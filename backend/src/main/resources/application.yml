@@ -1,0 +1,57 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    active: local
+    group:
+      local:
+        - common
+      prod:
+        - common
+  config:
+    activate:
+      on-profile: common
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/ddauction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: root
+    password: 1111
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+app:
+  allowed-origins: http://localhost:3000,http://localhost
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc://${RDS_ENDPOINT}:3306/ddauction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: false
+
+app:
+  allowed-origins: ${ALLOWED_ORIGINS}

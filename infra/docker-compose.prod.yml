@@ -8,10 +8,7 @@ services:
       - .env.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
-      SPRING_DATASOURCE_URL: jdbc:mysql://${RDS_ENDPOINT}:3306/ddauction_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      RDS_ENDPOINT: ${RDS_ENDPOINT}
     restart: unless-stopped
     ports:
       - "8080:8080"

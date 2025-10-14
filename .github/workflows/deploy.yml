@@ -66,7 +66,6 @@ jobs:
             
              # 🛑 수정된 부분: CORS 허용 도메인 추가 🛑
             ALLOWED_ORIGINS=http://localhost:3000,http://${{ secrets.EC2_HOST }},http://${{ secrets.EC2_HOST }}:8080
-            YOUR_REST_API_KEY=${{ secrets.KAKAO_REST_API_KEY }} 
 
             DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
             BACKEND_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/ddauction-backend:latest
