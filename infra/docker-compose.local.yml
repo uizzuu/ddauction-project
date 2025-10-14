@@ -7,7 +7,7 @@ services:
       - .env.local.db
     environment:
       # MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: pharmacy_db
+      MYSQL_DATABASE: ddauction_db
     ports:
       - "3307:3306"   # 호스트 3307 → 컨테이너 3306
     volumes:
@@ -30,7 +30,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: local
       # 컨테이너 간 접속 → DB 호스트는 localhost가 아니라 'db'
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/pharmacy_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/ddauction_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul&characterEncoding=utf8
       SPRING_DATASOURCE_USERNAME: root
     ports:
       - "8080:8080"
