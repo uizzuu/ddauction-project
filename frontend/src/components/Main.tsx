@@ -1,9 +1,9 @@
-import type { User } from '../types';
+import type { User, Page } from '../types';
 
 type Props = {
-  setPage: (page: 'main' | 'login' | 'signup' | 'register' | 'list') => void;
-  user: User;
-  setUser: (user: User) => void;
+  setPage: (page: Page) => void;
+  user: User | null;
+  setUser: (user: User | null) => void;
 };
 
 const buttonStyle = {
@@ -15,15 +15,6 @@ const buttonStyle = {
   cursor: 'pointer',
   fontSize: '16px',
   fontWeight: 'bold',
-};
-
-const containerStyle = {
-  minHeight: '100vh',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: '20px',
-  color: 'white',
 };
 
 export default function Main({ setPage, user, setUser }: Props) {

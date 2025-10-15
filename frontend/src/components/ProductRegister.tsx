@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { User } from '../types';
+import type { User, Page } from '../types';
 
 type Props = {
-  setPage: (page: 'main' | 'login' | 'signup' | 'register' | 'list') => void;
+  setPage: (page: Page) => void;
   user: User | null;
 };
 
@@ -48,7 +48,12 @@ const buttonStyle = {
 };
 
 export default function ProductRegister({ setPage, user }: Props) {
-  const [form, setForm] = useState({ title: '', description: '', startPrice: '', endDate: '' });
+  const [form, setForm] = useState({ 
+    title: '', 
+    description: '', 
+    startPrice: '', 
+    endDate: '' 
+  });
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
@@ -57,16 +62,20 @@ export default function ProductRegister({ setPage, user }: Props) {
       setPage('login');
       return;
     }
+    
     try {
       const response = await fetch('/api/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
+      
       if (response.ok) {
         alert('물품 등록 성공!');
         setPage('list');
-      } else setError('물품 등록 실패');
+      } else {
+        setError('물품 등록 실패');
+      }
     } catch {
       setError('서버 연결 실패');
     }
@@ -77,16 +86,53 @@ export default function ProductRegister({ setPage, user }: Props) {
       <div style={formBoxStyle}>
         <h2 style={{ fontSize: '32px', marginBottom: '30px' }}>물품 등록</h2>
 
-        <input type="text" placeholder="물품명" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} style={inputStyle} />
-        <textarea placeholder="상세 설명" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }} />
-        <input type="number" placeholder="시작 가격" value={form.startPrice} onChange={(e) => setForm({ ...form, startPrice: e.target.value })} style={inputStyle} />
-        <input type="datetime-local" placeholder="경매 종료일시" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} style={inputStyle} />
+        <input 
+          type="text" 
+          placeholder="물품명" 
+          value={form.title} 
+          onChange={(e) => setForm({ ...form, title: e.target.value })} 
+          style={inputStyle} 
+        />
+        
+        <textarea 
+          placeholder="상세 설명" 
+          value={form.description} 
+          onChange={(e) => setForm({ ...form, description: e.target.value })} 
+          style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }} 
+        />
+        
+        <input 
+          type="number" 
+          placeholder="시작 가격" 
+          value={form.startPrice} 
+          onChange={(e) => setForm({ ...form, startPrice: e.target.value })} 
+          style={inputStyle} 
+        />
+        
+        <input 
+          type="datetime-local" 
+          placeholder="경매 종료일시" 
+          value={form.endDate} 
+          onChange={(e) => setForm({ ...form, endDate: e.target.value })} 
+          style={inputStyle} 
+        />
 
         {error && <p style={{ color: '#ff4444', marginBottom: '10px' }}>{error}</p>}
 
-        <button onClick={handleSubmit} style={{ ...buttonStyle, width: '100%', marginTop: '20px' }}>등록하기</button>
+        <button 
+          onClick={handleSubmit} 
+          style={{ ...buttonStyle, width: '100%', marginTop: '20px' }}
+        >
+          등록하기
+        </button>
+        
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <button onClick={() => setPage('main')} style={{ color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}>취소</button>
+          <button 
+            onClick={() => setPage('main')} 
+            style={{ color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            취소
+          </button>
         </div>
       </div>
     </div>

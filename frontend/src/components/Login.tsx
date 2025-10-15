@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { User } from '../types';
+import type { User, Page } from '../types';
 
 type Props = {
-  setPage: (page: 'main' | 'login' | 'signup' | 'register' | 'list') => void;
+  setPage: (page: Page) => void;
   setUser: (user: User) => void;
 };
 
