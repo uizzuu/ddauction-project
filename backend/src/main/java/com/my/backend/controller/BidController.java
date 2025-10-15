@@ -1,7 +1,7 @@
-//package com.my.auction.controller;
+//package com.backend.controller;
 //
-//import com.my.auction.entity.Bid;
-//import com.my.auction.service.BidService;
+//import com.my.backend.entity.Bid;
+//import com.my.backend.service.BidService;
 //import lombok.RequiredArgsConstructor;
 //import org.springframework.web.bind.annotation.*;
 //

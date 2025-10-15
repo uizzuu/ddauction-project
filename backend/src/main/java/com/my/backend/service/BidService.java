@@ -1,9 +1,9 @@
-//package com.my.auction.service;
+//package com.my.backend.service;
 //
-//import com.my.auction.entity.Bid;
-//import com.my.auction.entity.Product;
-//import com.my.auction.repository.BidRepository;
-//import com.my.auction.repository.ProductRepository;
+//import com.my.backend.entity.Bid;
+//import com.my.backend.entity.Product;
+//import com.my.backend.repository.BidRepository;
+//import com.my.backend.repository.ProductRepository;
 //import lombok.RequiredArgsConstructor;
 //import org.springframework.stereotype.Service;
 //

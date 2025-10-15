@@ -4,7 +4,7 @@ import com.my.backend.dto.SigninRequest;
 import com.my.backend.dto.SignupRequest;
 import com.my.backend.dto.UserDto;
 import com.my.backend.entity.User;
-import com.my.auction.service.AuthService;
+import com.my.backend.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

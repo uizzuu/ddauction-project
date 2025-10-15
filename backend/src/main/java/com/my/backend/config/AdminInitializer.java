@@ -1,7 +1,7 @@
 package com.my.backend.config;
 
 import com.my.backend.entity.User;
-import com.my.auction.repository.UserRepository;
+import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
