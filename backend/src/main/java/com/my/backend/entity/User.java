@@ -23,10 +23,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
     private String userName;
-    @Column(unique = true)
+    @Column(unique = true,length = 10)
     private String nickName;
     private String password;
-    @Column(unique = true)
+    @Column(unique = true,length = 10)
     private String phone;
     @Column(unique = true)
     private String email;
@@ -37,7 +37,7 @@ public class User {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
     @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
+    @Column(nullable = false)
     private Role role;
     public enum Role {
         USER, ADMIN
