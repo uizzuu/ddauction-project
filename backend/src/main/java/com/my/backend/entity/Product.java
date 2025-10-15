@@ -62,6 +62,10 @@ public class Product {
 
     private Long amount;
 
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
     public enum ProductStatus {
         ACTIVE,
         SOLD,

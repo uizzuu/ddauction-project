@@ -1,5 +1,6 @@
 package com.my.backend.dto;
 
+import com.my.backend.entity.Category;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.User;
 import com.my.backend.entity.Bidder;
@@ -25,6 +26,7 @@ public class ProductDto {
     private LocalDateTime updatedAt;
     private Long bidderId;
     private Long amount;
+    private Long categoryId;
 
     public static ProductDto fromEntity(Product product) {
         if (product == null) {
@@ -45,10 +47,11 @@ public class ProductDto {
                 .updatedAt(product.getUpdatedAt())
                 .bidderId(product.getBidder().getBidderId())
                 .amount(product.getAmount())
+                .categoryId(product.getCategory().getCategoryId())
                 .build();
     }
 
-    public Product toEntity(User seller, Bidder bidder) {
+    public Product toEntity(User seller, Bidder bidder, Category category) {
         return Product.builder()
                 .productId(this.productId)
                 .user(seller)
@@ -64,6 +67,7 @@ public class ProductDto {
                 .updatedAt(this.updatedAt)
                 .bidder(bidder)
                 .amount(this.amount)
+                .category(category)
                 .build();
     }
 }
