@@ -34,7 +34,7 @@ public class ProductDto {
         }
         return ProductDto.builder()
                 .productId(product.getProductId())
-                .sellerId(product.getUser().getUserId())
+                .sellerId(product.getUser() != null ? product.getUser().getUserId() : null)
                 .title(product.getTitle())
                 .content(product.getContent())
                 .price(product.getPrice())
