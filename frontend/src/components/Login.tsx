@@ -48,12 +48,17 @@ const buttonStyle = {
 };
 
 export default function Login({ setPage, setUser }: Props) {
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
+    if (!form.email || !form.password) {
+      setError('이메일과 비밀번호를 입력해주세요.');
+      return;
+    }
+
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch('/api/auth/signin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
@@ -64,7 +69,7 @@ export default function Login({ setPage, setUser }: Props) {
         setUser(data);
         setPage('main');
       } else {
-        setError('로그인 실패');
+        setError('로그인 실패: 이메일 또는 비밀번호를 확인하세요.');
       }
     } catch {
       setError('서버 연결 실패');
@@ -77,10 +82,10 @@ export default function Login({ setPage, setUser }: Props) {
         <h2 style={{ fontSize: '32px', marginBottom: '30px' }}>로그인</h2>
 
         <input
-          type="text"
-          placeholder="아이디"
-          value={form.username}
-          onChange={(e) => setForm({ ...form, username: e.target.value })}
+          type="email"
+          placeholder="이메일"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
           style={inputStyle}
         />
         <input
@@ -98,11 +103,17 @@ export default function Login({ setPage, setUser }: Props) {
         </button>
 
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <button onClick={() => setPage('signup')} style={{ color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}>
+          <button
+            onClick={() => setPage('signup')}
+            style={{ color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
             회원가입하기
           </button>
           <span style={{ margin: '0 10px', color: '#666' }}>|</span>
-          <button onClick={() => setPage('main')} style={{ color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}>
+          <button
+            onClick={() => setPage('main')}
+            style={{ color: '#999', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
             메인으로
           </button>
         </div>

@@ -33,17 +33,29 @@ export default function Main({ setPage, user, setUser }: Props) {
         <div>
           {user ? (
             <>
-              <span style={{ marginRight: '20px' }}>{user.username}님</span>
-              <button onClick={() => setUser(null)} style={buttonStyle}>
+              {/* 로그인한 사용자의 닉네임 표시 */}
+              <span style={{ marginRight: '20px', fontWeight: 'bold' }}>
+                {user.nickName}님
+              </span>
+              <button
+                onClick={() => setUser(null)}
+                style={buttonStyle}
+              >
                 로그아웃
               </button>
             </>
           ) : (
             <>
-              <button onClick={() => setPage('login')} style={buttonStyle}>
+              <button
+                onClick={() => setPage('login')}
+                style={buttonStyle}
+              >
                 로그인
               </button>
-              <button onClick={() => setPage('signup')} style={{ ...buttonStyle, marginLeft: '10px' }}>
+              <button
+                onClick={() => setPage('signup')}
+                style={{ ...buttonStyle, marginLeft: '10px' }}
+              >
                 회원가입
               </button>
             </>
@@ -58,7 +70,10 @@ export default function Main({ setPage, user, setUser }: Props) {
         </p>
 
         <div style={{ display: 'flex', gap: '20px', justifyContent: 'center', marginTop: '40px' }}>
-          <button onClick={() => setPage('register')} style={{ ...buttonStyle, fontSize: '18px', padding: '15px 40px' }}>
+          <button
+            onClick={() => setPage('register')}
+            style={{ ...buttonStyle, fontSize: '18px', padding: '15px 40px' }}
+          >
             물품 등록하기
           </button>
           <button
