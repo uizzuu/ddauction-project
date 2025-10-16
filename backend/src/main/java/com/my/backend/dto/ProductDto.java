@@ -63,8 +63,6 @@ public class ProductDto {
                 .auctionEndTime(this.auctionEndTime)
                 .productStatus(this.productStatus)
                 .paymentStatus(this.paymentStatus)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
                 .bidder(bidder)
                 .amount(this.amount)
                 .category(category)

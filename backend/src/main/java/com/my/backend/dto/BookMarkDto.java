@@ -35,8 +35,6 @@ public class BookMarkDto {
                 .bookmarkId(this.bookmarkId)
                 .user(user)
                 .product(product)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
                 .build();
     }
 }

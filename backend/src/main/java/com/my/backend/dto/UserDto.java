@@ -44,8 +44,6 @@ public class UserDto {
                 .nickName(this.nickName)
                 .phone(this.phone)
                 .email(this.email)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
                 .role(this.role)
                 .build();
     }

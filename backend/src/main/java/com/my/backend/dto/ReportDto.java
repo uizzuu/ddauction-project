@@ -38,8 +38,6 @@ public class ReportDto {
                 .targetId(target)
                 .reason(this.reason)
                 .status(this.status)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
                 .build();
     }
 }

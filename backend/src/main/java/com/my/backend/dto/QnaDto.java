@@ -41,8 +41,6 @@ public class QnaDto {
                 .product(product)
                 .title(this.title)
                 .question(this.question)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
                 .build();
     }
 }

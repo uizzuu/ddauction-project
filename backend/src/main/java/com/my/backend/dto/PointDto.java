@@ -33,8 +33,6 @@ public class PointDto {
         return Point.builder()
                 .pointId(this.pointId)
                 .user(user)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
                 .pointStatus(this.pointStatus)
                 .build();
     }

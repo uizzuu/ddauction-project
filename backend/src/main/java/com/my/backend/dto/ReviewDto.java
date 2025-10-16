@@ -34,8 +34,6 @@ public class ReviewDto {
                 .user(user)
                 .comments(this.comments)
                 .rating(this.rating)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
                 .build();
     }
 }

@@ -36,8 +36,6 @@ public class QnaReviewDto {
                 .qnaUser(user)
                 .qna(qna)
                 .answer(this.answer)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
                 .build();
     }
 }
