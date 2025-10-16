@@ -53,9 +53,31 @@ export default function ProductList({ setPage }: Props) {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {products.map((product) => (
             <div key={product.id} style={{ background: '#2a2a2a', padding: '20px', borderRadius: '8px', border: '1px solid #444' }}>
-              <div style={{ width: '100%', height: '200px', background: '#1a1a1a', marginBottom: '15px', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
-                이미지
+              <div
+                style={{
+                  width: '100%',
+                  height: '200px',
+                  background: '#1a1a1a',
+                  marginBottom: '15px',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#666',
+                  overflow: 'hidden',
+                }}
+              >
+                {product.imageUrl ? (
+                  <img
+                    src={product.imageUrl}
+                    alt={product.title}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  '이미지 없음'
+                )}
               </div>
+
               <h3 style={{ fontSize: '20px', marginBottom: '10px' }}>{product.title}</h3>
               <p style={{ color: '#ffcc00', fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
                 {product.price?.toLocaleString()}원

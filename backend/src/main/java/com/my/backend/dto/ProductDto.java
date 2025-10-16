@@ -29,8 +29,9 @@ public class ProductDto {
     private Long categoryId;
 
     public static ProductDto fromEntity(Product product) {
-        if (product == null) return null;
-
+        if (product == null) {
+            return null;
+        }
         return ProductDto.builder()
                 .productId(product.getProductId())
                 .sellerId(product.getUser() != null ? product.getUser().getUserId() : null)
@@ -46,7 +47,7 @@ public class ProductDto {
                 .updatedAt(product.getUpdatedAt())
                 .bidderId(product.getBidder() != null ? product.getBidder().getBidderId() : null)
                 .amount(product.getAmount())
-                .categoryId(product.getCategory() != null ? product.getCategory().getCategoryId() : null)
+                .categoryId(product.getCategory().getCategoryId())
                 .build();
     }
 
@@ -62,8 +63,6 @@ public class ProductDto {
                 .auctionEndTime(this.auctionEndTime)
                 .productStatus(this.productStatus)
                 .paymentStatus(this.paymentStatus)
-                .createdAt(this.createdAt)
-                .updatedAt(this.updatedAt)
                 .bidder(bidder)
                 .amount(this.amount)
                 .category(category)
