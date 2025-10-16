@@ -1,5 +1,6 @@
 package com.my.backend.entity;
 
+import com.my.backend.entity.board.Board;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,6 +31,10 @@ public class Qna {
     @ManyToOne
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
+
+    @ManyToOne
+    @JoinColumn(name = "board_id", nullable = false)
+    private Board board;
 
     private String title;
     private String question;

@@ -3,6 +3,7 @@ package com.my.backend.dto;
 import com.my.backend.entity.Qna;
 import com.my.backend.entity.User;
 import com.my.backend.entity.Product;
+import com.my.backend.entity.board.Board;
 import lombok.Builder;
 import lombok.Data;
 
@@ -14,6 +15,7 @@ public class QnaDto {
     private Long qnaId;
     private Long userId;
     private Long productId;
+    private Long boardId;
     private String title;
     private String question;
     private LocalDateTime createdAt;
@@ -25,8 +27,9 @@ public class QnaDto {
         }
         return QnaDto.builder()
                 .qnaId(qna.getQnaId())
-                .userId(qna.getUser().getUserId())
-                .productId(qna.getProduct().getProductId())
+                .userId(qna.getUser() != null ? qna.getUser().getUserId() : null)
+                .productId(qna.getProduct() != null ? qna.getProduct().getProductId() : null)
+                .boardId(qna.getBoard() != null ? qna.getBoard().getBoardId() : null)
                 .title(qna.getTitle())
                 .question(qna.getQuestion())
                 .createdAt(qna.getCreatedAt())
@@ -34,11 +37,12 @@ public class QnaDto {
                 .build();
     }
 
-    public Qna toEntity(User user, Product product) {
+    public Qna toEntity(User user, Product product, Board board) {
         return Qna.builder()
                 .qnaId(this.qnaId)
                 .user(user)
                 .product(product)
+                .board(board)
                 .title(this.title)
                 .question(this.question)
                 .build();
