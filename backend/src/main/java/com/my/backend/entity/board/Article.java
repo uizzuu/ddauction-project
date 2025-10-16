@@ -1,5 +1,5 @@
 package com.my.backend.entity.board;
-
+import com.my.backend.entity.board.Board;
 import com.my.backend.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
