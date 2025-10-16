@@ -19,5 +19,5 @@ public class Board {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long boardId;
 
-    private String boardName;
+    private String name;
 }

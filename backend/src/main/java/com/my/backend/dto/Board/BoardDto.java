@@ -1,4 +1,4 @@
-package com.my.backend.dto.board;
+package com.my.backend.dto;
 
 import com.my.backend.entity.board.Board;
 import lombok.Builder;
@@ -8,7 +8,7 @@ import lombok.Data;
 @Builder
 public class BoardDto {
     private Long boardId;
-    private String boardName;
+    private String name;
 
     // Entity → DTO
     public static BoardDto fromEntity(Board board) {
@@ -17,7 +17,7 @@ public class BoardDto {
         }
         return BoardDto.builder()
                 .boardId(board.getBoardId())
-                .boardName(board.getBoardName())
+                .name(board.getName())
                 .build();
     }
 
@@ -25,7 +25,7 @@ public class BoardDto {
     public Board toEntity() {
         return Board.builder()
                 .boardId(this.boardId)
-                .boardName(this.boardName)
+                .name(this.name)
                 .build();
     }
 }

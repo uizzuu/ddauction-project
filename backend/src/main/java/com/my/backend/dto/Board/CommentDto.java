@@ -1,4 +1,4 @@
-package com.my.backend.dto.board;
+package com.my.backend.dto;
 
 import com.my.backend.entity.board.Article;
 import com.my.backend.entity.board.Comment;
