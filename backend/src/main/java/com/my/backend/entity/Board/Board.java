@@ -1,5 +1,6 @@
-package com.my.backend.entity;
+package com.my.backend.entity.Board;
 
+import com.my.backend.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,22 +24,5 @@ public class Board {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long boardId;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Lob
-    @Column(nullable = false)
-    private String content;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+    private String name;
 }

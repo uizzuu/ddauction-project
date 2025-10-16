@@ -45,7 +45,7 @@ public class ProductDto {
                 .paymentStatus(product.getPaymentStatus())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
-                .bidderId(product.getBidder().getBidderId())
+                .bidderId(product.getBidder() != null ? product.getBidder().getBidderId() : null)
                 .amount(product.getAmount())
                 .categoryId(product.getCategory().getCategoryId())
                 .build();

@@ -1,5 +1,6 @@
-package com.my.backend.entity;
+package com.my.backend.entity.Board;
 
+import com.my.backend.entity.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,34 +13,35 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user")
+@Table(name = "article")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Data
 @EntityListeners(AuditingEntityListener.class)
-public class User {
+public class Article {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long userId;
-    private String userName;
-    @Column(unique = true)
-    private String nickName;
-    private String password;
-    @Column(unique = true)
-    private String phone;
-    @Column(unique = true)
-    private String email;
+    private Long articleId;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @ManyToOne
+    @JoinColumn(name = "board_id")
+    private Board board;
+
+    private String title;
+
+    @Lob
+    private String content;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Role role;
-    public enum Role {
-        USER, ADMIN
-    }
 }
