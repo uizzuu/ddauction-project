@@ -90,7 +90,7 @@ export default function ProductRegister({ setPage, user }: Props) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/categories");
+        const res = await fetch("http://15.165.25.115/api/categories");
         if (res.ok) {
           const data: Category[] = await res.json();
           setCategories(data);
@@ -106,6 +106,7 @@ export default function ProductRegister({ setPage, user }: Props) {
     };
     fetchCategories();
   }, []);
+  console.log("현재 categories state:", categories);
 
   const handleSubmit = async () => {
     setError("");
