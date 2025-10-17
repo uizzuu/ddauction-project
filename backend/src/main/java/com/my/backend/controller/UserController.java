@@ -1,8 +1,9 @@
 package com.my.backend.controller;
 
-import com.my.backend.dto.UserUpdateDto;
+import com.my.backend.dto.UserDto;
 import com.my.backend.entity.User;
 import com.my.backend.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +27,9 @@ public class UserController {
     }
 
     @PostMapping
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    public UserDto createUser(@RequestBody @Valid UserDto userDto) {
+        User user = userService.createUser(userDto.toEntity());
+        return UserDto.fromEntity(user);
     }
 
     @PutMapping("/{id}")
@@ -40,17 +42,5 @@ public class UserController {
         userService.deleteUser(id);
     }
 
-    @PutMapping("/{id}/mypage")
-    public User updateMyPage(
-            @PathVariable Long id,
-            @RequestBody UserUpdateDto dto
-    ) {
-        return userService.updateUserInfo(id, dto);
-    }
-
-    @GetMapping("/{id}/mypage")
-    public User getMyPage(@PathVariable Long id) {
-        return userService.getUser(id);
-    }
 
 }
