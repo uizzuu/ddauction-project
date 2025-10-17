@@ -17,7 +17,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    // 모든 유저 조회 (DTO 반환)
+    // 모든 유저 조회
     public List<UserDto> getAllUsers() {
         return userRepository.findAll()
                 .stream()
@@ -32,28 +32,53 @@ public class UserService {
         return UserDto.fromEntity(user);
     }
 
-    // 유저 생성
+    // 회원가입
     public UserDto createUser(UserDto dto) {
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            dto.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
         User saved = userRepository.save(dto.toEntity());
         return UserDto.fromEntity(saved);
     }
 
-    // DTO에서 id 가져와 업데이트
-    public UserDto updateUser(UserDto dto) {
-        Long id = dto.getUserId();
-        if (id == null) throw new RuntimeException("업데이트할 사용자 ID가 필요합니다.");
+    // 로그인
+    public UserDto login(String email, String password) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다."));
 
-        User user = userRepository.findById(id)
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
+        }
+
+        return UserDto.fromEntity(user);
+    }
+
+    // 유저 정보 수정
+    public UserDto updateUser(UserDto dto) {
+        if (dto.getUserId() == null) throw new RuntimeException("수정할 사용자 ID가 필요합니다.");
+        User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
 
-        if (dto.getUserName() != null) user.setUserName(dto.getUserName());
-        if (dto.getNickName() != null) user.setNickName(dto.getNickName());
-        if (dto.getPassword() != null) user.setPassword(passwordEncoder.encode(dto.getPassword()));
-        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
-        if (dto.getEmail() != null) user.setEmail(dto.getEmail());
+        if (dto.getUserName() != null && !dto.getUserName().isBlank()) {
+            user.setUserName(dto.getUserName());
+        }
+        if (dto.getNickName() != null && !dto.getNickName().isBlank()) {
+            user.setNickName(dto.getNickName());
+        }
+        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        }
+        if (dto.getPhone() != null && !dto.getPhone().isBlank()) {
+            if (!dto.getPhone().matches("\\d{10,11}")) {
+                throw new RuntimeException("전화번호는 숫자만 10~11자리여야 합니다.");
+            }
+            user.setPhone(dto.getPhone());
+        }
+        if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
+            user.setEmail(dto.getEmail());
+        }
 
-        User updated = userRepository.save(user);
-        return UserDto.fromEntity(updated);
+        return UserDto.fromEntity(userRepository.save(user));
     }
 
     // 유저 삭제

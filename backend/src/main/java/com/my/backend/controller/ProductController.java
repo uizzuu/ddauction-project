@@ -50,5 +50,4 @@ public class ProductController {
     public List<ProductDto> getProductsBySeller(@PathVariable Long userId) {
         return productService.getProductsBySeller(userId);
     }
-
 }

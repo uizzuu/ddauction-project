@@ -43,27 +43,31 @@ public class ProductService {
 
     // 새 상품 생성
     public ProductDto createProduct(ProductDto productDto) {
-        // 1. Seller(User) 매핑
         User seller = userRepository.findById(productDto.getSellerId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "판매자가 존재하지 않습니다."));
 
-        // 2. Bidder 매핑 (선택)
+        Category category = categoryRepository.findById(productDto.getCategoryId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "카테고리가 존재하지 않습니다."));
+
+        // bidder는 null 가능
         Bidder bidder = null;
         if (productDto.getBidderId() != null) {
             bidder = bidderRepository.findById(productDto.getBidderId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "입찰자가 존재하지 않습니다."));
         }
 
-        // 3. Category 매핑
-        Category category = categoryRepository.findById(productDto.getCategoryId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "카테고리가 존재하지 않습니다."));
-
-        // 4. Product 엔티티 생성
         Product product = productDto.toEntity(seller, bidder, category);
 
-        // 5. 저장
-        Product savedProduct = productRepository.save(product);
+        // price 안전 변환
+        if (productDto.getPrice() != null) {
+            try {
+                product.setPrice(Long.parseLong(productDto.getPrice()));
+            } catch (NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
+            }
+        }
 
+        Product savedProduct = productRepository.save(product);
         return ProductDto.fromEntity(savedProduct);
     }
 
@@ -81,14 +85,13 @@ public class ProductService {
         Category category = categoryRepository.findById(updatedProductDto.getCategoryId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "카테고리가 존재하지 않습니다."));
 
-        // 기존 Product 필드 업데이트
         product.setTitle(updatedProductDto.getTitle());
         product.setContent(updatedProductDto.getContent());
         if (updatedProductDto.getPrice() != null) {
             try {
                 product.setPrice(Long.parseLong(updatedProductDto.getPrice()));
             } catch (NumberFormatException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
             }
         }
         product.setImageUrl(updatedProductDto.getImageUrl());
@@ -119,5 +122,4 @@ public class ProductService {
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
-
 }
