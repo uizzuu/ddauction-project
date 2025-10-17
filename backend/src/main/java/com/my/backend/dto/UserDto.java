@@ -16,7 +16,6 @@ public class UserDto {
     private Long userId;
     private String userName;
     private String nickName;
-    private String password;
     private String phone;
     private String email;
     private LocalDateTime createdAt;
@@ -29,7 +28,6 @@ public class UserDto {
                 .userId(user.getUserId())
                 .userName(user.getUserName())
                 .nickName(user.getNickName())
-                .password(user.getPassword())
                 .phone(user.getPhone())
                 .email(user.getEmail())
                 .createdAt(user.getCreatedAt())
@@ -44,7 +42,6 @@ public class UserDto {
                 .userId(this.userId)
                 .userName(this.userName)
                 .nickName(this.nickName)
-                .password(this.password)
                 .phone(this.phone)
                 .email(this.email)
                 .role(this.role)
