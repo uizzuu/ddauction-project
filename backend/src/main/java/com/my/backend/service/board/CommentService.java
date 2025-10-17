@@ -38,7 +38,7 @@ public class CommentService {
         );
     }
 
-    // 2️ 특정 게시글 댓글 전체 조회
+    // 2 특정 게시글 댓글 전체 조회
     public List<CommentDto> findCommentsByArticle(Long articleId) {
         Article article = articleRepository.findById(articleId).orElse(null);
         if (article == null) return List.of();
