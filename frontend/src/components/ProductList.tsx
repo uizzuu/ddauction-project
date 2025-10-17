@@ -22,7 +22,7 @@ export default function ProductList({ setPage }: Props) {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://localhost:8080/api/products');
+        const res = await fetch('http://15.165.25.115/api/products');
         if (res.ok) {
           const data: Product[] = await res.json();
           setProducts(data);

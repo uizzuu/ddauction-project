@@ -41,7 +41,7 @@ export default function MyPage({ setPage, user, setUser }: Props) {
 
   // 카테고리 목록 가져오기
   useEffect(() => {
-    fetch("http://localhost:8080/api/categories")
+    fetch("http://15.165.25.115/api/categories")
       .then(res => res.json())
       .then(data => setCategories(data))
       .catch(err => console.error("카테고리 불러오기 실패", err));
