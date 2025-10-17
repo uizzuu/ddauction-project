@@ -43,4 +43,11 @@ public class ProductController {
     public void deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
     }
+
+    // 사용자 판매 상품 조회
+    @GetMapping("/seller/{userId}")
+    public List<ProductDto> getProductsBySeller(@PathVariable Long userId) {
+        return productService.getProductsBySeller(userId);
+    }
+
 }

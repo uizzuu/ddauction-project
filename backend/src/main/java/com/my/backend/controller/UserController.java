@@ -1,5 +1,6 @@
 package com.my.backend.controller;
 
+import com.my.backend.dto.UserUpdateDto;
 import com.my.backend.entity.User;
 import com.my.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -38,4 +39,18 @@ public class UserController {
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }
+
+    @PutMapping("/{id}/mypage")
+    public User updateMyPage(
+            @PathVariable Long id,
+            @RequestBody UserUpdateDto dto
+    ) {
+        return userService.updateUserInfo(id, dto);
+    }
+
+    @GetMapping("/{id}/mypage")
+    public User getMyPage(@PathVariable Long id) {
+        return userService.getUser(id);
+    }
+
 }

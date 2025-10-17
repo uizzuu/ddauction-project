@@ -52,7 +52,8 @@ export default function ProductList({ setPage }: Props) {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
           {products.map((product) => (
-            <div key={product.id} style={{ background: '#2a2a2a', padding: '20px', borderRadius: '8px', border: '1px solid #444' }}>
+            <div key={product.productId} style={{ background: '#2a2a2a', padding: '20px', borderRadius: '8px', border: '1px solid #444' }}>
+              {/* 이미지 */}
               <div
                 style={{
                   width: '100%',
@@ -78,13 +79,36 @@ export default function ProductList({ setPage }: Props) {
                 )}
               </div>
 
+              {/* 제목 & 가격 */}
               <h3 style={{ fontSize: '20px', marginBottom: '10px' }}>{product.title}</h3>
               <p style={{ color: '#ffcc00', fontSize: '24px', fontWeight: 'bold', marginBottom: '10px' }}>
                 {product.price?.toLocaleString()}원
               </p>
-              <p style={{ color: '#999', marginBottom: '15px' }}>
-                종료: {new Date(product.auctionEndTime).toLocaleString()}
-              </p>
+
+              {/* 설명 */}
+              {product.description && <p style={{ color: '#ccc', marginBottom: '10px' }}>{product.description}</p>}
+
+              {/* 카테고리 */}
+              {product.category && <p style={{ color: '#999', marginBottom: '5px' }}>카테고리: {product.category.name}</p>}
+
+              {/* 상태 */}
+              <p style={{ color: '#999', marginBottom: '5px' }}>상품 상태: {product.productStatus}</p>
+              <p style={{ color: '#999', marginBottom: '5px' }}>결제 상태: {product.paymentStatus}</p>
+
+              {/* 경매 종료 */}
+              {product.auctionEndTime && (
+                <p style={{ color: '#999', marginBottom: '5px' }}>
+                  경매 종료: {new Date(product.auctionEndTime).toLocaleString()}
+                </p>
+              )}
+
+              {/* 입찰자 */}
+              {product.bidder && <p style={{ color: '#999', marginBottom: '5px' }}>현재 입찰자: {product.bidder.username}</p>}
+
+              {/* 수량 */}
+              {product.amount && <p style={{ color: '#999', marginBottom: '10px' }}>수량: {product.amount}</p>}
+
+              {/* 입찰 버튼 */}
               <button style={{ ...buttonStyle, width: '100%' }}>입찰하기</button>
             </div>
           ))}

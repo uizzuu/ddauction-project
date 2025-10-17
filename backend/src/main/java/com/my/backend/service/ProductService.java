@@ -105,4 +105,13 @@ public class ProductService {
         }
         productRepository.deleteById(id);
     }
+
+    // 특정 사용자 판매 상품 조회
+    public List<ProductDto> getProductsBySeller(Long userId) {
+        return productRepository.findByUserUserId(userId)
+                .stream()
+                .map(ProductDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
 }

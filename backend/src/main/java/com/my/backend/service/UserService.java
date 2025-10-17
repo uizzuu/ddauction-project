@@ -1,8 +1,10 @@
 package com.my.backend.service;
 
+import com.my.backend.dto.UserUpdateDto;
 import com.my.backend.entity.User;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -40,4 +43,15 @@ public class UserService {
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
     }
+
+    public User updateUserInfo(Long id, UserUpdateDto dto) {
+        User user = getUser(id);
+
+        if (dto.getNickName() != null) user.setNickName(dto.getNickName());
+        if (dto.getPassword() != null) user.setPassword(dto.getPassword());
+        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
+
+        return userRepository.save(user);
+    }
+
 }

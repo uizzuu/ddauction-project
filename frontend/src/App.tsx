@@ -4,6 +4,7 @@ import Login from "./components/Login";
 import Signup from "./components/Signup";
 import ProductRegister from "./components/ProductRegister";
 import ProductList from "./components/ProductList";
+import MyPage from "./components/MyPage";
 import type { User, Page } from "./types";
 
 export default function App() {
@@ -20,6 +21,8 @@ export default function App() {
         return <ProductRegister setPage={setPage} user={user} />;
       case "list":
         return <ProductList setPage={setPage} />;
+      case "mypage":
+        return <MyPage setPage={setPage} user={user} setUser={setUser} />;
       default:
         return <Main setPage={setPage} user={user} setUser={setUser} />;
     }

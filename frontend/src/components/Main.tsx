@@ -37,6 +37,15 @@ export default function Main({ setPage, user, setUser }: Props) {
               <span style={{ marginRight: '20px', fontWeight: 'bold' }}>
                 {user.nickName}님
               </span>
+
+              {/* ✅ 여기 마이페이지 버튼 추가 */}
+              <button
+                onClick={() => setPage('mypage')}
+                style={{ ...buttonStyle, marginRight: '10px' }}
+              >
+                마이페이지
+              </button>
+
               <button
                 onClick={() => setUser(null)}
                 style={buttonStyle}
