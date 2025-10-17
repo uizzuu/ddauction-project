@@ -84,7 +84,13 @@ public class ProductService {
         // 기존 Product 필드 업데이트
         product.setTitle(updatedProductDto.getTitle());
         product.setContent(updatedProductDto.getContent());
-        product.setPrice(updatedProductDto.getPrice());
+        if (updatedProductDto.getPrice() != null) {
+            try {
+                product.setPrice(Long.parseLong(updatedProductDto.getPrice()));
+            } catch (NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+            }
+        }
         product.setImageUrl(updatedProductDto.getImageUrl());
         product.setOneMinuteAuction(updatedProductDto.isOneMinuteAuction());
         product.setAuctionEndTime(updatedProductDto.getAuctionEndTime());
