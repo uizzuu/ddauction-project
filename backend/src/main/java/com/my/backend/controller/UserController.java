@@ -3,6 +3,7 @@ package com.my.backend.controller;
 import com.my.backend.dto.UserDto;
 import com.my.backend.entity.User;
 import com.my.backend.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
