@@ -34,6 +34,7 @@ public class Product {
 
     private Long price;
 
+    @Column(length = 1000)
     private String imageUrl;
 
     private boolean oneMinuteAuction;
