@@ -1,6 +1,9 @@
 package com.my.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,14 +25,29 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
+
+    @NotBlank
     private String userName;
+
+    @NotBlank
     @Column(unique = true)
     private String nickName;
+
     private String password;
+
     @Column(unique = true)
+    @NotBlank
+    @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 숫자만 10~11자리여야 합니다.")
     private String phone;
+
+//    example@ (도메인 없음)
+//example.com (골뱅이 없음)
+//@domain.com (아이디 없음) 이런거 허용안함
+    @NotBlank
+    @Email(message = "올바른 이메일 형식이 아닙니다.")
     @Column(unique = true)
     private String email;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
