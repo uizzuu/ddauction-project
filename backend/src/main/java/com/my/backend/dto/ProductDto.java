@@ -4,6 +4,8 @@ import com.my.backend.entity.Category;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.User;
 import com.my.backend.entity.Bidder;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Data;
 
@@ -16,7 +18,9 @@ public class ProductDto {
     private Long sellerId;
     private String title;
     private String content;
-    private Long price;
+    @NotBlank
+    @Pattern(regexp = "^[1-9][0-9]*$")
+    private String price;
     private String imageUrl;
     private boolean oneMinuteAuction;
     private LocalDateTime auctionEndTime;
@@ -37,7 +41,7 @@ public class ProductDto {
                 .sellerId(product.getUser() != null ? product.getUser().getUserId() : null)
                 .title(product.getTitle())
                 .content(product.getContent())
-                .price(product.getPrice())
+                .price(product.getPrice().toString())
                 .imageUrl(product.getImageUrl())
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
@@ -57,7 +61,7 @@ public class ProductDto {
                 .user(seller)
                 .title(this.title)
                 .content(this.content)
-                .price(this.price)
+                .price(Long.parseLong(this.price))
                 .imageUrl(this.imageUrl)
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)
