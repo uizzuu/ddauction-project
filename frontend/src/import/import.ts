@@ -8,7 +8,7 @@ import Login from "../pages/Login";
 import Signup from "../pages/Signup";
 import ProductList from "../pages/ProductList";
 import ProductRegister from "../pages/ProductRegister";
-import MyPage from "../pages/Mypage";
+import MyPage from "../pages/MyPage";
 
 export {
   HeaderMain,
