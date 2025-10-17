@@ -141,7 +141,7 @@ export default function ProductRegister({ setPage, user }: Props) {
         productStatus: "ACTIVE",
       };
 
-      const response = await fetch("http://localhost:8080/api/products", {
+      const response = await fetch("http://15.165.25.115/api/products", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData),
