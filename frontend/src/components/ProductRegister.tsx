@@ -118,6 +118,12 @@ export default function ProductRegister({ setPage, user }: Props) {
       setError("로그인 정보가 없습니다.");
       return;
     }
+    
+  let price = form.price;
+  if (!price || price <= 0) {
+    setError("시작 가격을 입력해주세요.");
+    return;
+  }
 
     let auctionEndTime = form.auctionEndTime;
     if (form.oneMinuteAuction) {
