@@ -1,0 +1,121 @@
+/* Header 스타일 */
+.header {
+  background-color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-line {
+  border-bottom: 1px solid #eee;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-nav {
+  height: 50px;
+}
+
+.logo {
+  height: 30px;
+}
+
+.img-link:hover {
+  cursor: pointer;
+}
+
+.img-link > svg {
+  height: 100%;
+}
+
+.menu {
+  height: 16px;
+}
+
+.menu:hover path,
+.nav-link:hover {
+  stroke: #b17576;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.nav-link {
+  color: #333;
+  font-size: 16px;
+  font-weight: 500;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.test {
+  color: #aaa;
+}
+
+.user-info {
+  font-weight: 600;
+}
+
+.btn-logout {
+  background: #fff;
+  border: 1px solid #b17576;
+  color: #b17576;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.btn-logout:hover {
+  background: #b17576;
+  color: #fff;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+
+  .nav {
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .nav-link {
+    font-size: 14px;
+  }
+
+  .logo {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nav {
+    gap: 15px;
+  }
+
+  .nav-link {
+    font-size: 13px;
+  }
+
+  .btn-logout {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+}

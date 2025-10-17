@@ -1,0 +1,48 @@
+/* 모달 박스 */
+.content-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #777;
+  position: relative;
+}
+.modal-content {
+  width: 100%; /* 가로 100% */
+  max-width: 400px; /* 필요시 최대 너비 */
+  background: #aaa;
+  border-radius: 4px;
+  padding: 16px;
+  box-shadow: 0 4px 11px rgba(175, 175, 175, 0.2);
+
+  position: absolute;
+  top: 45px;
+  left: -15px;
+  z-index: 1000;
+}
+
+/* 카테고리 리스트 */
+.category-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* 각 카테고리 버튼 */
+.category-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin: 4px 0;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #f9f9f9;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.category-btn:hover {
+  background: #e0e0e0;
+}
