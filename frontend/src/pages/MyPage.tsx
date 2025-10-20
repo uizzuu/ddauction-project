@@ -24,7 +24,7 @@ export default function MyPage({ user, setUser }: Props) {
 
   // 카테고리 목록 가져오기
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/categories`)
+    fetch(`${API_BASE_URL}/categories`)
       .then((res) => res.json())
       .then((data) => setCategories(data))
       .catch((err) => console.error("카테고리 불러오기 실패", err));
@@ -58,7 +58,7 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleUpdate = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}/mypage`, {
+      const res = await fetch(`${API_BASE_URL}/users/${user.userId}/mypage`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -82,7 +82,7 @@ export default function MyPage({ user, setUser }: Props) {
   const handleDelete = async () => {
     if (!confirm("정말 회원 탈퇴하시겠습니까?")) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}`, {
+      const res = await fetch(`${API_BASE_URL}/users/${user.userId}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -102,7 +102,7 @@ export default function MyPage({ user, setUser }: Props) {
   const handleFetchSellingProducts = async () => {
     if (!showSelling) {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/products/seller/${user.userId}`);
+        const res = await fetch(`${API_BASE_URL}/products/seller/${user.userId}`);
         if (res.ok) {
           const data: Product[] = await res.json();
           setSellingProducts(data);
