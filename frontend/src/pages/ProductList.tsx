@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import type { Product } from "../types/types";
+import { API_BASE_URL } from "../services/api";
 
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -8,7 +9,7 @@ export default function ProductList() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("http://15.165.25.115/api/products");
+        const res = await fetch(`${API_BASE_URL}/api/products`);
         if (res.ok) {
           const data: Product[] = await res.json();
           setProducts(data);
