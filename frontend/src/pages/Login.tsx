@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User, LoginForm } from "../types/types";
+import { API_BASE_URL } from "../services/api";
 
 type Props = {
   setUser: (user: User) => void;
@@ -18,7 +19,7 @@ export default function Login({ setUser }: Props) {
     }
 
     try {
-      const response = await fetch("/api/auth/signin", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

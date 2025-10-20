@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User, ProductForm, Category } from "../types/types";
+import { API_BASE_URL } from "../services/api";
 
 type Props = {
   user: User | null;
@@ -23,7 +24,7 @@ export default function ProductRegister({ user }: Props) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("/api/categories");
+        const res = await fetch(`${API_BASE_URL}/api/categories`);
         if (res.ok) {
           const data: Category[] = await res.json();
           setCategories(data);
@@ -71,7 +72,7 @@ export default function ProductRegister({ user }: Props) {
         paymentStatus: "PENDING",
       };
 
-      const response = await fetch("http://15.165.25.115/api/products", {
+      const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData),

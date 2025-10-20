@@ -2,9 +2,6 @@
 # Backend (Spring Boot + Gradle)
 ##############################
 
-# backend/.env 파일은 항상 추적
-!backend/.env
-
 # Gradle 산출물/캐시 무시
 .gradle/
 build/
