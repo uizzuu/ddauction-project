@@ -12,39 +12,34 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "product")
+@Table(name = "payment")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Data
 @EntityListeners(AuditingEntityListener.class)
-public class Product {
+public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productId;
+    private Long paymentId;
 
     @ManyToOne
-    @JoinColumn(name = "seller_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "product_id")
+    private Product product;
 
-    private String title;
+    @ManyToOne
+    @JoinColumn(name = "bid_id")
+    private Bid bid;
 
-    @Column(columnDefinition = "TEXT")
-    private String content;
+    private Long amount;
 
-    private Long price;
-
-    @Column(length = 1000)
-    private String imageUrl;
-
-    private boolean oneMinuteAuction;
-
-    private LocalDateTime auctionEndTime;
+    @ManyToOne
+    @JoinColumn(name = "payment_method_id")
+    private PaymentMethod paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProductStatus productStatus;
-
+    private PaymentStatus paymentStatus;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -54,21 +49,12 @@ public class Product {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    @JoinColumn(name = "bid_id")
-    private Bid bid;
-
-    @ManyToOne
-    @JoinColumn(name = "payment_id")
-    private Payment payment;
-
-    @ManyToOne
-    @JoinColumn(name = "category_id", nullable = false)
-    private Category category;
-
-    public enum ProductStatus {
-        ACTIVE,
-        SOLD,
-        CLOSED
+    public enum PaymentStatus {
+        PENDING,    // 결제 대기
+        PAID,       // 결제 완료
+        CANCELLED,  // 결제 취소됨
+        FAILED,     // 결제 실패
+        REFUNDED    // 환불됨
     }
+
 }

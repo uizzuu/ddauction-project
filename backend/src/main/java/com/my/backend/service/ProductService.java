@@ -1,14 +1,8 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.ProductDto;
-import com.my.backend.entity.Bidder;
-import com.my.backend.entity.Category;
-import com.my.backend.entity.Product;
-import com.my.backend.entity.User;
-import com.my.backend.repository.BidderRepository;
-import com.my.backend.repository.CategoryRepository;
-import com.my.backend.repository.ProductRepository;
-import com.my.backend.repository.UserRepository;
+import com.my.backend.entity.*;
+import com.my.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -22,9 +16,10 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final BidderRepository bidderRepository;
+    private final BidRepository bidRepository;
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
+    private final PaymentRepository paymentRepository;
 
     // 모든 상품 조회
     public List<ProductDto> getAllProducts() {
@@ -49,16 +44,21 @@ public class ProductService {
         Category category = categoryRepository.findById(productDto.getCategoryId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "카테고리가 존재하지 않습니다."));
 
-        // bidder는 null 가능
-        Bidder bidder = null;
-        if (productDto.getBidderId() != null) {
-            bidder = bidderRepository.findById(productDto.getBidderId())
+        Bid bid = null;
+        if (productDto.getBidId() != null) {
+            bid = bidRepository.findById(productDto.getBidId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "입찰자가 존재하지 않습니다."));
         }
 
-        Product product = productDto.toEntity(seller, bidder, category);
+        Payment payment = null;
+        if (productDto.getPaymentId() != null) {
+            payment = paymentRepository.findById(productDto.getPaymentId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제가 존재하지 않습니다."));
+        }
 
-        // price 안전 변환
+        Product product = productDto.toEntity(seller, bid, payment, category);
+
+        // price 안전 변환 (이미 toEntity 내부에 변환 코드 있지만 중복체크)
         if (productDto.getPrice() != null) {
             try {
                 product.setPrice(Long.parseLong(productDto.getPrice()));
@@ -76,10 +76,16 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));
 
-        Bidder bidder = null;
-        if (updatedProductDto.getBidderId() != null) {
-            bidder = bidderRepository.findById(updatedProductDto.getBidderId())
+        Bid bid = null;
+        if (updatedProductDto.getBidId() != null) {
+            bid = bidRepository.findById(updatedProductDto.getBidId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "입찰자가 존재하지 않습니다."));
+        }
+
+        Payment payment = null;
+        if (updatedProductDto.getPaymentId() != null) {
+            payment = paymentRepository.findById(updatedProductDto.getPaymentId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제가 존재하지 않습니다."));
         }
 
         Category category = categoryRepository.findById(updatedProductDto.getCategoryId())
@@ -87,6 +93,7 @@ public class ProductService {
 
         product.setTitle(updatedProductDto.getTitle());
         product.setContent(updatedProductDto.getContent());
+
         if (updatedProductDto.getPrice() != null) {
             try {
                 product.setPrice(Long.parseLong(updatedProductDto.getPrice()));
@@ -94,13 +101,13 @@ public class ProductService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
             }
         }
+
         product.setImageUrl(updatedProductDto.getImageUrl());
         product.setOneMinuteAuction(updatedProductDto.isOneMinuteAuction());
         product.setAuctionEndTime(updatedProductDto.getAuctionEndTime());
         product.setProductStatus(updatedProductDto.getProductStatus());
-        product.setPaymentStatus(updatedProductDto.getPaymentStatus());
-        product.setBidder(bidder);
-        product.setAmount(updatedProductDto.getAmount());
+        product.setBid(bid);
+        product.setPayment(payment);
         product.setCategory(category);
 
         Product savedProduct = productRepository.save(product);

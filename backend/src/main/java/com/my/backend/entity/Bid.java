@@ -13,16 +13,16 @@ import java.time.LocalDateTime;
 
 
 @Entity
-@Table(name = "bidder")
+@Table(name = "bid")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Data
 @EntityListeners(AuditingEntityListener.class)
-public class Bidder {
+public class Bid {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long bidderId;
+    private Long bidId;
 
     @ManyToOne
     @JoinColumn(name = "product_id")
@@ -32,14 +32,14 @@ public class Bidder {
     @JoinColumn(name = "user_id")
     private User user;
 
+    @Column(nullable = false)
+    private Long bidPrice;
+
+    private boolean isWinning;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    private Long bidderPrice;
 
 }

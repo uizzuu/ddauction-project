@@ -1,9 +1,6 @@
 package com.my.backend.dto;
 
-import com.my.backend.entity.Category;
-import com.my.backend.entity.Product;
-import com.my.backend.entity.User;
-import com.my.backend.entity.Bidder;
+import com.my.backend.entity.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
@@ -14,48 +11,61 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class ProductDto {
+
     private Long productId;
+
     private Long sellerId;
+
     private String title;
+
     private String content;
+
     @NotBlank
     @Pattern(regexp = "^[1-9][0-9]*$")
     private String price;
+
     private String imageUrl;
+
     private boolean oneMinuteAuction;
+
     private LocalDateTime auctionEndTime;
+
     private Product.ProductStatus productStatus;
-    private Product.PaymentStatus paymentStatus;
+
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
-    private Long bidderId;
-    private Long amount;
+
+    private Long bidId;
+
+    private Long paymentId;
+
     private Long categoryId;
 
     public static ProductDto fromEntity(Product product) {
         if (product == null) {
             return null;
         }
+
         return ProductDto.builder()
                 .productId(product.getProductId())
                 .sellerId(product.getUser() != null ? product.getUser().getUserId() : null)
                 .title(product.getTitle())
                 .content(product.getContent())
-                .price(product.getPrice().toString())
+                .price(product.getPrice() != null ? product.getPrice().toString() : null)
                 .imageUrl(product.getImageUrl())
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
                 .productStatus(product.getProductStatus())
-                .paymentStatus(product.getPaymentStatus())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
-                .bidderId(product.getBidder() != null ? product.getBidder().getBidderId() : null)
-                .amount(product.getAmount())
-                .categoryId(product.getCategory().getCategoryId())
+                .bidId(product.getBid() != null ? product.getBid().getBidId() : null)
+                .paymentId(product.getPayment() != null ? product.getPayment().getPaymentId() : null)
+                .categoryId(product.getCategory() != null ? product.getCategory().getCategoryId() : null)
                 .build();
     }
 
-    public Product toEntity(User seller, Bidder bidder, Category category) {
+    public Product toEntity(User seller, Bid bid, Payment payment, Category category) {
         return Product.builder()
                 .productId(this.productId)
                 .user(seller)
@@ -66,9 +76,8 @@ public class ProductDto {
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)
                 .productStatus(this.productStatus)
-                .paymentStatus(this.paymentStatus)
-                .bidder(bidder)
-                .amount(this.amount)
+                .bid(bid)
+                .payment(payment)
                 .category(category)
                 .build();
     }
