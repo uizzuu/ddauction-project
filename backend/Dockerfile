@@ -14,5 +14,5 @@ COPY --from=build /app/build/libs/*.jar /app/server.jar
 EXPOSE 8080
 # 컨테이너 안의 환경 변수를 정의하는 구문
 # 컨테이너가 실행될 때 리눅스 환경 변수로 들어감.
-ENV SPRING_PROFILES_ACTIVE=local
+ENV SPRING_PROFILES_ACTIVE=prod
 CMD ["java", "-jar", "/app/server.jar"]
