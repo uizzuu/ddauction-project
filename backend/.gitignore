@@ -1,37 +1,88 @@
-HELP.md
-.gradle
+##############################
+# Backend (Spring Boot + Gradle)
+##############################
+# Gradle
+.gradle/
 build/
-!gradle/wrapper/gradle-wrapper.jar
-!**/src/main/**/build/
-!**/src/test/**/build/
+*.class
+*.jar
+*.war
+*.log
 
-### STS ###
-.apt_generated
+# Gradle wrapper는 예외 처리
+!gradle/wrapper/gradle-wrapper.jar
+
+# Gradle 캐시 / 빌드 산출물
+**/caches/
+**/groovy-dsl/
+**/transforms/
+**/registry.bin
+**/registry.bin.lock
+
+# Spring / STS
+.apt_generated/
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
-.sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
+.sts4-cache/
+.metadata/
+.recommenders/
+bootRun/
+target/
 
-### IntelliJ IDEA ###
-.idea
+# backend/.env 파일 추적 허용
+!backend/.env
+
+##############################
+# Frontend (React / Vite / Node)
+##############################
+node_modules/
+dist/
+build/
+*.env
+.env.*
+.vite/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+##############################
+# IDE / Editor
+##############################
+.idea/
 *.iws
 *.iml
 *.ipr
 out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
+*.classpath
+*.project
+.settings/
+*.metadata/
+*.recommenders/
 .vscode/
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.nb-gradle/
+
+##############################
+# Docker / Infra
+##############################
+docker-compose.override.yml
+*.env.local
+*.env.*.local
+
+##############################
+# OS / Misc
+##############################
+.DS_Store
+Thumbs.db
+
+##############################
+# Optional documentation / helper files
+##############################
+HELP.md
