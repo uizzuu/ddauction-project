@@ -46,25 +46,28 @@ public class UserController {
         return userService.login(dto.getEmail(), dto.getPassword());
     }
 
-    // 유저 수정
+    // 유저 수정 (전체)
     @PutMapping
     public UserDto updateUser(@RequestBody UserDto dto) {
         return userService.updateUser(dto);
     }
 
-    // 유저 삭제
-    @DeleteMapping
-    public void deleteUser(@RequestBody UserDto dto) {
-        userService.deleteUser(dto.getUserId());
+    // 유저 삭제 (수정 필요: @DeleteMapping("/{id}"))
+// 프론트엔드는 DELETE /api/users/{userId} 를 호출합니다.
+    @DeleteMapping("/{id}") // 👈 수정 필요: @PathVariable을 받아야 합니다.
+    public void deleteUser(@PathVariable Long id) { // 👈 DTO 대신 ID를 받도록 수정 필요
+        userService.deleteUser(id);
     }
 
-    // 마이페이지 업데이트
-    @PutMapping("/mypage")
-    public UserDto updateMyPage(@RequestBody UserDto dto) {
+    // 마이페이지 업데이트 (수정 필요: @PutMapping("/{id}/mypage"))
+// 프론트엔드는 PUT /api/users/{userId}/mypage 를 호출합니다.
+    @PutMapping("/{id}/mypage") // 👈 수정 필요: {id}를 추가하고
+    public UserDto updateMyPage(@PathVariable Long id, @RequestBody UserDto dto) { // 👈 @PathVariable을 받도록 변경
+        dto.setUserId(id); // DTO에 ID 설정 (선택 사항)
         return userService.updateUser(dto);
     }
 
-    // 마이페이지 조회
+    // 마이페이지 조회 (현재는 정상)
     @GetMapping("/{id}/mypage")
     public UserDto getMyPage(@PathVariable Long id) {
         return userService.getUser(id);

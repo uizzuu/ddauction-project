@@ -33,7 +33,7 @@ spring:
         format_sql: true
 
 app:
-  allowed-origins: http://localhost:3000,http://localhost
+  allowed-origins: http://localhost:3000,http://localhost,http://localhost:5173
 
 ---
 spring:

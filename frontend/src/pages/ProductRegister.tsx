@@ -24,7 +24,7 @@ export default function ProductRegister({ user }: Props) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/categories`);
+        const res = await fetch(`${API_BASE_URL}/api/categories`);
         if (res.ok) {
           const data: Category[] = await res.json();
           setCategories(data);
@@ -72,7 +72,7 @@ export default function ProductRegister({ user }: Props) {
         paymentStatus: "PENDING",
       };
 
-      const response = await fetch(`${API_BASE_URL}/products`, {
+      const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData),
