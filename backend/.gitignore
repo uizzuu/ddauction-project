@@ -1,23 +1,31 @@
 ##############################
 # Backend (Spring Boot + Gradle)
 ##############################
-# Gradle
+
+# backend/.env 파일은 항상 추적
+!backend/.env
+
+# Gradle 산출물/캐시 무시
 .gradle/
 build/
 *.class
 *.jar
 *.war
 *.log
-
-# Gradle wrapper는 예외 처리
 !gradle/wrapper/gradle-wrapper.jar
 
 # Gradle 캐시 / 빌드 산출물
+backend/caches/
 **/caches/
+**/gradle-8.14.3-bin/
 **/groovy-dsl/
 **/transforms/
 **/registry.bin
 **/registry.bin.lock
+**/*.dylib
+*.TAG
+*.dylib.lock
+*.jnilib
 
 # Spring / STS
 .apt_generated/
@@ -31,9 +39,6 @@ build/
 .recommenders/
 bootRun/
 target/
-
-# backend/.env 파일 추적 허용
-!backend/.env
 
 ##############################
 # Frontend (React / Vite / Node)
