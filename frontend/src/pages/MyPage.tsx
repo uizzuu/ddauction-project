@@ -183,15 +183,7 @@ export default function MyPage({ user, setUser }: Props) {
                 <h3>판매 중인 상품</h3>
                 <ul>
                   {sellingProducts.map((product) => (
-                    <li
-                      key={product.productId}
-                      style={{
-                        marginBottom: "20px",
-                        padding: "10px",
-                        border: "1px solid #fff",
-                        borderRadius: "6px",
-                      }}
-                    >
+                    <li key={product.productId}>
                       {product.imageUrl && (
                         <img
                           src={product.imageUrl}
