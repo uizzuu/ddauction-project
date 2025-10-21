@@ -3,6 +3,7 @@ package com.my.backend.controller;
 import com.my.backend.dto.UserDto;
 import com.my.backend.entity.User;
 import com.my.backend.service.UserService;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -38,24 +39,48 @@ public class UserController {
         return userService.createUser(dto);
     }
 
-    // 로그인
+    // 로그인 (세션 저장)
     @PostMapping("/login")
-    public UserDto login(@RequestBody UserDto dto) {
+    public UserDto login(@RequestBody UserDto dto, HttpSession session) {
         if (dto.getEmail() == null || dto.getPassword() == null) {
             throw new RuntimeException("이메일과 비밀번호를 모두 입력해야 합니다.");
         }
-        return userService.login(dto.getEmail(), dto.getPassword());
+
+        UserDto userDto = userService.login(dto.getEmail(), dto.getPassword());
+
+        // 세션에 사용자 ID 저장
+        session.setAttribute("userId", userDto.getUserId());
+
+        return userDto;
+    }
+
+    // 로그인 상태 확인 (새로고침 후 유지용)
+    @GetMapping("/me")
+    public UserDto getCurrentUser(HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
+            throw new RuntimeException("로그인하지 않은 사용자입니다.");
+        }
+        return userService.getUser(userId);
     }
 
     // 마이페이지 조회 (로그인한 유저 기준)
     @GetMapping("/{id}/mypage")
-    public UserDto getMyPage(@PathVariable Long id) {
+    public UserDto getMyPage(@PathVariable Long id, HttpSession session) {
+        Long sessionUserId = (Long) session.getAttribute("userId");
+        if (!id.equals(sessionUserId)) {
+            throw new RuntimeException("권한이 없습니다.");
+        }
         return userService.getUser(id);
     }
 
     // 마이페이지 업데이트
     @PutMapping("/{id}/mypage")
-    public UserDto updateMyPage(@PathVariable Long id, @RequestBody UserDto dto) {
+    public UserDto updateMyPage(@PathVariable Long id, @RequestBody UserDto dto, HttpSession session) {
+        Long sessionUserId = (Long) session.getAttribute("userId");
+        if (!id.equals(sessionUserId)) {
+            throw new RuntimeException("권한이 없습니다.");
+        }
         dto.setUserId(id); // PathVariable id를 DTO에 설정
         return userService.updateUser(dto);
     }
@@ -64,5 +89,11 @@ public class UserController {
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
+    }
+
+    // 로그아웃
+    @PostMapping("/logout")
+    public void logout(HttpSession session) {
+        session.invalidate();
     }
 }

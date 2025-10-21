@@ -1,5 +1,5 @@
+import { useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { useState } from "react";
 import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
 import {
@@ -17,12 +17,24 @@ import {
 import "./import/import.css";
 import type { User, Category } from "./types/types";
 
-
-
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [category, setCategory] = useState<Category[]>([]);
   const location = useLocation();
+
+  // 앱 시작 시 세션에서 로그인 상태 가져오기
+  useEffect(() => {
+    fetch("http://15.165.25.115/api/users/me", {
+      method: "GET",
+      credentials: "include", // 쿠키 포함
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("세션 없음");
+        return res.json();
+      })
+      .then(data => setUser(data))
+      .catch(() => setUser(null));
+  }, []);
 
   const noHeaderPaths = ["/login", "/signup"];
   const showHeader = !noHeaderPaths.includes(location.pathname);
@@ -43,7 +55,6 @@ export default function App() {
         <Route path="/articles/new" element={<ArticleForm userId={user?.userId ?? null} />} />
         <Route path="/articles/:id/edit" element={<ArticleForm userId={user?.userId ?? null} />} />
         <Route path="/articles/:id" element={<ArticleDetail user={user} />} />
-
       </Routes>
     </div>
   );
