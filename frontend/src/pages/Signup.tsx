@@ -14,6 +14,11 @@ export default function Signup() {
     phone: "",
   });
 
+  const [isComposing, setIsComposing] = useState({
+    userName: false,
+    nickName: false,
+  });
+
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [errors, setErrors] = useState({
     userName: "",
@@ -69,8 +74,6 @@ export default function Signup() {
   const handleSubmit = async () => {
     if (!validateAll()) return;
 
-    console.log("password to send:", form.password);
-
     try {
       const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
         method: "POST",
@@ -115,12 +118,20 @@ export default function Signup() {
             type="text"
             placeholder="이름"
             value={form.userName}
+            onCompositionStart={() =>
+              setIsComposing((prev) => ({ ...prev, userName: true }))
+            }
+            onCompositionEnd={() =>
+              setIsComposing((prev) => ({ ...prev, userName: false }))
+            }
             onChange={(e) => {
-              const filtered = e.target.value.replace(/[^가-힣a-zA-Z]/g, "");
-              setForm({ ...form, userName: filtered });
+              let val = e.target.value;
+              if (!isComposing.userName)
+                val = val.replace(/[^가-힣a-zA-Z]/g, "");
+              setForm((prev) => ({ ...prev, userName: val }));
               setErrors((prev) => ({
                 ...prev,
-                userName: filtered ? "" : "이름을 입력해주세요",
+                userName: val ? "" : "이름을 입력해주세요",
               }));
             }}
             className="input"
@@ -134,12 +145,20 @@ export default function Signup() {
             type="text"
             placeholder="닉네임"
             value={form.nickName}
+            onCompositionStart={() =>
+              setIsComposing((prev) => ({ ...prev, nickName: true }))
+            }
+            onCompositionEnd={() =>
+              setIsComposing((prev) => ({ ...prev, nickName: false }))
+            }
             onChange={(e) => {
-              const filtered = e.target.value.replace(/[^가-힣a-zA-Z0-9]/g, "");
-              setForm({ ...form, nickName: filtered });
+              let val = e.target.value;
+              if (!isComposing.nickName)
+                val = val.replace(/[^가-힣a-zA-Z0-9]/g, "");
+              setForm((prev) => ({ ...prev, nickName: val }));
               let msg = "";
-              if (!filtered) msg = "닉네임을 입력해주세요";
-              else if (filtered.length < 3 || filtered.length > 12)
+              if (!val) msg = "닉네임을 입력해주세요";
+              else if (val.length < 3 || val.length > 12)
                 msg = "닉네임은 3~12자여야 합니다";
               setErrors((prev) => ({ ...prev, nickName: msg }));
             }}
@@ -156,7 +175,7 @@ export default function Signup() {
             value={form.email}
             onChange={(e) => {
               const val = e.target.value;
-              setForm({ ...form, email: val });
+              setForm((prev) => ({ ...prev, email: val }));
               const msg =
                 val && !isEmailValid(val)
                   ? "올바른 이메일 형식이 아닙니다"
@@ -176,7 +195,7 @@ export default function Signup() {
               const filtered = e.target.value
                 .replace(/[^0-9]/g, "")
                 .slice(0, 11);
-              setForm({ ...form, phone: filtered });
+              setForm((prev) => ({ ...prev, phone: filtered }));
               let msg = "";
               if (!filtered) msg = "전화번호를 입력해주세요";
               else if (filtered.length < 10)
@@ -194,9 +213,8 @@ export default function Signup() {
             value={form.password}
             onChange={(e) => {
               const val = e.target.value;
-              setForm({ ...form, password: val });
+              setForm((prev) => ({ ...prev, password: val }));
 
-              // 비밀번호 패턴 체크
               const pattern = /^(?=.*[0-9])(?=.*[!*@#])[a-zA-Z0-9!*@#]{8,}$/;
               let msg = "";
               if (!val) msg = "비밀번호를 입력해주세요";
@@ -235,7 +253,7 @@ export default function Signup() {
                     : "",
               }));
             }}
-            onPaste={(e) => e.preventDefault()} // 붙여넣기 막기
+            onPaste={(e) => e.preventDefault()}
             className="input"
           />
           {errors.passwordConfirm && (

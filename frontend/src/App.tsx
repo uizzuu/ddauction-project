@@ -16,6 +16,7 @@ import {
 } from "./import/import";
 import "./import/import.css";
 import type { User, Category } from "./types/types";
+import { API_BASE_URL } from "./services/api";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -24,7 +25,7 @@ export default function App() {
 
   // 앱 시작 시 세션에서 로그인 상태 가져오기
   useEffect(() => {
-    fetch("http://15.165.25.115/api/users/me", {
+    fetch(`${API_BASE_URL}/api/users/me`, {
       method: "GET",
       credentials: "include", // 쿠키 포함
     })
