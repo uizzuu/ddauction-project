@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { SignupForm } from "../types/types";
-import { API_BASE_URL } from "../services/api";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -33,7 +32,7 @@ export default function Signup() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+      const response = await fetch("/api/users/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

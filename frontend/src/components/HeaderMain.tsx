@@ -34,7 +34,7 @@ export default function HeaderMain({ user, setUser }: Props) {
           {user ? (
             <>
               <span className="nav-link user-info">{user.nickName} 님</span>
-              <Link to="/mypage" className="nav-link test">
+              <Link to="/myPage" className="nav-link test">
                 마이페이지
               </Link>
               <button onClick={handleLogout} className="nav-link test">

@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import ModalCategory from "../components/ModalCategory";
 import type { Category } from "../types/types";
-import { API_BASE_URL } from "../services/api";
 
 type Props = {
   category: Category[];
@@ -15,7 +14,7 @@ export default function HeaderSub({ category, setCategory }: Props) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/categories`);
+        const res = await fetch("http://localhost:8080/api/categories");
         if (!res.ok) throw new Error("카테고리 로드 실패");
         const data: Category[] = await res.json();
         setCategory(data.sort((a, b) => a.categoryId - b.categoryId));
