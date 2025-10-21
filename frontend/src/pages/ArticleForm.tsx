@@ -31,6 +31,7 @@ export default function ArticleForm({ userId }: Props) {
             title: article.title,
             content: article.content,
             boardId: article.boardId,
+            userId: article.userId,
           });
         })
         .catch(() => alert("게시글을 불러오지 못했습니다."))
@@ -65,16 +66,18 @@ export default function ArticleForm({ userId }: Props) {
 
     try {
       setLoading(true);
+
+      const articleData = {
+        ...form,
+        userId, 
+      };
+
       if (id) {
-        await updateArticle(Number(id), form);
+        await updateArticle(Number(id), articleData); // 수정
         alert("게시글이 수정되었습니다.");
         navigate(`/articles/${id}`);
       } else {
-        const articleData = { ...form, userId };
-
-        console.log("보내는 데이터:", articleData);
-
-        const created = await createArticle(articleData);
+        const created = await createArticle(articleData); // 생성
         alert("게시글이 생성되었습니다.");
         navigate(`/articles/${created.articleId}`);
       }
@@ -89,8 +92,8 @@ export default function ArticleForm({ userId }: Props) {
 
   return (
     <form onSubmit={handleSubmit} style={{ padding: "2rem" }}>
-      {/* 숨겨진 게시판 ID */}
       <input type="hidden" name="boardId" value={form.boardId} />
+      <input type="hidden" name="userId" value={userId ?? ""} />
 
       <div style={{ marginTop: "1rem" }}>
         <label htmlFor="title">제목</label>
