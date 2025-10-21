@@ -25,8 +25,8 @@ export default function ModalCategory({
     if (isOpen && targetRef.current) {
       const rect = targetRef.current.getBoundingClientRect();
       setPosition({
-        top: rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX,
+        top: rect.bottom + window.scrollY + 10,
+        left: rect.left + window.scrollX - 20,
       });
     }
   }, [isOpen, targetRef]);
@@ -53,17 +53,7 @@ export default function ModalCategory({
     <div
       ref={modalRef}
       className="modal-content"
-      style={{
-        position: "absolute",
-        top: position.top,
-        left: position.left,
-        maxHeight: "300px",
-        overflowY: "auto",
-        zIndex: 1000,
-        background: "#fff",
-        borderRadius: "16px",
-        boxShadow: "0 4px 11px rgba(0,0,0,0.2)",
-      }}
+      style={{ top: position.top, left: position.left }}
     >
       <p className="category-btn all-category">전체 카테고리</p>
       <ul className="category-list">

@@ -22,7 +22,9 @@ export default function HeaderSub({ category, setCategory }: Props) {
         const data = await res.json();
         // 배열인지 확인하고 전체 저장
         const categoriesArray: Category[] = Array.isArray(data) ? data : [];
-        setCategory(categoriesArray.sort((a, b) => a.categoryId - b.categoryId));
+        setCategory(
+          categoriesArray.sort((a, b) => a.categoryId - b.categoryId)
+        );
       } catch (err) {
         console.error(err);
       }
@@ -39,10 +41,15 @@ export default function HeaderSub({ category, setCategory }: Props) {
             onClick={() => setIsModalOpen((prev) => !prev)}
             className="menu img-link"
           >
-            <svg width="22" height="18" viewBox="0 0 22 18" fill="none">
+            <svg
+              width="22"
+              height="18"
+              viewBox="0 0 22 18"
+              fill="none"
+              style={{ color: isModalOpen ? "#b17576" : "#111111", stroke: isModalOpen ? "#b17576" : "#111111"}}
+            >
               <path
                 d="M1 1H21M1 9H21M1 17H21"
-                stroke="#111111"
                 strokeWidth="2"
                 strokeLinecap="square"
                 strokeLinejoin="round"
@@ -58,10 +65,18 @@ export default function HeaderSub({ category, setCategory }: Props) {
             targetRef={menuBtnRef}
           />
 
-          <NavLink to="/" className="nav-link">홈</NavLink>
-          <NavLink to="/auction" className="nav-link">경매목록</NavLink>
-          <NavLink to="/register" className="nav-link">상품등록</NavLink>
-          <NavLink to="/community" className="nav-link">커뮤니티</NavLink>
+          <NavLink to="/" className="nav-link">
+            홈
+          </NavLink>
+          <NavLink to="/auction" className="nav-link">
+            경매목록
+          </NavLink>
+          <NavLink to="/register" className="nav-link">
+            상품등록
+          </NavLink>
+          <NavLink to="/community" className="nav-link">
+            커뮤니티
+          </NavLink>
         </nav>
       </div>
     </header>
