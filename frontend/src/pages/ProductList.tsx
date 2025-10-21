@@ -65,8 +65,8 @@ export default function ProductList() {
               <div
                 key={product.productId}
                 className="product-card"
-                style={{ cursor: "pointer" }} // 클릭 가능 표시
-                onClick={() => navigate(`/products/${product.productId}`)} // 상세 페이지 이동
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate(`/products/${product.productId}`)}
               >
                 <div className="product-image">
                   {product.imageUrl ? (
@@ -78,14 +78,15 @@ export default function ProductList() {
 
                 <div className="product-info">
                   <h3 className="product-title">{product.title}</h3>
-                  <p className="product-price">{formatPrice(product.price)}</p>
+                  {/* price → startingPrice */}
+                  <p className="product-price">{formatPrice(product.startingPrice)}</p>
                   <p className="product-time">
                     종료: {formatDate(product.auctionEndTime)}
                   </p>
                   <button
                     className="btn-bid"
                     onClick={(e) => {
-                      e.stopPropagation(); // 카드 클릭 이벤트 중지
+                      e.stopPropagation();
                       navigate(`/products/${product.productId}`);
                     }}
                   >

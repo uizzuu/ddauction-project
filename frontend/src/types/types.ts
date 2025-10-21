@@ -19,7 +19,7 @@ export interface Product {
   content?: string;
   description?: string;
   price?: number;
-  startPrice?: number;
+  startingPrice?: number;
   imageUrl?: string;
   auctionEndTime: string;
   createdAt?: string;

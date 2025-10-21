@@ -89,7 +89,7 @@ export default function ProductDetail() {
     const highestBid =
       product.bids && product.bids.length > 0
         ? Math.max(...product.bids.map((b) => b.price))
-        : product.price ?? 0;
+        : product.startingPrice ?? 0;
 
     if (bidNum <= highestBid) {
       return alert(`입찰가가 현재 최고 입찰가(${highestBid.toLocaleString()}원)보다 높아야 합니다.`);
@@ -109,7 +109,7 @@ export default function ProductDetail() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ bidderPrice: bidNum }), // ✅ 서버가 기대하는 구조
+        body: JSON.stringify({ bidderPrice: bidNum }),
       });
 
       if (res.ok) {
@@ -146,7 +146,7 @@ export default function ProductDetail() {
   const highestBid =
     product.bids && product.bids.length > 0
       ? Math.max(...product.bids.map((b) => b.price))
-      : product.price ?? 0;
+      : product.startingPrice ?? 0;
 
   return (
     <div style={{ padding: "16px" }}>
