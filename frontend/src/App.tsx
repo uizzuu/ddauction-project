@@ -2,7 +2,6 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import { useState } from "react";
 import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
-import ArticleList from "./pages/ArticleList";
 import {
   HeaderMain,
   HeaderSub,
