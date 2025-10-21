@@ -60,7 +60,6 @@ public class ProductService {
 
         Product product = productDto.toEntity(seller, bid, payment, category);
 
-        // price 안전 변환 (이미 toEntity 내부에 변환 코드 있지만 중복체크)
         if (productDto.getStartingPrice() != null) {
             try {
                 product.setStartingPrice(Long.parseLong(productDto.getStartingPrice()));
@@ -132,7 +131,7 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-    // 🔥 입찰 처리 (로그인 사용자만)
+    // 입찰 처리
     public BidDto placeBid(Long productId, Long userId, Long price) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));
@@ -140,16 +139,15 @@ public class ProductService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자가 존재하지 않습니다."));
 
-        // 최고 입찰가: bidder 테이블에서 확인, 없으면 product.price
-        Long maxBidPrice = bidRepository.findTopByProductOrderByBidPriceDesc(product)
+        // 최고 입찰가 조회
+        Long highestBidPrice = bidRepository.findTopByProductOrderByBidPriceDesc(product)
                 .map(Bid::getBidPrice)
                 .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
 
-        if (price <= maxBidPrice) {
+        if (price <= highestBidPrice) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "입찰 금액은 현재 최고 입찰가보다 높아야 합니다.");
         }
 
-        // 입찰 기록 저장
         Bid bid = Bid.builder()
                 .product(product)
                 .user(user)
@@ -158,9 +156,15 @@ public class ProductService {
                 .build();
 
         bid = bidRepository.save(bid);
-
-        // ❌ Product.price는 절대 변경하지 않음
-
         return BidDto.fromEntity(bid);
+    }
+
+    // 최고 입찰가만 가져오기 (DTO 건드리지 않음)
+    public Long getHighestBidPrice(Long productId) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));
+        return bidRepository.findTopByProductOrderByBidPriceDesc(product)
+                .map(Bid::getBidPrice)
+                .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
     }
 }

@@ -2,9 +2,11 @@ package com.my.backend.controller;
 
 import com.my.backend.dto.UserDto;
 import com.my.backend.entity.User;
-import com.my.backend.service.UserService;
+import com.my.backend.repository.UserRepository;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,54 +16,49 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
-
-    // 모든 유저 조회 (관리자용)
-    @GetMapping
-    public List<UserDto> getAllUsers() {
-        return userService.getAllUsers();
-    }
-
-    // 단일 유저 조회 (관리자용)
-    @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable Long id) {
-        return userService.getUser(id);
-    }
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     // 회원가입
     @PostMapping("/signup")
-    public UserDto createUser(@Valid @RequestBody UserDto dto) {
-        if (dto.getRole() == null) {
-            dto.setRole(User.Role.USER);  // 기본 Role 설정
-        }
-        return userService.createUser(dto);
+    public User signup(@Valid @RequestBody UserDto dto) {
+        User user = new User();
+        user.setEmail(dto.getEmail());
+        user.setNickName(dto.getNickName());
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        return userRepository.save(user);
     }
 
     // 로그인
     @PostMapping("/login")
-    public UserDto login(@RequestBody UserDto dto) {
-        if (dto.getEmail() == null || dto.getPassword() == null) {
-            throw new RuntimeException("이메일과 비밀번호를 모두 입력해야 합니다.");
+    public User login(@RequestBody UserDto dto, HttpSession session) {
+        User user = userRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+            throw new RuntimeException("비밀번호가 틀렸습니다.");
         }
-        return userService.login(dto.getEmail(), dto.getPassword());
+        session.setAttribute("loginUser", user); // 세션 저장
+        return user;
     }
 
-    // 마이페이지 조회 (로그인한 유저 기준)
-    @GetMapping("/{id}/mypage")
-    public UserDto getMyPage(@PathVariable Long id) {
-        return userService.getUser(id);
+    // 로그아웃
+    @PostMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "로그아웃 완료";
     }
 
-    // 마이페이지 업데이트
-    @PutMapping("/{id}/mypage")
-    public UserDto updateMyPage(@PathVariable Long id, @RequestBody UserDto dto) {
-        dto.setUserId(id); // PathVariable id를 DTO에 설정
-        return userService.updateUser(dto);
+    // 로그인 유저 정보
+    @GetMapping("/me")
+    public User me(HttpSession session) {
+        User user = (User) session.getAttribute("loginUser");
+        if (user == null) throw new RuntimeException("로그인이 필요합니다.");
+        return user;
     }
 
-    // 유저 삭제
-    @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable Long id) {
-        userService.deleteUser(id);
+    // 모든 유저 조회 (관리자용)
+    @GetMapping
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 }

@@ -14,7 +14,7 @@ export default function HeaderSub({ category, setCategory }: Props) {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch("http://localhost:8080/api/categories");
+        const res = await fetch("http://15.165.25.115/api/categories");
         if (!res.ok) throw new Error("카테고리 로드 실패");
         const data: Category[] = await res.json();
         setCategory(data.sort((a, b) => a.categoryId - b.categoryId));
