@@ -20,6 +20,7 @@ backend/caches/
 **/registry.bin
 **/registry.bin.lock
 **/*.dylib
+**/.tmp/
 *.TAG
 *.dylib.lock
 *.jnilib

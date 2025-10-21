@@ -58,11 +58,14 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleUpdate = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}/mypage`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/users/${user.userId}/mypage`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
 
       if (res.ok) {
         const updatedUser = await res.json();
@@ -102,7 +105,9 @@ export default function MyPage({ user, setUser }: Props) {
   const handleFetchSellingProducts = async () => {
     if (!showSelling) {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/products/seller/${user.userId}`);
+        const res = await fetch(
+          `${API_BASE_URL}/api/products/seller/${user.userId}`
+        );
         if (res.ok) {
           const data: Product[] = await res.json();
           setSellingProducts(data);
