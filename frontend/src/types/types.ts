@@ -95,5 +95,6 @@ export interface ArticleForm {
   title: string;
   content: string;
   boardId: number;
+  userId?: number;
 }
 

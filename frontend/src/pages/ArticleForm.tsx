@@ -70,7 +70,8 @@ export default function ArticleForm({ userId }: Props) {
         alert("게시글이 수정되었습니다.");
         navigate(`/articles/${id}`);
       } else {
-        const created = await createArticle(form);
+        const articleData = { ...form, userId };
+        const created = await createArticle(articleData);
         alert("게시글이 생성되었습니다.");
         navigate(`/articles/${created.articleId}`);
       }
