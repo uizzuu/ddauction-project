@@ -9,7 +9,8 @@ import {
   ProductList,
   ProductRegister,
   MyPage,
-  ProductDetail
+  ProductDetail,
+  ArticleList,
 } from "./import/import";
 import "./import/import.css";
 import type { User, Category } from "./types/types";
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/register" element={<ProductRegister user={user} />} />
         <Route path="/mypage" element={<MyPage user={user} setUser={setUser}/>} />
         <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/community" element={<ArticleList user={user}/>} />
       </Routes>
     </div>
   );

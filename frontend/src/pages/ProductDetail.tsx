@@ -20,6 +20,10 @@ export default function ProductDetail() {
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
 
+  // 🔥 찜 관련 state
+  const [isBookMarked, setIsBookMarked] = useState(false);
+  const [bookmarkCount, setBookmarkCount] = useState(0);
+
   const calculateRemainingTime = (endTime: string) => {
     const now = new Date();
     const end = new Date(endTime);
@@ -43,6 +47,7 @@ export default function ProductDetail() {
         const data: Product = await res.json();
         setProduct(data);
         setRemainingTime(calculateRemainingTime(data.auctionEndTime));
+        setBookmarkCount(data.amount ?? 0);
 
         // 판매자 정보
         if (data.sellerId) {
@@ -57,8 +62,6 @@ export default function ProductDetail() {
           } catch {
             setSellerNickName("알 수 없음");
           }
-        } else {
-          setSellerNickName("알 수 없음");
         }
 
         // 카테고리명
@@ -79,6 +82,15 @@ export default function ProductDetail() {
         if (bidRes.ok) {
           const highest: number = await bidRes.json();
           setCurrentHighestBid(highest);
+        }
+
+        // 🔥 현재 사용자가 찜했는지 여부
+        const bmRes = await fetch(`${API_BASE_URL}/api/bookmarks/check?productId=${id}`, {
+          credentials: "include",
+        });
+        if (bmRes.ok) {
+          const bookmarked: boolean = await bmRes.json();
+          setIsBookMarked(bookmarked);
         }
       } catch (err) {
         console.error(err);
@@ -113,7 +125,6 @@ export default function ProductDetail() {
     const now = new Date();
     const end = new Date(product.auctionEndTime);
     if (now >= end) return alert("이미 경매가 종료된 상품입니다.");
-    if (!id) return;
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/products/${id}/bid`, {
@@ -147,6 +158,34 @@ export default function ProductDetail() {
     } catch (err) {
       console.error(err);
       alert("서버 오류");
+    }
+  };
+
+  // 🔥 찜 토글 처리 (세션 기반 로그인 유저)
+  const handleToggleBookmark = async () => {
+    if (!product) return;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/bookmarks/toggle?productId=${product.productId}`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (res.ok) {
+        const text = await res.text();
+        const bookmarked = text === "찜 완료";
+        setIsBookMarked(bookmarked);
+
+        // 찜 수 갱신
+        const countRes = await fetch(`${API_BASE_URL}/api/bookmarks/count?productId=${product.productId}`);
+        if (countRes.ok) {
+          const count = await countRes.json();
+          setBookmarkCount(count);
+        }
+      } else {
+        alert("찜 기능 실패");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("찜 기능 실패");
     }
   };
 
@@ -188,8 +227,22 @@ export default function ProductDetail() {
         <div style={{ flex: 1, minWidth: "300px", display: "flex", flexDirection: "column", gap: "12px" }}>
           <h2 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{product.title}</h2>
 
+          {/* 🔥 찜 + 신고 버튼 */}
           <div style={{ display: "flex", gap: "12px", fontSize: "0.9rem", color: "#555" }}>
-            <span>💖 찜 {product.amount ?? 0}</span>
+            <button
+              onClick={handleToggleBookmark}
+              style={{
+                backgroundColor: isBookMarked ? "#ef4444" : "#fff",
+                color: isBookMarked ? "#fff" : "#ef4444",
+                border: "1px solid #ef4444",
+                borderRadius: "6px",
+                padding: "2px 8px",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+              }}
+            >
+              💖 {bookmarkCount}
+            </button>
             <button
               style={{
                 backgroundColor: "#ef4444",

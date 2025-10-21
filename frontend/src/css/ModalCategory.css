@@ -1,32 +1,48 @@
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent; /* 투명하게 */
+  z-index: 999; /* modal-content보다 낮게 */
+}
+
 /* 모달 박스 */
 .content-wrap {
   max-width: 1200px;
+  height: 100%;
   margin: 0 auto;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
-  background: #777;
+  background: rgba(0, 0, 0, 0);
   position: relative;
 }
+
 .modal-content {
   width: 100%; /* 가로 100% */
-  max-width: 400px; /* 필요시 최대 너비 */
-  background: #aaa;
-  border-radius: 4px;
-  padding: 16px;
-  box-shadow: 0 4px 11px rgba(175, 175, 175, 0.2);
+  max-width: 180px; /* 필요시 최대 너비 */
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 21px rgba(175, 175, 175, 0.06);
 
   position: absolute;
-  top: 45px;
-  left: -15px;
   z-index: 1000;
+  top: 40px;
+  left: -20px;
 }
 
 /* 카테고리 리스트 */
 .category-list {
   list-style: none;
-  padding: 0;
+  padding: 16px 0;
   margin: 0;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* 각 카테고리 버튼 */
@@ -34,15 +50,29 @@
   display: block;
   width: 100%;
   text-align: left;
-  margin: 4px 0;
-  padding: 8px 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #f9f9f9;
+  padding: 0 24px;
   cursor: pointer;
   transition: background 0.2s;
+
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .category-btn:hover {
-  background: #e0e0e0;
+  color: #b17576;
+}
+
+.all-category {
+  background: #b17576;
+  color: #fff;
+  padding: 12px 24px;
+}
+
+.all-category:hover {
+  background: #8c5d5e;
+  color: #fff;
+}
+
+.category-btn:hover p {
+  color: #b17576;
 }
