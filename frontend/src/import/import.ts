@@ -10,6 +10,7 @@ import ProductList from "../pages/ProductList";
 import ProductRegister from "../pages/ProductRegister";
 import MyPage from "../pages/MyPage";
 import ProductDetail from "../pages/ProductDetail";
+import ArticleList from "../pages/ArticleList";
 
 export {
   HeaderMain,
@@ -20,5 +21,6 @@ export {
   ProductList,
   ProductRegister,
   MyPage,
-  ProductDetail
+  ProductDetail,
+  ArticleList,
 };

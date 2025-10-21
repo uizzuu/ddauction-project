@@ -59,6 +59,11 @@
   cursor: pointer;
 }
 
+.nav-link.active {
+  font-weight: bold;
+  color: #b17576;
+}
+
 .test {
   color: #aaa;
 }

@@ -44,7 +44,7 @@ public class UserDto {
                 .userId(this.userId)
                 .userName(this.userName)
                 .nickName(this.nickName)
-                .password(this.password.trim().replaceAll("[^a-zA-Z0-9!*@#]", ""))
+                .password(this.password)
                 .phone(this.phone)
                 .email(this.email)
                 .role(this.role)
