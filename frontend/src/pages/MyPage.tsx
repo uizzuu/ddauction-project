@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User, Product } from "../types/types";
+import { API_BASE_URL } from "../services/api";
 
 type Props = {
   user: User | null;
@@ -23,7 +24,7 @@ export default function MyPage({ user, setUser }: Props) {
 
   // 카테고리 목록 가져오기
   useEffect(() => {
-    fetch("http://localhost:8080/api/categories")
+    fetch(`${API_BASE_URL}/api/categories`)
       .then((res) => res.json())
       .then((data) => setCategories(data))
       .catch((err) => console.error("카테고리 불러오기 실패", err));
@@ -57,11 +58,14 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleUpdate = async () => {
     try {
-      const res = await fetch(`/api/users/${user.userId}/mypage`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/users/${user.userId}/mypage`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
 
       if (res.ok) {
         const updatedUser = await res.json();
@@ -81,7 +85,7 @@ export default function MyPage({ user, setUser }: Props) {
   const handleDelete = async () => {
     if (!confirm("정말 회원 탈퇴하시겠습니까?")) return;
     try {
-      const res = await fetch(`/api/users/${user.userId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}`, {
         method: "DELETE",
       });
       if (res.ok) {
@@ -101,7 +105,9 @@ export default function MyPage({ user, setUser }: Props) {
   const handleFetchSellingProducts = async () => {
     if (!showSelling) {
       try {
-        const res = await fetch(`/api/products/seller/${user.userId}`);
+        const res = await fetch(
+          `${API_BASE_URL}/api/products/seller/${user.userId}`
+        );
         if (res.ok) {
           const data: Product[] = await res.json();
           setSellingProducts(data);
@@ -177,15 +183,7 @@ export default function MyPage({ user, setUser }: Props) {
                 <h3>판매 중인 상품</h3>
                 <ul>
                   {sellingProducts.map((product) => (
-                    <li
-                      key={product.productId}
-                      style={{
-                        marginBottom: "20px",
-                        padding: "10px",
-                        border: "1px solid #fff",
-                        borderRadius: "6px",
-                      }}
-                    >
+                    <li key={product.productId}>
                       {product.imageUrl && (
                         <img
                           src={product.imageUrl}
