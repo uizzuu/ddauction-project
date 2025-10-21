@@ -31,6 +31,7 @@ public class UserController {
     // 회원가입
     @PostMapping("/signup")
     public UserDto createUser(@Valid @RequestBody UserDto dto) {
+        System.out.println("received password: '" + dto.getPassword() + "'");
         if (dto.getRole() == null) {
             dto.setRole(User.Role.USER);  // 기본 Role 설정
         }

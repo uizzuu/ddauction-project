@@ -68,7 +68,7 @@ function isCategoryArray(obj: unknown): obj is Category[] {
 
 // 로그인
 export async function login(form: LoginForm): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}${API_BASE}/auth/login`, {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/users/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(form),
@@ -83,7 +83,7 @@ export async function login(form: LoginForm): Promise<User> {
 
 // 회원가입
 export async function signup(form: SignupForm): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}${API_BASE}/auth/signup`, {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/users/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(form),

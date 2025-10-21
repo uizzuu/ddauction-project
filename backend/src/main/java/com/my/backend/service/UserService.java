@@ -35,6 +35,7 @@ public class UserService {
     // 회원가입
     public UserDto createUser(UserDto dto) {
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            validatePassword(dto.getPassword()); // 비밀번호 유효성 검사
             dto.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
         User saved = userRepository.save(dto.toEntity());
@@ -66,6 +67,7 @@ public class UserService {
             user.setNickName(dto.getNickName());
         }
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            validatePassword(dto.getPassword()); // 비밀번호 유효성 검사
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
         if (dto.getPhone() != null && !dto.getPhone().isBlank()) {
@@ -84,5 +86,15 @@ public class UserService {
     // 유저 삭제
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    // 비밀번호 유효성 검사
+    private void validatePassword(String password) {
+        if (password == null || password.length() < 8)
+            throw new IllegalArgumentException("비밀번호는 8자리 이상이어야 합니다.");
+        if (!password.matches(".*[0-9].*"))
+            throw new IllegalArgumentException("비밀번호에 최소 1개의 숫자가 포함되어야 합니다.");
+        if (!password.matches(".*[!*@#].*"))
+            throw new IllegalArgumentException("비밀번호에 최소 1개의 특수문자(!*@#)가 포함되어야 합니다.");
     }
 }
