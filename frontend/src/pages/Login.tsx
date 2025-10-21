@@ -39,7 +39,7 @@ export default function Login({ setUser }: Props) {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2 className="auth-title img-link">
+        <h2 onClick={() => navigate("/")} className="auth-title img-link">
           <svg
             viewBox="0 0 127 36"
             fill="none"

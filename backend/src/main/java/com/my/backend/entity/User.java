@@ -31,10 +31,15 @@ public class User {
     private String userName;
 
     @NotBlank
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9]{3,12}+$", message = "닉네임은 3~12자여야 합니다.")
     @Column(unique = true)
     private String nickName;
 
     @NotBlank
+    @Pattern(
+            regexp = "^(?=.*[0-9])(?=.*[!*@#])[a-zA-Z0-9!*@#]{8,}$",
+            message = "비밀번호는 8자리 이상, 최소 1개의 숫자와 !*@# 중 1개의 특수문자를 포함해야 합니다."
+    )
     private String password;
 
     @Column(unique = true)
@@ -42,11 +47,13 @@ public class User {
     @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 숫자만 10~11자리여야 합니다.")
     private String phone;
 
-//    example@ (도메인 없음)
-//example.com (골뱅이 없음)
-//@domain.com (아이디 없음) 이런거 허용안함
+    //example@ (도메인 없음)
+    //example.com (골뱅이 없음)
+    //@domain.com (아이디 없음) 이런거 허용안함
     @NotBlank
-    @Email(message = "올바른 이메일 형식이 아닙니다.")
+    @Email(
+            regexp = "^[a-zA-Z0-9]+@[a-zA-Z0-9]+\\.[a-zA-Z]{2,}$",
+            message = "올바른 이메일 형식이 아닙니다.")
     @Column(unique = true)
     private String email;
 
@@ -61,6 +68,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
+
     public enum Role {
         USER, ADMIN
     }
