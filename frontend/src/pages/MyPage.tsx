@@ -11,15 +11,15 @@ type Props = {
 export default function MyPage({ user, setUser }: Props) {
   const [editing, setEditing] = useState(false);
   const [showSelling, setShowSelling] = useState(false);
+  const [showBookmarks, setShowBookmarks] = useState(false);
   const [form, setForm] = useState({
     nickName: user?.nickName || "",
     password: "",
     phone: "",
   });
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<
-    { categoryId: number; name: string }[]
-  >([]);
+  const [bookmarkedProducts, setBookmarkedProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<{ categoryId: number; name: string }[]>([]);
   const navigate = useNavigate();
 
   // 카테고리 목록 가져오기
@@ -58,14 +58,11 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleUpdate = async () => {
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/users/${user.userId}/mypage`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}/mypage`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
       if (res.ok) {
         const updatedUser = await res.json();
@@ -105,9 +102,7 @@ export default function MyPage({ user, setUser }: Props) {
   const handleFetchSellingProducts = async () => {
     if (!showSelling) {
       try {
-        const res = await fetch(
-          `${API_BASE_URL}/api/products/seller/${user.userId}`
-        );
+        const res = await fetch(`${API_BASE_URL}/api/products/seller/${user.userId}`);
         if (res.ok) {
           const data: Product[] = await res.json();
           setSellingProducts(data);
@@ -120,6 +115,27 @@ export default function MyPage({ user, setUser }: Props) {
       }
     }
     setShowSelling(!showSelling);
+  };
+
+  // 🔥 찜 목록 가져오기
+  const handleFetchBookmarkedProducts = async () => {
+    if (!showBookmarks) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/bookmarks/mypage`, {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data: Product[] = await res.json();
+          setBookmarkedProducts(data);
+        } else {
+          alert("찜 상품 조회 실패");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("서버 오류");
+      }
+    }
+    setShowBookmarks(!showBookmarks);
   };
 
   const getCategoryName = (categoryId?: number) => {
@@ -142,6 +158,9 @@ export default function MyPage({ user, setUser }: Props) {
             </button>
             <button style={buttonStyle} onClick={handleFetchSellingProducts}>
               판매 상품
+            </button>
+            <button style={buttonStyle} onClick={handleFetchBookmarkedProducts}>
+              찜 목록
             </button>
           </div>
 
@@ -206,6 +225,34 @@ export default function MyPage({ user, setUser }: Props) {
                 </ul>
               </div>
             )}
+
+            {showBookmarks && (
+              <div>
+                <h3>찜한 상품</h3>
+                {bookmarkedProducts.length === 0 ? (
+                  <p>찜한 상품이 없습니다.</p>
+                ) : (
+                  <ul>
+                    {bookmarkedProducts.map((product) => (
+                      <li key={product.productId}>
+                        {product.imageUrl && (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.title}
+                            style={{ width: "150px", marginBottom: "10px" }}
+                          />
+                        )}
+                        <div style={{ fontWeight: "bold", fontSize: "18px" }}>
+                          {product.title} - {product.startingPrice?.toLocaleString()}원
+                        </div>
+                        <div>{product.description || product.content}</div>
+                        <div>카테고리: {getCategoryName(product.categoryId)}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -219,7 +266,7 @@ export default function MyPage({ user, setUser }: Props) {
           <button style={buttonStyle} onClick={() => alert("입찰 목록")}>
             입찰 목록
           </button>
-          <button style={buttonStyle} onClick={() => alert("찜 목록")}>
+          <button style={buttonStyle} onClick={handleFetchBookmarkedProducts}>
             찜 목록
           </button>
           <button style={buttonStyle} onClick={() => alert("Q&A 목록")}>

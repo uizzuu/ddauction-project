@@ -24,6 +24,7 @@ export default function ProductDetail() {
   const [isBookMarked, setIsBookMarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(0);
 
+  // 남은 시간 계산
   const calculateRemainingTime = (endTime: string) => {
     const now = new Date();
     const end = new Date(endTime);
@@ -47,7 +48,13 @@ export default function ProductDetail() {
         const data: Product = await res.json();
         setProduct(data);
         setRemainingTime(calculateRemainingTime(data.auctionEndTime));
-        setBookmarkCount(data.amount ?? 0);
+
+        // 🔥 찜 수
+        const bmCountRes = await fetch(`${API_BASE_URL}/api/bookmarks/count?productId=${id}`);
+        if (bmCountRes.ok) {
+          const count = await bmCountRes.json();
+          setBookmarkCount(count);
+        }
 
         // 판매자 정보
         if (data.sellerId) {
@@ -144,9 +151,7 @@ export default function ProductDetail() {
         };
 
         setProduct((prev) =>
-          prev
-            ? { ...prev, bids: [...(prev.bids ?? []), newBid] }
-            : prev
+          prev ? { ...prev, bids: [...(prev.bids ?? []), newBid] } : prev
         );
         setCurrentHighestBid(newBidServer.bidPrice);
         setBidValue("");
@@ -161,7 +166,7 @@ export default function ProductDetail() {
     }
   };
 
-  // 🔥 찜 토글 처리 (세션 기반 로그인 유저)
+  // 🔥 찜 토글 처리
   const handleToggleBookmark = async () => {
     if (!product) return;
     try {
