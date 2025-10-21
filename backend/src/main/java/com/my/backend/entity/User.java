@@ -33,6 +33,7 @@ public class User {
     @Column(unique = true)
     private String nickName;
 
+    @NotBlank
     private String password;
 
     @Column(unique = true)
@@ -51,9 +52,11 @@ public class User {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
