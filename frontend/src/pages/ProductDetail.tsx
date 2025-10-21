@@ -1,3 +1,4 @@
+// src/pages/ProductDetail.tsx
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import {
@@ -18,6 +19,7 @@ export default function ProductDetail() {
   const [bidValue, setBidValue] = useState("");
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("");
+  const [currentHighestBid, setCurrentHighestBid] = useState(0);
 
   const calculateRemainingTime = (endTime: string) => {
     const now = new Date();
@@ -59,6 +61,13 @@ export default function ProductDetail() {
               )
               .catch(() => console.warn("카테고리명 불러오기 실패"));
           }
+
+          // 최고 입찰가 가져오기
+          const bidRes = await fetch(`${API_BASE_URL}/api/products/${id}/highest-bid`);
+          if (bidRes.ok) {
+            const highest: number = await bidRes.json();
+            setCurrentHighestBid(highest);
+          }
         }
       } catch (err) {
         console.error(err);
@@ -79,29 +88,18 @@ export default function ProductDetail() {
   // 🔥 입찰 처리
   const handleBid = async () => {
     const bidNum = Number(bidValue);
-
     if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
       return alert("올바른 금액을 입력해주세요 (0보다 큰 숫자)");
     }
     if (!product) return;
 
-    // 현재 최고 입찰가보다 낮으면 경고
-    const highestBid =
-      product.bids && product.bids.length > 0
-        ? Math.max(...product.bids.map((b) => b.price))
-        : product.startingPrice ?? 0;
-
-    if (bidNum <= highestBid) {
-      return alert(`입찰가가 현재 최고 입찰가(${highestBid.toLocaleString()}원)보다 높아야 합니다.`);
+    if (bidNum <= currentHighestBid) {
+      return alert(`입찰가가 현재 최고 입찰가(${currentHighestBid.toLocaleString()}원)보다 높아야 합니다.`);
     }
 
-    // 경매 종료 체크
     const now = new Date();
     const end = new Date(product.auctionEndTime);
-    if (now >= end) {
-      return alert("이미 경매가 종료된 상품입니다.");
-    }
-
+    if (now >= end) return alert("이미 경매가 종료된 상품입니다.");
     if (!id) return;
 
     try {
@@ -109,22 +107,27 @@ export default function ProductDetail() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ bidderPrice: bidNum }),
+        body: JSON.stringify({ bidPrice: bidNum }),
       });
 
       if (res.ok) {
-        const newBidServer: { bidderId: number; bidderPrice: number } = await res.json();
+        const newBidServer: { bidderId: number; bidPrice: number } = await res.json();
         const newBid: Bid = {
           bidId: newBidServer.bidderId,
           userId: product.sellerId ?? 0,
-          price: newBidServer.bidderPrice,
+          price: newBidServer.bidPrice,
           createdAt: new Date().toISOString(),
         };
 
         setProduct((prev) =>
-          prev ? { ...prev, bids: [...(prev.bids ?? []), newBid] } : prev
+          prev
+            ? {
+                ...prev,
+                bids: [...(prev.bids ?? []), newBid],
+              }
+            : prev
         );
-
+        setCurrentHighestBid(newBidServer.bidPrice); // 최고 입찰가 갱신
         setBidValue("");
         alert("입찰 성공!");
       } else {
@@ -142,11 +145,8 @@ export default function ProductDetail() {
   // 그래프 데이터
   const graphData = (product.bids ?? []).map((b, i) => ({ name: `${i + 1}`, price: b.price }));
 
-  // 최고 입찰가
-  const highestBid =
-    product.bids && product.bids.length > 0
-      ? Math.max(...product.bids.map((b) => b.price))
-      : product.startingPrice ?? 0;
+  // 경매등록가
+  const auctionStartingPrice = product.startingPrice ?? 0;
 
   return (
     <div style={{ padding: "16px" }}>
@@ -207,7 +207,8 @@ export default function ProductDetail() {
             남은시간: {remainingTime}
           </p>
 
-          <p>경매등록가: {highestBid.toLocaleString()}원</p>
+          <p>경매등록가: {auctionStartingPrice.toLocaleString()}원</p>
+          <p>현재 최고 입찰가: {currentHighestBid.toLocaleString()}원</p>
 
           <div
             style={{
