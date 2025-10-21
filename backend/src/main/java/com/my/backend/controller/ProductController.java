@@ -34,13 +34,7 @@ public class ProductController {
 
     // 새 상품 생성
     @PostMapping
-    public ProductDto createProduct(@Valid @RequestBody ProductDto productDto,
-                                    @RequestParam(required = false) Long userId) {
-        // 임시: 로그인 없이도 가능하게 userId가 없으면 0L
-        if (userId == null) {
-            userId = 0L;
-        }
-        productDto.setSellerId(userId);
+    public ProductDto createProduct(@Valid @RequestBody ProductDto productDto) {
         return productService.createProduct(productDto);
     }
 

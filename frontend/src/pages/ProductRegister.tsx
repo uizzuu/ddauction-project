@@ -45,8 +45,8 @@ export default function ProductRegister({ user }: Props) {
       return;
     }
 
-    if (!form.title || !form.content || !form.categoryId) {
-      setError("필수 항목을 입력해주세요");
+    if (!form.title || !form.content || !form.categoryId || !form.price) {
+      setError("필수 항목을 모두 입력해주세요");
       return;
     }
 
@@ -64,9 +64,14 @@ export default function ProductRegister({ user }: Props) {
 
     try {
       const productData = {
-        ...form,
-        sellerId: user.userId,
+        title: form.title,
+        content: form.content,
+        startingPrice: form.price.toString(), // 🔥 숫자를 문자열로 변환
+        imageUrl: form.imageUrl,
+        oneMinuteAuction: form.oneMinuteAuction,
         auctionEndTime,
+        sellerId: user.userId,
+        categoryId: form.categoryId,
         productStatus: "ACTIVE",
         paymentStatus: "PENDING",
       };
@@ -81,9 +86,11 @@ export default function ProductRegister({ user }: Props) {
         alert("물품 등록 성공!");
         navigate("/auction");
       } else {
-        setError("물품 등록 실패");
+        const text = await response.text();
+        setError(`물품 등록 실패: ${text}`);
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("서버 연결 실패");
     }
   };
@@ -124,7 +131,7 @@ export default function ProductRegister({ user }: Props) {
             className="textarea"
           />
 
-          <label className="label">시작 가격 (원)</label>
+          <label className="label">시작 가격 (원) *</label>
           <input
             type="number"
             placeholder="예: 10000"
