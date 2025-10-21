@@ -27,6 +27,7 @@ public class User {
     private Long userId;
 
     @NotBlank
+    @Pattern(regexp = "^[가-힣a-zA-Z]+$")
     private String userName;
 
     @NotBlank
