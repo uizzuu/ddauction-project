@@ -33,7 +33,8 @@ export interface Product {
   oneMinuteAuction?: boolean;
   bidderId?: number;
   amount?: number;
-  bids?: Bid[]; // 추가
+  bids?: Bid[]; // 입찰 기록
+  bid?: Bid; // 🔥 현재 최고 입찰 추가
 }
 
 export interface Category {
