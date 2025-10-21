@@ -31,7 +31,7 @@ public class Payment {
     @JoinColumn(name = "bid_id")
     private Bid bid;
 
-    private Long amount;
+    private Long totalPrice;
 
     @ManyToOne
     @JoinColumn(name = "payment_method_id")

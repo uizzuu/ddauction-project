@@ -32,7 +32,7 @@ public class Product {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    private Long price;
+    private Long startingPrice;
 
     @Column(length = 1000)
     private String imageUrl;

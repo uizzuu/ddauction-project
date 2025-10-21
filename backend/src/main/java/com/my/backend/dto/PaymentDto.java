@@ -13,7 +13,7 @@ public class PaymentDto {
     private Long paymentId;
     private Long productId;
     private Long bidId;
-    private Long amount;
+    private Long totalPrice;
     private Long paymentMethodId;
     private Payment.PaymentStatus paymentStatus;
     private LocalDateTime createdAt;
@@ -26,7 +26,7 @@ public class PaymentDto {
                 .paymentId(payment.getPaymentId())
                 .productId(payment.getProduct() != null ? payment.getProduct().getProductId() : null)
                 .bidId(payment.getBid() != null ? payment.getBid().getBidId() : null)
-                .amount(payment.getAmount())
+                .totalPrice(payment.getTotalPrice())
                 .paymentMethodId(payment.getPaymentMethod() != null ? payment.getPaymentMethod().getPaymentId(): null)
                 .paymentStatus(payment.getPaymentStatus())
                 .createdAt(payment.getCreatedAt())
@@ -38,7 +38,7 @@ public class PaymentDto {
         // DTO → Entity 변환
         return Payment.builder()
                 .paymentId(this.paymentId)
-                .amount(this.amount)
+                .totalPrice(this.totalPrice)
                 .paymentStatus(this.paymentStatus)
                 .build();
     }

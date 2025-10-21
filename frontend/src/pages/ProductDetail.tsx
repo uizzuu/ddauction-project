@@ -10,6 +10,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import type { Product, Bid, User, Category } from "../types/types";
+import { API_BASE_URL } from "../services/api";
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -35,7 +36,7 @@ export default function ProductDetail() {
     if (!id) return;
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:8080/api/products/${id}`);
+        const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
         if (res.ok) {
           const data: Product = await res.json();
           setProduct(data);
@@ -43,7 +44,7 @@ export default function ProductDetail() {
 
           // 판매자 정보
           if (data.sellerId) {
-            fetch(`http://localhost:8080/api/users/${data.sellerId}`)
+            fetch(`${API_BASE_URL}/api/users/${data.sellerId}`)
               .then((r) => r.json())
               .then((user: User) => setSellerNickName(user.nickName))
               .catch(() => console.warn("판매자 정보 가져오기 실패"));
@@ -51,7 +52,7 @@ export default function ProductDetail() {
 
           // 카테고리명
           if (data.categoryId && !data.categoryName) {
-            fetch(`http://localhost:8080/api/categories/${data.categoryId}`)
+            fetch(`${API_BASE_URL}/api/categories/${data.categoryId}`)
               .then((r) => r.json())
               .then((c: Category) =>
                 setProduct((prev) => (prev ? { ...prev, categoryName: c.name } : prev))
@@ -104,7 +105,7 @@ export default function ProductDetail() {
     if (!id) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/api/products/${id}/bid`, {
+      const res = await fetch(`${API_BASE_URL}/api/products/${id}/bid`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

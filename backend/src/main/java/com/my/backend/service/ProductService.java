@@ -61,9 +61,9 @@ public class ProductService {
         Product product = productDto.toEntity(seller, bid, payment, category);
 
         // price 안전 변환 (이미 toEntity 내부에 변환 코드 있지만 중복체크)
-        if (productDto.getPrice() != null) {
+        if (productDto.getStartingPrice() != null) {
             try {
-                product.setPrice(Long.parseLong(productDto.getPrice()));
+                product.setStartingPrice(Long.parseLong(productDto.getStartingPrice()));
             } catch (NumberFormatException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
             }
@@ -96,9 +96,9 @@ public class ProductService {
         product.setTitle(updatedProductDto.getTitle());
         product.setContent(updatedProductDto.getContent());
 
-        if (updatedProductDto.getPrice() != null) {
+        if (updatedProductDto.getStartingPrice() != null) {
             try {
-                product.setPrice(Long.parseLong(updatedProductDto.getPrice()));
+                product.setStartingPrice(Long.parseLong(updatedProductDto.getStartingPrice()));
             } catch (NumberFormatException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
             }
@@ -143,7 +143,7 @@ public class ProductService {
         // 최고 입찰가: bidder 테이블에서 확인, 없으면 product.price
         Long maxBidPrice = bidRepository.findTopByProductOrderByBidPriceDesc(product)
                 .map(Bid::getBidPrice)
-                .orElse(product.getPrice() != null ? product.getPrice() : 0L);
+                .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
 
         if (price <= maxBidPrice) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "입찰 금액은 현재 최고 입찰가보다 높아야 합니다.");

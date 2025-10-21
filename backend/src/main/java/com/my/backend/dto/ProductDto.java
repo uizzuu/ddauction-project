@@ -22,7 +22,7 @@ public class ProductDto {
 
     @NotBlank
     @Pattern(regexp = "^[1-9][0-9]*$")
-    private String price;
+    private String startingPrice;
 
     private String imageUrl;
 
@@ -52,7 +52,7 @@ public class ProductDto {
                 .sellerId(product.getUser() != null ? product.getUser().getUserId() : null)
                 .title(product.getTitle())
                 .content(product.getContent())
-                .price(product.getPrice() != null ? product.getPrice().toString() : null)
+                .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice().toString() : null)
                 .imageUrl(product.getImageUrl())
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
@@ -71,7 +71,7 @@ public class ProductDto {
                 .user(seller)
                 .title(this.title)
                 .content(this.content)
-                .price(Long.parseLong(this.price))
+                .startingPrice(Long.parseLong(this.startingPrice))
                 .imageUrl(this.imageUrl)
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)
