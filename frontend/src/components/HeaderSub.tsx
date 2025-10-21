@@ -77,6 +77,9 @@ export default function HeaderSub({ category, setCategory }: Props) {
             <Link to="/register" className="nav-link test">
               상품등록
             </Link>
+            <Link to="/community" className="nav-link">
+              커뮤니티</Link>
+
           </nav>
         </div>
       </header>
