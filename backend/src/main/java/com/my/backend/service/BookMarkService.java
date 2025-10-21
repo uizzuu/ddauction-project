@@ -1,5 +1,6 @@
 package com.my.backend.service;
 
+import com.my.backend.dto.ProductDto;
 import com.my.backend.entity.BookMark;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.User;
@@ -9,6 +10,9 @@ import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,5 +65,18 @@ public class BookMarkService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("상품이 존재하지 않습니다."));
         return bookMarkRepository.findByUserAndProduct(user, product).isPresent();
+    }
+
+    /**
+     * 🔹 로그인 유저 기준 찜한 상품 목록 조회 (마이페이지)
+     */
+    public List<ProductDto> getBookMarkedProducts(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+
+        List<BookMark> bookmarks = bookMarkRepository.findAllByUser(user);
+        return bookmarks.stream()
+                .map(b -> ProductDto.fromEntity(b.getProduct()))
+                .collect(Collectors.toList());
     }
 }
