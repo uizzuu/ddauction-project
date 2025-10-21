@@ -17,7 +17,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<Product | null>(null);
   const [bidValue, setBidValue] = useState("");
   const [remainingTime, setRemainingTime] = useState("");
-  const [sellerNickName, setSellerNickName] = useState("");
+  const [sellerNickName, setSellerNickName] = useState("로딩중...");
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
 
   const calculateRemainingTime = (endTime: string) => {
@@ -35,43 +35,57 @@ export default function ProductDetail() {
   // 상품 정보 가져오기
   useEffect(() => {
     if (!id) return;
+
     const fetchProduct = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
-        if (res.ok) {
-          const data: Product = await res.json();
-          setProduct(data);
-          setRemainingTime(calculateRemainingTime(data.auctionEndTime));
+        if (!res.ok) throw new Error("상품 정보를 가져올 수 없습니다.");
+        const data: Product = await res.json();
+        setProduct(data);
+        setRemainingTime(calculateRemainingTime(data.auctionEndTime));
 
-          // 판매자 정보
-          if (data.sellerId) {
-            fetch(`${API_BASE_URL}/api/users/${data.sellerId}`)
-              .then((r) => r.json())
-              .then((user: User) => setSellerNickName(user.nickName))
-              .catch(() => console.warn("판매자 정보 가져오기 실패"));
+        // 판매자 정보
+        if (data.sellerId) {
+          try {
+            const sellerRes = await fetch(`${API_BASE_URL}/api/users/${data.sellerId}`);
+            if (sellerRes.ok) {
+              const seller: User = await sellerRes.json();
+              setSellerNickName(seller.nickName ?? "알 수 없음");
+            } else {
+              setSellerNickName("알 수 없음");
+            }
+          } catch {
+            setSellerNickName("알 수 없음");
           }
+        } else {
+          setSellerNickName("알 수 없음");
+        }
 
-          // 카테고리명
-          if (data.categoryId && !data.categoryName) {
-            fetch(`${API_BASE_URL}/api/categories/${data.categoryId}`)
-              .then((r) => r.json())
-              .then((c: Category) =>
-                setProduct((prev) => (prev ? { ...prev, categoryName: c.name } : prev))
-              )
-              .catch(() => console.warn("카테고리명 불러오기 실패"));
+        // 카테고리명
+        if (data.categoryId && !data.categoryName) {
+          try {
+            const categoryRes = await fetch(`${API_BASE_URL}/api/categories/${data.categoryId}`);
+            if (categoryRes.ok) {
+              const c: Category = await categoryRes.json();
+              setProduct((prev) => (prev ? { ...prev, categoryName: c.name } : prev));
+            }
+          } catch {
+            console.warn("카테고리명 불러오기 실패");
           }
+        }
 
-          // 최고 입찰가 가져오기
-          const bidRes = await fetch(`${API_BASE_URL}/api/products/${id}/highest-bid`);
-          if (bidRes.ok) {
-            const highest: number = await bidRes.json();
-            setCurrentHighestBid(highest);
-          }
+        // 최고 입찰가
+        const bidRes = await fetch(`${API_BASE_URL}/api/products/${id}/highest-bid`);
+        if (bidRes.ok) {
+          const highest: number = await bidRes.json();
+          setCurrentHighestBid(highest);
         }
       } catch (err) {
         console.error(err);
+        setSellerNickName("알 수 없음");
       }
     };
+
     fetchProduct();
   }, [id]);
 
@@ -120,13 +134,10 @@ export default function ProductDetail() {
 
         setProduct((prev) =>
           prev
-            ? {
-                ...prev,
-                bids: [...(prev.bids ?? []), newBid],
-              }
+            ? { ...prev, bids: [...(prev.bids ?? []), newBid] }
             : prev
         );
-        setCurrentHighestBid(newBidServer.bidPrice); // 최고 입찰가 갱신
+        setCurrentHighestBid(newBidServer.bidPrice);
         setBidValue("");
         alert("입찰 성공!");
       } else {
@@ -141,10 +152,7 @@ export default function ProductDetail() {
 
   if (!product) return <div style={{ padding: "16px" }}>상품을 찾을 수 없습니다.</div>;
 
-  // 그래프 데이터
   const graphData = (product.bids ?? []).map((b, i) => ({ name: `${i + 1}`, price: b.price }));
-
-  // 경매등록가
   const auctionStartingPrice = product.startingPrice ?? 0;
 
   return (
@@ -182,7 +190,6 @@ export default function ProductDetail() {
 
           <div style={{ display: "flex", gap: "12px", fontSize: "0.9rem", color: "#555" }}>
             <span>💖 찜 {product.amount ?? 0}</span>
-            <span>👀 조회수 {product.bidderId ?? 0}</span>
             <button
               style={{
                 backgroundColor: "#ef4444",
@@ -199,7 +206,7 @@ export default function ProductDetail() {
             </button>
           </div>
 
-          <p>판매자: {sellerNickName || "알 수 없음"}</p>
+          <p>판매자: {sellerNickName}</p>
           <p>카테고리: {product.categoryName ?? "없음"}</p>
           <p style={{ color: "#555", fontSize: "0.9rem" }}>
             등록시간: {new Date(product.createdAt ?? "").toLocaleString()} <br />
@@ -235,7 +242,6 @@ export default function ProductDetail() {
               gap: "8px",
             }}
           >
-            {/* 입찰 기록: 최대 5건 */}
             <div style={{ marginBottom: "8px" }}>
               {(product.bids ?? []).slice(0, 5).map((b, i) => (
                 <p key={b.bidId} style={{ margin: 0 }}>

@@ -159,7 +159,7 @@ public class ProductService {
         return BidDto.fromEntity(bid);
     }
 
-    // 최고 입찰가만 가져오기 (DTO 건드리지 않음)
+    // 최고 입찰가 조회
     public Long getHighestBidPrice(Long productId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));

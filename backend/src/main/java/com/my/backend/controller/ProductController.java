@@ -28,8 +28,12 @@ public class ProductController {
 
     // 특정 상품 조회
     @GetMapping("/{id}")
-    public ProductDto getProduct(@PathVariable Long id) {
-        return productService.getProduct(id);
+    public ResponseEntity<ProductDto> getProduct(@PathVariable Long id) {
+        ProductDto product = productService.getProduct(id);
+        if (product == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        return ResponseEntity.ok(product);
     }
 
     // 최고 입찰가 조회
@@ -49,8 +53,8 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
         }
         try {
-            BidDto bidder = productService.placeBid(id, loginUser.getUserId(), dto.getBidPrice());
-            return ResponseEntity.ok(bidder);
+            BidDto newBid = productService.placeBid(id, loginUser.getUserId(), dto.getBidPrice());
+            return ResponseEntity.ok(newBid);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
@@ -58,25 +62,29 @@ public class ProductController {
 
     // 새 상품 생성
     @PostMapping
-    public ProductDto createProduct(@Valid @RequestBody ProductDto dto) {
-        return productService.createProduct(dto);
+    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto dto) {
+        ProductDto created = productService.createProduct(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     // 상품 수정
     @PutMapping("/{id}")
-    public ProductDto updateProduct(@PathVariable Long id, @RequestBody ProductDto dto) {
-        return productService.updateProduct(id, dto);
+    public ResponseEntity<ProductDto> updateProduct(@PathVariable Long id, @RequestBody ProductDto dto) {
+        ProductDto updated = productService.updateProduct(id, dto);
+        return ResponseEntity.ok(updated);
     }
 
     // 상품 삭제
     @DeleteMapping("/{id}")
-    public void deleteProduct(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
 
     // 특정 사용자 판매 상품 조회
     @GetMapping("/seller/{userId}")
-    public List<ProductDto> getProductsBySeller(@PathVariable Long userId) {
-        return productService.getProductsBySeller(userId);
+    public ResponseEntity<List<ProductDto>> getProductsBySeller(@PathVariable Long userId) {
+        List<ProductDto> products = productService.getProductsBySeller(userId);
+        return ResponseEntity.ok(products);
     }
 }

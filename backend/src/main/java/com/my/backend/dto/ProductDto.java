@@ -16,6 +16,8 @@ public class ProductDto {
 
     private Long sellerId;
 
+    private String sellerNickName; //  추가
+
     private String title;
 
     private String content;
@@ -50,6 +52,7 @@ public class ProductDto {
         return ProductDto.builder()
                 .productId(product.getProductId())
                 .sellerId(product.getUser() != null ? product.getUser().getUserId() : null)
+                .sellerNickName(product.getUser() != null ? product.getUser().getNickName() : null) // ⭐ 추가
                 .title(product.getTitle())
                 .content(product.getContent())
                 .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice().toString() : null)
