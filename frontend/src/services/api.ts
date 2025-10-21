@@ -160,7 +160,7 @@ export async function createArticle(articleData: ArticleForm): Promise<ArticleDt
 // 게시글 수정
 export async function updateArticle(id: number, articleData: ArticleForm): Promise<ArticleDto> {
   const response = await fetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
-    method: "PATCH",
+    method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(articleData),
   });
