@@ -1,10 +1,13 @@
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Category } from "../types/types";
 
 interface ModalCategoryProps {
   isOpen: boolean;
   onClose: () => void;
-  categories: Category[]; // 기존 Category 타입 그대로 사용
-  onSelectCategory: (category: Category) => void; // Category 객체 그대로
+  categories: Category[];
+  onSelectCategory: (category: Category) => void;
+  targetRef: React.RefObject<HTMLButtonElement | null>;
 }
 
 export default function ModalCategory({
@@ -12,29 +15,73 @@ export default function ModalCategory({
   onClose,
   categories,
   onSelectCategory,
+  targetRef,
 }: ModalCategoryProps) {
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+
+  // 모달 위치 계산
+  useEffect(() => {
+    if (isOpen && targetRef.current) {
+      const rect = targetRef.current.getBoundingClientRect();
+      setPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX,
+      });
+    }
+  }, [isOpen, targetRef]);
+
+  // 바깥 클릭 시 닫기
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(e.target as Node) &&
+        targetRef.current &&
+        !targetRef.current.contains(e.target as Node)
+      ) {
+        onClose();
+      }
+    }
+    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen, onClose, targetRef]);
+
   if (!isOpen) return null;
 
-  return (
-    <div className="content-wrap" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <h2>카테고리 선택</h2>
-        <ul className="category-list">
-          {categories.map((cat) => (
-            <li key={cat.categoryId}>
-              <button
-                className="category-btn"
-                onClick={() => {
-                  onSelectCategory(cat);
-                  onClose();
-                }}
-              >
-                {cat.name}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+  return createPortal(
+    <div
+      ref={modalRef}
+      className="modal-content"
+      style={{
+        position: "absolute",
+        top: position.top,
+        left: position.left,
+        maxHeight: "300px",
+        overflowY: "auto",
+        zIndex: 1000,
+        background: "#fff",
+        borderRadius: "16px",
+        boxShadow: "0 4px 11px rgba(0,0,0,0.2)",
+      }}
+    >
+      <p className="category-btn all-category">전체 카테고리</p>
+      <ul className="category-list">
+        {categories.map((cat) => (
+          <li key={cat.categoryId}>
+            <button
+              className="category-btn"
+              onClick={() => {
+                onSelectCategory(cat);
+                onClose();
+              }}
+            >
+              {cat.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>,
+    document.body
   );
 }

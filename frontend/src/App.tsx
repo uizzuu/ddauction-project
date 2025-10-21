@@ -12,7 +12,8 @@ import {
   ProductList,
   ProductRegister,
   MyPage,
-  ProductDetail
+  ProductDetail,
+  ArticleList,
 } from "./import/import";
 import "./import/import.css";
 import type { User, Category } from "./types/types";
