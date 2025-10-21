@@ -6,9 +6,12 @@ import type {
   Product,
   Category,
   CreateProductRequest,
+  ArticleDto,
+  ArticleForm,
 } from "../types/types";
 
 const API_BASE = "/api";
+
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 // ------------------- 타입 가드 ------------------- //
@@ -125,4 +128,50 @@ export async function getCategories(): Promise<Category[]> {
   const data: unknown = await response.json();
   if (!isCategoryArray(data)) throw new Error("API 반환값이 Category[] 타입과 일치하지 않음");
   return data;
+}
+
+
+
+// 게시글 목록 조회
+export async function getArticles(): Promise<ArticleDto[]> {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/articles`);
+  if (!response.ok) throw new Error("게시글 목록 조회 실패");
+  return response.json();
+}
+
+// 게시글 단건 조회
+export async function getArticleById(id: number): Promise<ArticleDto> {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/articles/${id}`);
+  if (!response.ok) throw new Error("게시글 조회 실패");
+  return response.json();
+}
+
+// 게시글 생성
+export async function createArticle(articleData: ArticleForm): Promise<ArticleDto> {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/articles`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(articleData),
+  });
+  if (!response.ok) throw new Error("게시글 생성 실패");
+  return response.json();
+}
+
+// 게시글 수정
+export async function updateArticle(id: number, articleData: ArticleForm): Promise<ArticleDto> {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(articleData),
+  });
+  if (!response.ok) throw new Error("게시글 수정 실패");
+  return response.json();
+}
+
+// 게시글 삭제
+export async function deleteArticle(id: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("게시글 삭제 실패");
 }
