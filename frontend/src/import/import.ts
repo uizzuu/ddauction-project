@@ -9,6 +9,7 @@ import Signup from "../pages/Signup";
 import ProductList from "../pages/ProductList";
 import ProductRegister from "../pages/ProductRegister";
 import MyPage from "../pages/MyPage";
+import ProductDetail from "../pages/ProductDetail";
 
 export {
   HeaderMain,
@@ -18,5 +19,6 @@ export {
   Signup,
   ProductList,
   ProductRegister,
-  MyPage
+  MyPage,
+  ProductDetail
 };

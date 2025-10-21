@@ -6,19 +6,34 @@ export interface User {
   phone?: string;
 }
 
+export interface Bid {
+  bidId: number;
+  userId: number;
+  price: number;
+  createdAt: string;
+}
+
 export interface Product {
   productId: number;
   title: string;
-  content?: string; // 백엔드에서 오는 내용
-  description?: string; // 프론트에서 표시용
+  content?: string;
+  description?: string;
   price?: number;
+  startPrice?: number;
   imageUrl?: string;
   auctionEndTime: string;
+  createdAt?: string;
+  updatedAt?: string;
   productStatus?: string;
   paymentStatus?: string;
   categoryId?: number;
+  categoryName?: string;
   sellerId?: number;
+  sellerName?: string;
   oneMinuteAuction?: boolean;
+  bidderId?: number;
+  amount?: number;
+  bids?: Bid[]; // 추가
 }
 
 export interface Category {

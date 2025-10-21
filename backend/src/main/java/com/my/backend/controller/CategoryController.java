@@ -23,4 +23,11 @@ public class CategoryController {
                 .map(CategoryDto::fromEntity)
                 .collect(Collectors.toList());
     }
+    @GetMapping("/{id}")
+    public CategoryDto getCategoryById(@PathVariable Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("카테고리를 찾을 수 없습니다."));
+        return CategoryDto.fromEntity(category);
+    }
+
 }

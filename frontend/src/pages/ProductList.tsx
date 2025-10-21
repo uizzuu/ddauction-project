@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Product } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -60,7 +62,12 @@ export default function ProductList() {
         ) : (
           <div className="product-grid">
             {products.map((product) => (
-              <div key={product.productId} className="product-card">
+              <div
+                key={product.productId}
+                className="product-card"
+                style={{ cursor: "pointer" }} // 클릭 가능 표시
+                onClick={() => navigate(`/products/${product.productId}`)} // 상세 페이지 이동
+              >
                 <div className="product-image">
                   {product.imageUrl ? (
                     <img src={product.imageUrl} alt={product.title} />
@@ -75,7 +82,15 @@ export default function ProductList() {
                   <p className="product-time">
                     종료: {formatDate(product.auctionEndTime)}
                   </p>
-                  <button className="btn-bid">입찰하기</button>
+                  <button
+                    className="btn-bid"
+                    onClick={(e) => {
+                      e.stopPropagation(); // 카드 클릭 이벤트 중지
+                      navigate(`/products/${product.productId}`);
+                    }}
+                  >
+                    입찰하기
+                  </button>
                 </div>
               </div>
             ))}

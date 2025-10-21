@@ -33,7 +33,7 @@ export default function MyPage({ user, setUser }: Props) {
   // 로그인 안 된 경우
   if (!user) {
     return (
-      <div style={{ color: "white", padding: "40px", textAlign: "center" }}>
+      <div>
         <h2>로그인이 필요합니다.</h2>
         <button onClick={() => navigate("/login")}>로그인 페이지로</button>
       </div>
@@ -127,25 +127,16 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   return (
-    <div style={{ color: "white", padding: "40px" }}>
+    <div>
       <button onClick={() => navigate("/")} style={buttonStyle}>
         메인으로
       </button>
 
       <h2>마이페이지</h2>
 
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "15px",
-          marginTop: "20px",
-        }}
-      >
-        <div style={{ display: "flex", gap: "20px" }}>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "15px" }}
-          >
+      <div>
+        <div>
+          <div>
             <button style={buttonStyle} onClick={() => setEditing(!editing)}>
               내 정보 수정
             </button>
@@ -154,15 +145,9 @@ export default function MyPage({ user, setUser }: Props) {
             </button>
           </div>
 
-          <div style={{ flex: 1 }}>
+          <div>
             {editing && (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "10px",
-                }}
-              >
+              <div>
                 <input
                   name="nickName"
                   placeholder="닉네임"
@@ -182,7 +167,7 @@ export default function MyPage({ user, setUser }: Props) {
                   value={form.phone}
                   onChange={handleChange}
                 />
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div>
                   <button style={buttonStyle} onClick={handleUpdate}>
                     저장
                   </button>
@@ -196,7 +181,7 @@ export default function MyPage({ user, setUser }: Props) {
             {showSelling && sellingProducts.length > 0 && (
               <div>
                 <h3>판매 중인 상품</h3>
-                <ul style={{ listStyle: "none", padding: 0 }}>
+                <ul>
                   {sellingProducts.map((product) => (
                     <li
                       key={product.productId}
@@ -232,14 +217,7 @@ export default function MyPage({ user, setUser }: Props) {
           </div>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "15px",
-            marginTop: "20px",
-          }}
-        >
+        <div>
           <button style={buttonStyle} onClick={() => alert("결제 수단 관리")}>
             결제 수단 관리
           </button>

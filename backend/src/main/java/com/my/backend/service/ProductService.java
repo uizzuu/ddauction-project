@@ -1,6 +1,7 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.ProductDto;
+import com.my.backend.dto.BidDto;
 import com.my.backend.entity.*;
 import com.my.backend.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -128,5 +130,37 @@ public class ProductService {
                 .stream()
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    // 🔥 입찰 처리 (로그인 사용자만)
+    public BidDto placeBid(Long productId, Long userId, Long price) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자가 존재하지 않습니다."));
+
+        // 최고 입찰가: bidder 테이블에서 확인, 없으면 product.price
+        Long maxBidPrice = bidRepository.findTopByProductOrderByBidPriceDesc(product)
+                .map(Bid::getBidPrice)
+                .orElse(product.getPrice() != null ? product.getPrice() : 0L);
+
+        if (price <= maxBidPrice) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "입찰 금액은 현재 최고 입찰가보다 높아야 합니다.");
+        }
+
+        // 입찰 기록 저장
+        Bid bid = Bid.builder()
+                .product(product)
+                .user(user)
+                .bidPrice(price)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        bid = bidRepository.save(bid);
+
+        // ❌ Product.price는 절대 변경하지 않음
+
+        return BidDto.fromEntity(bid);
     }
 }
