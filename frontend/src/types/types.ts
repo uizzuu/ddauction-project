@@ -33,8 +33,7 @@ export interface Product {
   oneMinuteAuction?: boolean;
   bidderId?: number;
   amount?: number;
-  bids?: Bid[]; // 입찰 기록
-  bid?: Bid; // 🔥 현재 최고 입찰 추가
+  bids?: Bid[]; // 추가
 }
 
 export interface Category {
@@ -78,3 +77,22 @@ export interface CreateProductRequest {
   productStatus: string;
   paymentStatus: string;
 }
+
+//게시판
+export interface ArticleDto {
+  articleId: number;
+  userId: number;
+  nickName: string;
+  boardId: number;
+  boardName: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+export interface ArticleForm {
+  title: string;
+  content: string;
+  boardId: number;
+}
+
