@@ -53,7 +53,7 @@ export default function ArticleForm({ userId }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!userId) {
+    if (userId == null) {
       alert("로그인 후 이용해주세요.");
       return;
     }
@@ -71,6 +71,9 @@ export default function ArticleForm({ userId }: Props) {
         navigate(`/articles/${id}`);
       } else {
         const articleData = { ...form, userId };
+
+        console.log("보내는 데이터:", articleData);
+
         const created = await createArticle(articleData);
         alert("게시글이 생성되었습니다.");
         navigate(`/articles/${created.articleId}`);
