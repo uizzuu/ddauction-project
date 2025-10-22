@@ -20,7 +20,7 @@ export default function ProductDetail() {
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
 
-  // 🔥 찜 관련 state
+  // 찜 관련 state
   const [isBookMarked, setIsBookMarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(0);
 
@@ -49,7 +49,7 @@ export default function ProductDetail() {
         setProduct(data);
         setRemainingTime(calculateRemainingTime(data.auctionEndTime));
 
-        // 🔥 찜 수
+        // 찜 수
         const bmCountRes = await fetch(`${API_BASE_URL}/api/bookmarks/count?productId=${id}`);
         if (bmCountRes.ok) {
           const count = await bmCountRes.json();
@@ -91,7 +91,7 @@ export default function ProductDetail() {
           setCurrentHighestBid(highest);
         }
 
-        // 🔥 현재 사용자가 찜했는지 여부
+        // 현재 사용자가 찜했는지 여부
         const bmRes = await fetch(`${API_BASE_URL}/api/bookmarks/check?productId=${id}`, {
           credentials: "include",
         });
@@ -117,7 +117,7 @@ export default function ProductDetail() {
     return () => clearInterval(interval);
   }, [product]);
 
-  // 🔥 입찰 처리
+  // 입찰 처리
   const handleBid = async () => {
     const bidNum = Number(bidValue);
     if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
@@ -166,7 +166,7 @@ export default function ProductDetail() {
     }
   };
 
-  // 🔥 찜 토글 처리
+  // 찜 토글 처리
   const handleToggleBookmark = async () => {
     if (!product) return;
     try {
@@ -191,6 +191,36 @@ export default function ProductDetail() {
     } catch (err) {
       console.error(err);
       alert("찜 기능 실패");
+    }
+  };
+
+  // 신고 처리 (세션 기반)
+  const handleReport = async () => {
+    if (!product) return;
+
+    const reason = prompt("신고 사유를 입력해주세요:");
+    if (!reason?.trim()) return alert("신고 사유는 필수입니다.");
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // 세션 쿠키 포함
+        body: JSON.stringify({
+          targetId: product.sellerId, // 신고 대상은 판매자
+          reason: reason.trim(),
+        }),
+      });
+
+      if (res.ok) {
+        alert("신고가 접수되었습니다. 관리자가 확인 후 처리합니다.");
+      } else {
+        const errText = await res.text();
+        alert("신고 실패: " + errText);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("신고 처리 중 오류가 발생했습니다.");
     }
   };
 
@@ -232,7 +262,7 @@ export default function ProductDetail() {
         <div style={{ flex: 1, minWidth: "300px", display: "flex", flexDirection: "column", gap: "12px" }}>
           <h2 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>{product.title}</h2>
 
-          {/* 🔥 찜 + 신고 버튼 */}
+          {/* 찜 + 신고 버튼 */}
           <div style={{ display: "flex", gap: "12px", fontSize: "0.9rem", color: "#555" }}>
             <button
               onClick={handleToggleBookmark}
@@ -258,7 +288,7 @@ export default function ProductDetail() {
                 cursor: "pointer",
                 fontSize: "0.8rem",
               }}
-              onClick={() => alert("신고 기능은 아직 미구현")}
+              onClick={handleReport}
             >
               신고
             </button>
