@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../services/api";
 import type { Product, Category } from "../types/types";
+import SelectBox from "../components/SelectBox";
 
 export default function ProductSearchPage() {
   const navigate = useNavigate();
@@ -35,7 +36,9 @@ export default function ProductSearchPage() {
       if (keyword) query.append("keyword", keyword);
       if (categoryId) query.append("category", categoryId.toString());
 
-      const res = await fetch(`${API_BASE_URL}/api/products/search?${query.toString()}`);
+      const res = await fetch(
+        `${API_BASE_URL}/api/products/search?${query.toString()}`
+      );
       if (!res.ok) throw new Error("상품 검색 실패");
 
       const data: Product[] = await res.json();
@@ -55,36 +58,28 @@ export default function ProductSearchPage() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">상품 검색</h1>
+    <div className="container">
+      <h1 className="page-title">상품 검색</h1>
 
       {/* 검색 폼 */}
-      <form onSubmit={handleSearch} className="flex gap-3 mb-6">
+      <form onSubmit={handleSearch} className="search-form">
         <input
           type="text"
           placeholder="상품 이름 검색"
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
-          className="border rounded-lg px-3 py-2 flex-1"
+          className="search-input"
         />
-        <select
-          value={categoryId}
-          onChange={(e) =>
-            setCategoryId(e.target.value === "" ? "" : Number(e.target.value))
-          }
-          className="border rounded-lg px-3 py-2"
-        >
-          <option value="">전체 카테고리</option>
-          {categories.map((c) => (
-            <option key={c.categoryId} value={c.categoryId}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-        <button
-          type="submit"
-          className="bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition"
-        >
+        <SelectBox
+          value={categoryId === "" ? "" : String(categoryId)}
+          onChange={(val) => setCategoryId(val === "" ? "" : Number(val))}
+          options={categories.map((c) => ({
+            value: String(c.categoryId),
+            label: c.name,
+          }))}
+          placeholder="전체 카테고리"
+        />
+        <button type="submit" className="search-btn">
           검색
         </button>
       </form>
@@ -120,7 +115,7 @@ export default function ProductSearchPage() {
           ))}
         </div>
       ) : (
-        <p className="text-gray-500">검색 결과가 없습니다.</p>
+        <p className="no-content-text">검색 결과가 없습니다.</p>
       )}
     </div>
   );

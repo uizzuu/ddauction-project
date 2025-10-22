@@ -1,5 +1,5 @@
 .register-container {
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - 120px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -12,8 +12,8 @@
   padding: 50px;
   border-radius: 16px;
   width: 100%;
-  max-width: 650px;
-  border: 1px solid #333;
+  max-width: 450px;
+  border: 1px solid #b17576;
 }
 
 .register-title {
@@ -25,7 +25,7 @@
 }
 
 .notice-text {
-  color: #111;
+  color: #b17576;
   font-size: 18px;
   text-align: center;
   margin-bottom: 20px;

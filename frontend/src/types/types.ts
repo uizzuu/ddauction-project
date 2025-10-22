@@ -113,4 +113,16 @@ export interface CommentForm {
   userId: number;
 }
 
+// 공통 UI 타입들
+export interface Option {
+  value: string;
+  label: string;
+}
 
+export interface SelectBoxProps {
+  value: string;
+  onChange: (value: string) => void;
+  options: Option[];
+  placeholder?: string;
+  className?: string;
+}

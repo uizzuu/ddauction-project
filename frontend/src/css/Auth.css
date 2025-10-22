@@ -63,9 +63,8 @@
 .btn-submit {
   width: 100%;
   padding: 16px;
-  background: #eee;
-  color: #333;
-  border: none;
+  border: 1px solid #b17576;
+  color: #b17576;
   border-radius: 12px;
   font-size: 16px;
   font-weight: bold;

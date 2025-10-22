@@ -51,8 +51,8 @@ export default function ProductList() {
   }
 
   return (
-    <div className="product-list-container">
-      <div className="content-wrapper">
+    <div className="container">
+      <div>
         <h2 className="page-title">진행중인 경매</h2>
 
         {products.length === 0 ? (

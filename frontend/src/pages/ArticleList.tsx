@@ -22,7 +22,7 @@ export default function ArticleList({ user }: Props) {
   if (loading) return <div>로딩 중...</div>;
 
   return (
-    <div className="article-container">
+    <div className="container">
       <h2 className="page-title">게시판</h2>
 
       {user && (
@@ -35,7 +35,7 @@ export default function ArticleList({ user }: Props) {
       )}
 
       {articles.length === 0 ? (
-        <p>게시글이 없습니다.</p>
+        <p className="no-content-text">게시글이 없습니다.</p>
       ) : (
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
