@@ -5,6 +5,8 @@ import {
   deleteArticle,
   getCommentsByArticleId,
   createComment,
+  updateComment,   // ← 댓글 수정 API 함수 import 추가
+  deleteComment,   // ← 댓글 삭제 API 함수 import 추가
 } from "../services/api";
 import type { ArticleDto, User, CommentDto, CommentForm } from "../types/types";
 
@@ -19,6 +21,10 @@ export default function ArticleDetail({ user }: Props) {
   const [article, setArticle] = useState<ArticleDto | null>(null);
   const [comments, setComments] = useState<CommentDto[]>([]);
   const [commentContent, setCommentContent] = useState("");
+
+  // --- 댓글 수정 관련 상태 추가 ---
+  const [editingCommentId, setEditingCommentId] = useState<number | null>(null);  // 현재 수정 중인 댓글 ID
+  const [editingContent, setEditingContent] = useState("");                      // 수정 중인 댓글 내용
 
   // 게시글 조회
   useEffect(() => {
@@ -57,6 +63,55 @@ export default function ArticleDetail({ user }: Props) {
       setComments(updated);
     } catch {
       alert("댓글 등록에 실패했습니다.");
+    }
+  };
+
+  // --- 댓글 수정 시작 함수 추가 ---
+  const startEditing = (comment: CommentDto) => {
+    setEditingCommentId(comment.commentId!);
+    setEditingContent(comment.content);
+  };
+
+  // --- 댓글 수정 취소 함수 추가 ---
+  const cancelEditing = () => {
+    setEditingCommentId(null);
+    setEditingContent("");
+  };
+
+  // --- 댓글 수정 저장 함수 추가 ---
+  const saveEditing = async () => {
+    if (!editingCommentId) return;
+
+    if (!editingContent.trim()) {
+      alert("댓글 내용을 입력해주세요.");
+      return;
+    }
+
+    const form: CommentForm = {
+      content: editingContent,
+      userId: user!.userId,
+    };
+
+
+    try {
+      await updateComment(editingCommentId, form);
+      const updatedComments = await getCommentsByArticleId(Number(id));
+      setComments(updatedComments);
+      cancelEditing();
+    } catch {
+      alert("댓글 수정 실패");
+    }
+  };
+
+  // --- 댓글 삭제 함수 추가 ---
+  const handleCommentDelete = async (commentId: number) => {
+    if (!window.confirm("댓글을 삭제하시겠습니까?")) return;
+
+    try {
+      await deleteComment(commentId);
+      setComments(comments.filter((c) => c.commentId !== commentId));
+    } catch {
+      alert("댓글 삭제 실패");
     }
   };
 
@@ -112,7 +167,39 @@ export default function ArticleDetail({ user }: Props) {
               <span style={{ color: "#888", fontSize: "0.9rem" }}>
                 {new Date(comment.createdAt).toLocaleString()}
               </span>
-              <p>{comment.content}</p>
+              {editingCommentId === comment.commentId ? (
+                <>
+                  {/* --- 댓글 수정 모드일 때 텍스트 에어리어와 버튼들 --- */}
+                  <textarea
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    rows={3}
+                    style={{ width: "100%" }}
+                  />
+                  <button onClick={saveEditing}>저장</button>
+                  <button onClick={cancelEditing} style={{ marginLeft: "0.5rem" }}>
+                    취소
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p>{comment.content}</p>
+                  {/* 댓글 작성자만 수정/삭제 버튼 표시 */}
+                  {user?.userId === comment.userId && (
+                    <>
+                      {/* --- 댓글 수정 버튼 --- */}
+                      <button onClick={() => startEditing(comment)}>수정</button>
+                      {/* --- 댓글 삭제 버튼 --- */}
+                      <button
+                        onClick={() => handleCommentDelete(comment.commentId!)}
+                        style={{ marginLeft: "0.5rem", color: "red" }}
+                      >
+                        삭제
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
             </li>
           ))}
         </ul>
