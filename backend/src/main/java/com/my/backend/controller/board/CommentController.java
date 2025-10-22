@@ -9,6 +9,7 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -30,6 +31,12 @@ public class CommentController {
 
         return ResponseEntity.ok(dto);
     }
+    @GetMapping("/articles/{articleId}/comments")
+    public ResponseEntity<List<CommentDto>> getCommentsByArticleId(@PathVariable Long articleId) {
+        List<CommentDto> comments = commentService.findCommentsByArticleId(articleId);
+        return ResponseEntity.ok(comments);
+    }
+
 
     // 2️ 댓글 생성
     @PostMapping("/articles/{articleId}/comments")

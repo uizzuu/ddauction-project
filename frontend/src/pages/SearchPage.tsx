@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../services/api";
 import type { Product, Category } from "../types/types";
 import SelectBox from "../components/SelectBox";
 
 export default function ProductSearchPage() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [keyword, setKeyword] = useState(""); // 검색어
   const [categoryId, setCategoryId] = useState<number | "">(""); // 선택 카테고리
@@ -29,12 +30,12 @@ export default function ProductSearchPage() {
   }, []);
 
   // 상품 검색
-  const fetchProducts = async () => {
+  const fetchProducts = async (kw: string, cat: number | "") => {
     setLoading(true);
     try {
       const query = new URLSearchParams();
-      if (keyword) query.append("keyword", keyword);
-      if (categoryId) query.append("category", categoryId.toString());
+      if (kw) query.append("keyword", kw);
+      if (cat) query.append("category", cat.toString());
 
       const res = await fetch(
         `${API_BASE_URL}/api/products/search?${query.toString()}`
@@ -51,10 +52,32 @@ export default function ProductSearchPage() {
     }
   };
 
+  // URL 쿼리 변화를 감지해서 검색
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const kw = params.get("keyword") || "";
+    const catId = params.get("category") || "";
+
+    setKeyword(kw);
+    setCategoryId(catId ? Number(catId) : "");
+
+    // keyword나 category가 있으면 검색 실행
+    if (kw || catId) {
+      fetchProducts(kw, catId ? Number(catId) : "");
+    } else {
+      setProducts([]);
+    }
+  }, [location.search]);
+
   // 검색 버튼 클릭
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchProducts();
+    // URL을 바꾸면 useEffect에서 자동 검색
+    const query = new URLSearchParams();
+    if (keyword) query.append("keyword", keyword.trim());
+    if (categoryId) query.append("category", categoryId.toString());
+
+    navigate(`/search?${query.toString()}`);
   };
 
   return (

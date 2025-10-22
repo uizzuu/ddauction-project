@@ -48,6 +48,24 @@ public class CommentService {
                 .map(CommentDto::fromEntity)
                 .collect(Collectors.toList());
     }
+    public List<CommentDto> findCommentsByArticleId(Long articleId) {
+        List<Comment> comments = commentRepository.findByArticleArticleId(articleId);
+
+        return comments.stream()
+                .map(comment -> {
+                    CommentDto dto = new CommentDto();
+                    dto.setCommentId(comment.getCommentId());
+                    dto.setArticleId(comment.getArticle().getArticleId());
+                    dto.setUserId(comment.getUser().getUserId());
+                    dto.setNickName(comment.getUser().getNickName());
+                    dto.setContent(comment.getContent());
+                    dto.setCreatedAt(comment.getCreatedAt());
+                    dto.setUpdatedAt(comment.getUpdatedAt());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+    }
+
 
     // 3️ 댓글 생성
     public void insertComment(Long articleId, CommentDto dto) {
