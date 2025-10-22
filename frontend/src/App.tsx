@@ -52,7 +52,7 @@ export default function App() {
         <Route path="/auction" element={<ProductList />} />
         <Route path="/register" element={<ProductRegister user={user} />} />
         <Route path="/mypage" element={<MyPage user={user} setUser={setUser} />} />
-        <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/products/:id" element={<ProductDetail user={user} setUser={setUser} />} />
         <Route path="/community" element={<ArticleList user={user} />} />
         <Route path="/articles/new" element={<ArticleForm userId={user?.userId ?? null} />} />
         <Route path="/articles/:id/edit" element={<ArticleForm userId={user?.userId ?? null} />} />

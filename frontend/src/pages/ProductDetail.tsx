@@ -9,10 +9,22 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { Product, Bid, User, Category } from "../types/types";
+import type {
+  Product,
+  Bid,
+  User,
+  Category,
+  Qna,
+  QnaAnswer,
+} from "../types/types";
 import { API_BASE_URL } from "../services/api";
 
-export default function ProductDetail() {
+type Props = {
+  user: User | null;
+  setUser: (user: User | null) => void;
+};
+
+export default function ProductDetail({ user, setUser }: Props) {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [bidValue, setBidValue] = useState("");
@@ -25,7 +37,7 @@ export default function ProductDetail() {
   const [bookmarkCount, setBookmarkCount] = useState(0);
 
   // QnA 관련 state
-  const [qnaList, setQnaList] = useState<any[]>([]);
+  const [qnaList, setQnaList] = useState<Qna[]>([]);
   const [newQuestion, setNewQuestion] = useState({ title: "", question: "" });
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
 
@@ -56,7 +68,9 @@ export default function ProductDetail() {
 
         // 찜 수
         try {
-          const bmCountRes = await fetch(`${API_BASE_URL}/api/bookmarks/count?productId=${id}`);
+          const bmCountRes = await fetch(
+            `${API_BASE_URL}/api/bookmarks/count?productId=${id}`
+          );
           if (bmCountRes.ok) {
             const count = await bmCountRes.json();
             setBookmarkCount(count);
@@ -101,7 +115,9 @@ export default function ProductDetail() {
 
         // 최고 입찰가
         try {
-          const bidRes = await fetch(`${API_BASE_URL}/api/products/${id}/highest-bid`);
+          const bidRes = await fetch(
+            `${API_BASE_URL}/api/products/${id}/highest-bid`
+          );
           if (bidRes.ok) {
             const highest: number = await bidRes.json();
             setCurrentHighestBid(highest);
@@ -112,9 +128,12 @@ export default function ProductDetail() {
 
         // 현재 사용자가 찜했는지 여부 (세션 포함)
         try {
-          const bmRes = await fetch(`${API_BASE_URL}/api/bookmarks/check?productId=${id}`, {
-            credentials: "include",
-          });
+          const bmRes = await fetch(
+            `${API_BASE_URL}/api/bookmarks/check?productId=${id}`,
+            {
+              credentials: "include",
+            }
+          );
           if (bmRes.ok) {
             const bookmarked: boolean = await bmRes.json();
             setIsBookMarked(bookmarked);
@@ -301,6 +320,27 @@ export default function ProductDetail() {
       alert("찜 기능 실패");
     }
   };
+
+  // 로그인 사용자 정보 가져오기
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/me`, {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data: User = await res.json();
+          setUser(data);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error("유저 정보 불러오기 실패:", err);
+        setUser(null);
+      }
+    };
+    fetchUser();
+  }, [setUser]);
 
   // 신고
   const handleReport = async () => {
@@ -532,30 +572,57 @@ export default function ProductDetail() {
       {/* QnA 섹션 */}
       <div style={{ marginTop: 40 }}>
         <h3 style={{ fontSize: "1.1rem", fontWeight: "600" }}>💬 상품 Q&A</h3>
-        <div style={{ backgroundColor: "#fff", padding: 16, borderRadius: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
-          {/* 제목 입력 */}
-          <input
-            type="text"
-            placeholder="질문 제목"
-            value={newQuestion.title}
-            onChange={(e) => setNewQuestion({ ...newQuestion, title: e.target.value })}
-            style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 6, marginBottom: 6 }}
-          />
-
-
+        <div
+          style={{
+            backgroundColor: "#fff",
+            padding: 16,
+            borderRadius: 12,
+            boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
+          }}
+        >
           {/* 질문 작성 */}
           <div style={{ marginBottom: 20 }}>
+            <input
+              type="text"
+              placeholder="질문 제목"
+              value={newQuestion.title}
+              onChange={(e) =>
+                setNewQuestion({ ...newQuestion, title: e.target.value })
+              }
+              style={{
+                width: "100%",
+                padding: 10,
+                marginBottom: 8,
+                border: "1px solid #ccc",
+                borderRadius: 6,
+              }}
+            />
             <textarea
               placeholder="질문 내용"
               value={newQuestion.question}
-              onChange={(e) => setNewQuestion({ ...newQuestion, question: e.target.value })}
+              onChange={(e) =>
+                setNewQuestion({ ...newQuestion, question: e.target.value })
+              }
               rows={3}
-              style={{ width: "100%", padding: 10, border: "1px solid #ccc", borderRadius: 6 }}
+              style={{
+                width: "100%",
+                padding: 10,
+                border: "1px solid #ccc",
+                borderRadius: 6,
+              }}
             />
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
               <button
                 onClick={handleCreateQuestion}
-                style={{ marginTop: 8, backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "8px 14px", borderRadius: 6, cursor: "pointer" }}
+                style={{
+                  marginTop: 8,
+                  backgroundColor: "#ef4444",
+                  color: "#fff",
+                  border: "none",
+                  padding: "8px 14px",
+                  borderRadius: 6,
+                  cursor: "pointer",
+                }}
               >
                 질문 등록
               </button>
@@ -567,21 +634,52 @@ export default function ProductDetail() {
             <p style={{ color: "#888" }}>아직 등록된 질문이 없습니다.</p>
           ) : (
             qnaList.map((q) => (
-              <div key={q.qnaId} style={{ borderTop: "1px solid #eee", paddingTop: 12, marginTop: 12 }}>
+              <div
+                key={q.qnaId}
+                style={{
+                  borderTop: "1px solid #eee",
+                  paddingTop: 12,
+                  marginTop: 12,
+                }}
+              >
                 <p style={{ fontWeight: 600, marginBottom: 6 }}>{q.title}</p>
-                <p style={{ margin: "6px 0", whiteSpace: "pre-wrap" }}>{q.question}</p>
-                <p style={{ fontSize: "0.85rem", color: "#777", margin: "6px 0" }}>
-                  작성자: {q.nickName} | {q.createdAt ? new Date(q.createdAt).toLocaleString() : ""}
+                <p style={{ margin: "6px 0", whiteSpace: "pre-wrap" }}>
+                  {q.question}
+                </p>
+                <p
+                  style={{
+                    fontSize: "0.85rem",
+                    color: "#777",
+                    margin: "6px 0",
+                  }}
+                >
+                  작성자: {q.nickName} |{" "}
+                  {q.createdAt ? new Date(q.createdAt).toLocaleString() : ""}
                 </p>
 
                 {/* 답변 목록 */}
                 {q.answers?.length > 0 && (
-                  <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: "3px solid #ef4444" }}>
-                    {q.answers.map((a: any) => (
+                  <div
+                    style={{
+                      marginTop: 8,
+                      paddingLeft: 12,
+                      borderLeft: "3px solid #ef4444",
+                    }}
+                  >
+                    {q.answers.map((a: QnaAnswer) => (
                       <div key={a.qnaReviewId} style={{ marginBottom: 8 }}>
                         <p style={{ margin: "4px 0" }}>💬 {a.answer}</p>
-                        <p style={{ fontSize: "0.8rem", color: "#777", margin: 0 }}>
-                          답변자: {a.nickName} | {a.createdAt ? new Date(a.createdAt).toLocaleString() : ""}
+                        <p
+                          style={{
+                            fontSize: "0.8rem",
+                            color: "#777",
+                            margin: 0,
+                          }}
+                        >
+                          답변자: {a.nickName} |{" "}
+                          {a.createdAt
+                            ? new Date(a.createdAt).toLocaleString()
+                            : ""}
                         </p>
                       </div>
                     ))}
@@ -589,23 +687,43 @@ export default function ProductDetail() {
                 )}
 
                 {/* 답변 입력 (누구나 버튼 클릭 시 시도하나, 서버에서 권한 검증) */}
-                <div style={{ marginTop: 8 }}>
-                  <textarea
-                    placeholder="답변 입력 (관리자/판매자만 가능할 수 있습니다)"
-                    value={answers[q.qnaId] || ""}
-                    onChange={(e) => setAnswers({ ...answers, [q.qnaId]: e.target.value })}
-                    rows={2}
-                    style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 6 }}
-                  />
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <button
-                      onClick={() => handleAnswerSubmit(q.qnaId)}
-                      style={{ marginTop: 6, backgroundColor: "#555", color: "#fff", border: "none", padding: "6px 12px", borderRadius: 6, cursor: "pointer" }}
+                {/* 답변 입력 — 관리자만 보이게 */}
+                {user?.role === "ADMIN" && (
+                  <div style={{ marginTop: 8 }}>
+                    <textarea
+                      placeholder="답변 입력 (관리자 전용)"
+                      value={answers[q.qnaId] || ""}
+                      onChange={(e) =>
+                        setAnswers({ ...answers, [q.qnaId]: e.target.value })
+                      }
+                      rows={2}
+                      style={{
+                        width: "100%",
+                        padding: 8,
+                        border: "1px solid #ccc",
+                        borderRadius: 6,
+                      }}
+                    />
+                    <div
+                      style={{ display: "flex", justifyContent: "flex-end" }}
                     >
-                      답변 등록
-                    </button>
+                      <button
+                        onClick={() => handleAnswerSubmit(q.qnaId)}
+                        style={{
+                          marginTop: 6,
+                          backgroundColor: "#555",
+                          color: "#fff",
+                          border: "none",
+                          padding: "6px 12px",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                        }}
+                      >
+                        답변 등록
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))
           )}

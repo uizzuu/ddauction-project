@@ -1,6 +1,7 @@
 package com.my.backend.controller;
 
 import com.my.backend.entity.QnaReview;
+import com.my.backend.repository.QnaRepository;
 import com.my.backend.service.QnaService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import java.util.Map;
 public class QnaController {
 
     private final QnaService qnaService;
+    private final QnaRepository qnaRepository;
 
     // ============================
     // 질문 작성
@@ -69,5 +71,10 @@ public class QnaController {
     public ResponseEntity<?> getMyQnas(@PathVariable Long userId) {
         List<Map<String, Object>> myQnas = qnaService.getMyQnas(userId);
         return ResponseEntity.ok(myQnas);
+    }
+
+    // 상품별 QnA 조회 (답변 + 닉네임 포함)
+    public List<Map<String, Object>> getQnaWithReviewsByProduct(Long productId) {
+        return qnaRepository.findQnaWithUserByProductId(productId);
     }
 }

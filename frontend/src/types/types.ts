@@ -4,6 +4,7 @@ export interface User {
   nickName: string;
   email?: string;
   phone?: string;
+  role?: "ADMIN" | "USER";
 }
 
 export interface Bid {
@@ -167,7 +168,11 @@ export interface Qna {
   title: string;
   question: string;
   createdAt: string;
-  answers: QnaAnswer[];
+  updatedAt?: string;
+  boardId?: number;
+  productId?: number;
+  userId: number;
+  nickName?: string;
 }
 
 export interface QnaAnswer {
