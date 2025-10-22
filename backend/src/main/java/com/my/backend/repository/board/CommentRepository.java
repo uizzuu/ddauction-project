@@ -12,7 +12,9 @@ import java.util.List;
 public interface CommentRepository extends JpaRepository<Comment, Long> {
     // 특정 Article의 댓글 리스트 조회
     List<Comment> findByArticle(Article article);
+    List<Comment> findByArticleArticleId(Long articleId);
 
     // User별 댓글 조회
     List<Comment> findByUser(User user);
+
 }
