@@ -284,8 +284,6 @@ export default function ProductDetail() {
         const text = await res.text();
         const bookmarked = text === "찜 완료";
         setIsBookMarked(bookmarked);
-        const countRes = await fetch(`${API_BASE_URL}/api/bookmarks/count?productId=${product.productId}`);
-
         // 찜 수 갱신
         const countRes = await fetch(
           `${API_BASE_URL}/api/bookmarks/count?productId=${product.productId}`
