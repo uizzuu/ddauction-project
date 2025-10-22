@@ -54,13 +54,17 @@ public class CommentService {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
 
-        // User 조회
         User user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
 
-        Comment comment = dto.toEntity(article, user);
+        Comment comment = new Comment();
+        comment.setArticle(article);
+        comment.setUser(user);
+        comment.setContent(dto.getContent());
+
         commentRepository.save(comment);
     }
+
 
     // 4️ 댓글 수정
     public void updateComment(CommentDto dto) {
