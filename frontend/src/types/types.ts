@@ -110,6 +110,7 @@ export interface CommentDto {
 
 export interface CommentForm {
   content: string;
+  userId: number;
 }
 
 

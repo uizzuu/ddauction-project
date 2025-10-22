@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getArticleById, deleteArticle, getCommentsByArticleId, createComment } from "../services/api"; // API 호출 함수
+import {
+  getArticleById,
+  deleteArticle,
+  getCommentsByArticleId,
+  createComment,
+} from "../services/api";
 import type { ArticleDto, User, CommentDto, CommentForm } from "../types/types";
 
 interface Props {
@@ -10,44 +15,46 @@ interface Props {
 export default function ArticleDetail({ user }: Props) {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [article, setArticle] = useState<ArticleDto | null>(null);
   const [comments, setComments] = useState<CommentDto[]>([]);
-  const [commentContent, setCommentContent] = useState<string>("");
+  const [commentContent, setCommentContent] = useState("");
 
   // 게시글 조회
   useEffect(() => {
-    if (id) {
-      getArticleById(Number(id))
-        .then(setArticle)
-        .catch(() => alert("게시글을 불러오지 못했습니다."));
-    }
+    if (!id) return;
+    getArticleById(Number(id))
+      .then(setArticle)
+      .catch(() => alert("게시글을 불러오지 못했습니다."));
   }, [id]);
 
   // 댓글 목록 조회
   useEffect(() => {
-    if (id) {
-      getCommentsByArticleId(Number(id))
-        .then(setComments)
-        .catch(() => alert("댓글을 불러오지 못했습니다."));
-    }
+    if (!id) return;
+    getCommentsByArticleId(Number(id))
+      .then(setComments)
+      .catch(() => alert("댓글을 불러오지 못했습니다."));
   }, [id]);
 
-  // 댓글 작성 처리
+  // 댓글 작성
   const handleCommentSubmit = async () => {
-    if (!id) return;
+    if (!id || !user) return;
+
     if (!commentContent.trim()) {
       alert("댓글 내용을 입력해주세요.");
       return;
     }
 
-    const form: CommentForm = { content: commentContent };
+    const form: CommentForm = {
+      content: commentContent,
+      userId: user.userId,
+    };
 
     try {
       await createComment(Number(id), form);
-      setCommentContent(""); // 작성 후 입력란 초기화
-      // 댓글 목록 새로고침
-      const updatedComments = await getCommentsByArticleId(Number(id));
-      setComments(updatedComments);
+      setCommentContent("");
+      const updated = await getCommentsByArticleId(Number(id));
+      setComments(updated);
     } catch {
       alert("댓글 등록에 실패했습니다.");
     }
@@ -61,7 +68,7 @@ export default function ArticleDetail({ user }: Props) {
     try {
       await deleteArticle(Number(id));
       alert("삭제되었습니다.");
-      navigate("/board"); // 게시판 목록 경로에 맞게 수정
+      navigate("/board");
     } catch {
       alert("삭제 실패");
     }
@@ -73,15 +80,14 @@ export default function ArticleDetail({ user }: Props) {
     <div style={{ padding: "2rem" }}>
       <h2>{article.title}</h2>
       <p>작성자: {article.nickName}</p>
-      <p style={{ color: "#888" }}>
-        {new Date(article.createdAt).toLocaleString()}
-      </p>
+      <p style={{ color: "#888" }}>{new Date(article.createdAt).toLocaleString()}</p>
+
       <div
         style={{ marginTop: "1.5rem" }}
         dangerouslySetInnerHTML={{ __html: article.content }}
       />
 
-      {/* 수정/삭제 버튼 - 작성자일 때만 표시 */}
+      {/* 수정/삭제 버튼 */}
       {user?.userId === article.userId && (
         <div style={{ marginTop: "2rem" }}>
           <button onClick={() => navigate(`/articles/${article.articleId}/edit`)}>
@@ -96,12 +102,13 @@ export default function ArticleDetail({ user }: Props) {
       {/* 댓글 영역 */}
       <div style={{ marginTop: "3rem" }}>
         <h3>댓글</h3>
-        {/* 댓글 목록 */}
+
         {comments.length === 0 && <p>댓글이 없습니다.</p>}
+
         <ul>
           {comments.map((comment) => (
             <li key={comment.commentId} style={{ marginBottom: "1rem" }}>
-              <strong>{comment.nickName}</strong> -{" "}
+              <strong>{comment.nickName}</strong>{" "}
               <span style={{ color: "#888", fontSize: "0.9rem" }}>
                 {new Date(comment.createdAt).toLocaleString()}
               </span>
@@ -110,7 +117,6 @@ export default function ArticleDetail({ user }: Props) {
           ))}
         </ul>
 
-        {/* 댓글 작성 폼 */}
         {user ? (
           <div style={{ marginTop: "1rem" }}>
             <textarea
