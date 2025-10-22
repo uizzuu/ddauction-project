@@ -46,7 +46,7 @@ export default function HeaderSub({ category, setCategory }: Props) {
               height="18"
               viewBox="0 0 22 18"
               fill="none"
-              style={{ color: isModalOpen ? "#b17576" : "#111111", stroke: isModalOpen ? "#b17576" : "#111111"}}
+              style={{ color: isModalOpen ? "#b17576" : "#111111", stroke: isModalOpen ? "#b17576" : "#111111" }}
             >
               <path
                 d="M1 1H21M1 9H21M1 17H21"
@@ -76,6 +76,9 @@ export default function HeaderSub({ category, setCategory }: Props) {
           </NavLink>
           <NavLink to="/community" className="nav-link">
             커뮤니티
+          </NavLink>
+          <NavLink to="/search" className="nav-link">
+            통합검색
           </NavLink>
         </nav>
       </div>

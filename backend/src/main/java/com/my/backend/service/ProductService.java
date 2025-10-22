@@ -167,4 +167,23 @@ public class ProductService {
                 .map(Bid::getBidPrice)
                 .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
     }
+
+    public List<ProductDto> searchProducts(String keyword, Long categoryId) {
+        // 동적 쿼리 예시
+        List<Product> products;
+        if ((keyword == null || keyword.isEmpty()) && categoryId == null) {
+            products = productRepository.findAll();
+        } else if (keyword != null && !keyword.isEmpty() && categoryId != null) {
+            products = productRepository.findByTitleContainingAndCategory_CategoryId(keyword, categoryId);
+        } else if (keyword != null && !keyword.isEmpty()) {
+            products = productRepository.findByTitleContaining(keyword);
+        } else {
+            products = productRepository.findByCategory_CategoryId(categoryId);
+        }
+
+        return products.stream()
+                .map(ProductDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
 }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
+import SearchPage from "./pages/SearchPage";
 import {
   HeaderMain,
   HeaderSub,
@@ -56,6 +57,7 @@ export default function App() {
         <Route path="/articles/new" element={<ArticleForm userId={user?.userId ?? null} />} />
         <Route path="/articles/:id/edit" element={<ArticleForm userId={user?.userId ?? null} />} />
         <Route path="/articles/:id" element={<ArticleDetail user={user} />} />
+        <Route path="/search" element={<SearchPage />} />
       </Routes>
     </div>
   );
