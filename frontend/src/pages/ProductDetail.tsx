@@ -18,6 +18,7 @@ import type {
   QnaAnswer,
 } from "../types/types";
 import { API_BASE_URL } from "../services/api";
+import { formatDateTime } from "../utils/date";
 
 type Props = {
   user: User | null;
@@ -193,14 +194,14 @@ export default function ProductDetail({ user, setUser }: Props) {
         credentials: "include",
         body: JSON.stringify({
           productId: product.productId,
-          title: newQuestion.title,  // 제목 추가
+          title: newQuestion.title, // 제목 추가
           question: newQuestion.question,
-          boardName: "qna",          // 고정
+          boardName: "qna", // 고정
         }),
       });
       if (res.ok) {
         alert("질문이 등록되었습니다.");
-        setNewQuestion({title: "", question: "" });
+        setNewQuestion({ title: "", question: "" });
         fetchQnaList(product.productId);
       } else {
         const msg = await res.text();
@@ -453,7 +454,10 @@ export default function ProductDetail({ user, setUser }: Props) {
             <p>판매자: {sellerNickName}</p>
             <p>카테고리: {product.categoryName ?? "없음"}</p>
             <p style={{ color: "#555", fontSize: "0.9rem" }}>
-              등록시간: {new Date(product.createdAt ?? "").toLocaleString()}{" "}
+              등록시간:{" "}
+              {product.createdAt
+                ? formatDateTime(product.createdAt)
+                : "알 수 없음"}{" "}
               <br />
               남은시간: {remainingTime}
             </p>
@@ -581,7 +585,7 @@ export default function ProductDetail({ user, setUser }: Props) {
           }}
         >
           {/* 질문 작성 */}
-          <div style={{ marginBottom: 20 }}>
+          <div className="flex-column gap-8">
             <input
               type="text"
               placeholder="질문 제목"
@@ -589,13 +593,7 @@ export default function ProductDetail({ user, setUser }: Props) {
               onChange={(e) =>
                 setNewQuestion({ ...newQuestion, title: e.target.value })
               }
-              style={{
-                width: "100%",
-                padding: 10,
-                marginBottom: 8,
-                border: "1px solid #ccc",
-                borderRadius: 6,
-              }}
+              className="article-input article-review"
             />
             <textarea
               placeholder="질문 내용"
@@ -603,27 +601,10 @@ export default function ProductDetail({ user, setUser }: Props) {
               onChange={(e) =>
                 setNewQuestion({ ...newQuestion, question: e.target.value })
               }
-              rows={3}
-              style={{
-                width: "100%",
-                padding: 10,
-                border: "1px solid #ccc",
-                borderRadius: 6,
-              }}
+              className="article-textarea article-review"
             />
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button
-                onClick={handleCreateQuestion}
-                style={{
-                  marginTop: 8,
-                  backgroundColor: "#ef4444",
-                  color: "#fff",
-                  border: "none",
-                  padding: "8px 14px",
-                  borderRadius: 6,
-                  cursor: "pointer",
-                }}
-              >
+              <button onClick={handleCreateQuestion} className="article-btn">
                 질문 등록
               </button>
             </div>
@@ -654,7 +635,7 @@ export default function ProductDetail({ user, setUser }: Props) {
                   }}
                 >
                   작성자: {q.nickName} |{" "}
-                  {q.createdAt ? new Date(q.createdAt).toLocaleString() : ""}
+                  {q.createdAt ? formatDateTime(q.createdAt) : ""}
                 </p>
 
                 {/* 답변 목록 */}
@@ -677,16 +658,13 @@ export default function ProductDetail({ user, setUser }: Props) {
                           }}
                         >
                           답변자: {a.nickName} |{" "}
-                          {a.createdAt
-                            ? new Date(a.createdAt).toLocaleString()
-                            : ""}
+                          {a.createdAt ? formatDateTime(a.createdAt) : ""}
                         </p>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* 답변 입력 (누구나 버튼 클릭 시 시도하나, 서버에서 권한 검증) */}
                 {/* 답변 입력 — 관리자만 보이게 */}
                 {user?.role === "ADMIN" && (
                   <div style={{ marginTop: 8 }}>
@@ -696,13 +674,7 @@ export default function ProductDetail({ user, setUser }: Props) {
                       onChange={(e) =>
                         setAnswers({ ...answers, [q.qnaId]: e.target.value })
                       }
-                      rows={2}
-                      style={{
-                        width: "100%",
-                        padding: 8,
-                        border: "1px solid #ccc",
-                        borderRadius: 6,
-                      }}
+                      className="article-textarea article-review"
                     />
                     <div
                       style={{ display: "flex", justifyContent: "flex-end" }}
