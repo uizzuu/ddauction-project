@@ -269,7 +269,7 @@ export default function ProductDetail() {
     }
   };
 
-  // 찜 토글 처리
+  // 찜 토글
   const handleToggleBookmark = async () => {
     if (!product) return;
     try {
@@ -285,6 +285,11 @@ export default function ProductDetail() {
         const bookmarked = text === "찜 완료";
         setIsBookMarked(bookmarked);
         const countRes = await fetch(`${API_BASE_URL}/api/bookmarks/count?productId=${product.productId}`);
+
+        // 찜 수 갱신
+        const countRes = await fetch(
+          `${API_BASE_URL}/api/bookmarks/count?productId=${product.productId}`
+        );
         if (countRes.ok) {
           const count = await countRes.json();
           setBookmarkCount(count);
@@ -339,18 +344,18 @@ export default function ProductDetail() {
     <div className="container">
       <div className="flex-box product-detail">
         {/* 이미지 */}
-        <div className="img-box" style={{ width: 480, height: 360 }}>
-          {product.imageUrl ? (
-            <img
-              src={product.imageUrl}
-              alt={product.title}
-              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 8 }}
-            />
-          ) : (
-            <div className="no-img-txt" style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#888" }}>
-              이미지 없음
-            </div>
-          )}
+        <div className="img-box">
+          <div>
+            {product.imageUrl ? (
+              <img
+                src={product.imageUrl}
+                alt={product.title}
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <div className="no-img-txt">이미지 없음</div>
+            )}
+          </div>
         </div>
         <div>
           {/* 상세 설명 */}
@@ -508,10 +513,6 @@ export default function ProductDetail() {
             boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
           }}
         >
-      {/* 그래프 */}
-      <div style={{ marginTop: 24 }}>
-        <h3 style={{ fontSize: "1.1rem", fontWeight: "600" }}>입찰 그래프</h3>
-        <div style={{ backgroundColor: "#fff", borderRadius: 12, padding: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={graphData}>
               <CartesianGrid strokeDasharray="3 3" />
