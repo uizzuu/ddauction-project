@@ -126,3 +126,28 @@ export interface SelectBoxProps {
   placeholder?: string;
   className?: string;
 }
+
+// 신고 타입
+export interface Report {
+  reportId: number;
+  reporterId: number;
+  targetId: number;
+  reason: string;
+  status: boolean;
+}
+
+// Q&A 타입
+export interface Qna {
+  qnaId: number;
+  title: string;
+  question: string;
+  createdAt: string;
+  answers: QnaAnswer[];
+}
+
+export interface QnaAnswer {
+  qnaReviewId: number;
+  answer: string;
+  nickName: string;
+  createdAt: string;
+}

@@ -1,16 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { User, Product } from "../types/types";
+import type { User, Product, Report, Qna } from "../types/types";
 import { API_BASE_URL } from "../services/api";
-
-// 신고 타입 정의
-type Report = {
-  reportId: number;
-  reporterId: number;
-  targetId: number;
-  reason: string;
-  status: boolean;
-};
 
 type Props = {
   user: User | null;
@@ -22,6 +13,7 @@ export default function MyPage({ user, setUser }: Props) {
   const [showSelling, setShowSelling] = useState(false);
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showReports, setShowReports] = useState(false);
+  const [showQnas, setShowQnas] = useState(false);
 
   const [form, setForm] = useState({
     nickName: user?.nickName || "",
@@ -32,7 +24,9 @@ export default function MyPage({ user, setUser }: Props) {
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
   const [bookmarkedProducts, setBookmarkedProducts] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [myQnas, setMyQnas] = useState<Qna[]>([]);
   const [categories, setCategories] = useState<{ categoryId: number; name: string }[]>([]);
+
   const navigate = useNavigate();
 
   // 카테고리 목록 가져오기
@@ -170,6 +164,24 @@ export default function MyPage({ user, setUser }: Props) {
     setShowReports(!showReports);
   };
 
+  const handleFetchMyQnas = async () => {
+    if (!showQnas) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/qna/user/${user.userId}`);
+        if (res.ok) {
+          const data = await res.json();
+          setMyQnas(data);
+        } else {
+          alert("Q&A 조회 실패");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("서버 오류");
+      }
+    }
+    setShowQnas(!showQnas);
+  };
+
   const getCategoryName = (categoryId?: number) => {
     return categories.find((c) => c.categoryId === categoryId)?.name || "없음";
   };
@@ -197,9 +209,13 @@ export default function MyPage({ user, setUser }: Props) {
             <button style={buttonStyle} onClick={handleFetchReports}>
               신고 내역
             </button>
+            <button style={buttonStyle} onClick={handleFetchMyQnas}>
+              내 Q&A
+            </button>
           </div>
 
           <div>
+            {/* 내 정보 수정 */}
             {editing && (
               <div>
                 <input
@@ -232,6 +248,7 @@ export default function MyPage({ user, setUser }: Props) {
               </div>
             )}
 
+            {/* 판매 상품 */}
             {showSelling && sellingProducts.length > 0 && (
               <div>
                 <h3>판매 중인 상품</h3>
@@ -261,6 +278,7 @@ export default function MyPage({ user, setUser }: Props) {
               </div>
             )}
 
+            {/* 찜 목록 */}
             {showBookmarks && (
               <div>
                 <h3>찜한 상품</h3>
@@ -289,6 +307,7 @@ export default function MyPage({ user, setUser }: Props) {
               </div>
             )}
 
+            {/* 신고 내역 */}
             {showReports && (
               <div>
                 <h3>신고 내역</h3>
@@ -307,6 +326,41 @@ export default function MyPage({ user, setUser }: Props) {
                 )}
               </div>
             )}
+
+            {/* 내 Q&A */}
+            {showQnas && (
+              <div>
+                <h3>내 Q&A</h3>
+                {myQnas.length === 0 ? (
+                  <p>작성한 질문이 없습니다.</p>
+                ) : (
+                  <ul>
+                    {myQnas.map((qna) => (
+                      <li key={qna.qnaId} style={{ marginBottom: "15px" }}>
+                        <div style={{ fontWeight: "bold" }}>{qna.title}</div>
+                        <div>질문: {qna.question}</div>
+                        <div>작성일: {new Date(qna.createdAt).toLocaleString()}</div>
+                        <div>
+                          <strong>답변:</strong>
+                          {qna.answers.length === 0 ? (
+                            <span> 대기중</span>
+                          ) : (
+                            <ul>
+                              {qna.answers.map((a) => (
+                                <li key={a.qnaReviewId}>
+                                  {a.nickName}: {a.answer} (
+                                  {new Date(a.createdAt).toLocaleString()})
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -319,9 +373,6 @@ export default function MyPage({ user, setUser }: Props) {
           </button>
           <button style={buttonStyle} onClick={() => alert("입찰 목록")}>
             입찰 목록
-          </button>
-          <button style={buttonStyle} onClick={() => alert("Q&A 목록")}>
-            Q&A목록
           </button>
           <button style={buttonStyle} onClick={() => alert("리뷰 목록")}>
             리뷰 목록

@@ -1,6 +1,5 @@
 package com.my.backend.controller;
 
-import com.my.backend.entity.Qna;
 import com.my.backend.entity.QnaReview;
 import com.my.backend.service.QnaService;
 import jakarta.servlet.http.HttpSession;
@@ -18,7 +17,9 @@ public class QnaController {
 
     private final QnaService qnaService;
 
+    // ============================
     // 질문 작성
+    // ============================
     @PostMapping
     public ResponseEntity<?> createQuestion(@RequestBody Map<String, String> body, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -31,7 +32,9 @@ public class QnaController {
         return ResponseEntity.ok(qnaService.createQuestion(userId, productId, title, question));
     }
 
+    // ============================
     // 답변 작성
+    // ============================
     @PostMapping("/{qnaId}/review")
     public ResponseEntity<?> answerQuestion(@PathVariable Long qnaId, @RequestBody Map<String, String> body, HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
@@ -41,17 +44,30 @@ public class QnaController {
         return ResponseEntity.ok(qnaService.answerQuestion(qnaId, userId, answer));
     }
 
+    // ============================
     // 상품별 QnA 조회 (답변 포함)
+    // ============================
     @GetMapping("/product/{productId}")
     public ResponseEntity<?> getQnaByProduct(@PathVariable Long productId) {
         List<Map<String, Object>> qnaListWithReviews = qnaService.getQnaWithReviewsByProduct(productId);
         return ResponseEntity.ok(qnaListWithReviews);
     }
 
-    // 질문별 답변 조회 (선택적)
+    // ============================
+    // 질문별 답변 조회
+    // ============================
     @GetMapping("/{qnaId}/reviews")
     public ResponseEntity<?> getReviewsByQna(@PathVariable Long qnaId) {
         List<QnaReview> reviews = qnaService.getReviewsByQna(qnaId);
         return ResponseEntity.ok(reviews);
+    }
+
+    // ============================
+    // 마이페이지용 내 질문 + 답변 조회
+    // ============================
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getMyQnas(@PathVariable Long userId) {
+        List<Map<String, Object>> myQnas = qnaService.getMyQnas(userId);
+        return ResponseEntity.ok(myQnas);
     }
 }

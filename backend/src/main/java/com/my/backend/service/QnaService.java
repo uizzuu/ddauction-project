@@ -27,9 +27,7 @@ public class QnaService {
     private final ProductRepository productRepository;
     private final BoardRepository boardRepository;
 
-    // ============================
     // 질문 작성
-    // ============================
     @Transactional
     public Qna createQuestion(Long userId, Long productId, String title, String question) {
         User user = userRepository.findById(userId)
@@ -53,9 +51,7 @@ public class QnaService {
         return qnaRepository.save(qna);
     }
 
-    // ============================
     // 답변 작성 (관리자 또는 판매자만 가능)
-    // ============================
     @Transactional
     public QnaReview answerQuestion(Long qnaId, Long userId, String answer) {
         Qna qna = qnaRepository.findById(qnaId)
@@ -64,10 +60,7 @@ public class QnaService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 존재하지 않습니다."));
         Product product = qna.getProduct();
 
-        // 관리자 여부 확인
         boolean isAdmin = user.getRole() == Role.ADMIN;
-
-        // 판매자 여부 확인 (Product의 user가 판매자)
         boolean isSeller = product != null && product.getUser() != null &&
                 Objects.equals(product.getUser().getUserId(), userId);
 
@@ -84,9 +77,7 @@ public class QnaService {
         return qnaReviewRepository.save(review);
     }
 
-    // ============================
     // 상품별 질문 + 답변 조회
-    // ============================
     public List<Map<String, Object>> getQnaWithReviewsByProduct(Long productId) {
         List<Qna> qnaList = qnaRepository.findByProductProductId(productId);
         List<Map<String, Object>> result = new ArrayList<>();
@@ -118,12 +109,41 @@ public class QnaService {
         return result;
     }
 
-    // ============================
     // 질문별 답변 조회
-    // ============================
     public List<QnaReview> getReviewsByQna(Long qnaId) {
         Qna qna = qnaRepository.findById(qnaId)
                 .orElseThrow(() -> new IllegalArgumentException("질문이 존재하지 않습니다."));
         return qnaReviewRepository.findByQna(qna);
+    }
+
+    // 내 질문 + 답변 조회 (마이페이지용)
+    public List<Map<String, Object>> getMyQnas(Long userId) {
+        List<Qna> qnaList = qnaRepository.findByUserUserId(userId);
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Qna qna : qnaList) {
+            List<QnaReview> reviews = qnaReviewRepository.findByQna(qna);
+
+            List<Map<String, Object>> answerList = new ArrayList<>();
+            for (QnaReview r : reviews) {
+                Map<String, Object> answerMap = new HashMap<>();
+                answerMap.put("qnaReviewId", r.getQnaReviewId());
+                answerMap.put("answer", r.getAnswer());
+                answerMap.put("nickName", r.getQnaUser().getNickName());
+                answerMap.put("createdAt", r.getCreatedAt());
+                answerList.add(answerMap);
+            }
+
+            Map<String, Object> qnaMap = new HashMap<>();
+            qnaMap.put("qnaId", qna.getQnaId());
+            qnaMap.put("title", qna.getTitle());
+            qnaMap.put("question", qna.getQuestion());
+            qnaMap.put("createdAt", qna.getCreatedAt());
+            qnaMap.put("answers", answerList);
+
+            result.add(qnaMap);
+        }
+
+        return result;
     }
 }
