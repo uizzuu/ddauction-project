@@ -164,8 +164,8 @@ export default function ProductDetail() {
   // 질문 작성
   const handleCreateQuestion = async () => {
     if (!product) return alert("상품 정보가 없습니다.");
-    if (!newQuestion.title.trim() || !newQuestion.question.trim()) {
-      return alert("제목과 내용을 모두 입력해주세요.");
+    if (!newQuestion.question.trim()) {
+      return alert("질문 내용을 입력해주세요.");
     }
     try {
       const res = await fetch(`${API_BASE_URL}/api/qna`, {
@@ -174,13 +174,14 @@ export default function ProductDetail() {
         credentials: "include",
         body: JSON.stringify({
           productId: product.productId,
-          title: newQuestion.title,
+          title: newQuestion.title,  // 제목 추가
           question: newQuestion.question,
+          boardName: "qna",          // 고정
         }),
       });
       if (res.ok) {
         alert("질문이 등록되었습니다.");
-        setNewQuestion({ title: "", question: "" });
+        setNewQuestion({title: "", question: "" });
         fetchQnaList(product.productId);
       } else {
         const msg = await res.text();
@@ -532,15 +533,18 @@ export default function ProductDetail() {
       <div style={{ marginTop: 40 }}>
         <h3 style={{ fontSize: "1.1rem", fontWeight: "600" }}>💬 상품 Q&A</h3>
         <div style={{ backgroundColor: "#fff", padding: 16, borderRadius: 12, boxShadow: "0 1px 6px rgba(0,0,0,0.06)" }}>
+          {/* 제목 입력 */}
+          <input
+            type="text"
+            placeholder="질문 제목"
+            value={newQuestion.title}
+            onChange={(e) => setNewQuestion({ ...newQuestion, title: e.target.value })}
+            style={{ width: "100%", padding: 8, border: "1px solid #ccc", borderRadius: 6, marginBottom: 6 }}
+          />
+
+
           {/* 질문 작성 */}
           <div style={{ marginBottom: 20 }}>
-            <input
-              type="text"
-              placeholder="질문 제목"
-              value={newQuestion.title}
-              onChange={(e) => setNewQuestion({ ...newQuestion, title: e.target.value })}
-              style={{ width: "100%", padding: 10, marginBottom: 8, border: "1px solid #ccc", borderRadius: 6 }}
-            />
             <textarea
               placeholder="질문 내용"
               value={newQuestion.question}

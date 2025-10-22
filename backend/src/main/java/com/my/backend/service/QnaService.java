@@ -27,7 +27,7 @@ public class QnaService {
     private final ProductRepository productRepository;
     private final BoardRepository boardRepository;
 
-    // 질문 작성
+    // 질문 작성 (title은 프론트에서 입력한 값, boardName은 항상 "qna")
     @Transactional
     public Qna createQuestion(Long userId, Long productId, String title, String question) {
         User user = userRepository.findById(userId)
@@ -35,8 +35,9 @@ public class QnaService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품이 존재하지 않습니다."));
 
+        // board_name은 항상 "qna"
         Board board = Board.builder()
-                .boardName(title)
+                .boardName("qna")
                 .build();
         boardRepository.save(board);
 
@@ -44,7 +45,7 @@ public class QnaService {
                 .user(user)
                 .product(product)
                 .board(board)
-                .title(title)
+                .title(title)   // 프론트에서 보낸 제목 그대로
                 .question(question)
                 .build();
 
@@ -97,7 +98,7 @@ public class QnaService {
 
             Map<String, Object> qnaMap = new HashMap<>();
             qnaMap.put("qnaId", qna.getQnaId());
-            qnaMap.put("title", qna.getTitle());
+            qnaMap.put("title", qna.getTitle());  // 프론트 제목 그대로
             qnaMap.put("question", qna.getQuestion());
             qnaMap.put("createdAt", qna.getCreatedAt());
             qnaMap.put("nickName", qna.getUser().getNickName());

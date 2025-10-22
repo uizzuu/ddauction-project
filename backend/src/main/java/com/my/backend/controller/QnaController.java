@@ -26,8 +26,8 @@ public class QnaController {
         if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
 
         Long productId = Long.parseLong(body.get("productId"));
-        String title = body.get("title");
-        String question = body.get("question");
+        String title = body.get("title");        // 프론트에서 받은 제목
+        String question = body.get("question");  // 프론트에서 받은 질문 내용
 
         return ResponseEntity.ok(qnaService.createQuestion(userId, productId, title, question));
     }
