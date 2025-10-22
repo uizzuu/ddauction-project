@@ -36,7 +36,7 @@ export default function ArticleDetail({ user }: Props) {
   if (!article) return <div>로딩 중...</div>;
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div className="article-container">
       <h2>{article.title}</h2>
       <p>작성자: {article.nickName}</p>
       <p style={{ color: "#888" }}>

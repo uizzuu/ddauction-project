@@ -200,8 +200,8 @@ export default function ProductDetail() {
   const auctionStartingPrice = product.startingPrice ?? 0;
 
   return (
-    <div style={{ padding: "16px" }}>
-      <section style={{ display: "flex", gap: "24px", flexWrap: "wrap" }}>
+    <div className="content-wrapper">
+      <div>
         {/* 이미지 */}
         <div style={{ width: "220px", flexShrink: 0 }}>
           <div
@@ -340,10 +340,10 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* 입찰 그래프 */}
-      <section style={{ marginTop: "24px" }}>
+      <div style={{ marginTop: "24px" }}>
         <h3 style={{ fontSize: "1.2rem", fontWeight: "bold", marginBottom: "8px" }}>입찰 그래프</h3>
         <div
           style={{
@@ -363,7 +363,7 @@ export default function ProductDetail() {
             </LineChart>
           </ResponsiveContainer>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

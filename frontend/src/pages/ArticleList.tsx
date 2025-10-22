@@ -22,8 +22,8 @@ export default function ArticleList({ user }: Props) {
   if (loading) return <div>로딩 중...</div>;
 
   return (
-    <div style={{ padding: "2rem" }}>
-      <h2>게시판</h2>
+    <div className="article-container">
+      <h2 className="page-title">게시판</h2>
 
       {user && (
         <button
@@ -59,7 +59,13 @@ export default function ArticleList({ user }: Props) {
                 <td style={{ padding: "0.5rem", textAlign: "center" }}>
                   {article.nickName}
                 </td>
-                <td style={{ padding: "0.5rem", textAlign: "center", color: "#888" }}>
+                <td
+                  style={{
+                    padding: "0.5rem",
+                    textAlign: "center",
+                    color: "#888",
+                  }}
+                >
                   {new Date(article.createdAt).toLocaleDateString()}
                 </td>
               </tr>
