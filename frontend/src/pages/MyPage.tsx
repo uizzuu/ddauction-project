@@ -187,7 +187,7 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   return (
-    <div>
+    <div className="container">
       <button onClick={() => navigate("/")} style={buttonStyle}>
         메인으로
       </button>

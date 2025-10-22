@@ -69,11 +69,12 @@ export default function ProductSearchPage() {
     }
   }, [location.search]);
 
+  const query = new URLSearchParams();
+
   // 검색 버튼 클릭
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // URL을 바꾸면 useEffect에서 자동 검색
-    const query = new URLSearchParams();
     if (keyword) query.append("keyword", keyword.trim());
     if (categoryId) query.append("category", categoryId.toString());
 
@@ -82,7 +83,13 @@ export default function ProductSearchPage() {
 
   return (
     <div className="container">
-      <h1 className="page-title">상품 검색</h1>
+      <p className="page-title">
+        {keyword && `${keyword}`}{" "}
+        {categoryId
+          ? `(${categories.find((c) => c.categoryId === categoryId)?.name})`
+          : ""}{" "}
+        검색
+      </p>
 
       {/* 검색 폼 */}
       <form onSubmit={handleSearch} className="search-form">

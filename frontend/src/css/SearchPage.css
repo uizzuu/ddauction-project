@@ -28,7 +28,7 @@
 
 :is(.search-select, .search-input):focus {
   outline: 0;
-  border: 1px solid #b17576;
+  border-color: #b17576;
 }
 
 .no-content-text {

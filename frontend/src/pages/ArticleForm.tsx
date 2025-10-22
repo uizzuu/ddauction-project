@@ -69,7 +69,7 @@ export default function ArticleForm({ userId }: Props) {
 
       const articleData = {
         ...form,
-        userId, 
+        userId,
       };
 
       if (id) {
@@ -88,42 +88,50 @@ export default function ArticleForm({ userId }: Props) {
     }
   };
 
-  if (loading) return <div>로딩 중...</div>;
+  if (loading) return <div className="container">로딩 중...</div>;
 
   return (
-    <form onSubmit={handleSubmit} style={{ padding: "2rem" }}>
-      <input type="hidden" name="boardId" value={form.boardId} />
-      <input type="hidden" name="userId" value={userId ?? ""} />
+    <div className="container">
+      <form onSubmit={handleSubmit} className="flex-column article-form gap-24">
+        <input type="hidden" name="boardId" value={form.boardId} />
+        <input type="hidden" name="userId" value={userId ?? ""} />
 
-      <div style={{ marginTop: "1rem" }}>
-        <label htmlFor="title">제목</label>
-        <input
-          id="title"
-          name="title"
-          type="text"
-          value={form.title}
-          onChange={handleChange}
-          required
-          style={{ width: "100%" }}
-        />
-      </div>
+        <div>
+          <label htmlFor="title" className="article-label">
+            제목
+          </label>
+          <input
+            id="title"
+            name="title"
+            type="text"
+            value={form.title}
+            onChange={handleChange}
+            required
+            className="article-input"
+          />
+        </div>
 
-      <div style={{ marginTop: "1rem" }}>
-        <label htmlFor="content">내용</label>
-        <textarea
-          id="content"
-          name="content"
-          value={form.content}
-          onChange={handleChange}
-          required
-          rows={10}
-          style={{ width: "100%" }}
-        />
-      </div>
+        <div>
+          <label htmlFor="content" className="article-label">
+            내용
+          </label>
+          <textarea
+            id="content"
+            name="content"
+            value={form.content}
+            onChange={handleChange}
+            required
+            rows={10}
+            className="article-textarea"
+          />
+        </div>
 
-      <button type="submit" style={{ marginTop: "1.5rem" }}>
-        {id ? "수정하기" : "등록하기"}
-      </button>
-    </form>
+        <div className="btn-wrap">
+          <button type="submit" className="article-btn">
+            {id ? "수정하기" : "등록하기"}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 }

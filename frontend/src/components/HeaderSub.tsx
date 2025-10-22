@@ -33,7 +33,7 @@ export default function HeaderSub({ category, setCategory }: Props) {
   }, [setCategory]);
 
   return (
-    <header className="header header-line">
+    <header className="header header-line header-sub">
       <div className="header-content header-nav">
         <nav className="nav" style={{ position: "relative" }}>
           <button

@@ -114,7 +114,7 @@ export default function ProductRegister({ user }: Props) {
       <div className="register-box">
         <h2 className="register-title">물품 등록</h2>
 
-        <div className="form-group">
+        <div className="form-group register">
           <label className="label">제목 *</label>
           <input
             type="text"

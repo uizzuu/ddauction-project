@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, NavLink } from "react-router-dom";
 import {
   getArticleById,
   deleteArticle,
@@ -31,7 +31,7 @@ export default function ArticleDetail({ user }: Props) {
     if (!id) return;
     getArticleById(Number(id))
       .then(setArticle)
-      .catch(() => alert("게시글을 불러오지 못했습니다."));
+      .catch((err) => console.error("게시글 조회 실패:", err));
   }, [id]);
 
   // 댓글 목록 조회
@@ -39,7 +39,7 @@ export default function ArticleDetail({ user }: Props) {
     if (!id) return;
     getCommentsByArticleId(Number(id))
       .then(setComments)
-      .catch(() => alert("댓글을 불러오지 못했습니다."));
+      .catch((err) => console.error("댓글 조회 실패:", err));
   }, [id]);
 
   // 댓글 작성
@@ -132,95 +132,114 @@ export default function ArticleDetail({ user }: Props) {
 
   return (
     <div className="container">
-      <h2>{article.title}</h2>
-      <p>작성자: {article.nickName}</p>
-      <p style={{ color: "#888" }}>{new Date(article.createdAt).toLocaleString()}</p>
-
-      <div
-        style={{ marginTop: "1.5rem" }}
-        dangerouslySetInnerHTML={{ __html: article.content }}
-      />
-
-      {/* 게시글 수정/삭제 버튼 */}
-      {user?.userId === article.userId && (
-        <div style={{ marginTop: "2rem" }}>
-          <button onClick={() => navigate(`/articles/${article.articleId}/edit`)}>
-            수정
-          </button>
-          <button onClick={handleDelete} style={{ marginLeft: "1rem", color: "red" }}>
-            삭제
-          </button>
+      {/* 글 영역 */}
+      <div className="flex-column gap-12">
+        <h2>{article.title}</h2>
+        <div className="flex-column gap-4">
+          <p>작성자: {article.nickName}</p>
+          <p>{new Date(article.createdAt).toLocaleString()}</p>
         </div>
-      )}
+
+        <div
+          dangerouslySetInnerHTML={{ __html: article.content }}
+          className="article-content"
+        />
+
+        {/* 게시글 수정/삭제 버튼 */}
+        {user?.userId === article.userId && (
+          <div className="flex-box gap-4">
+            <button
+              onClick={() => navigate(`/articles/${article.articleId}/edit`)}
+              className="article-btn"
+            >
+              수정
+            </button>
+            <button onClick={handleDelete} className="article-btn">
+              삭제
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* 댓글 영역 */}
-      <div style={{ marginTop: "3rem" }}>
-        <h3>댓글</h3>
+      <div className="flex-column gap-18 review-box border-top">
+        <p className="review-title">{comments.length}개의 댓글</p>
 
         {comments.length === 0 && <p>댓글이 없습니다.</p>}
 
-        <ul>
-          {comments.map((comment) => {
-            // userId 값 콘솔 출력
-            console.log("user?.userId:", user?.userId, "comment.userId:", comment.userId);
-
-            return (
-              <li key={comment.commentId} style={{ marginBottom: "1rem" }}>
-                <strong>{comment.nickName}</strong>{" "}
+        <ul className="flex-column gap-18">
+          {comments.map((comment) => (
+            <li key={comment.commentId} className="flex-column gap-8">
+              <div className="flex-box gap-4">
+                <strong>{comment.nickName}</strong>
                 <span style={{ color: "#888", fontSize: "0.9rem" }}>
                   {new Date(comment.createdAt).toLocaleString()}
                 </span>
+              </div>
 
-                {editingCommentId === comment.commentId ? (
-                  <>
-                    <textarea
-                      value={editingContent}
-                      onChange={(e) => setEditingContent(e.target.value)}
-                      rows={3}
-                      style={{ width: "100%" }}
-                    />
-                    <button onClick={saveEditing}>저장</button>
-                    <button onClick={cancelEditing} style={{ marginLeft: "0.5rem" }}>
+              {editingCommentId === comment.commentId ? (
+                <div className="flex-column gap-8">
+                  <textarea
+                    value={editingContent}
+                    onChange={(e) => setEditingContent(e.target.value)}
+                    rows={3}
+                    className="article-textarea article-review-li"
+                  />
+                  <div className="flex-box gap-4">
+                    <button onClick={saveEditing} className="article-btn">
+                      저장
+                    </button>
+                    <button onClick={cancelEditing} className="article-btn">
                       취소
                     </button>
-                  </>
-                ) : (
-                  <>
-                    <p>{comment.content}</p>
-                    {/* 댓글 작성자만 수정/삭제 버튼 */}
-                    {user?.userId === comment.userId && (
-                      <>
-                        <button onClick={() => startEditing(comment)}>수정</button>
-                        <button
-                          onClick={() => handleCommentDelete(comment.commentId!)}
-                          style={{ marginLeft: "0.5rem", color: "red" }}
-                        >
-                          삭제
-                        </button>
-                      </>
-                    )}
-                  </>
-                )}
-              </li>
-            );
-          })}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p>{comment.content}</p>
+                  {user?.userId === comment.userId && (
+                    <div className="flex-box gap-4">
+                      <button
+                        onClick={() => startEditing(comment)}
+                        className="article-btn"
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => handleCommentDelete(comment.commentId!)}
+                        className="article-btn"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </li>
+          ))}
         </ul>
 
         {user ? (
-          <div style={{ marginTop: "1rem" }}>
+          <div className="flex-column gap-24 border-top">
+            <p className="reply-title">댓글쓰기</p>
             <textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
               rows={3}
               style={{ width: "100%" }}
               placeholder="댓글을 입력하세요."
+              className="article-textarea article-review"
             />
-            <button onClick={handleCommentSubmit} style={{ marginTop: "0.5rem" }}>
-              댓글 등록
-            </button>
+            <div className="btn-wrap">
+              <button onClick={handleCommentSubmit} className="article-btn">
+                댓글 등록
+              </button>
+            </div>
           </div>
         ) : (
-          <p>댓글을 작성하려면 로그인하세요.</p>
+          <p className="no-content-text">
+            댓글을 작성하려면 <NavLink to="/login">로그인</NavLink>하세요.
+          </p>
         )}
       </div>
     </div>

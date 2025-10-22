@@ -23,16 +23,18 @@ export default function ArticleList({ user }: Props) {
 
   return (
     <div className="container">
-      <h2 className="page-title">게시판</h2>
+      <div className="flex-box between">
+        <h2 className="page-title">게시판</h2>
 
-      {user && (
-        <button
-          onClick={() => navigate("/articles/new")}
-          style={{ marginBottom: "1rem" }}
-        >
-          글쓰기
-        </button>
-      )}
+        {user && (
+          <button
+            onClick={() => navigate("/articles/new")}
+            className="article-btn"
+          >
+            글쓰기
+          </button>
+        )}
+      </div>
 
       {articles.length === 0 ? (
         <p className="no-content-text">게시글이 없습니다.</p>

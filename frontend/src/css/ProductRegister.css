@@ -38,6 +38,10 @@
   margin-bottom: 20px;
 }
 
+.form-group.register {
+  width: 100%;
+}
+
 .label {
   color: #fff;
   font-size: 14px;

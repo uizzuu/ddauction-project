@@ -1,6 +1,9 @@
 /* Header 스타일 */
 .header {
   background-color: #fff;
+}
+
+.header-sub {
   position: sticky;
   top: 0;
   z-index: 100;
@@ -29,8 +32,9 @@
   gap: 8px;
   margin: 0;
   padding: 0;
-  max-height: 30px;
+  height: 100%;
   width: 100%;
+  position: relative;
 }
 
 .header-search :is(.search-input, .search-btn) {

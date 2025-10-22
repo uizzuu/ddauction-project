@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import type { User } from "../types/types";
 
@@ -59,21 +59,21 @@ export default function HeaderMain({ user, setUser }: Props) {
           {user ? (
             <>
               <span className="nav-link user-info">{user.nickName} 님</span>
-              <Link to="/myPage" className="nav-link">
+              <NavLink to="/myPage" className="nav-link">
                 마이페이지
-              </Link>
+              </NavLink>
               <button onClick={handleLogout} className="nav-link">
                 로그아웃
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="nav-link">
+              <NavLink to="/login" className="nav-link">
                 로그인
-              </Link>
-              <Link to="/signup" className="nav-link">
+              </NavLink>
+              <NavLink to="/signup" className="nav-link">
                 회원가입
-              </Link>
+              </NavLink>
             </>
           )}
         </nav>
