@@ -6,7 +6,7 @@
 
 .content-wrapper {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 2rem auto;
 }
 
 .page-title {
@@ -43,7 +43,7 @@
 .product-card:hover {
   transform: translateY(-5px);
   border-color: #b17576;
-  box-shadow: 0 10px 30px rgba(255, 204, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(175, 175, 175, 0.2);
 }
 
 .product-image {
