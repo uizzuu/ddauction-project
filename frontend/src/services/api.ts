@@ -8,6 +8,8 @@ import type {
   CreateProductRequest,
   ArticleDto,
   ArticleForm,
+  CommentDto,
+  CommentForm,
 } from "../types/types";
 
 const API_BASE = "/api";
@@ -130,7 +132,7 @@ export async function getCategories(): Promise<Category[]> {
   return data;
 }
 
-
+// ------------------- 게시글 API ------------------- //
 
 // 게시글 목록 조회
 export async function getArticles(): Promise<ArticleDto[]> {
@@ -175,3 +177,49 @@ export async function deleteArticle(id: number): Promise<void> {
   });
   if (!response.ok) throw new Error("게시글 삭제 실패");
 }
+// ------------------- 댓글 API ------------------- //
+
+// 게시글에 달린 댓글 목록 조회
+export async function getCommentsByArticleId(articleId: number): Promise<CommentDto[]> {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/articles/${articleId}/comments`);
+  if (!response.ok) throw new Error("댓글 목록 조회 실패");
+  return response.json();
+}
+
+// 댓글 생성
+export async function createComment(articleId: number, form: CommentForm): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/articles/${articleId}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(form),
+  });
+
+  if (!response.ok) {
+    throw new Error("댓글 등록 실패");
+  }
+}
+
+// 댓글 수정
+export async function updateComment(commentId: number, form: CommentForm): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/comments/${commentId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(form),
+  });
+
+  if (!response.ok) {
+    throw new Error("댓글 수정 실패");
+  }
+}
+
+// 댓글 삭제
+export async function deleteComment(commentId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/comments/${commentId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("댓글 삭제 실패");
+  }
+}
+

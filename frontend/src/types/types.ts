@@ -98,3 +98,18 @@ export interface ArticleForm {
   userId?: number;
 }
 
+export interface CommentDto {
+  commentId: number;
+  articleId: number;
+  userId: number;
+  nickName: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CommentForm {
+  content: string;
+}
+
+
