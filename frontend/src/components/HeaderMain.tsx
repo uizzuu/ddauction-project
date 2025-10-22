@@ -25,8 +25,8 @@ export default function HeaderMain({ user, setUser }: Props) {
   };
 
   return (
-    <header className="header bg-white shadow-md">
-      <div className="header-content flex items-center justify-between px-4 py-2">
+    <header className="header">
+      <div className="header-content">
         {/* 로고 */}
         <div onClick={() => navigate("/")} className="logo img-link cursor-pointer">
           <svg viewBox="0 0 127 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-32 h-auto">
@@ -38,40 +38,40 @@ export default function HeaderMain({ user, setUser }: Props) {
         </div>
 
         {/* 검색창 */}
-        <form onSubmit={handleSearch} className="search-form flex gap-2 flex-1 mx-4">
+        <form onSubmit={handleSearch} className="header-search">
           <input
             type="text"
             placeholder="검색어를 입력하세요"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            className="search-input border rounded-lg px-3 py-2 flex-1 focus:outline-none focus:ring-2 focus:ring-rose-400"
+            className="search-input"
           />
           <button
             type="submit"
-            className="search-button bg-rose-500 text-white px-4 py-2 rounded-lg hover:bg-rose-600 transition"
+            className="search-btn"
           >
             검색
           </button>
         </form>
 
         {/* 네비게이션 */}
-        <nav className="nav flex gap-4 items-center">
+        <nav className="nav">
           {user ? (
             <>
-              <span className="nav-link user-info font-medium">{user.nickName} 님</span>
-              <Link to="/myPage" className="nav-link text-rose-600 hover:underline">
+              <span className="nav-link user-info">{user.nickName} 님</span>
+              <Link to="/myPage" className="nav-link">
                 마이페이지
               </Link>
-              <button onClick={handleLogout} className="nav-link text-rose-600 hover:underline">
+              <button onClick={handleLogout} className="nav-link">
                 로그아웃
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="nav-link text-rose-600 hover:underline">
+              <Link to="/login" className="nav-link">
                 로그인
               </Link>
-              <Link to="/signup" className="nav-link text-rose-600 hover:underline">
+              <Link to="/signup" className="nav-link">
                 회원가입
               </Link>
             </>

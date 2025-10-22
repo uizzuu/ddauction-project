@@ -131,7 +131,7 @@ export default function ArticleDetail({ user }: Props) {
   if (!article) return <div>로딩 중...</div>;
 
   return (
-    <div className="article-container">
+    <div className="container">
       <h2>{article.title}</h2>
       <p>작성자: {article.nickName}</p>
       <p style={{ color: "#888" }}>{new Date(article.createdAt).toLocaleString()}</p>

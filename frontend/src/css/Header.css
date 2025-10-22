@@ -13,10 +13,41 @@
 .header-content {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px 0;
+  height: 70px;
+  box-sizing: border-box;
+  padding: 10px 0;
   display: flex;
   justify-content: space-between;
+  gap: 24px;
   align-items: center;
+}
+
+.header-search {
+  display: flex;
+  justify-content: left;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  max-height: 30px;
+  width: 100%;
+}
+
+.header-search :is(.search-input, .search-btn) {
+  width: 400px;
+  height: 40px;
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+.header-search .search-btn {
+  width: fit-content;
+  padding: 0 16px;
+}
+
+.header-search .search-btn:active {
+  color: #b17576;
+  border-color: #b17576;
 }
 
 .header-nav {
@@ -56,6 +87,7 @@
   font-weight: 500;
   transition: color 0.2s;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .nav-link.active {

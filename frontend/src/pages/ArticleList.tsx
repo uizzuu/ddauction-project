@@ -19,7 +19,7 @@ export default function ArticleList({ user }: Props) {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div>로딩 중...</div>;
+  if (loading) return <div className="container">로딩 중...</div>;
 
   return (
     <div className="container">

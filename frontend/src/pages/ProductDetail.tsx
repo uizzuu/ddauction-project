@@ -230,22 +230,11 @@ export default function ProductDetail() {
   const auctionStartingPrice = product.startingPrice ?? 0;
 
   return (
-    <div className="content-wrapper">
-      <div>
+    <div className="container">
+      <div className="flex-box">
         {/* 이미지 */}
-        <div style={{ width: "220px", flexShrink: 0 }}>
-          <div
-            style={{
-              width: "100%",
-              height: "220px",
-              overflow: "hidden",
-              borderRadius: "12px",
-              backgroundColor: "#f0f0f0",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
+        <div className="img-box">
+          <div>
             {product.imageUrl ? (
               <img
                 src={product.imageUrl}
@@ -253,10 +242,11 @@ export default function ProductDetail() {
                 style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
-              <div>이미지 없음</div>
+              <div className="no-img-txt">이미지 없음</div>
             )}
           </div>
         </div>
+        <div>
 
         {/* 상세 설명 */}
         <div style={{ flex: 1, minWidth: "300px", display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -316,7 +306,6 @@ export default function ProductDetail() {
             {product.description ?? product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
-
         {/* 입찰 박스 */}
         <div style={{ width: "260px", flexShrink: 0 }}>
           <div
@@ -369,6 +358,7 @@ export default function ProductDetail() {
               </button>
             </div>
           </div>
+        </div>
         </div>
       </div>
 

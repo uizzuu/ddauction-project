@@ -31,6 +31,37 @@ body {
   margin-bottom: 1rem;
 }
 
+.flex-box {
+  display: flex;
+  gap: 40px;
+}
+
+.img-box {
+  width: 400px;
+  height: 400px;
+
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+.img-box > div {
+  width: 100%;
+  height: 100%;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.no-img-txt {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #eee;
+}
+
 /* 공통 버튼 스타일 */
 button {
   font-family: inherit;
