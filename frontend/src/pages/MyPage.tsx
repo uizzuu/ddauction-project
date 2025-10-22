@@ -3,6 +3,15 @@ import { useNavigate } from "react-router-dom";
 import type { User, Product } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 
+// 신고 타입 정의
+type Report = {
+  reportId: number;
+  reporterId: number;
+  targetId: number;
+  reason: string;
+  status: boolean;
+};
+
 type Props = {
   user: User | null;
   setUser: (user: User | null) => void;
@@ -12,13 +21,17 @@ export default function MyPage({ user, setUser }: Props) {
   const [editing, setEditing] = useState(false);
   const [showSelling, setShowSelling] = useState(false);
   const [showBookmarks, setShowBookmarks] = useState(false);
+  const [showReports, setShowReports] = useState(false);
+
   const [form, setForm] = useState({
     nickName: user?.nickName || "",
     password: "",
     phone: "",
   });
+
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
   const [bookmarkedProducts, setBookmarkedProducts] = useState<Product[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [categories, setCategories] = useState<{ categoryId: number; name: string }[]>([]);
   const navigate = useNavigate();
 
@@ -117,7 +130,6 @@ export default function MyPage({ user, setUser }: Props) {
     setShowSelling(!showSelling);
   };
 
-  // 🔥 찜 목록 가져오기
   const handleFetchBookmarkedProducts = async () => {
     if (!showBookmarks) {
       try {
@@ -136,6 +148,26 @@ export default function MyPage({ user, setUser }: Props) {
       }
     }
     setShowBookmarks(!showBookmarks);
+  };
+
+  const handleFetchReports = async () => {
+    if (!showReports) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/reports/mypage`, {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data: Report[] = await res.json();
+          setReports(data);
+        } else {
+          alert("신고 내역 조회 실패");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("서버 오류");
+      }
+    }
+    setShowReports(!showReports);
   };
 
   const getCategoryName = (categoryId?: number) => {
@@ -161,6 +193,9 @@ export default function MyPage({ user, setUser }: Props) {
             </button>
             <button style={buttonStyle} onClick={handleFetchBookmarkedProducts}>
               찜 목록
+            </button>
+            <button style={buttonStyle} onClick={handleFetchReports}>
+              신고 내역
             </button>
           </div>
 
@@ -253,6 +288,25 @@ export default function MyPage({ user, setUser }: Props) {
                 )}
               </div>
             )}
+
+            {showReports && (
+              <div>
+                <h3>신고 내역</h3>
+                {reports.length === 0 ? (
+                  <p>신고한 내역이 없습니다.</p>
+                ) : (
+                  <ul>
+                    {reports.map((report) => (
+                      <li key={report.reportId} style={{ marginBottom: "10px" }}>
+                        <div>신고 대상 ID: {report.targetId}</div>
+                        <div>신고 사유: {report.reason}</div>
+                        <div>처리 상태: {report.status ? "완료" : "대기"}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -266,14 +320,8 @@ export default function MyPage({ user, setUser }: Props) {
           <button style={buttonStyle} onClick={() => alert("입찰 목록")}>
             입찰 목록
           </button>
-          <button style={buttonStyle} onClick={handleFetchBookmarkedProducts}>
-            찜 목록
-          </button>
           <button style={buttonStyle} onClick={() => alert("Q&A 목록")}>
             Q&A목록
-          </button>
-          <button style={buttonStyle} onClick={() => alert("신고 내역")}>
-            신고 내역
           </button>
           <button style={buttonStyle} onClick={() => alert("리뷰 목록")}>
             리뷰 목록

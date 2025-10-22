@@ -50,4 +50,15 @@ public class ReportController {
         reportService.updateReportStatus(reportId, status);
         return ResponseEntity.ok("신고 상태가 변경되었습니다.");
     }
+
+    // 🔥 마이페이지: 내가 신고한 내역 조회
+    @GetMapping("/mypage")
+    public ResponseEntity<?> getMyReports(HttpSession session) {
+        Long reporterId = (Long) session.getAttribute("userId");
+        if (reporterId == null) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+        List<ReportDto> reports = reportService.getReportsByReporter(reporterId);
+        return ResponseEntity.ok(reports);
+    }
 }

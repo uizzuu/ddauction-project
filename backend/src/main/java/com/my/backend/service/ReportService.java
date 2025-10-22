@@ -50,4 +50,12 @@ public class ReportService {
                 .orElseThrow(() -> new IllegalArgumentException("신고가 존재하지 않습니다."));
         report.setStatus(status);
     }
+
+    // 🔥 내가 신고한 목록 조회
+    public List<ReportDto> getReportsByReporter(Long reporterId) {
+        return reportRepository.findByReporterIdUserId(reporterId)
+                .stream()
+                .map(ReportDto::fromEntity)
+                .collect(Collectors.toList());
+    }
 }
