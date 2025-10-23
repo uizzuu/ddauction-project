@@ -13,6 +13,20 @@ spring:
       on-profile: common
 
 ---
+
+spring:
+  config:
+    activate:
+      on-profile: common
+  # 공통 데이터소스 설정 등...
+
+jwt:
+  secret: ${JWT_SECRET}                           # JWT 시크릿 값 (환경변수에서 읽음)
+  access-token-expire-length: 3600000             # 1시간 (밀리초)
+  refresh-token-expire-length: 86400000           # 1일 (밀리초)
+
+---
+
 spring:
   config:
     activate:
@@ -39,6 +53,7 @@ app:
   allowed-origins: http://localhost:3000,http://localhost,http://localhost:5173
 
 ---
+
 spring:
   config:
     activate:

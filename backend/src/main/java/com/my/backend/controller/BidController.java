@@ -1,4 +1,4 @@
-//package com.backend.controller;
+//package com.my.backend.controller;
 //
 //import com.my.backend.entity.Bid;
 //import com.my.backend.service.BidService;
@@ -32,15 +32,4 @@
 //        return bidService.createBid(bid);
 //    }
 //
-//    // 입찰 수정
-//    @PutMapping("/{id}")
-//    public Bid updateBid(@PathVariable Long id, @RequestBody Bid bid) {
-//        return bidService.updateBid(id, bid);
-//    }
-//
-//    // 입찰 삭제
-//    @DeleteMapping("/{id}")
-//    public void deleteBid(@PathVariable Long id) {
-//        bidService.deleteBid(id);
-//    }
 //}
