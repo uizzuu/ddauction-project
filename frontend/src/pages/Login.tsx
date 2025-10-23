@@ -34,7 +34,10 @@ export default function Login({ setUser }: Props) {
     return Object.values(newErrors).every((err) => !err);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    // 엔터나 버튼 클릭 시 새로고침 방지
+    if (e) e.preventDefault();
+
     if (!validateAll()) return;
 
     try {
@@ -42,6 +45,7 @@ export default function Login({ setUser }: Props) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
+        credentials: "include", // 쿠키 포함
       });
 
       if (response.ok) {
@@ -76,54 +80,69 @@ export default function Login({ setUser }: Props) {
           </svg>
         </h2>
 
-        <div className="form-group">
-          {/* 이메일 */}
-          <input
-            type="email"
-            placeholder="이메일"
-            value={form.email}
-            onChange={(e) => {
-              const val = e.target.value;
-              setForm((prev) => ({ ...prev, email: val }));
-              setErrors((prev) => ({
-                ...prev,
-                email: val && !isEmailValid(val) ? "올바른 이메일 형식이 아닙니다" : "",
-              }));
-            }}
-            className="input"
-          />
-          {errors.email && <p className="error-message">{errors.email}</p>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            {/* 이메일 */}
+            <input
+              type="email"
+              placeholder="이메일"
+              value={form.email}
+              onChange={(e) => {
+                const val = e.target.value;
+                setForm((prev) => ({ ...prev, email: val }));
+                setErrors((prev) => ({
+                  ...prev,
+                  email:
+                    val && !isEmailValid(val)
+                      ? "올바른 이메일 형식이 아닙니다"
+                      : "",
+                }));
+              }}
+              className="input"
+            />
+            {errors.email && <p className="error-message">{errors.email}</p>}
 
-          {/* 비밀번호 */}
-          <input
-            type="password"
-            placeholder="비밀번호"
-            value={form.password}
-            onChange={(e) => {
-              const val = e.target.value;
-              setForm((prev) => ({ ...prev, password: val }));
-              setErrors((prev) => ({
-                ...prev,
-                password:
-                  val && val.length < 8 ? "비밀번호는 8자리 이상이어야 합니다" : "",
-              }));
-            }}
-            className="input"
-          />
-          {errors.password && <p className="error-message">{errors.password}</p>}
-        </div>
+            {/* 비밀번호 */}
+            <input
+              type="password"
+              placeholder="비밀번호"
+              value={form.password}
+              onChange={(e) => {
+                const val = e.target.value;
+                setForm((prev) => ({ ...prev, password: val }));
+                setErrors((prev) => ({
+                  ...prev,
+                  password:
+                    val && val.length < 8
+                      ? "비밀번호는 8자리 이상이어야 합니다"
+                      : "",
+                }));
+              }}
+              className="input"
+            />
+            {errors.password && (
+              <p className="error-message">{errors.password}</p>
+            )}
+          </div>
 
-        {errors.submit && <p className="error-message">{errors.submit}</p>}
+          {errors.submit && <p className="error-message">{errors.submit}</p>}
 
-        <button onClick={handleSubmit} className="btn-submit">
-          로그인
-        </button>
+          <button type="submit" className="btn-submit">
+            로그인
+          </button>
+        </form>
 
         <div className="auth-links">
-          <button onClick={() => navigate("/find-id")} className="auth-link-btn">
+          <button
+            onClick={() => navigate("/find-id")}
+            className="auth-link-btn"
+          >
             아이디 찾기
           </button>
-          <button onClick={() => navigate("/find-password")} className="auth-link-btn">
+          <button
+            onClick={() => navigate("/find-password")}
+            className="auth-link-btn"
+          >
             비밀번호 찾기
           </button>
           <button onClick={() => navigate("/signup")} className="auth-link-btn">
