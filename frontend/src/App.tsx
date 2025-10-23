@@ -14,6 +14,7 @@ import {
   MyPage,
   ProductDetail,
   ArticleList,
+  AdminPage,
 } from "./import/import";
 import "./import/import.css";
 import type { User, Category } from "./types/types";
@@ -58,6 +59,10 @@ export default function App() {
         <Route path="/articles/:id/edit" element={<ArticleForm userId={user?.userId ?? null} />} />
         <Route path="/articles/:id" element={<ArticleDetail user={user} />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/admin" element={user?.role === "ADMIN" ? (<AdminPage user={user} />
+        ) : (<div style={{ padding: "20px" }}>
+          접근 권한이 없습니다. 관리자만 접근 가능합니다.
+        </div>)} />
       </Routes>
     </div>
   );

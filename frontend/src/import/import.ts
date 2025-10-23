@@ -11,6 +11,7 @@ import ProductRegister from "../pages/ProductRegister";
 import MyPage from "../pages/MyPage";
 import ProductDetail from "../pages/ProductDetail";
 import ArticleList from "../pages/ArticleList";
+import AdminPage from '../pages/AdminPage';
 
 export {
   HeaderMain,
@@ -23,4 +24,5 @@ export {
   MyPage,
   ProductDetail,
   ArticleList,
+  AdminPage
 };

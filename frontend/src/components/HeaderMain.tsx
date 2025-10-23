@@ -85,6 +85,16 @@ export default function HeaderMain({ user, setUser }: Props) {
               <NavLink to="/myPage" className="nav-link">
                 마이페이지
               </NavLink>
+              {/* 관리자 전용 버튼 */}
+              {user.role === "ADMIN" && (
+                <button
+                  onClick={() => navigate("/admin")}
+                  className="nav-link"
+                  style={{ background: "#000", color: "#fff", borderRadius: "4px", padding: "4px 8px" }}
+                >
+                  관리자 페이지
+                </button>
+              )}
               <button onClick={handleLogout} className="nav-link">
                 로그아웃
               </button>
