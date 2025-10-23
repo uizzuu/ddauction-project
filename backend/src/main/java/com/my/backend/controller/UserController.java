@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -95,5 +96,35 @@ public class UserController {
     @PostMapping("/logout")
     public void logout(HttpSession session) {
         session.invalidate();
+    }
+
+    // 회원 정지 (role → BANNED)
+    @PutMapping("/admin/{id}/ban")
+    public UserDto banUser(@PathVariable Long id) {
+        return userService.banUser(id);
+    }
+
+    // 회원 정지 해제 (role → USER)
+    @PutMapping("/admin/{id}/unban")
+    public UserDto unbanUser(@PathVariable Long id) {
+        return userService.unbanUser(id);
+    }
+
+    // 이메일 or 닉네임으로 검색
+    @GetMapping("/admin/search")
+    public List<UserDto> searchUsers(@RequestParam(required = false) String email,
+                                     @RequestParam(required = false) String nickName) {
+        return userService.searchUsers(email, nickName);
+    }
+
+    @GetMapping("/admin")
+    public List<UserDto> getAllUsersAdmin() {
+        return userService.getAllUsers();
+    }
+
+    @PutMapping("/{id}/role")
+    public UserDto updateUserRole(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String roleStr = body.get("role");
+        return userService.updateUserRole(id, roleStr);
     }
 }

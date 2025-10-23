@@ -3,6 +3,7 @@ package com.my.backend.repository;
 import com.my.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long> {
@@ -15,4 +16,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 닉네임 존재 확인
     boolean existsByNickName(String nickName);
+
+    // 이메일 포함 검색
+    List<User> findByEmailContaining(String email);
+
+    // 닉네임 포함 검색
+    List<User> findByNickNameContaining(String nickName);
+
+    // 이메일 + 닉네임 포함 검색
+    List<User> findByEmailContainingAndNickNameContaining(String email, String nickName);
 }

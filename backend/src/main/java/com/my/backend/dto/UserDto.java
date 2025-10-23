@@ -51,5 +51,3 @@ public class UserDto {
                 .build();
     }
 }
-
-//password추가
