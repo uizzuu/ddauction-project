@@ -58,4 +58,12 @@ public class ReportService {
                 .map(ReportDto::fromEntity)
                 .collect(Collectors.toList());
     }
+    // 관리자용 신고목록 조회
+    public List<ReportDto> getAllReports() {
+        return reportRepository.findAll()
+                .stream()
+                .map(ReportDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
 }

@@ -9,6 +9,14 @@ export default function AdminPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [stats, setStats] = useState<{ userCount?: number; productCount?: number; reportCount?: number }>({});
 
+  // 수정용 상태
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<{ nickName: string; password: string; phone: string }>({
+    nickName: "",
+    password: "",
+    phone: "",
+  });
+
   useEffect(() => {
     if (section === "user") fetchUsers();
     else if (section === "product") fetchProducts();
@@ -30,7 +38,7 @@ export default function AdminPage() {
   };
 
   const fetchReports = async () => {
-    const res = await fetch(`${API_BASE_URL}/admin/reports`);
+    const res = await fetch(`${API_BASE_URL}/api/reports/admin`);
     const data = await res.json();
     setReports(data);
   };
@@ -41,7 +49,7 @@ export default function AdminPage() {
     setStats(data);
   };
 
-  // --- Action: Role 변경 ---
+  // --- Actions ---
   const handleChangeRole = async (userId: number, newRole: User["role"]) => {
     await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
       method: "PUT",
@@ -56,9 +64,33 @@ export default function AdminPage() {
     fetchProducts();
   };
 
-  const handleProcessReport = async (reportId: number) => {
-    await fetch(`${API_BASE_URL}/admin/reports/${reportId}/process`, { method: "PUT" });
+  const handleUpdateReportStatus = async (reportId: number, status: boolean) => {
+    await fetch(`${API_BASE_URL}/api/reports/${reportId}/status?status=${status}`, { method: "PATCH" });
     fetchReports();
+  };
+
+  // --- 회원 수정 ---
+  const handleEditClick = (user: User) => {
+    setEditingUserId(user.userId);
+    setEditForm({
+      nickName: user.nickName || "",
+      password: "",
+      phone: user.phone || "",
+    });
+  };
+
+  const handleSaveClick = async (userId: number) => {
+    await fetch(`${API_BASE_URL}/api/users/${userId}/mypage`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editForm),
+    });
+    setEditingUserId(null);
+    fetchUsers();
+  };
+
+  const handleCancelClick = () => {
+    setEditingUserId(null);
   };
 
   return (
@@ -76,6 +108,7 @@ export default function AdminPage() {
 
       {/* 메인 컨텐츠 */}
       <main className="admin-main">
+        {/* 회원 관리 */}
         {section === "user" && (
           <div className="admin-section">
             <h3>회원 관리</h3>
@@ -86,7 +119,10 @@ export default function AdminPage() {
                   <th>이름</th>
                   <th>닉네임</th>
                   <th>이메일</th>
-                  <th>권한</th>
+                  <th>전화번호</th>
+                  <th>가입일</th>
+                  <th>최종수정일</th>
+                  <th>권한 / 수정</th>
                 </tr>
               </thead>
               <tbody>
@@ -94,17 +130,52 @@ export default function AdminPage() {
                   <tr key={u.userId}>
                     <td>{u.userId}</td>
                     <td>{u.userName}</td>
-                    <td>{u.nickName}</td>
+                    <td>
+                      {editingUserId === u.userId ? (
+                        <input
+                          value={editForm.nickName}
+                          onChange={e => setEditForm({ ...editForm, nickName: e.target.value })}
+                        />
+                      ) : (
+                        u.nickName
+                      )}
+                    </td>
                     <td>{u.email}</td>
                     <td>
-                      <select
-                        value={u.role}
-                        onChange={e => handleChangeRole(u.userId, e.target.value as User["role"])}
-                      >
-                        <option value="USER">USER</option>
-                        <option value="BANNED">BANNED</option>
-                        <option value="ADMIN">ADMIN</option>
-                      </select>
+                      {editingUserId === u.userId ? (
+                        <input
+                          value={editForm.phone}
+                          onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
+                        />
+                      ) : (
+                        u.phone
+                      )}
+                    </td>
+                    <td>{u.createdAt ? new Date(u.createdAt).toLocaleString() : "-"}</td>
+                    <td>{u.updatedAt ? new Date(u.updatedAt).toLocaleString() : "-"}</td>
+                    <td>
+                      {editingUserId === u.userId ? (
+                        <>
+                          <input
+                            type="password"
+                            placeholder="새 비밀번호"
+                            value={editForm.password}
+                            onChange={e => setEditForm({ ...editForm, password: e.target.value })}
+                          />
+                          <button onClick={() => handleSaveClick(u.userId)}>저장</button>
+                          <button onClick={handleCancelClick}>취소</button>
+                        </>
+                      ) : (
+                        <select
+                          value={u.role}
+                          onChange={e => handleChangeRole(u.userId, e.target.value as User["role"])}
+                        >
+                          <option value="USER">USER</option>
+                          <option value="BANNED">BANNED</option>
+                          <option value="ADMIN">ADMIN</option>
+                        </select>
+                      )}
+                      {!editingUserId && <button onClick={() => handleEditClick(u)}>수정</button>}
                     </td>
                   </tr>
                 ))}
@@ -113,6 +184,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* 상품 관리 */}
         {section === "product" && (
           <div className="admin-section">
             <h3>상품 관리</h3>
@@ -145,6 +217,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* 신고 관리 */}
         {section === "report" && (
           <div className="admin-section">
             <h3>신고 관리</h3>
@@ -168,9 +241,13 @@ export default function AdminPage() {
                     <td>{r.reason}</td>
                     <td>{r.status ? "처리 완료" : "보류 중"}</td>
                     <td>
-                      {!r.status && (
-                        <button className="process-btn" onClick={() => handleProcessReport(r.reportId)}>처리</button>
-                      )}
+                      <select
+                        defaultValue={r.status ? "true" : "false"}
+                        onChange={e => handleUpdateReportStatus(r.reportId, e.target.value === "true")}
+                      >
+                        <option value="false">보류</option>
+                        <option value="true">처리 완료</option>
+                      </select>
                     </td>
                   </tr>
                 ))}
@@ -179,6 +256,7 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* 통계 */}
         {section === "stats" && (
           <div className="admin-section">
             <h3>통계</h3>

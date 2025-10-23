@@ -4,6 +4,8 @@ export interface User {
   nickName: string;
   email?: string;
   phone?: string;
+  createdAt?: string;
+  updatedAt?: string;
   role?: "ADMIN" | "USER" | "BANNED";
 }
 

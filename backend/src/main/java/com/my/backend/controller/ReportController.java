@@ -61,4 +61,11 @@ public class ReportController {
         List<ReportDto> reports = reportService.getReportsByReporter(reporterId);
         return ResponseEntity.ok(reports);
     }
+
+    // 관리자용 전체 신고 조회
+    @GetMapping("/admin")
+    public ResponseEntity<?> getAllReports() {
+        List<ReportDto> reports = reportService.getAllReports();
+        return ResponseEntity.ok(reports);
+    }
 }
