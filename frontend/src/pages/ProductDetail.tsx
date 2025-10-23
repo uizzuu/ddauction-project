@@ -1,18 +1,10 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
 import type { Product, Bid, User, Category, Qna } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/date";
 import ProductQnA from "../components/ProductQnA";
+import ProductBidGraph from "../components/ProductBidGraph";
 
 type Props = {
   user: User | null;
@@ -272,7 +264,6 @@ export default function ProductDetail({ user, setUser }: Props) {
   const handleReport = async () => {
     if (!product) return;
 
-    // 로그인하지 않은 경우
     if (!user) {
       alert("로그인 후 신고할 수 있습니다.");
       return;
@@ -292,7 +283,6 @@ export default function ProductDetail({ user, setUser }: Props) {
         }),
       });
 
-      // 로그인 세션 만료 또는 권한 없음
       if (res.status === 401) {
         alert("로그인 후 신고할 수 있습니다.");
         return;
@@ -313,10 +303,6 @@ export default function ProductDetail({ user, setUser }: Props) {
   if (!product)
     return <div style={{ padding: "16px" }}>상품을 찾을 수 없습니다.</div>;
 
-  const graphData = (product.bids ?? []).map((b, i) => ({
-    name: `${i + 1}`,
-    price: b.price,
-  }));
   const auctionStartingPrice = product.startingPrice ?? 0;
 
   return (
@@ -336,181 +322,146 @@ export default function ProductDetail({ user, setUser }: Props) {
             )}
           </div>
         </div>
-        <div>
-          {/* 상세 설명 */}
+
+        {/* 상세 설명 */}
+        <div
+          style={{
+            flex: 1,
+            minWidth: "300px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <h2 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
+            {product.title}
+          </h2>
+
+          {/* 찜 + 신고 버튼 */}
           <div
             style={{
-              flex: 1,
-              minWidth: "300px",
               display: "flex",
-              flexDirection: "column",
               gap: "12px",
+              fontSize: "0.9rem",
+              color: "#555",
             }}
           >
-            <h2 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
-              {product.title}
-            </h2>
-
-            {/* 찜 + 신고 버튼 */}
-            <div
+            <button
+              onClick={handleToggleBookmark}
               style={{
-                display: "flex",
-                gap: "12px",
-                fontSize: "0.9rem",
-                color: "#555",
+                backgroundColor: isBookMarked ? "#ef4444" : "#fff",
+                color: isBookMarked ? "#fff" : "#ef4444",
+                border: "1px solid #ef4444",
+                borderRadius: "6px",
+                padding: "2px 8px",
+                cursor: "pointer",
+                fontSize: "0.8rem",
               }}
             >
-              <button
-                onClick={handleToggleBookmark}
+              💖 {bookmarkCount}
+            </button>
+            <button
+              style={{
+                backgroundColor: "#ef4444",
+                color: "#fff",
+                border: "none",
+                borderRadius: "6px",
+                padding: "2px 8px",
+                cursor: "pointer",
+                fontSize: "0.8rem",
+              }}
+              onClick={handleReport}
+            >
+              신고
+            </button>
+          </div>
+
+          <p>판매자: {sellerNickName}</p>
+          <p>카테고리: {product.categoryName ?? "없음"}</p>
+          <p style={{ color: "#555", fontSize: "0.9rem" }}>
+            등록시간:{" "}
+            {product.createdAt
+              ? formatDateTime(product.createdAt)
+              : "알 수 없음"}{" "}
+            <br />
+            남은시간: {remainingTime}
+          </p>
+
+          <p>경매등록가: {auctionStartingPrice.toLocaleString()}원</p>
+          <p>현재 최고 입찰가: {currentHighestBid.toLocaleString()}원</p>
+
+          <div
+            style={{
+              backgroundColor: "#f9f9f9",
+              padding: "8px",
+              borderRadius: "8px",
+              border: "1px solid #eee",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {product.description ?? product.content ?? "상세 설명이 없습니다."}
+          </div>
+        </div>
+
+        {/* 입찰 박스 */}
+        <div style={{ width: "260px", flexShrink: 0, }}>
+          <div
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: "12px",
+              padding: "12px",
+              boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-end",
+              gap: "8px",
+              height: "100%",
+            }}
+          >
+            <div style={{ marginBottom: "8px" }}>
+              {(product.bids ?? []).slice(0, 5).map((b, i) => (
+                <p key={b.bidId} style={{ margin: 0 }}>
+                  {i + 1}번 입찰가: {b.price.toLocaleString()}원
+                </p>
+              ))}
+              {(!product.bids || product.bids.length === 0) && (
+                <p style={{ margin: 0, color: "#888" }}>아직 입찰이 없습니다.</p>
+              )}
+            </div>
+
+            <div style={{ display: "flex", gap: "8px" }}>
+              <input
+                type="number"
+                value={bidValue}
+                onChange={(e) => setBidValue(e.target.value)}
+                placeholder="희망 입찰가"
                 style={{
-                  backgroundColor: isBookMarked ? "#ef4444" : "#fff",
-                  color: isBookMarked ? "#fff" : "#ef4444",
-                  border: "1px solid #ef4444",
+                  flex: 1,
+                  padding: "6px 8px",
                   borderRadius: "6px",
-                  padding: "2px 8px",
-                  cursor: "pointer",
-                  fontSize: "0.8rem",
+                  border: "1px solid #ccc",
                 }}
-              >
-                💖 {bookmarkCount}
-              </button>
+              />
               <button
+                onClick={handleBid}
                 style={{
+                  padding: "6px 12px",
                   backgroundColor: "#ef4444",
                   color: "#fff",
                   border: "none",
                   borderRadius: "6px",
-                  padding: "2px 8px",
                   cursor: "pointer",
-                  fontSize: "0.8rem",
                 }}
-                onClick={handleReport}
               >
-                신고
+                입찰
               </button>
             </div>
-
-            <p>판매자: {sellerNickName}</p>
-            <p>카테고리: {product.categoryName ?? "없음"}</p>
-            <p style={{ color: "#555", fontSize: "0.9rem" }}>
-              등록시간:{" "}
-              {product.createdAt
-                ? formatDateTime(product.createdAt)
-                : "알 수 없음"}{" "}
-              <br />
-              남은시간: {remainingTime}
-            </p>
-
-            <p>경매등록가: {auctionStartingPrice.toLocaleString()}원</p>
-            <p>현재 최고 입찰가: {currentHighestBid.toLocaleString()}원</p>
-
-            <div
-              style={{
-                backgroundColor: "#f9f9f9",
-                padding: "8px",
-                borderRadius: "8px",
-                border: "1px solid #eee",
-                whiteSpace: "pre-wrap",
-              }}
-            >
-              {product.description ??
-                product.content ??
-                "상세 설명이 없습니다."}
-            </div>
-          </div>
-          {/* 입찰 박스 */}
-          <div style={{ width: "260px", flexShrink: 0 }}>
-            <div
-              style={{
-                backgroundColor: "#fff",
-                borderRadius: "12px",
-                padding: "12px",
-                boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-              }}
-            >
-              <div style={{ marginBottom: "8px" }}>
-                {(product.bids ?? []).slice(0, 5).map((b, i) => (
-                  <p key={b.bidId} style={{ margin: 0 }}>
-                    {i + 1}번 입찰가: {b.price.toLocaleString()}원
-                  </p>
-                ))}
-                {(!product.bids || product.bids.length === 0) && (
-                  <p style={{ margin: 0, color: "#888" }}>
-                    아직 입찰이 없습니다.
-                  </p>
-                )}
-              </div>
-
-              <div style={{ display: "flex", gap: "8px" }}>
-                <input
-                  type="number"
-                  value={bidValue}
-                  onChange={(e) => setBidValue(e.target.value)}
-                  placeholder="희망 입찰가"
-                  style={{
-                    flex: 1,
-                    padding: "6px 8px",
-                    borderRadius: "6px",
-                    border: "1px solid #ccc",
-                  }}
-                />
-                <button
-                  onClick={handleBid}
-                  style={{
-                    padding: "6px 12px",
-                    backgroundColor: "#ef4444",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                  }}
-                >
-                  입찰
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* 입찰 그래프 */}
-      <div style={{ marginTop: "24px" }}>
-        <h3
-          style={{
-            fontSize: "1.2rem",
-            fontWeight: "bold",
-            marginBottom: "8px",
-          }}
-        >
-          입찰 그래프
-        </h3>
-        <div
-          style={{
-            backgroundColor: "#fff",
-            borderRadius: "12px",
-            padding: "12px",
-            boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
-          }}
-        >
-          <ResponsiveContainer width="100%" height={250}>
-            <LineChart data={graphData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="price"
-                stroke="#000"
-                strokeWidth={2}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      {/* 새로운 입찰 그래프 컴포넌트 사용 */}
+      <ProductBidGraph bids={product.bids ?? []} />
 
       <ProductQnA
         user={user}

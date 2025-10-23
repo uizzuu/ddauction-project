@@ -69,7 +69,13 @@ export default function ProductSearchPage() {
       const res = await fetch(url);
       if (!res.ok) throw new Error("상품 불러오기 실패");
       const data: Product[] = await res.json();
-      setProducts(data);
+      // 최신순 정렬
+      const sorted = data.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return dateB - dateA; // 최신순
+      });
+      setProducts(sorted);
     } catch (err) {
       console.error(err);
       setProducts([]);
