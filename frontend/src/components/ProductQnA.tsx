@@ -1,0 +1,473 @@
+import { useState, useEffect, useCallback } from "react";
+import type { User, Qna } from "../types/types";
+import { API_BASE_URL } from "../services/api";
+import { formatDateTime } from "../utils/date";
+
+type Props = {
+  user: User | null;
+  productId: number;
+  qnaList: Qna[];
+  setQnaList: (list: Qna[]) => void;
+};
+
+export default function ProductQnA({
+  user,
+  productId,
+  qnaList,
+  setQnaList,
+}: Props) {
+  const [newQuestion, setNewQuestion] = useState({ title: "", question: "" });
+  const [answers, setAnswers] = useState<{ [key: number]: string }>({});
+
+  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(
+    null
+  );
+  const [editingQuestion, setEditingQuestion] = useState<{
+    title: string;
+    question: string;
+  }>({ title: "", question: "" });
+
+  const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
+  const [editingAnswerContent, setEditingAnswerContent] = useState("");
+
+  const [openQnaIds, setOpenQnaIds] = useState<number[]>([]);
+  //   const [openAnswerQnaId, setOpenAnswerQnaId] = useState<number | null>(null);
+
+  const fetchQnaList = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/qna/product/${productId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setQnaList(data);
+      } else {
+        setQnaList([]);
+      }
+    } catch {
+      setQnaList([]);
+    }
+  }, [productId, setQnaList]);
+
+  useEffect(() => {
+    if (productId) fetchQnaList();
+  }, [productId, fetchQnaList]);
+
+  // 질문 등록
+  const handleCreateQuestion = async () => {
+    if (!newQuestion.question.trim()) return alert("질문 내용을 입력해주세요.");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/qna`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ productId, ...newQuestion, boardName: "qna" }),
+      });
+      if (res.ok) {
+        setNewQuestion({ title: "", question: "" });
+        fetchQnaList();
+      } else {
+        const msg = await res.text();
+        alert("질문 등록 실패: " + msg);
+      }
+    } catch {
+      alert("질문 등록 중 오류 발생");
+    }
+  };
+
+  // 질문 삭제
+  const handleQuestionDelete = async (qnaId: number) => {
+    if (!window.confirm("질문을 삭제하시겠습니까?")) return;
+    try {
+      await fetch(`${API_BASE_URL}/api/qna/${qnaId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      fetchQnaList();
+    } catch {
+      alert("질문 삭제 실패");
+    }
+  };
+
+  // 질문 수정 저장
+  const saveEditingQuestion = async (qnaId: number) => {
+    if (!editingQuestion.title.trim() || !editingQuestion.question.trim())
+      return alert("내용을 입력해주세요.");
+    try {
+      await fetch(`${API_BASE_URL}/api/qna/${qnaId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(editingQuestion),
+      });
+      setEditingQuestionId(null);
+      setEditingQuestion({ title: "", question: "" });
+      fetchQnaList();
+    } catch {
+      alert("질문 수정 실패");
+    }
+  };
+
+  // 토글 버튼
+  const toggleQna = (qnaId: number) => {
+    setOpenQnaIds((prev) =>
+      prev.includes(qnaId)
+        ? prev.filter((id) => id !== qnaId)
+        : [...prev, qnaId]
+    );
+  };
+
+  // 토글 버튼 (답변창)
+  //   const toggleAnswerBox = (qnaId: number) => {
+  //     setOpenAnswerQnaId((prev) => (prev === qnaId ? null : qnaId));
+  //   };
+
+  // 답변 권한 확인 함수
+  const canAnswer = (qna: Qna) => {
+    return user?.role === "ADMIN" || user?.userId === qna.userId;
+  };
+
+  // 답변 수정 시작
+  const startEditingAnswer = (answerId: number, content: string) => {
+    setEditingAnswerId(answerId);
+    setEditingAnswerContent(content);
+  };
+
+  // 답변 수정 저장
+  const saveEditingAnswer = async (answerId: number) => {
+    if (!editingAnswerContent.trim()) return alert("내용을 입력해주세요.");
+    try {
+      await fetch(`${API_BASE_URL}/api/qna/${answerId}/review`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ answer: editingAnswerContent }),
+      });
+      setEditingAnswerId(null);
+      setEditingAnswerContent("");
+      fetchQnaList();
+    } catch {
+      alert("답변 수정 실패");
+    }
+  };
+
+  // 답변 삭제
+  const handleAnswerDelete = async (answerId: number) => {
+    if (!window.confirm("답변을 삭제하시겠습니까?")) return;
+    try {
+      await fetch(`${API_BASE_URL}/api/qna/${answerId}/review`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      fetchQnaList();
+    } catch {
+      alert("답변 삭제 실패");
+    }
+  };
+
+  // 답변 등록
+  const handleAnswerSubmit = async (qnaId: number) => {
+    const answer = answers[qnaId];
+    if (!answer?.trim()) return alert("답변 내용을 입력해주세요.");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/qna/${qnaId}/review`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ answer }),
+      });
+      if (res.ok) {
+        setAnswers((prev) => ({ ...prev, [qnaId]: "" }));
+        fetchQnaList();
+      } else {
+        const msg = await res.text();
+        alert("답변 등록 실패: " + msg);
+      }
+    } catch {
+      alert("답변 등록 중 오류 발생");
+    }
+  };
+
+  return (
+    <div style={{ marginTop: 40 }}>
+      <h3 style={{ fontSize: "1.1rem", fontWeight: "600" }}>💬 상품 Q&A</h3>
+      <div
+        style={{
+          backgroundColor: "#fff",
+          padding: 16,
+          borderRadius: 12,
+          boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
+        }}
+      >
+        {/* 질문 작성 */}
+        <div className="flex-column gap-8">
+          <input
+            type="text"
+            placeholder="질문 제목"
+            value={newQuestion.title}
+            onChange={(e) =>
+              setNewQuestion({ ...newQuestion, title: e.target.value })
+            }
+            className="article-input article-review"
+          />
+          <textarea
+            placeholder="질문 내용"
+            value={newQuestion.question}
+            onChange={(e) =>
+              setNewQuestion({ ...newQuestion, question: e.target.value })
+            }
+            className="article-textarea article-review"
+          />
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button onClick={handleCreateQuestion} className="article-btn">
+              질문 등록
+            </button>
+          </div>
+        </div>
+
+        {/* 질문 목록 */}
+        {qnaList.length === 0 ? (
+          <p style={{ color: "#888" }}>아직 등록된 질문이 없습니다.</p>
+        ) : (
+          qnaList.map((q) => (
+            <div
+              key={q.qnaId}
+              style={{
+                borderTop: "1px solid #eee",
+                paddingTop: 12,
+                marginTop: 12,
+                paddingLeft: 8,
+              }}
+              className="position-rl"
+            >
+              {/* 질문 제목 + 토글 버튼 */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <p className="product-text-sm-bold">{q.title}</p>
+                <button
+                  onClick={() => toggleQna(q.qnaId)}
+                  className="position-ab"
+                >
+                  <span
+                    className={`custom-select-arrow ${
+                      openQnaIds.includes(q.qnaId) ? "open" : ""
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* 토글 열렸을 때만 전체 내용 렌더링 */}
+              {openQnaIds.includes(q.qnaId) && (
+                <div className="flex-column gap-4" style={{ marginTop: 8 }}>
+                  {/* 질문 수정 모드 */}
+                  {editingQuestionId === q.qnaId ? (
+                    <div className="flex-column gap-8">
+                      <input
+                        type="text"
+                        value={editingQuestion.title}
+                        onChange={(e) =>
+                          setEditingQuestion({
+                            ...editingQuestion,
+                            title: e.target.value,
+                          })
+                        }
+                        className="article-input article-review"
+                      />
+                      <textarea
+                        value={editingQuestion.question}
+                        onChange={(e) =>
+                          setEditingQuestion({
+                            ...editingQuestion,
+                            question: e.target.value,
+                          })
+                        }
+                        className="article-textarea article-review"
+                      />
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button
+                          onClick={() => saveEditingQuestion(q.qnaId)}
+                          className="article-btn"
+                        >
+                          저장
+                        </button>
+                        <button
+                          onClick={() => setEditingQuestionId(null)}
+                          className="article-btn"
+                        >
+                          취소
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex-column gap-4">
+                      <p className="product-text-sm after-wrap">
+                        <span className="after">{q.nickName}</span>
+                        <span className="after">
+                          {q.createdAt
+                            ? formatDateTime(q.createdAt)
+                            : "작성일 없음"}
+                        </span>
+                      </p>
+                      <p className="product-text-sm-333">{q.question}</p>
+
+                      {/* 질문 수정/삭제 버튼 */}
+                      {user?.userId === q.userId && (
+                        <div
+                          style={{ display: "flex", gap: 8, marginBottom: 6 }}
+                        >
+                          <button
+                            onClick={() => {
+                              setEditingQuestionId(q.qnaId);
+                              setEditingQuestion({
+                                title: q.title,
+                                question: q.question,
+                              });
+                            }}
+                            className="article-btn"
+                          >
+                            수정
+                          </button>
+                          <button
+                            onClick={() => handleQuestionDelete(q.qnaId)}
+                            className="article-btn"
+                          >
+                            삭제
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 답변 목록 */}
+                  {q.answers?.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: 8,
+                        paddingLeft: 12,
+                        borderLeft: "3px solid #b17576",
+                      }}
+                    >
+                      {q.answers.map((a) => (
+                        <div key={a.qnaReviewId} style={{ marginBottom: 8 }}>
+                          {editingAnswerId === a.qnaReviewId ? (
+                            <div>
+                              <textarea
+                                value={editingAnswerContent}
+                                onChange={(e) =>
+                                  setEditingAnswerContent(e.target.value)
+                                }
+                                className="article-textarea article-review"
+                              />
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: 8,
+                                  marginTop: 4,
+                                }}
+                              >
+                                <button
+                                  onClick={() =>
+                                    saveEditingAnswer(a.qnaReviewId)
+                                  }
+                                  className="article-btn"
+                                >
+                                  저장
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingAnswerId(null);
+                                    setEditingAnswerContent("");
+                                  }}
+                                  className="article-btn"
+                                >
+                                  취소
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <p style={{ margin: "4px 0" }}>{a.answer}</p>
+                              <p
+                                style={{
+                                  fontSize: "0.8rem",
+                                  color: "#777",
+                                  margin: 0,
+                                }}
+                              >
+                                답변자: {a.nickName} |{" "}
+                                {a.createdAt ? formatDateTime(a.createdAt) : ""}
+                              </p>
+                              {user?.role === "ADMIN" && (
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    gap: 6,
+                                    marginTop: 4,
+                                  }}
+                                >
+                                  <button
+                                    onClick={() =>
+                                      startEditingAnswer(
+                                        a.qnaReviewId,
+                                        a.answer
+                                      )
+                                    }
+                                    className="article-btn"
+                                  >
+                                    수정
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleAnswerDelete(a.qnaReviewId)
+                                    }
+                                    className="article-btn"
+                                  >
+                                    삭제
+                                  </button>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 답변 입력 */}
+                  {canAnswer(q) && (
+                    <div className="flex-column gap-8" style={{ marginTop: 8 }}>
+                      <textarea
+                        placeholder="답변 입력"
+                        value={answers[q.qnaId] || ""}
+                        onChange={(e) =>
+                          setAnswers({
+                            ...answers,
+                            [q.qnaId]: e.target.value,
+                          })
+                        }
+                        className="article-textarea article-review"
+                      />
+                      <div
+                        style={{ display: "flex", justifyContent: "flex-end" }}
+                      >
+                        <button
+                          onClick={() => handleAnswerSubmit(q.qnaId)}
+                          className="article-btn"
+                        >
+                          답변 등록
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}

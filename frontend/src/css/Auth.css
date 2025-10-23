@@ -86,10 +86,6 @@
   margin-top: 25px;
 }
 
-.auth-link-btn:last-of-type::after {
-  content: none;
-}
-
 .auth-link-btn {
   background: none;
   border: none;
@@ -108,6 +104,10 @@
   height: 14px;
   width: 1px;
   background: #ddd;
+}
+
+.auth-link-btn:last-of-type::after {
+  content: none;
 }
 
 .auth-link-btn:hover {

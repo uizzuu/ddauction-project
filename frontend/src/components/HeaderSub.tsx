@@ -68,8 +68,8 @@ export default function HeaderSub({ category, setCategory }: Props) {
           <NavLink to="/" className="nav-link">
             홈
           </NavLink>
-          <NavLink to="/auction" className="nav-link">
-            경매목록
+          <NavLink to="/search" className="nav-link">
+            통합검색
           </NavLink>
           <NavLink to="/register" className="nav-link">
             상품등록
@@ -77,8 +77,8 @@ export default function HeaderSub({ category, setCategory }: Props) {
           <NavLink to="/community" className="nav-link">
             커뮤니티
           </NavLink>
-          <NavLink to="/search" className="nav-link">
-            통합검색
+          <NavLink to="/auction" className="nav-link test">
+            경매목록
           </NavLink>
         </nav>
       </div>

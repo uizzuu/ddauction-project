@@ -90,7 +90,7 @@ export default function ProductRegister({ user }: Props) {
 
       if (response.ok) {
         alert("물품 등록 성공!");
-        navigate("/auction");
+        navigate("/search");
       } else {
         const text = await response.text();
         console.log(text);

@@ -1,5 +1,6 @@
 .loading-container,
 .empty-state {
+  max-width: 1200px;
   min-height: 50vh;
   display: flex;
   justify-content: center;
@@ -11,7 +12,11 @@
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 25px;
+  gap: 20px;
+}
+
+.product-area .product-grid {
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
 }
 
 .product-card {
@@ -65,12 +70,28 @@
   font-size: 18px;
   font-weight: 600;
   color: #333;
+  white-space: nowrap;
+}
+
+.product-text-sm-bold {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+}
+
+.product-text-sm-333 {
+  font-size: 16px;
+  font-weight: 400;
+  color: #333;
+  white-space: nowrap;
 }
 
 .product-text-sm {
   font-size: 16px;
   font-weight: 400;
   color: #777;
+  white-space: nowrap;
 }
 
 .btn-bid {
@@ -86,7 +107,7 @@
   font-weight: 400;
   white-space: nowrap;
 
-  margin-top: 10px;
+  margin-top: 15px;
 }
 
 .btn-bid:hover {

@@ -102,6 +102,7 @@ public class QnaService {
             qnaMap.put("question", qna.getQuestion());
             qnaMap.put("createdAt", qna.getCreatedAt());
             qnaMap.put("nickName", qna.getUser().getNickName());
+            qnaMap.put("userId", qna.getUser().getUserId());
             qnaMap.put("answers", answerList);
 
             result.add(qnaMap);

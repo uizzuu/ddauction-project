@@ -9,16 +9,10 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type {
-  Product,
-  Bid,
-  User,
-  Category,
-  Qna,
-  QnaAnswer,
-} from "../types/types";
+import type { Product, Bid, User, Category, Qna } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/date";
+import ProductQnA from "../components/ProductQnA";
 
 type Props = {
   user: User | null;
@@ -39,8 +33,6 @@ export default function ProductDetail({ user, setUser }: Props) {
 
   // QnA 관련 state
   const [qnaList, setQnaList] = useState<Qna[]>([]);
-  const [newQuestion, setNewQuestion] = useState({ title: "", question: "" });
-  const [answers, setAnswers] = useState<{ [key: number]: string }>({});
 
   // 남은 시간 계산
   const calculateRemainingTime = (endTime: string) => {
@@ -142,11 +134,6 @@ export default function ProductDetail({ user, setUser }: Props) {
         } catch {
           console.warn("찜 여부 조회 실패");
         }
-
-        // QnA 목록
-        if (data.productId) {
-          await fetchQnaList(data.productId);
-        }
       } catch (err) {
         console.error(err);
         setSellerNickName("알 수 없음");
@@ -164,79 +151,6 @@ export default function ProductDetail({ user, setUser }: Props) {
     }, 1000);
     return () => clearInterval(interval);
   }, [product]);
-
-  // QnA 목록 불러오기
-  const fetchQnaList = async (productId: number) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/qna/product/${productId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setQnaList(data);
-      } else {
-        setQnaList([]);
-      }
-    } catch (err) {
-      console.error("QnA 불러오기 실패:", err);
-      setQnaList([]);
-    }
-  };
-
-  // 질문 작성
-  const handleCreateQuestion = async () => {
-    if (!product) return alert("상품 정보가 없습니다.");
-    if (!newQuestion.question.trim()) {
-      return alert("질문 내용을 입력해주세요.");
-    }
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/qna`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          productId: product.productId,
-          title: newQuestion.title, // 제목 추가
-          question: newQuestion.question,
-          boardName: "qna", // 고정
-        }),
-      });
-      if (res.ok) {
-        alert("질문이 등록되었습니다.");
-        setNewQuestion({ title: "", question: "" });
-        fetchQnaList(product.productId);
-      } else {
-        const msg = await res.text();
-        alert("질문 등록 실패: " + msg);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("질문 등록 중 오류 발생");
-    }
-  };
-
-  // 답변 작성
-  const handleAnswerSubmit = async (qnaId: number) => {
-    const answer = answers[qnaId];
-    if (!answer?.trim()) return alert("답변 내용을 입력해주세요.");
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/qna/${qnaId}/review`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ answer }),
-      });
-      if (res.ok) {
-        alert("답변이 등록되었습니다.");
-        setAnswers((prev) => ({ ...prev, [qnaId]: "" }));
-        if (product) fetchQnaList(product.productId);
-      } else {
-        const msg = await res.text();
-        alert("답변 등록 실패: " + msg);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("답변 등록 중 오류 발생");
-    }
-  };
 
   // 입찰 처리
   const handleBid = async () => {
@@ -573,134 +487,12 @@ export default function ProductDetail({ user, setUser }: Props) {
         </div>
       </div>
 
-      {/* QnA 섹션 */}
-      <div style={{ marginTop: 40 }}>
-        <h3 style={{ fontSize: "1.1rem", fontWeight: "600" }}>💬 상품 Q&A</h3>
-        <div
-          style={{
-            backgroundColor: "#fff",
-            padding: 16,
-            borderRadius: 12,
-            boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
-          }}
-        >
-          {/* 질문 작성 */}
-          <div className="flex-column gap-8">
-            <input
-              type="text"
-              placeholder="질문 제목"
-              value={newQuestion.title}
-              onChange={(e) =>
-                setNewQuestion({ ...newQuestion, title: e.target.value })
-              }
-              className="article-input article-review"
-            />
-            <textarea
-              placeholder="질문 내용"
-              value={newQuestion.question}
-              onChange={(e) =>
-                setNewQuestion({ ...newQuestion, question: e.target.value })
-              }
-              className="article-textarea article-review"
-            />
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button onClick={handleCreateQuestion} className="article-btn">
-                질문 등록
-              </button>
-            </div>
-          </div>
-
-          {/* 질문 목록 */}
-          {qnaList.length === 0 ? (
-            <p style={{ color: "#888" }}>아직 등록된 질문이 없습니다.</p>
-          ) : (
-            qnaList.map((q) => (
-              <div
-                key={q.qnaId}
-                style={{
-                  borderTop: "1px solid #eee",
-                  paddingTop: 12,
-                  marginTop: 12,
-                }}
-              >
-                <p style={{ fontWeight: 600, marginBottom: 6 }}>{q.title}</p>
-                <p style={{ margin: "6px 0", whiteSpace: "pre-wrap" }}>
-                  {q.question}
-                </p>
-                <p
-                  style={{
-                    fontSize: "0.85rem",
-                    color: "#777",
-                    margin: "6px 0",
-                  }}
-                >
-                  작성자: {q.nickName} |{" "}
-                  {q.createdAt ? formatDateTime(q.createdAt) : ""}
-                </p>
-
-                {/* 답변 목록 */}
-                {q.answers?.length > 0 && (
-                  <div
-                    style={{
-                      marginTop: 8,
-                      paddingLeft: 12,
-                      borderLeft: "3px solid #ef4444",
-                    }}
-                  >
-                    {q.answers.map((a: QnaAnswer) => (
-                      <div key={a.qnaReviewId} style={{ marginBottom: 8 }}>
-                        <p style={{ margin: "4px 0" }}>💬 {a.answer}</p>
-                        <p
-                          style={{
-                            fontSize: "0.8rem",
-                            color: "#777",
-                            margin: 0,
-                          }}
-                        >
-                          답변자: {a.nickName} |{" "}
-                          {a.createdAt ? formatDateTime(a.createdAt) : ""}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* 답변 입력 — 관리자만 보이게 */}
-                {user?.role === "ADMIN" && (
-                  <div style={{ marginTop: 8 }}>
-                    <textarea
-                      placeholder="답변 입력 (관리자 전용)"
-                      value={answers[q.qnaId] || ""}
-                      onChange={(e) =>
-                        setAnswers({ ...answers, [q.qnaId]: e.target.value })
-                      }
-                      className="article-textarea article-review"
-                    />
-                    <div
-                      style={{ display: "flex", justifyContent: "flex-end" }}
-                    >
-                      <button
-                        onClick={() => handleAnswerSubmit(q.qnaId)}
-                        style={{
-                          marginTop: 6,
-                          backgroundColor: "#555",
-                          color: "#fff",
-                          border: "none",
-                          padding: "6px 12px",
-                          borderRadius: 6,
-                          cursor: "pointer",
-                        }}
-                      >
-                        답변 등록
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+      <ProductQnA
+        user={user}
+        productId={product.productId}
+        qnaList={qnaList}
+        setQnaList={setQnaList}
+      />
     </div>
   );
 }

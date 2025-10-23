@@ -104,6 +104,18 @@
   gap: 12px;
 }
 
+.flex-box.gap-16 {
+  gap: 16px;
+}
+
+.flex-box.gap-24 {
+  gap: 24px;
+}
+
+.flex-box.gap-36 {
+  gap: 36px;
+}
+
 .flex-box.between {
   justify-content: space-between;
 }

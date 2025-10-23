@@ -59,7 +59,11 @@ export default function ProductSearchPage() {
         const query = new URLSearchParams();
         if (kw) query.append("keyword", kw);
         if (cat) query.append("category", cat.toString());
+        query.append("sort", "latest"); // 최신순 정렬
         url = `${API_BASE_URL}/api/products/search?${query.toString()}`;
+      } else {
+        // 검색어와 카테고리가 없을 때도 최신순
+        url += "?sort=latest";
       }
 
       const res = await fetch(url);
@@ -87,6 +91,19 @@ export default function ProductSearchPage() {
     fetchProducts(kw, catId ? Number(catId) : "");
   }, [location.search]);
 
+  // categoryId가 바뀌면 URL 갱신 → useEffect에서 자동 검색
+  useEffect(() => {
+    const query = new URLSearchParams();
+    if (keyword) query.append("keyword", keyword.trim());
+    if (categoryId) query.append("category", categoryId.toString());
+
+    // 현재 URL과 다르면 navigate
+    const newSearch = query.toString();
+    if (newSearch !== location.search.replace(/^\?/, "")) {
+      navigate(`/search?${newSearch}`);
+    }
+  }, [categoryId, keyword, location.search, navigate]);
+
   // 체크박스 클릭 시 검색 업데이트
   const handleCategoryChange = (id: number) => {
     const newCat = categoryId === id ? "" : id;
@@ -110,7 +127,9 @@ export default function ProductSearchPage() {
         {keyword || categoryId
           ? `${keyword ? `${keyword} ` : ""}${
               categoryId
-                ? `${categories.find((c) => c.categoryId === categoryId)?.name} `
+                ? `${
+                    categories.find((c) => c.categoryId === categoryId)?.name
+                  } `
                 : ""
             }검색`
           : "전체 검색"}
@@ -138,7 +157,7 @@ export default function ProductSearchPage() {
           검색
         </button>
       </form>
-      <div className="search-page flex-box gap-12">
+      <div className="search-page flex-box gap-36">
         <div className="category-sidebar">
           <div className="category-checkbox-group flex-column gap-4">
             {categories.map((c) => (
@@ -181,11 +200,12 @@ export default function ProductSearchPage() {
                     <h3 className="product-title">{p.title}</h3>
                     <div>
                       <div className="flex-box gap-8">
-                        <p className="product-text-sm">등록시간</p>
+                        <p className="product-text-sm">경매 등록가</p>
                         <p className="product-text-lg">
                           {formatPrice(p.startingPrice || p.price)}
                         </p>
                       </div>
+
                       {p.auctionEndTime && (
                         <>
                           <div className="flex-box gap-8">
