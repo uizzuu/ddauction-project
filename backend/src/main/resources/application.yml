@@ -30,6 +30,10 @@ spring:
       hibernate:
         show_sql: true
         format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
+  jackson:
+    time-zone: Asia/Seoul
 
 app:
   allowed-origins: http://localhost:3000,http://localhost,http://localhost:5173
@@ -51,6 +55,10 @@ spring:
     properties:
       hibernate:
         show_sql: false
+        jdbc:
+          time_zone: Asia/Seoul
+  jackson:
+    time-zone: Asia/Seoul
 
 app:
   allowed-origins: ${ALLOWED_ORIGINS}
