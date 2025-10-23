@@ -4,7 +4,7 @@ export interface User {
   nickName: string;
   email?: string;
   phone?: string;
-  role?: "ADMIN" | "USER";
+  role?: "ADMIN" | "USER" | "BANNED";
 }
 
 export interface Bid {

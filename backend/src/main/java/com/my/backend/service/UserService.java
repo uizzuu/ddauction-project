@@ -97,4 +97,55 @@ public class UserService {
         if (!password.matches(".*[!*@#].*"))
             throw new IllegalArgumentException("비밀번호에 최소 1개의 특수문자(!*@#)가 포함되어야 합니다.");
     }
+
+    // 회원 정지 (role → BANNED)
+    public UserDto banUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+        user.setRole(User.Role.BANNED);
+        return UserDto.fromEntity(userRepository.save(user));
+    }
+
+    // 회원 정지 해제 (role → USER)
+    public UserDto unbanUser(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+        user.setRole(User.Role.USER);
+        return UserDto.fromEntity(userRepository.save(user));
+    }
+
+    // 이메일 또는 닉네임으로 검색
+    public List<UserDto> searchUsers(String email, String nickName) {
+        List<User> users;
+
+        if (email != null && !email.isBlank() && nickName != null && !nickName.isBlank()) {
+            users = userRepository.findByEmailContainingAndNickNameContaining(email, nickName);
+        } else if (email != null && !email.isBlank()) {
+            users = userRepository.findByEmailContaining(email);
+        } else if (nickName != null && !nickName.isBlank()) {
+            users = userRepository.findByNickNameContaining(nickName);
+        } else {
+            users = userRepository.findAll();
+        }
+
+        return users.stream()
+                .map(UserDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public UserDto updateUserRole(Long id, String roleStr) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
+
+        User.Role role;
+        try {
+            role = User.Role.valueOf(roleStr.toUpperCase()); // 안전하게 대문자로 변환
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("잘못된 역할입니다.");
+        }
+
+        user.setRole(role);
+        userRepository.save(user);
+        return UserDto.fromEntity(user);
+    }
 }
