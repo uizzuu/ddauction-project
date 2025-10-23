@@ -96,6 +96,14 @@
   gap: 4px;
 }
 
+.flex-box.gap-8 {
+  gap: 8px;
+}
+
+.flex-box.gap-12 {
+  gap: 12px;
+}
+
 .flex-box.between {
   justify-content: space-between;
 }

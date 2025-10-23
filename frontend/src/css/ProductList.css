@@ -17,15 +17,9 @@
 .product-card {
   background: #fff;
   border-radius: 12px;
-  border: 1px solid #333;
+  border: 1px solid #ddd;
   overflow: hidden;
   transition: all 0.3s;
-}
-
-.product-card:hover {
-  transform: translateY(-5px);
-  border-color: #b17576;
-  box-shadow: 0 10px 30px rgba(175, 175, 175, 0.2);
 }
 
 .product-image {
@@ -54,47 +48,50 @@
 
 .product-info {
   padding: 20px;
+  line-height: 1.3;
 }
 
 .product-title {
-  font-size: 18px;
+  font-size: 24px;
   font-weight: bold;
-  color: #fff;
+  color: #333;
   margin-bottom: 10px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.product-price {
-  font-size: 24px;
-  font-weight: bold;
-  color: #b17576;
-  margin-bottom: 8px;
+.product-text-lg {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
 }
 
-.product-time {
-  font-size: 14px;
-  color: #999;
-  margin-bottom: 15px;
+.product-text-sm {
+  font-size: 16px;
+  font-weight: 400;
+  color: #777;
 }
 
 .btn-bid {
   width: 100%;
   padding: 12px;
-  background: #fff;
-  color: #111;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: bold;
   cursor: pointer;
   transition: all 0.2s;
+  border-style: none;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  color: #aaa;
+  font-size: 14px;
+  font-weight: 400;
+  white-space: nowrap;
+
+  margin-top: 10px;
 }
 
 .btn-bid:hover {
-  background: #b17576;
-  transform: scale(1.02);
+  color: #b17576;
+  border-color: #b17576;
 }
 
 @media (max-width: 768px) {

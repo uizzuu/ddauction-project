@@ -55,19 +55,19 @@ export default function ProductRegister({ user }: Props) {
     if (form.oneMinuteAuction) {
       const end = new Date();
       end.setMinutes(end.getMinutes() + 1);
-      auctionEndTime = end.toISOString();
+      auctionEndTime = end.toISOString().slice(0, 19);
     } else if (!auctionEndTime) {
       setError("경매 종료 시간을 입력해주세요");
       return;
     } else {
-      auctionEndTime = new Date(auctionEndTime).toISOString();
+      auctionEndTime = new Date(auctionEndTime).toISOString().slice(0, 19);
     }
 
     try {
       const productData = {
         title: form.title,
         content: form.content,
-        startingPrice: form.price.toString(), // 🔥 숫자를 문자열로 변환
+        startingPrice: form.price.toString(),
         imageUrl: form.imageUrl,
         oneMinuteAuction: form.oneMinuteAuction,
         auctionEndTime,
@@ -83,12 +83,18 @@ export default function ProductRegister({ user }: Props) {
         body: JSON.stringify(productData),
       });
 
+      if (!form.price || form.price <= 0) {
+        setError("시작 가격은 1원 이상이어야 합니다");
+        return;
+      }
+
       if (response.ok) {
         alert("물품 등록 성공!");
         navigate("/auction");
       } else {
         const text = await response.text();
-        setError(`물품 등록 실패: ${text}`);
+        console.log(text);
+        setError(`물품 등록 실패`);
       }
     } catch (err) {
       console.error(err);
