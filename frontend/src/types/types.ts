@@ -4,7 +4,7 @@ export interface User {
   nickName: string;
   email?: string;
   phone?: string;
-  role?: "ADMIN" | "USER";
+  role?: "ADMIN" | "USER" | "BANNED";
 }
 
 export interface Bid {
@@ -14,24 +14,25 @@ export interface Bid {
   createdAt: string;
 }
 
+// 상품 조회/표시에 사용할 타입
 export interface Product {
   productId: number;
   title: string;
   content?: string;
-  description?: string;
-  price?: number;
-  startingPrice?: number;
+  startingPrice?: number;     // 또는 string으로 정의 가능
   imageUrl?: string;
+  oneMinuteAuction?: boolean;
   auctionEndTime: string;
-  createdAt?: string;
-  updatedAt?: string;
   productStatus?: string;
-  paymentStatus?: string;
   categoryId?: number;
   categoryName?: string;
   sellerId?: number;
-  sellerName?: string;
-  oneMinuteAuction?: boolean;
+  sellerNickName?: string;    // 백엔드 필드 명
+  description?: string;
+  price?: number;
+  createdAt?: string;
+  updatedAt?: string;
+  paymentStatus?: string;
   bidderId?: number;
   amount?: number;
   bids?: Bid[]; // 입찰 기록
@@ -56,28 +57,28 @@ export interface SignupForm {
   phone: string;
 }
 
+// 상품 등록 폼 데이터 타입
 export interface ProductForm {
   title: string;
   content: string;
-  price: number;
+  startingPrice: string;  // 숫자 입력 후 문자열로 변환하여 저장
   imageUrl: string;
   oneMinuteAuction: boolean;
   auctionEndTime: string;
   categoryId: number | null;
 }
 
-// 상품 등록을 위한 타입
+// 서버 요청에 사용할 상품 생성 타입
 export interface CreateProductRequest {
   title: string;
   content: string;
-  price: number;
+  startingPrice: string;
   imageUrl: string;
   oneMinuteAuction: boolean;
   auctionEndTime: string;
-  categoryId: number;
   sellerId: number;
-  productStatus: string;
-  paymentStatus: string;
+  categoryId: number;
+  productStatus: string;  // "ACTIVE" 등을 전달
 }
 
 //게시판

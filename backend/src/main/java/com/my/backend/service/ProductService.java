@@ -57,17 +57,7 @@ public class ProductService {
             payment = paymentRepository.findById(productDto.getPaymentId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제가 존재하지 않습니다."));
         }
-
         Product product = productDto.toEntity(seller, bid, payment, category);
-
-        if (productDto.getStartingPrice() != null) {
-            try {
-                product.setStartingPrice(Long.parseLong(productDto.getStartingPrice()));
-            } catch (NumberFormatException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
-            }
-        }
-
         Product savedProduct = productRepository.save(product);
         return ProductDto.fromEntity(savedProduct);
     }
@@ -96,11 +86,7 @@ public class ProductService {
         product.setContent(updatedProductDto.getContent());
 
         if (updatedProductDto.getStartingPrice() != null) {
-            try {
-                product.setStartingPrice(Long.parseLong(updatedProductDto.getStartingPrice()));
-            } catch (NumberFormatException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
-            }
+            product.setStartingPrice(updatedProductDto.getStartingPrice());
         }
 
         product.setImageUrl(updatedProductDto.getImageUrl());
@@ -185,5 +171,4 @@ public class ProductService {
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
-
 }

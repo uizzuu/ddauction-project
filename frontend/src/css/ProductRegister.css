@@ -80,7 +80,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #fff;
+  color: #333;
   font-size: 15px;
   cursor: pointer;
 }

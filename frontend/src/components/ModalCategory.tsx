@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import type { Category } from "../types/types";
 
 interface ModalCategoryProps {
@@ -18,6 +19,7 @@ export default function ModalCategory({
   targetRef,
 }: ModalCategoryProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
   // 모달 위치 계산
@@ -55,7 +57,16 @@ export default function ModalCategory({
       className="modal-content"
       style={{ top: position.top, left: position.left }}
     >
-      <p className="category-btn all-category">전체 카테고리</p>
+      {/* 전체 카테고리 클릭 시 전체 검색으로 이동 */}
+      <p
+        className="category-btn all-category"
+        onClick={() => {
+          navigate("/search");
+          onClose();
+        }}
+      >
+        전체 카테고리
+      </p>
       <ul className="category-list">
         {categories.map((cat) => (
           <li key={cat.categoryId}>
@@ -63,6 +74,7 @@ export default function ModalCategory({
               className="category-btn"
               onClick={() => {
                 onSelectCategory(cat);
+                navigate(`/search?category=${cat.categoryId}`);
                 onClose();
               }}
             >

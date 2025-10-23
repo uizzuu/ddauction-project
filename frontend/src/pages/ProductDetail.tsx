@@ -207,6 +207,7 @@ export default function ProductDetail({ user, setUser }: Props) {
   // 찜 토글
   const handleToggleBookmark = async () => {
     if (!product) return;
+
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/bookmarks/toggle?productId=${product.productId}`,
@@ -215,24 +216,34 @@ export default function ProductDetail({ user, setUser }: Props) {
           credentials: "include",
         }
       );
-      if (res.ok) {
-        const text = await res.text();
-        const bookmarked = text === "찜 완료";
-        setIsBookMarked(bookmarked);
-        // 찜 수 갱신
-        const countRes = await fetch(
-          `${API_BASE_URL}/api/bookmarks/count?productId=${product.productId}`
-        );
-        if (countRes.ok) {
-          const count = await countRes.json();
-          setBookmarkCount(count);
-        }
-      } else {
-        alert("찜 기능 실패");
+
+      // 로그인 안 된 경우 먼저 처리
+      if (res.status === 401) {
+        alert("로그인 후 찜 해주세요.");
+        return;
+      }
+
+      if (!res.ok) {
+        const msg = await res.text();
+        alert("찜 기능 실패: " + msg);
+        return;
+      }
+
+      const text = await res.text();
+      const bookmarked = text === "찜 완료";
+      setIsBookMarked(bookmarked);
+
+      // 찜 수 갱신
+      const countRes = await fetch(
+        `${API_BASE_URL}/api/bookmarks/count?productId=${product.productId}`
+      );
+      if (countRes.ok) {
+        const count = await countRes.json();
+        setBookmarkCount(count);
       }
     } catch (err) {
       console.error(err);
-      alert("찜 기능 실패");
+      alert("찜 기능 실패 (네트워크 오류)");
     }
   };
 
@@ -261,6 +272,12 @@ export default function ProductDetail({ user, setUser }: Props) {
   const handleReport = async () => {
     if (!product) return;
 
+    // 로그인하지 않은 경우
+    if (!user) {
+      alert("로그인 후 신고할 수 있습니다.");
+      return;
+    }
+
     const reason = prompt("신고 사유를 입력해주세요:");
     if (!reason?.trim()) return alert("신고 사유는 필수입니다.");
 
@@ -274,8 +291,16 @@ export default function ProductDetail({ user, setUser }: Props) {
           reason: reason.trim(),
         }),
       });
-      if (res.ok) alert("신고가 접수되었습니다.");
-      else {
+
+      // 로그인 세션 만료 또는 권한 없음
+      if (res.status === 401) {
+        alert("로그인 후 신고할 수 있습니다.");
+        return;
+      }
+
+      if (res.ok) {
+        alert("신고가 접수되었습니다.");
+      } else {
         const msg = await res.text();
         alert("신고 실패: " + msg);
       }

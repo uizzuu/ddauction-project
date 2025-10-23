@@ -1,6 +1,9 @@
 package com.my.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.my.backend.entity.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
@@ -22,14 +25,15 @@ public class ProductDto {
 
     private String content;
 
-    @NotBlank
-    @Pattern(regexp = "^[1-9][0-9]*$")
-    private String startingPrice;
+    @Min(value = 1, message = "시작 가격은 1원 이상이어야 합니다.")
+    private Long startingPrice;
 
     private String imageUrl;
 
     private boolean oneMinuteAuction;
 
+    @NotNull(message = "경매 종료 시간은 필수 입력 항목입니다.")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss") // ✨ 추가
     private LocalDateTime auctionEndTime;
 
     private Product.ProductStatus productStatus;
@@ -55,7 +59,7 @@ public class ProductDto {
                 .sellerNickName(product.getUser() != null ? product.getUser().getNickName() : null) // ⭐ 추가
                 .title(product.getTitle())
                 .content(product.getContent())
-                .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice().toString() : null)
+                .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice() : null)
                 .imageUrl(product.getImageUrl())
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
@@ -74,7 +78,7 @@ public class ProductDto {
                 .user(seller)
                 .title(this.title)
                 .content(this.content)
-                .startingPrice(Long.parseLong(this.startingPrice))
+                .startingPrice(this.startingPrice)
                 .imageUrl(this.imageUrl)
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)

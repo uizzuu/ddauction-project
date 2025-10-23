@@ -78,43 +78,31 @@ export default function ProductSearchPage() {
     }
   };
 
-  // URL 쿼리 변화를 감지해서 자동 검색
+  // ✅ URL → 상태 반영 & 검색 실행 (한 방향만)
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const kw = params.get("keyword") || "";
-    const catId = params.get("category") || "";
+    const cat = params.get("category") || "";
 
     setKeyword(kw);
-    setCategoryId(catId ? Number(catId) : "");
+    setCategoryId(cat ? Number(cat) : "");
 
-    // keyword나 category가 있으면 검색 실행
-    fetchProducts(kw, catId ? Number(catId) : "");
+    fetchProducts(kw, cat ? Number(cat) : "");
   }, [location.search]);
 
-  // categoryId가 바뀌면 URL 갱신 → useEffect에서 자동 검색
-  useEffect(() => {
-    const query = new URLSearchParams();
-    if (keyword) query.append("keyword", keyword.trim());
-    if (categoryId) query.append("category", categoryId.toString());
-
-    // 현재 URL과 다르면 navigate
-    const newSearch = query.toString();
-    if (newSearch !== location.search.replace(/^\?/, "")) {
-      navigate(`/search?${newSearch}`);
-    }
-  }, [categoryId, keyword, location.search, navigate]);
-
-  // 체크박스 클릭 시 검색 업데이트
+  // 카테고리 체크박스 클릭 시 URL 갱신
   const handleCategoryChange = (id: number) => {
     const newCat = categoryId === id ? "" : id;
-    setCategoryId(newCat);
+    const query = new URLSearchParams();
+    if (keyword) query.append("keyword", keyword.trim());
+    if (newCat) query.append("category", newCat.toString());
+    navigate(`/search?${query.toString()}`);
   };
 
-  // 검색 버튼 클릭
+  // 검색 버튼 클릭 시 URL 갱신
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     const query = new URLSearchParams();
-    // URL을 바꾸면 useEffect에서 자동 검색
     if (keyword) query.append("keyword", keyword.trim());
     if (categoryId) query.append("category", categoryId.toString());
     navigate(`/search?${query.toString()}`);
