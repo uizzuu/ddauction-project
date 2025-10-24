@@ -341,7 +341,7 @@ export default function ProductDetail({ user, setUser }: Props) {
           <div
             style={{
               display: "flex",
-              gap: "12px",
+              gap: "4px",
               fontSize: "0.9rem",
               color: "#555",
             }}
@@ -349,22 +349,37 @@ export default function ProductDetail({ user, setUser }: Props) {
             <button
               onClick={handleToggleBookmark}
               style={{
-                backgroundColor: isBookMarked ? "#ef4444" : "#fff",
-                color: isBookMarked ? "#fff" : "#ef4444",
-                border: "1px solid #ef4444",
+                backgroundColor: "#fff",
+                color: "#aaa",
+                border: "1px solid #ddd",
                 borderRadius: "6px",
                 padding: "2px 8px",
                 cursor: "pointer",
                 fontSize: "0.8rem",
               }}
             >
-              💖 {bookmarkCount}
+              <div className="flex-box gap-4 center">
+                <svg
+                  width="12"
+                  height="11"
+                  viewBox="-0.5 -0.5 13 12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M6 11L5.13 10.2087C2.04 7.40926 0 5.55695 0 3.297C0 1.44469 1.452 0 3.3 0C4.344 0 5.346 0.485559 6 1.24687C6.654 0.485559 7.656 0 8.7 0C10.548 0 12 1.44469 12 3.297C12 5.55695 9.96 7.40926 6.87 10.2087L6 11Z"
+                    fill={isBookMarked ? "#b17576" : "#fff"}
+                    stroke="#b17576"
+                  />
+                </svg>
+                <p>{bookmarkCount}</p>
+              </div>
             </button>
             <button
               style={{
-                backgroundColor: "#ef4444",
-                color: "#fff",
-                border: "none",
+                backgroundColor: "#fff",
+                color: "#aaa",
+                border: "1px solid #ddd",
                 borderRadius: "6px",
                 padding: "2px 8px",
                 cursor: "pointer",
@@ -404,7 +419,7 @@ export default function ProductDetail({ user, setUser }: Props) {
         </div>
 
         {/* 입찰 박스 */}
-        <div style={{ width: "260px", flexShrink: 0, }}>
+        <div style={{ width: "260px", flexShrink: 0 }}>
           <div
             style={{
               backgroundColor: "#fff",
@@ -425,7 +440,9 @@ export default function ProductDetail({ user, setUser }: Props) {
                 </p>
               ))}
               {(!product.bids || product.bids.length === 0) && (
-                <p style={{ margin: 0, color: "#888" }}>아직 입찰이 없습니다.</p>
+                <p style={{ margin: 0, color: "#888" }}>
+                  아직 입찰이 없습니다.
+                </p>
               )}
             </div>
 

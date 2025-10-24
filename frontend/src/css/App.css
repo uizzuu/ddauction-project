@@ -74,6 +74,11 @@ body {
   background: #eee;
 }
 
+.center {
+  justify-self: center;
+  align-items: center;
+}
+
 /* 공통 버튼 스타일 */
 button {
   font-family: inherit;

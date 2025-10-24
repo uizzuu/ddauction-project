@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { API_BASE_URL } from "../services/api";
 import type { Product, Category } from "../types/types";
 import SelectBox from "../components/SelectBox";
@@ -130,27 +130,32 @@ export default function ProductSearchPage() {
       </p>
 
       {/* 검색 폼 */}
-      <form onSubmit={handleSearch} className="search-form">
-        <input
-          type="text"
-          placeholder="상품 이름 검색"
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          className="search-input"
-        />
-        <SelectBox
-          value={categoryId === "" ? "" : String(categoryId)}
-          onChange={(val) => setCategoryId(val === "" ? "" : Number(val))}
-          options={categories.map((c) => ({
-            value: String(c.categoryId),
-            label: c.name,
-          }))}
-          placeholder="전체 카테고리"
-        />
-        <button type="submit" className="search-btn">
-          검색
-        </button>
-      </form>
+      <div className="flex-box between" style={{marginBottom: "2rem"}}>
+        <form onSubmit={handleSearch} className="search-form" style={{marginBottom: 0}}>
+          <input
+            type="text"
+            placeholder="상품 이름 검색"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="search-input"
+          />
+          <SelectBox
+            value={categoryId === "" ? "" : String(categoryId)}
+            onChange={(val) => setCategoryId(val === "" ? "" : Number(val))}
+            options={categories.map((c) => ({
+              value: String(c.categoryId),
+              label: c.name,
+            }))}
+            placeholder="전체 카테고리"
+          />
+          <button type="submit" className="search-btn">
+            검색
+          </button>
+        </form>
+        <NavLink to="/register" className="search-btn">
+          상품등록
+        </NavLink>
+      </div>
       <div className="search-page flex-box gap-36">
         <div className="category-sidebar">
           <div className="category-checkbox-group flex-column gap-4">
