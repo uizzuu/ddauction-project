@@ -148,4 +148,17 @@ public class UserService {
         userRepository.save(user);
         return UserDto.fromEntity(user);
     }
+
+    // 이름, 닉네임, 이메일, 비밀번호로 검색
+    public List<UserDto> searchUsers(String userName, String nickName, String email, String phone) {
+        List<User> users = userRepository.findAll(); // 전체 조회 후 필터링
+
+        return users.stream()
+                .filter(u -> userName == null || userName.isBlank() || u.getUserName().contains(userName))
+                .filter(u -> nickName == null || nickName.isBlank() || u.getNickName().contains(nickName))
+                .filter(u -> email == null || email.isBlank() || u.getEmail().contains(email))
+                .filter(u -> phone == null || phone.isBlank() || u.getPhone().contains(phone))
+                .map(UserDto::fromEntity)
+                .collect(Collectors.toList());
+    }
 }

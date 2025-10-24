@@ -113,12 +113,6 @@ public class UserController {
         return userService.unbanUser(id);
     }
 
-    // 이메일 or 닉네임으로 검색
-    @GetMapping("/admin/search")
-    public List<UserDto> searchUsers(@RequestParam(required = false) String email,
-                                     @RequestParam(required = false) String nickName) {
-        return userService.searchUsers(email, nickName);
-    }
 
     @GetMapping("/admin")
     public List<UserDto> getAllUsersAdmin() {
@@ -129,5 +123,16 @@ public class UserController {
     public UserDto updateUserRole(@PathVariable Long id, @RequestBody Map<String, String> body) {
         String roleStr = body.get("role");
         return userService.updateUserRole(id, roleStr);
+    }
+
+    // 회원 검색 (이름, 닉네임, 이메일, 비밀번호)
+    @GetMapping("/admin/search")
+    public List<UserDto> searchUsers(
+            @RequestParam(required = false) String userName,
+            @RequestParam(required = false) String nickName,
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String phone
+    ) {
+        return userService.searchUsers(userName, nickName, email, phone);
     }
 }

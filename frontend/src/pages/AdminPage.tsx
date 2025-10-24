@@ -14,6 +14,10 @@ export default function AdminPage() {
   const [filterKeyword, setFilterKeyword] = useState("");
   const [filterCategory, setFilterCategory] = useState<number | null>(null);
 
+  // --- 회원 필터 상태 ---
+  const [userFilterField, setUserFilterField] = useState<"userName" | "nickName" | "email" |  "phone">("userName");
+  const [userFilterKeyword, setUserFilterKeyword] = useState("");
+
   // 상품 수정 상태
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [editProductForm, setEditProductForm] = useState<Partial<Product>>({
@@ -41,7 +45,14 @@ export default function AdminPage() {
 
   // --- Fetch Functions ---
   const fetchUsers = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/users/admin`);
+    let url = `${API_BASE_URL}/api/users/admin/search?`;
+    if (userFilterKeyword) {
+      if (userFilterField === "userName") url += `userName=${encodeURIComponent(userFilterKeyword)}`;
+      else if (userFilterField === "nickName") url += `nickName=${encodeURIComponent(userFilterKeyword)}`;
+      else if (userFilterField === "email") url += `email=${encodeURIComponent(userFilterKeyword)}`;
+      else if (userFilterField === "phone") url += `phone=${encodeURIComponent(userFilterKeyword)}`;
+    }
+    const res = await fetch(url);
     const data = await res.json();
     setUsers(data);
   };
@@ -154,6 +165,26 @@ export default function AdminPage() {
         {section === "user" && (
           <div className="admin-section">
             <h3>회원 관리</h3>
+
+            {/* --- 회원 필터 UI --- */}
+            <div style={{ marginBottom: "1rem" }}>
+              <select
+                value={userFilterField}
+                onChange={e => setUserFilterField(e.target.value as any)}
+              >
+                <option value="userName">이름</option>
+                <option value="nickName">닉네임</option>
+                <option value="email">이메일</option>
+                <option value="phone">전화번호</option>
+              </select>
+              <input
+                placeholder="검색어 입력"
+                value={userFilterKeyword}
+                onChange={e => setUserFilterKeyword(e.target.value)}
+              />
+              <button onClick={fetchUsers}>검색</button>
+            </div>
+
             <table className="admin-table">
               <thead>
                 <tr>
