@@ -30,7 +30,7 @@ export default function MyPage({ user, setUser }: Props) {
     oneMinuteAuction: false,
     auctionEndTime: "",
     categoryId: null,
-    productStatus: "ACTIVE", // 기본값
+    productStatus: "ACTIVE",
   });
 
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
@@ -114,13 +114,18 @@ export default function MyPage({ user, setUser }: Props) {
     }
   };
 
+  // ★ 이미지 URL 절대 경로 처리
   const normalizeProduct = (p: any): Product => ({
     productId: p.productId,
     title: p.title,
     content: p.content ?? p.description ?? "",
     price: p.price ?? p.bid?.price ?? p.startingPrice ?? 0,
     startingPrice: p.startingPrice ?? 0,
-    imageUrl: p.imageUrl,
+   imageUrl: p.imageUrl
+    ? p.imageUrl.startsWith("http")
+      ? p.imageUrl
+      : `${API_BASE_URL}/${p.imageUrl}`
+    : "",
     oneMinuteAuction: p.oneMinuteAuction ?? false,
     auctionEndTime: p.auctionEndTime,
     productStatus: p.productStatus ?? "ACTIVE",
@@ -208,12 +213,21 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   const toggleSection = (section: "editing" | "selling" | "bookmarks" | "reports" | "qnas") => {
+    const isCurrentlyOpen =
+      (section === "editing" && editing) ||
+      (section === "selling" && showSelling) ||
+      (section === "bookmarks" && showBookmarks) ||
+      (section === "reports" && showReports) ||
+      (section === "qnas" && showQnas);
+
     setEditing(false);
     setShowSelling(false);
     setShowBookmarks(false);
     setShowReports(false);
     setShowQnas(false);
     setEditingProductId(null);
+
+    if (isCurrentlyOpen) return;
 
     switch (section) {
       case "editing":
@@ -268,41 +282,45 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   const handleSaveProduct = async () => {
-    if (!editingProductId) return;
-    if (!productForm.categoryId) {
-      alert("카테고리를 선택해주세요.");
-      return;
-    }
+  if (!editingProductId) return;
+  if (!productForm.categoryId) {
+    alert("카테고리를 선택해주세요.");
+    return;
+  }
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/products/${editingProductId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: productForm.title,
-          startingPrice: productForm.startingPrice,
-          content: productForm.content,
-          categoryId: productForm.categoryId,
-          productStatus: productForm.productStatus, // 추가
-        }),
-      });
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/products/${editingProductId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: productForm.title,
+        startingPrice: productForm.startingPrice,
+        content: productForm.content,
+        categoryId: productForm.categoryId,
+        productStatus: productForm.productStatus,
+        imageUrl: productForm.imageUrl,        // ★ 기존 이미지 URL 포함
+        auctionEndTime: productForm.auctionEndTime,  // ★ 기존 마감 시간 포함
+        oneMinuteAuction: productForm.oneMinuteAuction, // ★ 1분 경매 여부 포함
+      }),
+    });
 
-      if (res.ok) {
-        const updatedProduct = normalizeProduct(await res.json());
-        setSellingProducts((prev) =>
-          prev.map((p) => (p.productId === editingProductId ? updatedProduct : p))
-        );
-        setEditingProductId(null);
-        alert("상품이 수정되었습니다.");
-      } else {
-        const errorText = await res.text();
-        alert("상품 수정 실패: " + errorText);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
+    if (res.ok) {
+      const updatedProduct = normalizeProduct(await res.json());
+      setSellingProducts((prev) =>
+        prev.map((p) => (p.productId === editingProductId ? updatedProduct : p))
+      );
+      setEditingProductId(null);
+      alert("상품이 수정되었습니다.");
+    } else {
+      const errorText = await res.text();
+      alert("상품 수정 실패: " + errorText);
     }
-  };
+  } catch (err) {
+    console.error(err);
+    alert("서버 오류");
+  }
+};
+
 
   const handleCancelProductEdit = () => setEditingProductId(null);
 
@@ -384,13 +402,29 @@ export default function MyPage({ user, setUser }: Props) {
                   }}
                 >
                   <div style={{ display: "flex", gap: "15px" }}>
-                    {product.imageUrl && (
+                    {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
                         alt={product.title}
-                        style={{ width: "150px", cursor: "pointer", borderRadius: "6px" }}
+                        style={{ width: "150px", cursor: "pointer", borderRadius: "6px", flexShrink: 0 }}
                         onClick={() => goToProductDetail(product.productId)}
                       />
+                    ) : (
+                      <div
+                        style={{
+                          width: "150px",
+                          height: "150px",
+                          background: "#eee",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#888",
+                          borderRadius: "6px",
+                          flexShrink: 0,
+                        }}
+                      >
+                        이미지 없음
+                      </div>
                     )}
                     <div style={{ flex: 1 }}>
                       <div style={{ fontWeight: "bold", fontSize: "18px" }}>{product.title}</div>
@@ -494,13 +528,29 @@ export default function MyPage({ user, setUser }: Props) {
             <ul>
               {bookmarkedProducts.map((product) => (
                 <li key={product.productId} style={{ marginBottom: "20px" }}>
-                  {product.imageUrl && (
+                  {product.imageUrl ? (
                     <img
                       src={product.imageUrl}
                       alt={product.title}
-                      style={{ width: "150px", cursor: "pointer" }}
+                      style={{ width: "150px", cursor: "pointer", flexShrink: 0 }}
                       onClick={() => goToProductDetail(product.productId)}
                     />
+                  ) : (
+                    <div
+                      style={{
+                        width: "150px",
+                        height: "150px",
+                        background: "#eee",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#888",
+                        borderRadius: "6px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      이미지 없음
+                    </div>
                   )}
                   <div style={{ fontWeight: "bold", fontSize: "18px" }}>
                     {product.title} - {product.price?.toLocaleString() || product.startingPrice?.toLocaleString()}원
