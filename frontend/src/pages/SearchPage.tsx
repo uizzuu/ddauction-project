@@ -69,7 +69,7 @@ export default function ProductSearchPage() {
 
       const res = await fetch(url);
       if (!res.ok) throw new Error("상품 불러오기 실패");
-      let data: Product[] = await res.json();
+      const data: Product[] = await res.json();
 
       let sorted = [...data];
 

@@ -45,6 +45,9 @@ public class Product {
     @Column(nullable = false)
     private ProductStatus productStatus;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private Payment.PaymentStatus paymentStatus;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -62,6 +65,10 @@ public class Product {
     @JoinColumn(name = "payment_id")
     private Payment payment;
 
+    private Long paymentUserId;
+
+    private Long amount;
+
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
@@ -70,5 +77,11 @@ public class Product {
         ACTIVE,
         SOLD,
         CLOSED
+    }
+
+    public enum PaymentStatus {
+        PENDING,
+        PAID,
+        CANCELLED
     }
 }

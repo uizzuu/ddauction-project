@@ -8,6 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,14 +45,16 @@ public class UserService {
 
     // 로그인
     public UserDto login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다."));
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        Optional<User> user = userRepository.findByEmail(email);
+        if(user.isEmpty()) {
             throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
         }
 
-        return UserDto.fromEntity(user);
+        if (!passwordEncoder.matches(password, user.get().getPassword())) {
+            throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
+        }
+
+        return UserDto.fromEntity(user.orElse(null));
     }
 
     // 유저 정보 수정
@@ -96,69 +99,5 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호에 최소 1개의 숫자가 포함되어야 합니다.");
         if (!password.matches(".*[!*@#].*"))
             throw new IllegalArgumentException("비밀번호에 최소 1개의 특수문자(!*@#)가 포함되어야 합니다.");
-    }
-
-    // 회원 정지 (role → BANNED)
-    public UserDto banUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
-        user.setRole(User.Role.BANNED);
-        return UserDto.fromEntity(userRepository.save(user));
-    }
-
-    // 회원 정지 해제 (role → USER)
-    public UserDto unbanUser(Long id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
-        user.setRole(User.Role.USER);
-        return UserDto.fromEntity(userRepository.save(user));
-    }
-
-    // 이메일 또는 닉네임으로 검색
-    public List<UserDto> searchUsers(String email, String nickName) {
-        List<User> users;
-
-        if (email != null && !email.isBlank() && nickName != null && !nickName.isBlank()) {
-            users = userRepository.findByEmailContainingAndNickNameContaining(email, nickName);
-        } else if (email != null && !email.isBlank()) {
-            users = userRepository.findByEmailContaining(email);
-        } else if (nickName != null && !nickName.isBlank()) {
-            users = userRepository.findByNickNameContaining(nickName);
-        } else {
-            users = userRepository.findAll();
-        }
-
-        return users.stream()
-                .map(UserDto::fromEntity)
-                .collect(Collectors.toList());
-    }
-
-    public UserDto updateUserRole(Long id, String roleStr) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다."));
-
-        User.Role role;
-        try {
-            role = User.Role.valueOf(roleStr.toUpperCase()); // 안전하게 대문자로 변환
-        } catch (IllegalArgumentException e) {
-            throw new RuntimeException("잘못된 역할입니다.");
-        }
-
-        user.setRole(role);
-        userRepository.save(user);
-        return UserDto.fromEntity(user);
-    }
-
-    // 이름, 닉네임, 이메일, 비밀번호로 검색
-    public List<UserDto> searchUsers(String userName, String nickName, String email, String phone) {
-        List<User> users = userRepository.findAll(); // 전체 조회 후 필터링
-
-        return users.stream()
-                .filter(u -> userName == null || userName.isBlank() || u.getUserName().contains(userName))
-                .filter(u -> nickName == null || nickName.isBlank() || u.getNickName().contains(nickName))
-                .filter(u -> email == null || email.isBlank() || u.getEmail().contains(email))
-                .filter(u -> phone == null || phone.isBlank() || u.getPhone().contains(phone))
-                .map(UserDto::fromEntity)
-                .collect(Collectors.toList());
     }
 }

@@ -41,18 +41,61 @@ export default function Login({ setUser }: Props) {
     if (!validateAll()) return;
 
     try {
-      const response = await fetch("/api/users/login", {
+      const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json",  },
         body: JSON.stringify(form),
-        credentials: "include", // 쿠키 포함
       });
+      console.log("로그인 response status:", response.status);
 
       if (response.ok) {
-        const data = await response.json();
-        setUser(data);
-        navigate("/");
+        // ✅ 응답 헤더에서 토큰 추출
+      const authHeader = response.headers.get("Authorization");
+      console.log("Authorization 헤더:", authHeader);
+      
+      if (!authHeader) {
+        throw new Error("토큰을 받지 못했습니다");
+      }
+      
+      // "Bearer " 제거
+      const token = authHeader.replace("Bearer ", "");
+      console.log("추출된 token:", token);
+      
+      localStorage.setItem("token", token);
+      console.log("저장된 token:", localStorage.getItem("token"));
+      
+      // ✅ 사용자 정보는 별도로 가져와야 함
+      const userResponse = await fetch("/api/users/me", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+      
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setUser(userData);
+      }
+      
+      // JWT 테스트
+      const testRes = await fetch("/api/some-protected", {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+      
+      console.log("Bearer:", token);
+      console.log("테스트 응답:", testRes.status);
+      
+      if (testRes.ok) {
+        console.log("✅ JWT 테스트 성공!");
       } else {
+        console.error("❌ JWT 테스트 실패:", testRes.status);
+      }
+      
+      navigate("/");
+      
+    } else {
         const data = await response.json();
         setErrors((prev) => ({
           ...prev,

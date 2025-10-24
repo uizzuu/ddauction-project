@@ -4,6 +4,7 @@ import com.my.backend.entity.Product;
 import com.my.backend.entity.Product.ProductStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -21,4 +22,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findByTitleContainingAndProductStatus(String keyword, ProductStatus productStatus);
     List<Product> findByCategory_CategoryIdAndProductStatus(Long categoryId, ProductStatus productStatus);
     List<Product> findByTitleContainingAndCategory_CategoryIdAndProductStatus(String keyword, Long categoryId, ProductStatus productStatus);
+
+    // 1분 경매 자동 종료용
+    List<Product> findByOneMinuteAuctionTrueAndProductStatusAndAuctionEndTimeBefore(
+            Product.ProductStatus status,
+            LocalDateTime endTime
+    );
 }
