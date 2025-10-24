@@ -75,7 +75,7 @@ export default function Signup() {
     if (!validateAll()) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

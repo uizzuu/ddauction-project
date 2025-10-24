@@ -4,7 +4,7 @@ import com.my.backend.dto.ReportDto;
 import com.my.backend.entity.Report;
 import com.my.backend.entity.User;
 import com.my.backend.repository.ReportRepository;
-import com.my.backend.repository.UserRepository;
+import com.my.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

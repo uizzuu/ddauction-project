@@ -52,12 +52,6 @@ public class QnaController {
     @GetMapping("/product/{productId}")
     public ResponseEntity<?> getQnaByProduct(@PathVariable Long productId) {
         List<Map<String, Object>> qnaListWithReviews = qnaService.getQnaWithReviewsByProduct(productId);
-        // userId 포함 확인
-        for (Map<String, Object> qnaMap : qnaListWithReviews) {
-            if (!qnaMap.containsKey("userId") && qnaMap.get("nickName") != null) {
-                // 이미 서비스에서 userId 포함되도록 수정했다면 필요 없음
-            }
-        }
         return ResponseEntity.ok(qnaListWithReviews);
     }
 

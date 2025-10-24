@@ -1,4 +1,4 @@
-//package com.backend.controller;
+package com.my.backend.controller;
 //
 //import com.my.backend.entity.Bid;
 //import com.my.backend.service.BidService;
@@ -44,3 +44,83 @@
 //        bidService.deleteBid(id);
 //    }
 //}
+
+
+import com.my.backend.dto.BidChartData;
+import com.my.backend.dto.auth.BidRequest;
+import com.my.backend.service.BidService;
+import com.my.backend.util.AuthUtil;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequestMapping("/api/bid")
+@RequiredArgsConstructor
+public class BidController {
+
+    private final BidService bidService;
+    private final AuthUtil authUtil;
+
+    /**
+     * 입찰하기 (인증 필요)
+     * - 요청 DTO: BidRequest { BigDecimal bidPrice }
+     * - 응답: BidResponse DTO (엔티티 직접 반환 금지)
+     */
+
+    @PostMapping("/{productId}/bid")
+    public ResponseEntity<?> placeBid(@PathVariable Long productId,
+                                      @Valid @RequestBody BidRequest request,
+                                      Authentication auth) {
+        Long userId = authUtil.extractUserId(auth);
+        return bidService.placeBid(userId, productId, request.getBidPrice());
+    }
+
+    /**
+     * 상품별 입찰 내역 조회 (공개/권한 정책은 SecurityConfig에 따름)
+     * - 응답: BidHistoryItem DTO 리스트
+     */
+    @GetMapping("/{productId}/bids")
+    public ResponseEntity<?> getBidHistory(@PathVariable Long productId) {
+        return bidService.getBidHistory(productId);
+    }
+
+    /**
+     * 입찰 금액 그래프 데이터 조회
+     */
+    @GetMapping("/{productId}/chart")
+    public ResponseEntity<?> getBidChartData(@PathVariable Long productId) {
+        return bidService.getBidHistoryForChart(productId);
+    }
+
+    /** 단건 응답 DTO */
+    public record BidResponse(
+            Long bidId,
+            Long productId,
+            Long userId,
+            Long bidPrice,
+            String createdAt
+    ) {}
+
+    /** 목록 응답 DTO */
+    public record BidHistoryItem(
+            Long bidId,
+            Long productId,
+            Long userId,
+            Long bidPrice,
+            String createdAt
+    ) {}
+
+    /** 입찰 그래프 응답 DTO */
+    public record BidChartResponse(
+            Long productId,
+            String productTitle,
+            List<BidChartData> bidChartData
+    ) {}
+}

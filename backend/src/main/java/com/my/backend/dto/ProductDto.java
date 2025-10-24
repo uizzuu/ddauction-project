@@ -2,14 +2,21 @@ package com.my.backend.dto;
 
 import com.my.backend.entity.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.jackson.Jacksonized;
 
 import java.time.LocalDateTime;
 
+@AllArgsConstructor
 @Data
 @Builder
+@Jacksonized
 public class ProductDto {
 
     private Long productId;
@@ -22,9 +29,9 @@ public class ProductDto {
 
     private String content;
 
-    @NotBlank
-    @Pattern(regexp = "^[1-9][0-9]*$")
-    private String startingPrice;
+    @NotNull
+    @Positive
+    private Long startingPrice;
 
     private String imageUrl;
 
@@ -55,7 +62,7 @@ public class ProductDto {
                 .sellerNickName(product.getUser() != null ? product.getUser().getNickName() : null) // ⭐ 추가
                 .title(product.getTitle())
                 .content(product.getContent())
-                .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice().toString() : null)
+                .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice() : null)
                 .imageUrl(product.getImageUrl())
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
@@ -74,7 +81,7 @@ public class ProductDto {
                 .user(seller)
                 .title(this.title)
                 .content(this.content)
-                .startingPrice(Long.parseLong(this.startingPrice))
+                .startingPrice(this.startingPrice)
                 .imageUrl(this.imageUrl)
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)
@@ -84,4 +91,6 @@ public class ProductDto {
                 .category(category)
                 .build();
     }
+
+
 }

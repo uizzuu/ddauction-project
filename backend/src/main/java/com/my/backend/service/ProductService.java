@@ -4,13 +4,17 @@ import com.my.backend.dto.ProductDto;
 import com.my.backend.dto.BidDto;
 import com.my.backend.entity.*;
 import com.my.backend.repository.*;
+import com.my.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,7 +43,7 @@ public class ProductService {
     }
 
     // 새 상품 생성
-    public ProductDto createProduct(ProductDto productDto) {
+    public ProductDto createProduct(Long userId, ProductDto productDto) {
         User seller = userRepository.findById(productDto.getSellerId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "판매자가 존재하지 않습니다."));
 
@@ -62,7 +66,7 @@ public class ProductService {
 
         if (productDto.getStartingPrice() != null) {
             try {
-                product.setStartingPrice(Long.parseLong(productDto.getStartingPrice()));
+                product.setStartingPrice(Long.parseLong(String.valueOf(productDto.getStartingPrice())));
             } catch (NumberFormatException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
             }
@@ -97,7 +101,7 @@ public class ProductService {
 
         if (updatedProductDto.getStartingPrice() != null) {
             try {
-                product.setStartingPrice(Long.parseLong(updatedProductDto.getStartingPrice()));
+                product.setStartingPrice(Long.parseLong(String.valueOf(updatedProductDto.getStartingPrice())));
             } catch (NumberFormatException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
             }
@@ -184,6 +188,18 @@ public class ProductService {
         return products.stream()
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<Map<String, Object>> getWinnerView(Long productId) {
+        Bid b = bidRepository.findTopByProductProductIdOrderByCreatedAtDesc(productId);
+        if (b == null) return Optional.empty();
+
+        return Optional.of(java.util.Map.of(
+                "productId", productId,
+                "winnerUserId", b.getUser().getUserId(),
+                "finalPrice", b.getBidPrice()
+        ));
     }
 
 }

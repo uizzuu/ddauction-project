@@ -6,7 +6,7 @@ import com.my.backend.entity.board.Article;
 import com.my.backend.entity.board.Board;
 import com.my.backend.repository.board.ArticleRepository;
 import com.my.backend.repository.board.BoardRepository;
-import com.my.backend.repository.UserRepository;
+import com.my.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

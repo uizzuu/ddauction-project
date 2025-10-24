@@ -2,12 +2,13 @@ package com.my.backend.service;
 
 import com.my.backend.dto.UserDto;
 import com.my.backend.entity.User;
-import com.my.backend.repository.UserRepository;
+import com.my.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,14 +45,16 @@ public class UserService {
 
     // 로그인
     public UserDto login(String email, String password) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다."));
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        Optional<User> user = userRepository.findByEmail(email);
+        if(user.isEmpty()) {
             throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
         }
 
-        return UserDto.fromEntity(user);
+        if (!passwordEncoder.matches(password, user.get().getPassword())) {
+            throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
+        }
+
+        return UserDto.fromEntity(user.orElse(null));
     }
 
     // 유저 정보 수정

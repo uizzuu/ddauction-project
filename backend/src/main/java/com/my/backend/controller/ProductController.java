@@ -48,23 +48,57 @@ public class ProductController {
     public ResponseEntity<?> placeBid(@PathVariable Long id,
                                       @RequestBody @Valid BidDto dto,
                                       HttpSession session) {
-        User loginUser = (User) session.getAttribute("loginUser");
-        if (loginUser == null) {
+    // 세션 키 수정
+    Long userId = (Long) session.getAttribute("userId");
+    if (userId == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+    }
+    try {
+        BidDto newBid = productService.placeBid(id, userId, dto.getBidPrice());
+        return ResponseEntity.ok(newBid);
+    } catch (IllegalArgumentException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+    } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("입찰 처리 중 오류");
+    }
+}
+//                                      {
+//        User loginUser = (User) session.getAttribute("loginUser");
+//        if (loginUser == null) {
+//            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+//        }
+//        try {
+//            BidDto newBid = productService.placeBid(id, loginUser.getUserId(), dto.getBidPrice());
+//            return ResponseEntity.ok(newBid);
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+//        }
+//    }
+
+    // 새 상품 생성
+// @PostMapping
+//    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto dto) {
+//        ProductDto created = productService.createProduct(dto);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+//    }
+
+    // 새 상품 생성 (세션 로그인 사용자로 등록)
+    @PostMapping
+    public ResponseEntity<?> createProduct(@Valid @RequestBody ProductDto dto,
+                                           HttpSession session) {
+        Long userId = (Long) session.getAttribute("userId");
+        if (userId == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
         }
         try {
-            BidDto newBid = productService.placeBid(id, loginUser.getUserId(), dto.getBidPrice());
-            return ResponseEntity.ok(newBid);
+            ProductDto created = productService.createProduct(userId, dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (IllegalArgumentException e) {          // 예: 카테고리 없음 등
+            return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("상품 생성 중 오류");
         }
-    }
-
-    // 새 상품 생성
-    @PostMapping
-    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto dto) {
-        ProductDto created = productService.createProduct(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     // 상품 수정
@@ -95,5 +129,13 @@ public class ProductController {
 
         List<ProductDto> result = productService.searchProducts(keyword, category);
         return ResponseEntity.ok(result);
+    }
+
+    /** 낙찰자(최고가 입찰자)만 간단히 확인 */
+    @GetMapping("/{id}/winner")
+    public ResponseEntity<?> getWinner(@PathVariable Long id) {
+        return productService.getWinnerView(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 }

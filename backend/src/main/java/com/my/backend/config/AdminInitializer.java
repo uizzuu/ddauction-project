@@ -3,7 +3,7 @@ package com.my.backend.config;
 import com.my.backend.entity.Category;
 import com.my.backend.entity.User;
 import com.my.backend.repository.CategoryRepository;
-import com.my.backend.repository.UserRepository;
+import com.my.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,7 +22,8 @@ public class AdminInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         // --- 관리자 계정 초기화 ---
-        if (userRepository.findByEmail("admin@example.com").isEmpty()) {
+        // findByEmail의 결과로 User 객체 반환 -> isEmpty는 주로 List, Map과 같은 객체에 많이 활용
+        if (userRepository.findByEmail("admin@example.com") == null) {
             User admin = User.builder()
                     .userName("관리자")
                     .nickName("admin")
