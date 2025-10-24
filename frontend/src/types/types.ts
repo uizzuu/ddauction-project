@@ -184,5 +184,3 @@ export interface QnaAnswer {
   nickName: string;
   createdAt: string;
 }
-
-// 

@@ -11,6 +11,7 @@ export default function ProductSearchPage() {
 
   const [keyword, setKeyword] = useState(""); // 검색어
   const [categoryId, setCategoryId] = useState<number | "">(""); // 선택 카테고리
+  const [activeOnly, setActiveOnly] = useState(false); // 거래 가능만 보기 필터
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
@@ -50,16 +51,22 @@ export default function ProductSearchPage() {
   }, []);
 
   // 상품 검색
-  const fetchProducts = async (kw: string = "", cat: number | "" = "") => {
+  const fetchProducts = async (
+    kw: string = "",
+    cat: number | "" = "",
+    active: boolean = false
+  ) => {
     setLoading(true);
     try {
       let url = `${API_BASE_URL}/api/products`;
 
-      if (kw || cat) {
-        const query = new URLSearchParams();
-        if (kw) query.append("keyword", kw);
-        if (cat) query.append("category", cat.toString());
-        query.append("sort", "latest"); // 최신순 정렬
+      const query = new URLSearchParams();
+      if (kw) query.append("keyword", kw);
+      if (cat) query.append("category", cat.toString());
+      if (active) query.append("productStatus", "ACTIVE");
+      query.append("sort", "latest"); // 최신순 정렬
+
+      if (kw || cat || active) {
         url = `${API_BASE_URL}/api/products/search?${query.toString()}`;
       } else {
         // 검색어와 카테고리가 없을 때도 최신순
@@ -69,6 +76,7 @@ export default function ProductSearchPage() {
       const res = await fetch(url);
       if (!res.ok) throw new Error("상품 불러오기 실패");
       const data: Product[] = await res.json();
+
       // 최신순 정렬
       const sorted = data.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -77,24 +85,24 @@ export default function ProductSearchPage() {
       });
       setProducts(sorted);
     } catch (err) {
-      console.error(err);
+      console.error("❌ 상품 검색 중 오류 발생:", err); // 에러 로그 강화
       setProducts([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ URL → 상태 반영 & 검색 실행 (한 방향만)
+  // 상태 세팅용 useEffect
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const kw = params.get("keyword") || "";
-    const cat = params.get("category") || "";
-
-    setKeyword(kw);
-    setCategoryId(cat ? Number(cat) : "");
-
-    fetchProducts(kw, cat ? Number(cat) : "");
+    setKeyword(params.get("keyword") || "");
+    setCategoryId(params.get("category") ? Number(params.get("category")) : "");
   }, [location.search]);
+
+  // 데이터 fetch용 useEffect
+  useEffect(() => {
+    fetchProducts(keyword, categoryId, activeOnly);
+  }, [keyword, categoryId, activeOnly]);
 
   // 카테고리 체크박스 클릭 시 URL 갱신
   const handleCategoryChange = (id: number) => {
@@ -114,6 +122,13 @@ export default function ProductSearchPage() {
     navigate(`/search?${query.toString()}`);
   };
 
+  // 거래 가능만 보기 변경 핸들러
+  const handleActiveOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isActive = e.target.checked;
+    setActiveOnly(isActive);
+    // URL에 영향을 주지 않고, useEffect가 activeOnly 변경을 감지하여 fetchProducts를 다시 실행합니다.
+  };
+
   return (
     <div className="container">
       {/* 검색어 표시 */}
@@ -130,8 +145,12 @@ export default function ProductSearchPage() {
       </p>
 
       {/* 검색 폼 */}
-      <div className="flex-box between" style={{marginBottom: "2rem"}}>
-        <form onSubmit={handleSearch} className="search-form" style={{marginBottom: 0}}>
+      <div className="flex-box between" style={{ marginBottom: "2rem" }}>
+        <form
+          onSubmit={handleSearch}
+          className="search-form"
+          style={{ marginBottom: 0 }}
+        >
           <input
             type="text"
             placeholder="상품 이름 검색"
@@ -156,9 +175,21 @@ export default function ProductSearchPage() {
           상품등록
         </NavLink>
       </div>
-      <div className="search-page flex-box gap-36">
-        <div className="category-sidebar">
+      <div className="flex-box gap-36">
+        <div className="category-sidebar flex-column gap-8">
           <div className="category-checkbox-group flex-column gap-4">
+            <p className="title-lg">필터</p>
+            <label className="category-label flex-box gap-4">
+              <input
+                type="checkbox"
+                checked={activeOnly}
+                onChange={handleActiveOnlyChange}
+              />
+              <p>거래가능만 보기</p>
+            </label>
+          </div>
+          <div className="category-checkbox-group flex-column gap-4">
+            <p className="title-md">카테고리</p>
             {categories.map((c) => (
               <label
                 key={c.categoryId}

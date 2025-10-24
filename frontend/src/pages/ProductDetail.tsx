@@ -11,7 +11,7 @@ type Props = {
   setUser: (user: User | null) => void;
 };
 
-export default function ProductDetail({ user, setUser }: Props) {
+export default function ProductDetail({ user }: Props) {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
   const [bidValue, setBidValue] = useState("");
@@ -238,27 +238,6 @@ export default function ProductDetail({ user, setUser }: Props) {
       alert("찜 기능 실패 (네트워크 오류)");
     }
   };
-
-  // 로그인 사용자 정보 가져오기
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/users/me`, {
-          credentials: "include",
-        });
-        if (res.ok) {
-          const data: User = await res.json();
-          setUser(data);
-        } else {
-          setUser(null);
-        }
-      } catch (err) {
-        console.error("유저 정보 불러오기 실패:", err);
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, [setUser]);
 
   // 신고
   const handleReport = async () => {

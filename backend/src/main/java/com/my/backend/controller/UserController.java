@@ -6,6 +6,8 @@ import com.my.backend.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -57,12 +59,13 @@ public class UserController {
 
     // 로그인 상태 확인 (새로고침 후 유지용)
     @GetMapping("/me")
-    public UserDto getCurrentUser(HttpSession session) {
+    public ResponseEntity<UserDto> getCurrentUser(HttpSession session) {
         Long userId = (Long) session.getAttribute("userId");
         if (userId == null) {
-            throw new RuntimeException("로그인하지 않은 사용자입니다.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build(); // 로그인 안 됐으면 401
         }
-        return userService.getUser(userId);
+        UserDto user = userService.getUser(userId);
+        return ResponseEntity.ok(user);
     }
 
     // 마이페이지 조회 (로그인한 유저 기준)

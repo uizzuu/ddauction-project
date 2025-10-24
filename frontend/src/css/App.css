@@ -79,6 +79,18 @@ body {
   align-items: center;
 }
 
+.title-lg {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.title-md {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
 /* 공통 버튼 스타일 */
 button {
   font-family: inherit;
