@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import type { User, Product, Report } from "../types/types";
+import type { User, Product, Report, Category } from "../types/types";
 import { API_BASE_URL } from "../services/api";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export default function AdminPage() {
   const [section, setSection] = useState<"user" | "product" | "report" | "stats">("user");
@@ -9,9 +10,22 @@ export default function AdminPage() {
   const [reports, setReports] = useState<Report[]>([]);
   const [stats, setStats] = useState<{ userCount?: number; productCount?: number; reportCount?: number }>({});
 
-  // 수정용 상태
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [filterKeyword, setFilterKeyword] = useState("");
+  const [filterCategory, setFilterCategory] = useState<number | null>(null);
+
+  // 상품 수정 상태
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
+  const [editProductForm, setEditProductForm] = useState<Partial<Product>>({
+    title: "",
+    categoryId: undefined,
+    startingPrice: undefined,
+    productStatus: "ACTIVE",
+  });
+
+  // 회원 수정 상태
   const [editingUserId, setEditingUserId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState<{ nickName: string; password: string; phone: string }>({
+  const [editUserForm, setEditUserForm] = useState<{ nickName: string; password: string; phone: string }>({
     nickName: "",
     password: "",
     phone: "",
@@ -22,6 +36,7 @@ export default function AdminPage() {
     else if (section === "product") fetchProducts();
     else if (section === "report") fetchReports();
     else if (section === "stats") fetchStats();
+    fetchCategories();
   }, [section]);
 
   // --- Fetch Functions ---
@@ -32,7 +47,10 @@ export default function AdminPage() {
   };
 
   const fetchProducts = async () => {
-    const res = await fetch(`${API_BASE_URL}/admin/products`);
+    let url = `${API_BASE_URL}/api/products/search?`;
+    if (filterKeyword) url += `keyword=${filterKeyword}&`;
+    if (filterCategory) url += `category=${filterCategory}&`;
+    const res = await fetch(url);
     const data = await res.json();
     setProducts(data);
   };
@@ -49,6 +67,12 @@ export default function AdminPage() {
     setStats(data);
   };
 
+  const fetchCategories = async () => {
+    const res = await fetch(`${API_BASE_URL}/api/categories`);
+    const data = await res.json();
+    setCategories(data);
+  };
+
   // --- Actions ---
   const handleChangeRole = async (userId: number, newRole: User["role"]) => {
     await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
@@ -59,8 +83,51 @@ export default function AdminPage() {
     fetchUsers();
   };
 
+  const handleEditUserClick = (user: User) => {
+    setEditingUserId(user.userId);
+    setEditUserForm({
+      nickName: user.nickName || "",
+      password: "",
+      phone: user.phone || "",
+    });
+  };
+
+  const handleSaveUserClick = async (userId: number) => {
+    await fetch(`${API_BASE_URL}/api/users/${userId}/mypage`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editUserForm),
+    });
+    setEditingUserId(null);
+    fetchUsers();
+  };
+
+  const handleCancelUserClick = () => setEditingUserId(null);
+
+  const handleEditProductClick = (product: Product) => {
+    setEditingProductId(product.productId);
+    setEditProductForm({
+      title: product.title,
+      categoryId: product.categoryId,
+      startingPrice: product.startingPrice,
+      productStatus: product.productStatus,
+    });
+  };
+
+  const handleSaveProductClick = async (productId: number) => {
+    await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editProductForm),
+    });
+    setEditingProductId(null);
+    fetchProducts();
+  };
+
+  const handleCancelProductClick = () => setEditingProductId(null);
+
   const handleDeleteProduct = async (productId: number) => {
-    await fetch(`${API_BASE_URL}/admin/products/${productId}`, { method: "DELETE" });
+    await fetch(`${API_BASE_URL}/api/products/${productId}`, { method: "DELETE" });
     fetchProducts();
   };
 
@@ -69,33 +136,9 @@ export default function AdminPage() {
     fetchReports();
   };
 
-  // --- 회원 수정 ---
-  const handleEditClick = (user: User) => {
-    setEditingUserId(user.userId);
-    setEditForm({
-      nickName: user.nickName || "",
-      password: "",
-      phone: user.phone || "",
-    });
-  };
-
-  const handleSaveClick = async (userId: number) => {
-    await fetch(`${API_BASE_URL}/api/users/${userId}/mypage`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editForm),
-    });
-    setEditingUserId(null);
-    fetchUsers();
-  };
-
-  const handleCancelClick = () => {
-    setEditingUserId(null);
-  };
-
+  // --- Render ---
   return (
     <div className="admin-container">
-      {/* 사이드바 */}
       <aside className="admin-sidebar">
         <h2>관리자 페이지</h2>
         <ul>
@@ -106,7 +149,6 @@ export default function AdminPage() {
         </ul>
       </aside>
 
-      {/* 메인 컨텐츠 */}
       <main className="admin-main">
         {/* 회원 관리 */}
         {section === "user" && (
@@ -133,23 +175,19 @@ export default function AdminPage() {
                     <td>
                       {editingUserId === u.userId ? (
                         <input
-                          value={editForm.nickName}
-                          onChange={e => setEditForm({ ...editForm, nickName: e.target.value })}
+                          value={editUserForm.nickName}
+                          onChange={e => setEditUserForm({ ...editUserForm, nickName: e.target.value })}
                         />
-                      ) : (
-                        u.nickName
-                      )}
+                      ) : u.nickName}
                     </td>
                     <td>{u.email}</td>
                     <td>
                       {editingUserId === u.userId ? (
                         <input
-                          value={editForm.phone}
-                          onChange={e => setEditForm({ ...editForm, phone: e.target.value })}
+                          value={editUserForm.phone}
+                          onChange={e => setEditUserForm({ ...editUserForm, phone: e.target.value })}
                         />
-                      ) : (
-                        u.phone
-                      )}
+                      ) : u.phone}
                     </td>
                     <td>{u.createdAt ? new Date(u.createdAt).toLocaleString() : "-"}</td>
                     <td>{u.updatedAt ? new Date(u.updatedAt).toLocaleString() : "-"}</td>
@@ -159,23 +197,25 @@ export default function AdminPage() {
                           <input
                             type="password"
                             placeholder="새 비밀번호"
-                            value={editForm.password}
-                            onChange={e => setEditForm({ ...editForm, password: e.target.value })}
+                            value={editUserForm.password}
+                            onChange={e => setEditUserForm({ ...editUserForm, password: e.target.value })}
                           />
-                          <button onClick={() => handleSaveClick(u.userId)}>저장</button>
-                          <button onClick={handleCancelClick}>취소</button>
+                          <button onClick={() => handleSaveUserClick(u.userId)}>저장</button>
+                          <button onClick={handleCancelUserClick}>취소</button>
                         </>
                       ) : (
-                        <select
-                          value={u.role}
-                          onChange={e => handleChangeRole(u.userId, e.target.value as User["role"])}
-                        >
-                          <option value="USER">USER</option>
-                          <option value="BANNED">BANNED</option>
-                          <option value="ADMIN">ADMIN</option>
-                        </select>
+                        <>
+                          <select
+                            value={u.role}
+                            onChange={e => handleChangeRole(u.userId, e.target.value as User["role"])}
+                          >
+                            <option value="USER">USER</option>
+                            <option value="BANNED">BANNED</option>
+                            <option value="ADMIN">ADMIN</option>
+                          </select>
+                          <button onClick={() => handleEditUserClick(u)}>수정</button>
+                        </>
                       )}
-                      {!editingUserId && <button onClick={() => handleEditClick(u)}>수정</button>}
                     </td>
                   </tr>
                 ))}
@@ -188,6 +228,23 @@ export default function AdminPage() {
         {section === "product" && (
           <div className="admin-section">
             <h3>상품 관리</h3>
+            <div style={{ marginBottom: "1rem" }}>
+              <input
+                placeholder="상품명 검색"
+                value={filterKeyword}
+                onChange={e => setFilterKeyword(e.target.value)}
+              />
+              <select
+                value={filterCategory ?? ""}
+                onChange={e => setFilterCategory(e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">전체 카테고리</option>
+                {categories.map(c => (
+                  <option key={c.categoryId} value={c.categoryId}>{c.name}</option>
+                ))}
+              </select>
+              <button onClick={fetchProducts}>검색</button>
+            </div>
             <table className="admin-table">
               <thead>
                 <tr>
@@ -196,19 +253,72 @@ export default function AdminPage() {
                   <th>카테고리</th>
                   <th>가격</th>
                   <th>상태</th>
-                  <th>삭제</th>
+                  <th>액션</th>
                 </tr>
               </thead>
               <tbody>
                 {products.map(p => (
                   <tr key={p.productId}>
                     <td>{p.productId}</td>
-                    <td>{p.title}</td>
-                    <td>{p.categoryName}</td>
-                    <td>{p.price ?? "-"}</td>
-                    <td>{p.productStatus}</td>
                     <td>
-                      <button className="delete-btn" onClick={() => handleDeleteProduct(p.productId)}>삭제</button>
+                      {editingProductId === p.productId ? (
+                        <input
+                          value={editProductForm.title ?? ""}
+                          onChange={e => setEditProductForm({ ...editProductForm, title: e.target.value })}
+                        />
+                      ) : p.title}
+                    </td>
+                    <td>
+                      {editingProductId === p.productId ? (
+                        <select
+                          value={editProductForm.categoryId ?? ""}
+                          onChange={e => setEditProductForm({ ...editProductForm, categoryId: Number(e.target.value) })}
+                        >
+                          {categories.map(c => (
+                            <option key={c.categoryId} value={c.categoryId}>{c.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        p.categoryName ?? categories.find(c => c.categoryId === p.categoryId)?.name ?? "-"
+                      )}
+                    </td>
+                    <td>
+                      {editingProductId === p.productId ? (
+                        <input
+                          type="number"
+                          value={editProductForm.startingPrice ?? 0}
+                          onChange={e => setEditProductForm({ ...editProductForm, startingPrice: Number(e.target.value) })}
+                        />
+                      ) : (
+                        p.price ?? p.startingPrice ?? 0
+                      )}
+                    </td>
+                    <td>
+                      {editingProductId === p.productId ? (
+                        <select
+                          value={editProductForm.productStatus ?? "ACTIVE"}
+                          onChange={e => setEditProductForm({ ...editProductForm, productStatus: e.target.value })}
+                        >
+                          <option value="ACTIVE">판매중</option>
+                          <option value="SOLD">판매완료</option>
+                          <option value="CLOSED">비활성</option>
+                        </select>
+                      ) : (
+                        p.productStatus ?? "-"
+                      )}
+                    </td>
+                    <td>
+                      {editingProductId === p.productId ? (
+                        <>
+                          <button onClick={() => handleSaveProductClick(p.productId)}>저장</button>
+                          <button onClick={handleCancelProductClick}>취소</button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => handleEditProductClick(p)}>수정</button>
+                          <button className="delete-btn" onClick={() => handleDeleteProduct(p.productId)}>삭제</button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -260,13 +370,24 @@ export default function AdminPage() {
         {section === "stats" && (
           <div className="admin-section">
             <h3>통계</h3>
-            <p>회원 수: {stats.userCount ?? 0}</p>
-            <p>상품 수: {stats.productCount ?? 0}</p>
-            <p>신고 수: {stats.reportCount ?? 0}</p>
+            <div style={{ width: "100%", height: 300 }}>
+              <ResponsiveContainer>
+                <BarChart data={[
+                  { name: "회원", count: stats.userCount ?? 0 },
+                  { name: "상품", count: stats.productCount ?? 0 },
+                  { name: "신고", count: stats.reportCount ?? 0 },
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         )}
       </main>
     </div>
   );
 }
-// 
