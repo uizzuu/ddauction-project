@@ -46,7 +46,10 @@ export default function HeaderSub({ category, setCategory }: Props) {
               height="18"
               viewBox="0 0 22 18"
               fill="none"
-              style={{ color: isModalOpen ? "#b17576" : "#333", stroke: isModalOpen ? "#b17576" : "#333" }}
+              style={{
+                color: isModalOpen ? "#b17576" : "#333",
+                stroke: isModalOpen ? "#b17576" : "#333",
+              }}
             >
               <path
                 d="M1 1H21M1 9H21M1 17H21"

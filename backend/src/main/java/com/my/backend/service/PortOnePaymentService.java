@@ -295,6 +295,8 @@
 
 package com.my.backend.service;
 
+import com.my.backend.common.enums.PaymentStatus;
+import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.config.PaymentProperties;
 import com.my.backend.dto.portone.PortOnePaymentResponse;
 import com.my.backend.dto.portone.PortOneTokenResponse;
@@ -315,9 +317,9 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.my.backend.entity.Payment.PaymentStatus.CANCELLED;
-import static com.my.backend.entity.Payment.PaymentStatus.PAID;
-import static com.my.backend.entity.Product.ProductStatus.ACTIVE;
+import static com.my.backend.common.enums.PaymentStatus.CANCELLED;
+import static com.my.backend.common.enums.PaymentStatus.PAID;
+import static com.my.backend.common.enums.ProductStatus.ACTIVE;
 
 @Slf4j
 @Service
@@ -554,8 +556,8 @@ public class PortOnePaymentService {
 
         Integer paidAmount = paymentInfo.getResponse().getPaidAmount();
 
-        product.setProductStatus(Product.ProductStatus.SOLD);
-        product.setPaymentStatus(Payment.PaymentStatus.PAID);
+        product.setProductStatus(ProductStatus.SOLD);
+        product.setPaymentStatus(PaymentStatus.PAID);
         product.setPaymentUserId(buyer.getUserId());
         product.setAmount(paidAmount == null ? null : paidAmount.longValue());
         productRepository.save(product);

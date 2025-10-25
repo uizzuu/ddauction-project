@@ -1,5 +1,6 @@
 package com.my.backend.entity;
 
+import com.my.backend.common.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -48,13 +49,5 @@ public class Payment {
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
-
-    public enum PaymentStatus {
-        PENDING,    // 결제 대기
-        PAID,       // 결제 완료
-        CANCELLED,  // 결제 취소됨
-        FAILED,     // 결제 실패
-        REFUNDED    // 환불됨
-    }
 
 }

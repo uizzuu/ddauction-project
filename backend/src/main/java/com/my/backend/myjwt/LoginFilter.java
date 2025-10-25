@@ -87,7 +87,9 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         String role = authorities.stream().findFirst().map(GrantedAuthority::getAuthority).orElse("ROLE_NONE");
         System.out.println("[DEBUG] role = " + role);
 
-        String token = jwtUtil.createJwt(customUserDetails.getEmail(), role, 60 * 60 * 24L);
+        // ms, s 충돌 해결 (LoginFilter <-> JWTUtil)
+        long expiredMs = 24 * 60 * 60 * 1000L; // 24시간 * 60분 * 60초 * 1000ms
+        String token = jwtUtil.createJwt(customUserDetails.getEmail(), role, expiredMs);
         System.out.println("[DEBUG] token = " + token);
 
         if (token != null) {

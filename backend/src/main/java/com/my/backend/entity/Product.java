@@ -1,5 +1,7 @@
 package com.my.backend.entity;
 
+import com.my.backend.common.enums.PaymentStatus;
+import com.my.backend.common.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,7 +10,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -45,9 +46,10 @@ public class Product {
     @Column(nullable = false)
     private ProductStatus productStatus;
 
+    // paymentStatus NN 설정 충돌, nullable true => false 변경
     @Enumerated(EnumType.STRING)
-    @Column(nullable = true)
-    private Payment.PaymentStatus paymentStatus;
+    @Column(name = "payment_status", nullable = false)
+    private PaymentStatus paymentStatus;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -72,16 +74,4 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
-
-    public enum ProductStatus {
-        ACTIVE,
-        SOLD,
-        CLOSED
-    }
-
-    public enum PaymentStatus {
-        PENDING,
-        PAID,
-        CANCELLED
-    }
 }

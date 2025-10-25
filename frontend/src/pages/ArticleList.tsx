@@ -15,7 +15,7 @@ export default function ArticleList({ user }: Props) {
   useEffect(() => {
     getArticles()
       .then(setArticles)
-      .catch(() => alert("게시글 목록을 불러오지 못했습니다."))
+      .catch(() => console.log("게시글 목록을 불러오지 못했습니다."))
       .finally(() => setLoading(false));
   }, []);
 

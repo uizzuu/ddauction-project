@@ -114,10 +114,7 @@ export default function ProductDetail({ user }: Props) {
         // 현재 사용자가 찜했는지 여부 (세션 포함)
         try {
           const bmRes = await fetch(
-            `${API_BASE_URL}/api/bookmarks/check?productId=${id}`,
-            {
-              credentials: "include",
-            }
+            `${API_BASE_URL}/api/bookmarks/check?productId=${id}`
           );
           if (bmRes.ok) {
             const bookmarked: boolean = await bmRes.json();
@@ -165,8 +162,9 @@ export default function ProductDetail({ user }: Props) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/products/${id}/bid`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ bidPrice: bidNum }),
       });
 
@@ -205,7 +203,6 @@ export default function ProductDetail({ user }: Props) {
         `${API_BASE_URL}/api/bookmarks/toggle?productId=${product.productId}`,
         {
           method: "POST",
-          credentials: "include",
         }
       );
 

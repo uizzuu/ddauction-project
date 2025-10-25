@@ -1,11 +1,11 @@
 package com.my.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.my.backend.common.enums.PaymentStatus;
+import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.entity.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Data;
 
@@ -36,7 +36,9 @@ public class ProductDto {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss") // ✨ 추가
     private LocalDateTime auctionEndTime;
 
-    private Product.ProductStatus productStatus;
+    private ProductStatus productStatus;
+
+    private PaymentStatus paymentStatus;
 
     private LocalDateTime createdAt;
 
@@ -64,6 +66,7 @@ public class ProductDto {
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
                 .productStatus(product.getProductStatus())
+                .paymentStatus(product.getPaymentStatus())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
                 .bidId(product.getBid() != null ? product.getBid().getBidId() : null)
@@ -83,6 +86,7 @@ public class ProductDto {
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)
                 .productStatus(this.productStatus)
+                .paymentStatus(this.paymentStatus)
                 .bid(bid)
                 .payment(payment)
                 .category(category)

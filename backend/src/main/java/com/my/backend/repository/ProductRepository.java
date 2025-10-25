@@ -1,7 +1,7 @@
 package com.my.backend.repository;
 
+import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.entity.Product;
-import com.my.backend.entity.Product.ProductStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDateTime;
@@ -25,7 +25,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
 
     // 1분 경매 자동 종료용
     List<Product> findByOneMinuteAuctionTrueAndProductStatusAndAuctionEndTimeBefore(
-            Product.ProductStatus status,
+            ProductStatus status,
             LocalDateTime endTime
     );
 }

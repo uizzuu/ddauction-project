@@ -75,7 +75,7 @@ export default function Signup() {
     if (!validateAll()) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
+      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
@@ -84,15 +84,25 @@ export default function Signup() {
       if (response.ok) {
         alert("회원가입 성공!");
         navigate("/login");
-      } else {
-        const data = await response.json();
+        // 서버에서 JSON으로 에러 메시지를 보내는 경우 처리
+        let message = "회원가입 실패";
+        try {
+          const data = await response.json();
+          if (data.message) message = data.message;
+          else if (data.errors && data.errors.length > 0)
+            message = data.errors[0].defaultMessage;
+        } catch {
+          message = `회원가입 실패 (${response.status})`;
+        }
+
         setErrors((prev) => ({
           ...prev,
-          submit: data.message || "회원가입 실패",
+          submit: message,
         }));
       }
     } catch {
-      setErrors((prev) => ({ ...prev, submit: "서버 연결 실패" }));
+      // 실제 네트워크 문제
+      setErrors((prev) => ({ ...prev, submit: "서버와 연결되지 않았습니다." }));
     }
   };
 
@@ -170,16 +180,25 @@ export default function Signup() {
 
           {/* 이메일 */}
           <input
-            type="email"
+            type="text"
             placeholder="이메일"
             value={form.email}
             onChange={(e) => {
-              const val = e.target.value;
+              const val = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣\s]/g, "");
               setForm((prev) => ({ ...prev, email: val }));
-              const msg =
-                val && !isEmailValid(val)
-                  ? "올바른 이메일 형식이 아닙니다"
-                  : "";
+            
+              let msg = "";
+              if (!val) msg = "이메일을 입력해주세요";
+              else if (!isEmailValid(val)) msg = "올바른 이메일 형식이 아닙니다";
+            
+              setErrors((prev) => ({ ...prev, email: msg }));
+            }}
+            onBlur={() => {
+              const val = form.email;
+              let msg = "";
+              if (!val) msg = "이메일을 입력해주세요";
+              else if (!isEmailValid(val))
+                msg = "올바른 이메일 형식이 아닙니다";
               setErrors((prev) => ({ ...prev, email: msg }));
             }}
             className="input"
@@ -209,18 +228,19 @@ export default function Signup() {
           {/* 비밀번호 */}
           <input
             type="password"
-            placeholder="비밀번호 (8자리 이상, 숫자+특수문자 !*@# 포함)"
+            placeholder="비밀번호 (8자리 이상, 대소문자+숫자+특수문자 !*@# 포함)"
             value={form.password}
             onChange={(e) => {
-              const val = e.target.value;
+              // 공백 제거
+              const val = e.target.value.replace(/\s+/g, "");
               setForm((prev) => ({ ...prev, password: val }));
-
-              const pattern = /^(?=.*[0-9])(?=.*[!*@#])[a-zA-Z0-9!*@#]{8,}$/;
+              const pattern =
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!*@#]).{8,}$/;
               let msg = "";
               if (!val) msg = "비밀번호를 입력해주세요";
               else if (!pattern.test(val))
                 msg =
-                  "비밀번호는 8자리 이상, 숫자와 !*@# 중 1개 이상 포함해야 합니다";
+                  "비밀번호는 8자리 이상, 대소문자+숫자+특수문자 !*@# 1개 이상 포함";
 
               setErrors((prev) => ({
                 ...prev,
@@ -243,7 +263,7 @@ export default function Signup() {
             placeholder="비밀번호 확인"
             value={passwordConfirm}
             onChange={(e) => {
-              const val = e.target.value;
+              const val = e.target.value.replace(/\s+/g, ""); // 공백 제거
               setPasswordConfirm(val);
               setErrors((prev) => ({
                 ...prev,

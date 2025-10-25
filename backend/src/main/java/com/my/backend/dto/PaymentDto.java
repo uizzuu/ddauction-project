@@ -1,5 +1,6 @@
 package com.my.backend.dto;
 
+import com.my.backend.common.enums.PaymentStatus;
 import com.my.backend.entity.Payment;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +16,7 @@ public class PaymentDto {
     private Long bidId;
     private Long totalPrice;
     private Long paymentMethodId;
-    private Payment.PaymentStatus paymentStatus;
+    private PaymentStatus paymentStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -39,7 +40,7 @@ public class PaymentDto {
         return Payment.builder()
                 .paymentId(this.paymentId)
                 .totalPrice(this.totalPrice)
-                .paymentStatus(this.paymentStatus)
+                .paymentStatus(this.paymentStatus != null ? this.paymentStatus : PaymentStatus.PENDING)
                 .build();
     }
 }
