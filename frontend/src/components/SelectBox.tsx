@@ -6,6 +6,7 @@ export default function SelectBox({
   onChange,
   options,
   placeholder = "선택하세요",
+  className = "",
 }: SelectBoxProps) {
   const [open, setOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<string>(placeholder);
@@ -32,7 +33,7 @@ export default function SelectBox({
   };
 
   return (
-    <div ref={boxRef} className="custom-select-box">
+    <div ref={boxRef} className={`custom-select-box ${className}`}>
       <button
         type="button"
         onClick={() => setOpen(!open)}

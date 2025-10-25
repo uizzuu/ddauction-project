@@ -6,6 +6,7 @@ import com.my.backend.dto.BidDto;
 import com.my.backend.entity.*;
 import com.my.backend.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,7 +27,7 @@ public class ProductService {
 
     // 전체 상품 조회
     public List<ProductDto> getAllProducts() {
-        return productRepository.findAll()
+        return productRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
                 .stream()
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
@@ -151,6 +152,7 @@ public class ProductService {
 
         return products.stream()
                 .map(ProductDto::fromEntity)
+                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .collect(Collectors.toList());
     }
 

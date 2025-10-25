@@ -9,12 +9,12 @@ export default function ProductSearchPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [keyword, setKeyword] = useState(""); 
-  const [categoryId, setCategoryId] = useState<number | "">(""); 
-  const [activeOnly, setActiveOnly] = useState(false); 
+  const [keyword, setKeyword] = useState("");
+  const [categoryId, setCategoryId] = useState<number | "">("");
+  const [activeOnly, setActiveOnly] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // 최신순, 오래된순, 가격 낮은순, 가격 높은순, 남은시간순, 인기순
   const [sortOption, setSortOption] = useState<
@@ -53,7 +53,13 @@ export default function ProductSearchPage() {
     kw: string = "",
     cat: number | "" = "",
     active: boolean = false,
-    sort: "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity" = "latest"
+    sort:
+      | "latest"
+      | "oldest"
+      | "priceAsc"
+      | "priceDesc"
+      | "timeLeft"
+      | "popularity" = "latest"
   ) => {
     setLoading(true);
     try {
@@ -66,18 +72,18 @@ export default function ProductSearchPage() {
       if (kw || cat || active) {
         url = `${API_BASE_URL}/api/products/search?${query.toString()}`;
       }
-
       const res = await fetch(url);
       if (!res.ok) throw new Error("상품 불러오기 실패");
       const data: Product[] = await res.json();
-
       let sorted = [...data];
 
       // 🔹 인기순일 경우, 각 상품 찜 수 가져오기
       if (sort === "popularity") {
         const productsWithBookmarkCount = await Promise.all(
           sorted.map(async (p) => {
-            const res = await fetch(`${API_BASE_URL}/api/bookmarks/count?productId=${p.productId}`);
+            const res = await fetch(
+              `${API_BASE_URL}/api/bookmarks/count?productId=${p.productId}`
+            );
             const count = await res.json();
             return { ...p, bookmarkCount: count };
           })
@@ -89,22 +95,30 @@ export default function ProductSearchPage() {
         switch (sort) {
           case "latest":
             sorted.sort(
-              (a, b) => (new Date(b.createdAt || "").getTime() || 0) - (new Date(a.createdAt || "").getTime() || 0)
+              (a, b) =>
+                (new Date(b.createdAt || "").getTime() || 0) -
+                (new Date(a.createdAt || "").getTime() || 0)
             );
             break;
           case "oldest":
             sorted.sort(
-              (a, b) => (new Date(a.createdAt || "").getTime() || 0) - (new Date(b.createdAt || "").getTime() || 0)
+              (a, b) =>
+                (new Date(a.createdAt || "").getTime() || 0) -
+                (new Date(b.createdAt || "").getTime() || 0)
             );
             break;
           case "priceAsc":
             sorted.sort(
-              (a, b) => (a.price ?? a.startingPrice ?? 0) - (b.price ?? b.startingPrice ?? 0)
+              (a, b) =>
+                (a.price ?? a.startingPrice ?? 0) -
+                (b.price ?? b.startingPrice ?? 0)
             );
             break;
           case "priceDesc":
             sorted.sort(
-              (a, b) => (b.price ?? b.startingPrice ?? 0) - (a.price ?? a.startingPrice ?? 0)
+              (a, b) =>
+                (b.price ?? b.startingPrice ?? 0) -
+                (a.price ?? a.startingPrice ?? 0)
             );
             break;
           case "timeLeft":
@@ -128,13 +142,15 @@ export default function ProductSearchPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    setKeyword(params.get("keyword") || "");
-    setCategoryId(params.get("category") ? Number(params.get("category")) : "");
-  }, [location.search]);
+    const kw = params.get("keyword") || "";
+    const cat = params.get("category") ? Number(params.get("category")) : "";
 
-  useEffect(() => {
-    fetchProducts(keyword, categoryId, activeOnly, sortOption);
-  }, [keyword, categoryId, activeOnly, sortOption]);
+    setKeyword(kw);
+    setCategoryId(cat);
+
+    // URL 기반으로 바로 fetch
+    fetchProducts(kw, cat, activeOnly, sortOption);
+  }, [location.search, activeOnly, sortOption]);
 
   const handleCategoryChange = (id: number) => {
     const newCat = categoryId === id ? "" : id;
@@ -160,24 +176,50 @@ export default function ProductSearchPage() {
     <div className="container">
       <p className="page-title">
         {keyword || categoryId
-          ? `${keyword ? `${keyword} ` : ""}${categoryId ? `${categories.find((c) => c.categoryId === categoryId)?.name} ` : ""}검색`
+          ? `${keyword ? `${keyword} ` : ""}${
+              categoryId
+                ? `${
+                    categories.find((c) => c.categoryId === categoryId)?.name
+                  } `
+                : ""
+            }검색`
           : "전체 검색"}
       </p>
 
       <div className="flex-box between" style={{ marginBottom: "2rem" }}>
-        <form onSubmit={handleSearch} className="search-form" style={{ marginBottom: 0 }}>
-          <input type="text" placeholder="상품 이름 검색" value={keyword} onChange={(e) => setKeyword(e.target.value)} className="search-input" />
+        <form
+          onSubmit={handleSearch}
+          className="search-form"
+          style={{ marginBottom: 0 }}
+        >
+          <input
+            type="text"
+            placeholder="상품 이름 검색"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            className="search-input"
+          />
           <SelectBox
             value={categoryId === "" ? "" : String(categoryId)}
             onChange={(val) => setCategoryId(val === "" ? "" : Number(val))}
-            options={categories.map((c) => ({ value: String(c.categoryId), label: c.name }))}
+            options={categories.map((c) => ({
+              value: String(c.categoryId),
+              label: c.name,
+            }))}
             placeholder="전체 카테고리"
+            className="min135"
           />
           <SelectBox
             value={sortOption}
             onChange={(val) =>
               setSortOption(
-                val as "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity"
+                val as
+                  | "latest"
+                  | "oldest"
+                  | "priceAsc"
+                  | "priceDesc"
+                  | "timeLeft"
+                  | "popularity"
               )
             }
             options={[
@@ -189,10 +231,15 @@ export default function ProductSearchPage() {
               { value: "popularity", label: "인기순" },
             ]}
             placeholder="정렬"
+            className="min118"
           />
-          <button type="submit" className="search-btn">검색</button>
+          <button type="submit" className="search-btn">
+            검색
+          </button>
         </form>
-        <NavLink to="/register" className="search-btn">상품등록</NavLink>
+        <NavLink to="/register" className="search-btn">
+          상품등록
+        </NavLink>
       </div>
 
       <div className="flex-box gap-36">
@@ -200,15 +247,26 @@ export default function ProductSearchPage() {
           <div className="category-checkbox-group flex-column gap-4">
             <p className="title-lg">필터</p>
             <label className="category-label flex-box gap-4">
-              <input type="checkbox" checked={activeOnly} onChange={handleActiveOnlyChange} />
+              <input
+                type="checkbox"
+                checked={activeOnly}
+                onChange={handleActiveOnlyChange}
+              />
               <p>거래가능만 보기</p>
             </label>
           </div>
           <div className="category-checkbox-group flex-column gap-4">
             <p className="title-md">카테고리</p>
             {categories.map((c) => (
-              <label key={c.categoryId} className="category-label flex-box gap-4">
-                <input type="checkbox" checked={categoryId === c.categoryId} onChange={() => handleCategoryChange(c.categoryId)} />
+              <label
+                key={c.categoryId}
+                className="category-label flex-box gap-4"
+              >
+                <input
+                  type="checkbox"
+                  checked={categoryId === c.categoryId}
+                  onChange={() => handleCategoryChange(c.categoryId)}
+                />
                 <p>{c.name}</p>
               </label>
             ))}
@@ -217,32 +275,55 @@ export default function ProductSearchPage() {
 
         <div className="product-area">
           {loading ? (
-            <p className="text-gray-500 text-center">불러오는 중...</p>
+            <p className="no-content-text">불러오는 중...</p>
           ) : products.length > 0 ? (
-            <div className="product-grid">
+            <div className="search-results-grid">
               {products.map((p) => (
-                <div key={p.productId} className="product-card" style={{ cursor: "pointer" }} onClick={() => navigate(`/products/${p.productId}`)}>
-                  <div className="product-image">{p.imageUrl ? <img src={p.imageUrl} alt={p.title} /> : <div className="no-image">이미지 없음</div>}</div>
+                <div
+                  key={p.productId}
+                  className="product-card"
+                  style={{ cursor: "pointer" }}
+                  onClick={() => navigate(`/products/${p.productId}`)}
+                >
+                  <div className="product-image">
+                    {p.imageUrl ? (
+                      <img src={p.imageUrl} alt={p.title} />
+                    ) : (
+                      <div className="no-image">이미지 없음</div>
+                    )}
+                  </div>
                   <div className="product-info flex-column gap-4">
                     <h3 className="product-title">{p.title}</h3>
                     <div>
                       <div className="flex-box gap-8">
                         <p className="product-text-sm">경매 등록가</p>
-                        <p className="product-text-lg">{formatPrice(p.startingPrice ?? p.price)}</p>
+                        <p className="product-text-lg">
+                          {formatPrice(p.startingPrice ?? p.price)}
+                        </p>
                       </div>
                       {p.auctionEndTime && (
                         <>
                           <div className="flex-box gap-8">
                             <p className="product-text-sm">남은시간</p>
                             <p className="product-text-sm">
-                              <span className="product-text-lg">{formatDate(p.auctionEndTime)}</span>
+                              <span className="product-text-lg">
+                                {formatDate(p.auctionEndTime)}
+                              </span>
                             </p>
                           </div>
-                          <p className="product-text-sm">({formatDateTime(p.auctionEndTime)})</p>
+                          <p className="product-text-sm">
+                            ({formatDateTime(p.auctionEndTime)})
+                          </p>
                         </>
                       )}
                     </div>
-                    <button className="btn-bid" onClick={(e) => { e.stopPropagation(); navigate(`/products/${p.productId}`); }}>
+                    <button
+                      className="btn-bid"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/products/${p.productId}`);
+                      }}
+                    >
                       입찰하기
                     </button>
                   </div>

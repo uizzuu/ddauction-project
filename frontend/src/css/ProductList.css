@@ -9,14 +9,20 @@
   font-size: 18px;
 }
 
+.product-area {
+  width: 100%;
+}
+
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 
-.product-area .product-grid {
+.search-results-grid {
+  display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 20px;
 }
 
 .product-card {

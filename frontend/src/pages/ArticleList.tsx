@@ -42,9 +42,9 @@ export default function ArticleList({ user }: Props) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #ccc" }}>
-              <th style={{ textAlign: "left", padding: "0.5rem" }}>제목</th>
-              <th style={{ padding: "0.5rem" }}>작성자</th>
-              <th style={{ padding: "0.5rem" }}>작성일</th>
+              <th style={{ textAlign: "left", padding: "0.5rem", width: "100%" }}>제목</th>
+              <th style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>작성자</th>
+              <th style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>작성일</th>
             </tr>
           </thead>
           <tbody>
@@ -57,15 +57,15 @@ export default function ArticleList({ user }: Props) {
                 }}
                 onClick={() => navigate(`/articles/${article.articleId}`)}
               >
-                <td style={{ padding: "0.5rem" }}>{article.title}</td>
-                <td style={{ padding: "0.5rem", textAlign: "center" }}>
+                <td style={{ padding: "0.5rem", width: "100%" }}>{article.title}</td>
+                <td style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>
                   {article.nickName}
                 </td>
                 <td
                   style={{
-                    padding: "0.5rem",
-                    textAlign: "center",
-                    color: "#888",
+                    padding: "0.5rem 2rem",
+                    color: "#888", 
+                    whiteSpace: "noWrap"
                   }}
                 >
                   {new Date(article.createdAt).toLocaleDateString()}

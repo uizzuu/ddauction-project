@@ -67,11 +67,19 @@
 /* SelectBox 전체 컨테이너 */
 .custom-select-box {
   display: inline-block;
-  min-width: 135px;
   color: #333;
   z-index: 10;
 
   position: relative;
+}
+
+.min135{
+  min-width: 135px;
+}
+
+.min118{
+  min-width: 118px;
+  flex-shrink: 0;
 }
 
 /* 선택된 버튼 영역 */
