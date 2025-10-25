@@ -3,6 +3,7 @@ package com.my.backend.websocket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidResponse;
 import com.my.backend.entity.Bid;
 import com.my.backend.entity.Product;
@@ -302,7 +303,7 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
 
             @PostConstruct
             public void initAuctionWebSocketHandler() throws JsonProcessingException {
-                List<Product> activeProductList = productRepository.findByProductStatus(Product.ProductStatus.ACTIVE);
+                List<Product> activeProductList = productRepository.findByProductStatus(ProductStatus.ACTIVE);
                 for(Product product : activeProductList) {
                     List<Bid> bidHistory = bidRepository.findByProductProductIdOrderByCreatedAtDesc(product.getProductId());
             bidHistoryMap.put(product.getProductId(), bidHistory);

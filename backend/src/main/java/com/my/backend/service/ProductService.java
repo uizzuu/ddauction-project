@@ -1,9 +1,9 @@
 package com.my.backend.service;
 
+import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.dto.BidDto;
 import com.my.backend.entity.*;
-import com.my.backend.entity.Product.ProductStatus;
 import com.my.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

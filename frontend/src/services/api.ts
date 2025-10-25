@@ -14,7 +14,8 @@ import type {
 
 const API_BASE = "/api";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 // ------------------- 타입 가드 ------------------- //
 
@@ -45,7 +46,8 @@ function isProduct(obj: unknown): obj is Product {
   if (typeof obj !== "object" || obj === null) return false;
   const o = obj as Record<string, unknown>;
 
-  const bidsValid = o.bids === undefined || (Array.isArray(o.bids) && o.bids.every(isBid));
+  const bidsValid =
+    o.bids === undefined || (Array.isArray(o.bids) && o.bids.every(isBid));
 
   return (
     typeof o.productId === "number" &&
@@ -103,12 +105,15 @@ export async function getProducts(): Promise<Product[]> {
   if (!response.ok) throw new Error("상품 목록 조회 실패");
 
   const data: unknown = await response.json();
-  if (!isProductArray(data)) throw new Error("API 반환값이 Product[] 타입과 일치하지 않음");
+  if (!isProductArray(data))
+    throw new Error("API 반환값이 Product[] 타입과 일치하지 않음");
   return data;
 }
 
 // 상품 등록
-export async function createProduct(productData: CreateProductRequest): Promise<Product> {
+export async function createProduct(
+  productData: CreateProductRequest
+): Promise<Product> {
   const response = await fetch(`${API_BASE_URL}${API_BASE}/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -118,7 +123,8 @@ export async function createProduct(productData: CreateProductRequest): Promise<
   if (!response.ok) throw new Error("상품 등록 실패");
 
   const data: unknown = await response.json();
-  if (!isProduct(data)) throw new Error("API 반환값이 Product 타입과 일치하지 않음");
+  if (!isProduct(data))
+    throw new Error("API 반환값이 Product 타입과 일치하지 않음");
   return data;
 }
 
@@ -128,7 +134,8 @@ export async function getCategories(): Promise<Category[]> {
   if (!response.ok) throw new Error("카테고리 조회 실패");
 
   const data: unknown = await response.json();
-  if (!isCategoryArray(data)) throw new Error("API 반환값이 Category[] 타입과 일치하지 않음");
+  if (!isCategoryArray(data))
+    throw new Error("API 반환값이 Category[] 타입과 일치하지 않음");
   return data;
 }
 
@@ -149,7 +156,9 @@ export async function getArticleById(id: number): Promise<ArticleDto> {
 }
 
 // 게시글 생성
-export async function createArticle(articleData: ArticleForm): Promise<ArticleDto> {
+export async function createArticle(
+  articleData: ArticleForm
+): Promise<ArticleDto> {
   const response = await fetch(`${API_BASE_URL}${API_BASE}/articles`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -160,7 +169,10 @@ export async function createArticle(articleData: ArticleForm): Promise<ArticleDt
 }
 
 // 게시글 수정
-export async function updateArticle(id: number, articleData: ArticleForm): Promise<ArticleDto> {
+export async function updateArticle(
+  id: number,
+  articleData: ArticleForm
+): Promise<ArticleDto> {
   const response = await fetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -180,19 +192,29 @@ export async function deleteArticle(id: number): Promise<void> {
 // ------------------- 댓글 API ------------------- //
 
 // 게시글에 달린 댓글 목록 조회
-export async function getCommentsByArticleId(articleId: number): Promise<CommentDto[]> {
-  const response = await fetch(`${API_BASE_URL}${API_BASE}/articles/${articleId}/comments`);
+export async function getCommentsByArticleId(
+  articleId: number
+): Promise<CommentDto[]> {
+  const response = await fetch(
+    `${API_BASE_URL}${API_BASE}/articles/${articleId}/comments`
+  );
   if (!response.ok) throw new Error("댓글 목록 조회 실패");
   return response.json();
 }
 
 // 댓글 생성
-export async function createComment(articleId: number, form: CommentForm): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}${API_BASE}/articles/${articleId}/comments`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(form),
-  });
+export async function createComment(
+  articleId: number,
+  form: CommentForm
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}${API_BASE}/articles/${articleId}/comments`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    }
+  );
 
   if (!response.ok) {
     throw new Error("댓글 등록 실패");
@@ -200,12 +222,18 @@ export async function createComment(articleId: number, form: CommentForm): Promi
 }
 
 // 댓글 수정
-export async function updateComment(commentId: number, form: CommentForm): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}${API_BASE}/comments/${commentId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(form),
-  });
+export async function updateComment(
+  commentId: number,
+  form: CommentForm
+): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}${API_BASE}/comments/${commentId}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    }
+  );
 
   if (!response.ok) {
     throw new Error("댓글 수정 실패");
@@ -214,9 +242,12 @@ export async function updateComment(commentId: number, form: CommentForm): Promi
 
 // 댓글 삭제
 export async function deleteComment(commentId: number): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}${API_BASE}/comments/${commentId}`, {
-    method: "DELETE",
-  });
+  const response = await fetch(
+    `${API_BASE_URL}${API_BASE}/comments/${commentId}`,
+    {
+      method: "DELETE",
+    }
+  );
 
   if (!response.ok) {
     throw new Error("댓글 삭제 실패");

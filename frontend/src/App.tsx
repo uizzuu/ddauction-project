@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
@@ -18,26 +18,11 @@ import {
 } from "./import/import";
 import "./import/import.css";
 import type { User, Category } from "./types/types";
-import { API_BASE_URL } from "./services/api";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [category, setCategory] = useState<Category[]>([]);
   const location = useLocation();
-
-  // 앱 시작 시 세션에서 로그인 상태 가져오기
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/users/me`, {
-      method: "GET",
-      credentials: "include", // 쿠키 포함
-    })
-      .then(res => {
-        if (!res.ok) throw new Error("세션 없음");
-        return res.json();
-      })
-      .then(data => setUser(data))
-      .catch(() => setUser(null));
-  }, []);
 
   const noHeaderPaths = ["/login", "/signup"];
   const showHeader = !noHeaderPaths.includes(location.pathname);

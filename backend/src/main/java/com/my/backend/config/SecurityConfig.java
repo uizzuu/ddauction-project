@@ -6,6 +6,7 @@ import com.my.backend.myjwt.LoginFilter;
 //import com.my.backend.oauth2.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -60,7 +61,11 @@ public class SecurityConfig {
 
                 // 경로별 접근 제어
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/signup", "/", "/join", "/api/auth/login", "/api/auth/signup", "/api/users/me").permitAll()
+                        .requestMatchers("/login", "/signup", "/", "/join",
+                                "/products", "articles", "categories",
+                                "/api/auth/login", "/api/auth/signup", "/api/users/me",
+                                "/api/categories", "/api/products", "/api/articles",
+                                "/api/categories/**", "/api/products/**", "/api/articles/**").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

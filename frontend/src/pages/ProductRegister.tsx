@@ -21,6 +21,7 @@ export default function ProductRegister({ user }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
   const [minDateTime, setMinDateTime] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   // 최소 선택 시간 설정
   useEffect(() => {
@@ -70,7 +71,9 @@ export default function ProductRegister({ user }: Props) {
       return;
     }
 
-    if (!user) {
+    const token = localStorage.getItem("token");
+    if (!token || !user) {
+      // user 체크와 token 체크 합침
       alert("로그인이 필요합니다");
       navigate("/login");
       return;
@@ -92,8 +95,10 @@ export default function ProductRegister({ user }: Props) {
     }
 
     // startingPrice 문자열 숫자로 변환, 콤마 제거
-    const cleanPrice = form.startingPrice.replace(/[^0-9]/g, "");
-    const startingPriceNumber = Math.max(Number(cleanPrice), 1);
+    const startingPriceNumber = Math.max(
+      Number(form.startingPrice.replace(/[^0-9]/g, "")),
+      1
+    );
     if (!startingPriceNumber || startingPriceNumber <= 0) {
       setError("시작 가격은 1원 이상이어야 합니다");
       return;
@@ -111,11 +116,15 @@ export default function ProductRegister({ user }: Props) {
         sellerId: user.userId,
         categoryId: form.categoryId,
         productStatus: "ACTIVE", // enum 값
+        paymentStatus: "PENDING",
       };
 
       const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // 로그인 시 저장된 토큰 사용
+        },
         body: JSON.stringify(productData),
       });
 
@@ -160,7 +169,10 @@ export default function ProductRegister({ user }: Props) {
             onChange={(e) => {
               const val = e.target.value;
               setForm({ ...form, title: val });
-              setError(val ? "" : "제목은 필수 입력 항목입니다");
+              setErrors({
+                ...errors,
+                title: val ? "" : "제목은 필수 입력 항목입니다",
+              });
             }}
             className="input"
           />
@@ -172,7 +184,10 @@ export default function ProductRegister({ user }: Props) {
             onChange={(e) => {
               const val = e.target.value;
               setForm({ ...form, content: val });
-              setError(val ? "" : "상세 설명은 필수 입력 항목입니다");
+              setErrors({
+                ...errors,
+                content: val ? "" : "상세 설명은 필수 입력 항목입니다",
+              });
             }}
             className="textarea"
           />
@@ -185,10 +200,13 @@ export default function ProductRegister({ user }: Props) {
             onChange={(e) => {
               const clean = e.target.value.replace(/[^0-9]/g, "");
               setForm({ ...form, startingPrice: clean });
-              const num = Number(clean);
-              setError(
-                !num || num <= 0 ? "시작 가격은 1원 이상이어야 합니다" : ""
-              );
+              setErrors({
+                ...errors,
+                startingPrice:
+                  !clean || Number(clean) <= 0
+                    ? "시작 가격은 1원 이상이어야 합니다"
+                    : "",
+              });
             }}
             className="input"
           />

@@ -7,6 +7,7 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   role?: "ADMIN" | "USER" | "BANNED";
+  token?: string;
 }
 
 export interface Bid {

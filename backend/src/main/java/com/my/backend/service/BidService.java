@@ -67,6 +67,7 @@ package com.my.backend.service;
 //}
 
 
+import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidChartData;
 import com.my.backend.dto.BidResponse;
 import com.my.backend.entity.Bid;
@@ -125,7 +126,7 @@ public class BidService {
                     LocalDateTime.now().isAfter(product.getAuctionEndTime()))
                 throw new IllegalArgumentException("경매가 이미 종료되었습니다.");
 
-            if (product.getProductStatus() != Product.ProductStatus.ACTIVE)
+            if (product.getProductStatus() != ProductStatus.ACTIVE)
                 throw new IllegalArgumentException("입찰이 가능한 상태의 상품이 아닙니다.");
 
             User user = userRepository.findById(userId)

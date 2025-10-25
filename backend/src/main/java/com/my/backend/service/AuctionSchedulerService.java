@@ -1,7 +1,8 @@
 package com.my.backend.service;
 
+import com.my.backend.common.enums.PaymentStatus;
+import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.entity.Bid;
-import com.my.backend.entity.Payment;
 import com.my.backend.entity.Product;
 import com.my.backend.repository.BidRepository;
 import com.my.backend.repository.ProductRepository;
@@ -37,7 +38,7 @@ public class AuctionSchedulerService {
         // 종료 시간이 지났고 아직 ACTIVE 인 1분 경매만 조회
         List<Product> expiredActives = productRepository
                 .findByOneMinuteAuctionTrueAndProductStatusAndAuctionEndTimeBefore(
-                        Product.ProductStatus.ACTIVE, now
+                        ProductStatus.ACTIVE, now
                 );
 
         if (expiredActives.isEmpty()) {
@@ -71,7 +72,7 @@ public class AuctionSchedulerService {
             Product product = opt.get();
 
             // 멱등 가드: 이미 CLOSED 처리돼 있으면 스킵
-            if (product.getProductStatus() != Product.ProductStatus.ACTIVE) {
+            if (product.getProductStatus() != ProductStatus.ACTIVE) {
                 log.debug("[Auction] 이미 처리된 경매 스킵: productId={}, status={}", productId, product.getProductStatus());
                 return;
             }
@@ -88,8 +89,8 @@ public class AuctionSchedulerService {
 
             if (highest != null) {
                 // 상품 상태 전이
-                product.setProductStatus(Product.ProductStatus.CLOSED);
-                product.setPaymentStatus(Payment.PaymentStatus.PENDING); // 결제 대기
+                product.setProductStatus(ProductStatus.CLOSED);
+                product.setPaymentStatus(PaymentStatus.PENDING); // 결제 대기
                 product.setPaymentUserId(highest.getUser().getUserId());
 
                 // 최종가 반영 (price가 현재가라면 그대로 업데이트)
@@ -108,7 +109,7 @@ public class AuctionSchedulerService {
 
             } else {
                 // 유찰: 입찰자가 없음
-                product.setProductStatus(Product.ProductStatus.CLOSED);
+                product.setProductStatus(ProductStatus.CLOSED);
                 productRepository.saveAndFlush(product);
 
                 log.info("[Auction] 경매 종료(유찰): productId={}", product.getProductId());

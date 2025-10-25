@@ -1,9 +1,9 @@
 package com.my.backend.controller;
 
+import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.entity.User;
-import com.my.backend.entity.Product.ProductStatus;
 import com.my.backend.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
