@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { User, Qna } from "../types/types";
+import { ROLE } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/date";
 
@@ -58,7 +59,6 @@ export default function ProductQnA({
       const res = await fetch(`${API_BASE_URL}/api/qna`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ productId, ...newQuestion, boardName: "qna" }),
       });
       if (res.ok) {
@@ -79,7 +79,6 @@ export default function ProductQnA({
     try {
       await fetch(`${API_BASE_URL}/api/qna/${qnaId}`, {
         method: "DELETE",
-        credentials: "include",
       });
       fetchQnaList();
     } catch {
@@ -95,7 +94,6 @@ export default function ProductQnA({
       await fetch(`${API_BASE_URL}/api/qna/${qnaId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(editingQuestion),
       });
       setEditingQuestionId(null);
@@ -122,7 +120,7 @@ export default function ProductQnA({
 
   // 답변 권한 확인 함수
   const canAnswer = (qna: Qna) => {
-    return user?.role === "ADMIN" || user?.userId === qna.userId;
+    return user?.role === ROLE[0] || user?.userId === qna.userId;
   };
 
   // 답변 수정 시작
@@ -138,7 +136,6 @@ export default function ProductQnA({
       await fetch(`${API_BASE_URL}/api/qna/${answerId}/review`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ answer: editingAnswerContent }),
       });
       setEditingAnswerId(null);
@@ -155,7 +152,6 @@ export default function ProductQnA({
     try {
       await fetch(`${API_BASE_URL}/api/qna/${answerId}/review`, {
         method: "DELETE",
-        credentials: "include",
       });
       fetchQnaList();
     } catch {
@@ -171,7 +167,6 @@ export default function ProductQnA({
       const res = await fetch(`${API_BASE_URL}/api/qna/${qnaId}/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({ answer }),
       });
       if (res.ok) {
@@ -246,7 +241,7 @@ export default function ProductQnA({
                   alignItems: "center",
                 }}
               >
-                <p className="product-text-sm-bold">{q.title}</p>
+                <p className="title-16 color-333 text-nowrap">{q.title}</p>
                 <button
                   onClick={() => toggleQna(q.qnaId)}
                   className="position-ab"
@@ -303,7 +298,7 @@ export default function ProductQnA({
                     </div>
                   ) : (
                     <div className="flex-column gap-4">
-                      <p className="product-text-sm after-wrap">
+                      <p className="text-16 color-777 text-nowrap after-wrap">
                         <span className="after">{q.nickName}</span>
                         <span className="after">
                           {q.createdAt
@@ -311,7 +306,7 @@ export default function ProductQnA({
                             : "작성일 없음"}
                         </span>
                       </p>
-                      <p className="product-text-sm-333">{q.question}</p>
+                      <p className="text-16 color-333 text-nowrap">{q.question}</p>
 
                       {/* 질문 수정/삭제 버튼 */}
                       {user?.userId === q.userId && (
@@ -342,7 +337,7 @@ export default function ProductQnA({
                   )}
 
                   {/* 답변 목록 */}
-                  {q.answers?.length > 0 && (
+                  {q.answers && q.answers?.length > 0 && (
                     <div
                       style={{
                         marginTop: 8,

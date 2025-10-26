@@ -169,12 +169,14 @@ export default function ProductDetail({ user }: Props) {
       });
 
       if (res.ok) {
-        const newBidServer: { bidderId: number; bidPrice: number } =
+        const newBidServer: { bidId: number; bidPrice: number } =
           await res.json();
+
         const newBid: Bid = {
-          bidId: newBidServer.bidderId,
+          bidId: newBidServer.bidId,
           userId: product.sellerId ?? 0,
-          price: newBidServer.bidPrice,
+          bidPrice: newBidServer.bidPrice,
+          isWinning: false,
           createdAt: new Date().toISOString(),
         };
 
@@ -252,7 +254,6 @@ export default function ProductDetail({ user }: Props) {
       const res = await fetch(`${API_BASE_URL}/api/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify({
           targetId: product.sellerId,
           reason: reason.trim(),
@@ -283,21 +284,18 @@ export default function ProductDetail({ user }: Props) {
 
   return (
     <div className="container">
-      <div className="flex-box product-detail">
+      <div className="flex-box gap-40">
         {/* 이미지 */}
-        <div className="img-box">
-          <div>
+          <div className="product-image product-detail-image">
             {product.imageUrl ? (
               <img
                 src={product.imageUrl}
                 alt={product.title}
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
               />
             ) : (
-              <div className="no-img-txt">이미지 없음</div>
+              <div className="no-image-txt">이미지 없음</div>
             )}
           </div>
-        </div>
 
         {/* 상세 설명 */}
         <div
@@ -334,7 +332,7 @@ export default function ProductDetail({ user }: Props) {
                 fontSize: "0.8rem",
               }}
             >
-              <div className="flex-box gap-4 center">
+              <div className="flex-box gap-4 flex-center">
                 <svg
                   width="12"
                   height="11"
@@ -390,7 +388,7 @@ export default function ProductDetail({ user }: Props) {
               whiteSpace: "pre-wrap",
             }}
           >
-            {product.description ?? product.content ?? "상세 설명이 없습니다."}
+            {product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
 
@@ -412,7 +410,7 @@ export default function ProductDetail({ user }: Props) {
             <div style={{ marginBottom: "8px" }}>
               {(product.bids ?? []).slice(0, 5).map((b, i) => (
                 <p key={b.bidId} style={{ margin: 0 }}>
-                  {i + 1}번 입찰가: {b.price.toLocaleString()}원
+                  {i + 1}번 입찰가: {b.bidPrice.toLocaleString()}원
                 </p>
               ))}
               {(!product.bids || product.bids.length === 0) && (

@@ -34,12 +34,12 @@ export default function HeaderSub({ category, setCategory }: Props) {
 
   return (
     <header className="header header-line header-sub">
-      <div className="header-content header-nav">
+      <div className="header-content height-50">
         <nav className="nav" style={{ position: "relative" }}>
           <button
             ref={menuBtnRef}
             onClick={() => setIsModalOpen((prev) => !prev)}
-            className="menu img-link"
+            className="svg-wrap height-16"
           >
             <svg
               width="22"

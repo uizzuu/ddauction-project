@@ -109,7 +109,7 @@ export default function Signup() {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2 onClick={() => navigate("/")} className="auth-title img-link">
+        <h2 onClick={() => navigate("/")} className="width-fit margin-auto svg-wrap mb-48 height-40">
           <svg
             viewBox="0 0 127 36"
             fill="none"

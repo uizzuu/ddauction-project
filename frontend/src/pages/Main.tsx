@@ -6,8 +6,8 @@ export default function Main() {
   return (
     <div className="main-container">
       <div className="main-content">
-        <h1 className="main-title">빠르고 확실한 경매</h1>
-        <p className="main-subtitle">중고물품을 경매로 판매하고 구매하세요</p>
+        <h1 className="title-56 mb-20 color-main">빠르고 확실한 경매</h1>
+        <p className="text-24 mb-48 color-aaa">중고물품을 경매로 판매하고 구매하세요</p>
 
         <div className="main-actions">
           <button

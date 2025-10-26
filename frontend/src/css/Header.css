@@ -16,7 +16,6 @@
 .header-content {
   max-width: 1200px;
   margin: 0 auto;
-  height: 70px;
   box-sizing: border-box;
   padding: 10px 0;
   display: flex;
@@ -54,31 +53,6 @@
   border-color: #b17576;
 }
 
-.header-nav {
-  height: 50px;
-}
-
-.logo {
-  height: 30px;
-}
-
-.img-link:hover {
-  cursor: pointer;
-}
-
-.img-link > svg {
-  height: 100%;
-}
-
-.menu {
-  height: 16px;
-}
-
-.menu:hover path,
-.nav-link:hover {
-  stroke: #b17576;
-}
-
 .nav {
   display: flex;
   align-items: center;
@@ -92,6 +66,10 @@
   transition: color 0.2s;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.nav-link:hover {
+  color: #b17576;
 }
 
 .nav-link.active {
@@ -138,10 +116,6 @@
 
   .nav-link {
     font-size: 14px;
-  }
-
-  .logo {
-    font-size: 20px;
   }
 }
 

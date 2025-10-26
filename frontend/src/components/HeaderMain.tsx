@@ -44,11 +44,11 @@ export default function HeaderMain({ user, setUser }: Props) {
 
   return (
     <header className="header">
-      <div className="header-content">
+      <div className="header-content height-70">
         {/* 로고 */}
         <div
           onClick={() => navigate("/")}
-          className="logo img-link cursor-pointer"
+          className="svg-wrap height-30"
         >
           <svg
             viewBox="0 0 127 36"

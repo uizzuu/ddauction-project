@@ -37,7 +37,7 @@ function isBid(obj: unknown): obj is Bid {
   return (
     typeof o.bidId === "number" &&
     typeof o.userId === "number" &&
-    typeof o.price === "number" &&
+    typeof o.bidPrice === "number" &&
     typeof o.createdAt === "string"
   );
 }

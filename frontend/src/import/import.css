@@ -3,12 +3,11 @@
 @import "../css/Header.css";
 @import "../css/ModalCategory.css";
 @import "../css/Auth.css";
-@import "../css/Login.css";
-@import "../css/Signup.css";
 @import "../css/ProductList.css";
 @import "../css/ProductDetail.css";
 @import "../css/ProductRegister.css";
-@import "../css/MyPage.css";
 @import "../css/Article.css";
 @import "../css/SearchPage.css";
-@import "../css/AdminPage.css"
+@import "../css/AdminPage.css";
+@import "../css/Max-768.css";
+@import "../css/Max-480.css";

@@ -48,7 +48,7 @@ export default function Login({ setUser }: Props) {
       });
 
       if (response.ok) {
-        // ✅ 응답 헤더에서 토큰 추출
+        // 응답 헤더에서 토큰 추출
       const authHeader = response.headers.get("Authorization");
       
       if (!authHeader) {
@@ -60,7 +60,7 @@ export default function Login({ setUser }: Props) {
       
       localStorage.setItem("token", token);
       
-      // ✅ 사용자 정보는 별도로 가져와야 함
+      // 사용자 정보는 별도로 가져와야 함
       const userResponse = await fetch("/api/users/me", {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -89,7 +89,7 @@ export default function Login({ setUser }: Props) {
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2 onClick={() => navigate("/")} className="auth-title img-link">
+        <h2 onClick={() => navigate("/")} className="width-fit margin-auto svg-wrap mb-48 height-40">
           <svg
             viewBox="0 0 127 36"
             fill="none"

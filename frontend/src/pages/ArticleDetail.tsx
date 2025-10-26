@@ -9,6 +9,7 @@ import {
   deleteComment,
 } from "../services/api";
 import type { ArticleDto, User, CommentDto, CommentForm } from "../types/types";
+import { formatDateTime } from "../utils/date";
 
 interface Props {
   user: User | null;
@@ -53,6 +54,7 @@ export default function ArticleDetail({ user }: Props) {
 
     const form: CommentForm = {
       content: commentContent,
+      articleId: Number(id),
       userId: user.userId,
     };
 
@@ -89,6 +91,7 @@ export default function ArticleDetail({ user }: Props) {
 
     const form: CommentForm = {
       content: editingContent,
+      articleId: Number(id),
       userId: user!.userId,
     };
 
@@ -135,9 +138,9 @@ export default function ArticleDetail({ user }: Props) {
       {/* 글 영역 */}
       <div className="flex-column gap-12">
         <h2>{article.title}</h2>
-        <div className="flex-column gap-4">
-          <p>작성자: {article.nickName}</p>
-          <p>{new Date(article.createdAt).toLocaleString()}</p>
+        <div className="flex-box gap-4">
+          <strong>{article.nickName ?? "알 수 없음"}</strong>
+          <p>{formatDateTime(article.createdAt)}</p>
         </div>
 
         <div
@@ -162,18 +165,18 @@ export default function ArticleDetail({ user }: Props) {
       </div>
 
       {/* 댓글 영역 */}
-      <div className="flex-column gap-18 review-box border-top">
-        <p className="review-title">{comments.length}개의 댓글</p>
+      <div className="flex-column gap-24 mt-20 top-line">
+        <p className="title-24">{comments.length}개의 댓글</p>
 
         {comments.length === 0 && <p>댓글이 없습니다.</p>}
 
-        <ul className="flex-column gap-18">
+        <ul className="flex-column gap-16">
           {comments.map((comment) => (
             <li key={comment.commentId} className="flex-column gap-8">
               <div className="flex-box gap-4">
-                <strong>{comment.nickName}</strong>
+                <strong>{comment.nickName ?? "알 수 없음"}</strong>
                 <span style={{ color: "#888", fontSize: "0.9rem" }}>
-                  {new Date(comment.createdAt).toLocaleString()}
+                  {formatDateTime(comment.createdAt)}
                 </span>
               </div>
 
@@ -220,8 +223,8 @@ export default function ArticleDetail({ user }: Props) {
         </ul>
 
         {user ? (
-          <div className="flex-column gap-24 border-top">
-            <p className="reply-title">댓글쓰기</p>
+          <div className="flex-column gap-24 top-line">
+            <p className="title-18">댓글쓰기</p>
             <textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}

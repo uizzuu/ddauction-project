@@ -1,45 +1,55 @@
+export const PRODUCT_STATUS = ["ACTIVE", "CLOSED", "SOLD"] as const;
+export type ProductStatus = (typeof PRODUCT_STATUS)[number];
+
+export const PAYMENT_STATUS = ["PENDING", "COMPLETED", "FAILED"] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
+
+export const ROLE = ["ADMIN", "USER", "BANNED"] as const;
+export  type Role = (typeof ROLE)[number];
+
 export interface User {
   userId: number;
   userName: string;
   nickName: string;
+  password?: string;
   email?: string;
   phone?: string;
   createdAt?: string;
   updatedAt?: string;
-  role?: "ADMIN" | "USER" | "BANNED";
+  role?: Role;
   token?: string;
 }
 
 export interface Bid {
   bidId: number;
   userId: number;
-  price: number;
+  bidPrice: number;
+  isWinning: boolean;
   createdAt: string;
 }
 
 // 상품 조회/표시에 사용할 타입
 export interface Product {
   productId: number;
+  sellerId: number;
+  sellerNickName: string;
   title: string;
   content?: string;
-  startingPrice?: number;     // 또는 string으로 정의 가능
+  startingPrice?: number;
   imageUrl?: string;
   oneMinuteAuction?: boolean;
   auctionEndTime: string;
-  productStatus?: string;
-  categoryId?: number;
-  categoryName?: string;
-  sellerId?: number;
-  sellerNickName?: string;    // 백엔드 필드 명
-  description?: string;
-  price?: number;
+  productStatus: ProductStatus;
+  paymentStatus: PaymentStatus;
   createdAt?: string;
   updatedAt?: string;
-  paymentStatus?: string;
-  bidderId?: number;
-  amount?: number;
-  bids?: Bid[]; // 입찰 기록
-  bid?: Bid; // 🔥 현재 최고 입찰 추가
+  bidId?: number;
+  bidPrice?: number | null;
+  paymentId?: number | null;
+  categoryId: number;
+  categoryName?: string;
+  bid?: Bid | null;
+  bids?: Bid[]; // 입찰기록
 }
 
 export interface Category {
@@ -64,12 +74,20 @@ export interface SignupForm {
 export interface ProductForm {
   title: string;
   content: string;
-  startingPrice: string;  // 숫자 입력 후 문자열로 변환하여 저장
+  startingPrice: string; // 숫자 입력 후 문자열로 변환하여 저장
   imageUrl: string;
   oneMinuteAuction: boolean;
   auctionEndTime: string;
   categoryId: number | null;
 }
+
+// 상품 수정 데이터 타입
+export type EditProductForm = {
+  title: string;
+  categoryId?: number;
+  startingPrice?: number;
+  productStatus: typeof PRODUCT_STATUS[number];
+};
 
 // 서버 요청에 사용할 상품 생성 타입
 export interface CreateProductRequest {
@@ -81,7 +99,7 @@ export interface CreateProductRequest {
   auctionEndTime: string;
   sellerId: number;
   categoryId: number;
-  productStatus: string;  // "ACTIVE" 등을 전달
+  productStatus: ProductStatus;
 }
 
 //게시판
@@ -96,6 +114,7 @@ export interface ArticleDto {
   createdAt: string;
   updatedAt: string;
 }
+
 export interface ArticleForm {
   title: string;
   content: string;
@@ -115,6 +134,7 @@ export interface CommentDto {
 
 export interface CommentForm {
   content: string;
+  articleId: number;
   userId: number;
 }
 
@@ -132,47 +152,28 @@ export interface SelectBoxProps {
   className?: string;
 }
 
-// 신고 타입
 export interface Report {
   reportId: number;
   reporterId: number;
   targetId: number;
   reason: string;
   status: boolean;
-}
-
-// Q&A 타입
-export interface Qna {
-  qnaId: number;
-  title: string;
-  question: string;
   createdAt: string;
-  answers: QnaAnswer[];
+  updatedAt: string;
 }
 
-export interface QnaAnswer {
-  qnaReviewId: number;
-  answer: string;
-  nickName: string;
-  createdAt: string;
+export interface Board {
+  boardId: number;
+  boardName: string;
 }
 
-// 신고 타입
-export interface Report {
-  reportId: number;
-  reporterId: number;
-  targetId: number;
-  reason: string;
-  status: boolean;
-}
-
-// Q&A 타입
 export interface Qna {
   qnaId: number;
   title: string;
   question: string;
   createdAt: string;
   updatedAt?: string;
+  answers?: QnaAnswer[];
   boardId?: number;
   productId?: number;
   userId: number;
@@ -184,4 +185,5 @@ export interface QnaAnswer {
   answer: string;
   nickName: string;
   createdAt: string;
+  updatedAt: string;
 }

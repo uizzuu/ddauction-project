@@ -24,7 +24,7 @@ export default function ArticleList({ user }: Props) {
   return (
     <div className="container">
       <div className="flex-box between">
-        <h2 className="page-title">게시판</h2>
+        <h2 className="title-32 mb-1rem">게시판</h2>
 
         {user && (
           <button
@@ -59,7 +59,7 @@ export default function ArticleList({ user }: Props) {
               >
                 <td style={{ padding: "0.5rem", width: "100%" }}>{article.title}</td>
                 <td style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>
-                  {article.nickName}
+                  {article.nickName ?? "알 수 없음"}
                 </td>
                 <td
                   style={{

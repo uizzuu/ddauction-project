@@ -8,7 +8,7 @@ type Props = {
 export default function ProductBidGraph({ bids }: Props) {
   const graphData = bids.map((b, i) => ({
     name: `${i + 1}`,
-    price: b.price,
+    bidPrice: b.bidPrice,
   }));
 
   return (

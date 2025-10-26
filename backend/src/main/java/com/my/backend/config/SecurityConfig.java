@@ -65,7 +65,7 @@ public class SecurityConfig {
                                 "/products", "articles", "categories",
                                 "/api/auth/login", "/api/auth/signup", "/api/users/me",
                                 "/api/categories", "/api/products", "/api/articles",
-                                "/api/categories/**", "/api/products/**", "/api/articles/**").permitAll()
+                                "/api/bookmarks/**", "/api/categories/**", "/api/products/**", "/api/articles/**").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

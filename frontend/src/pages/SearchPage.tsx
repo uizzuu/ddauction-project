@@ -110,15 +110,15 @@ export default function ProductSearchPage() {
           case "priceAsc":
             sorted.sort(
               (a, b) =>
-                (a.price ?? a.startingPrice ?? 0) -
-                (b.price ?? b.startingPrice ?? 0)
+                (a.startingPrice ?? a.startingPrice ?? 0) -
+                (b.startingPrice ?? b.startingPrice ?? 0)
             );
             break;
           case "priceDesc":
             sorted.sort(
               (a, b) =>
-                (b.price ?? b.startingPrice ?? 0) -
-                (a.price ?? a.startingPrice ?? 0)
+                (b.startingPrice ?? b.startingPrice ?? 0) -
+                (a.startingPrice ?? a.startingPrice ?? 0)
             );
             break;
           case "timeLeft":
@@ -174,7 +174,7 @@ export default function ProductSearchPage() {
 
   return (
     <div className="container">
-      <p className="page-title">
+      <p className="title-32 mb-1rem">
         {keyword || categoryId
           ? `${keyword ? `${keyword} ` : ""}${
               categoryId
@@ -245,7 +245,7 @@ export default function ProductSearchPage() {
       <div className="flex-box gap-36">
         <div className="category-sidebar flex-column gap-8">
           <div className="category-checkbox-group flex-column gap-4">
-            <p className="title-lg">필터</p>
+            <p className="title-24 mb-1rem">필터</p>
             <label className="category-label flex-box gap-4">
               <input
                 type="checkbox"
@@ -256,7 +256,7 @@ export default function ProductSearchPage() {
             </label>
           </div>
           <div className="category-checkbox-group flex-column gap-4">
-            <p className="title-md">카테고리</p>
+            <p className="title-20 mb-1rem">카테고리</p>
             {categories.map((c) => (
               <label
                 key={c.categoryId}
@@ -285,33 +285,33 @@ export default function ProductSearchPage() {
                   style={{ cursor: "pointer" }}
                   onClick={() => navigate(`/products/${p.productId}`)}
                 >
-                  <div className="product-image">
+                  <div className="product-image height-220">
                     {p.imageUrl ? (
                       <img src={p.imageUrl} alt={p.title} />
                     ) : (
-                      <div className="no-image">이미지 없음</div>
+                      <div className="no-image-txt">이미지 없음</div>
                     )}
                   </div>
                   <div className="product-info flex-column gap-4">
-                    <h3 className="product-title">{p.title}</h3>
+                    <h3 className="title-24 mb-10 text-nowrap color-333 text-ellipsis">{p.title}</h3>
                     <div>
                       <div className="flex-box gap-8">
-                        <p className="product-text-sm">경매 등록가</p>
-                        <p className="product-text-lg">
-                          {formatPrice(p.startingPrice ?? p.price)}
+                        <p className="text-16 color-777 text-nowrap">경매 등록가</p>
+                        <p className="title-18 color-333 text-nowrap">
+                          {formatPrice(p.startingPrice)}
                         </p>
                       </div>
                       {p.auctionEndTime && (
                         <>
                           <div className="flex-box gap-8">
-                            <p className="product-text-sm">남은시간</p>
-                            <p className="product-text-sm">
-                              <span className="product-text-lg">
+                            <p className="text-16 color-777 text-nowrap">남은시간</p>
+                            <p className="text-16 color-777 text-nowrap">
+                              <span className="title-18 color-333 text-nowrap">
                                 {formatDate(p.auctionEndTime)}
                               </span>
                             </p>
                           </div>
-                          <p className="product-text-sm">
+                          <p className="text-16 color-777 text-nowrap">
                             ({formatDateTime(p.auctionEndTime)})
                           </p>
                         </>

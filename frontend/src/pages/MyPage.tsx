@@ -1,6 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { User, Product, Report, Qna, ProductForm, Category } from "../types/types";
+import type {
+  User,
+  Product,
+  Report,
+  Qna,
+  ProductForm,
+  Category,
+} from "../types/types";
+import { PRODUCT_STATUS, PAYMENT_STATUS } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 
 type Props = {
@@ -22,7 +30,9 @@ export default function MyPage({ user, setUser }: Props) {
     phone: user?.phone || "",
   });
 
-  const [productForm, setProductForm] = useState<ProductForm & { productStatus: string }>({
+  const [productForm, setProductForm] = useState<
+    ProductForm & { productStatus: string }
+  >({
     title: "",
     content: "",
     startingPrice: "",
@@ -30,7 +40,7 @@ export default function MyPage({ user, setUser }: Props) {
     oneMinuteAuction: false,
     auctionEndTime: "",
     categoryId: null,
-    productStatus: "ACTIVE",
+    productStatus: PRODUCT_STATUS[0],
   });
 
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
@@ -49,12 +59,8 @@ export default function MyPage({ user, setUser }: Props) {
   }, []);
 
   if (!user) {
-    return (
-      <div>
-        <h2>로그인이 필요합니다.</h2>
-        <button onClick={() => navigate("/login")}>로그인 페이지로</button>
-      </div>
-    );
+    navigate("/");
+    return null;
   }
 
   const buttonStyle = {
@@ -76,11 +82,14 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleUpdate = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}/mypage`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/users/${user.userId}/mypage`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        }
+      );
       if (res.ok) {
         const updatedUser = await res.json();
         setUser(updatedUser);
@@ -99,7 +108,9 @@ export default function MyPage({ user, setUser }: Props) {
   const handleDelete = async () => {
     if (!confirm("정말 회원 탈퇴하시겠습니까?")) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}`, {
+        method: "DELETE",
+      });
       if (res.ok) {
         setUser(null);
         navigate("/");
@@ -115,48 +126,51 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   // ★ 이미지 URL 절대 경로 처리
-  const normalizeProduct = (p: any): Product => ({
-    productId: p.productId,
-    title: p.title,
-    content: p.content ?? p.description ?? "",
-    price: p.price ?? p.bid?.price ?? p.startingPrice ?? 0,
+  const normalizeProduct = (p: Partial<Product>): Product => ({
+    productId: p.productId ?? 0,
+    title: p.title ?? "제목 없음",
+    content: p.content ?? "",
     startingPrice: p.startingPrice ?? 0,
-   imageUrl: p.imageUrl
+    imageUrl: p.imageUrl
     ? p.imageUrl.startsWith("http")
       ? p.imageUrl
       : `${API_BASE_URL}/${p.imageUrl}`
     : "",
     oneMinuteAuction: p.oneMinuteAuction ?? false,
-    auctionEndTime: p.auctionEndTime,
-    productStatus: p.productStatus ?? "ACTIVE",
-    paymentStatus: p.payment?.status ?? p.paymentStatus ?? "N/A",
-    categoryId: p.category?.categoryId ?? p.categoryId,
-    categoryName: p.category?.name ?? p.categoryName ?? "없음",
-    sellerId: p.seller?.userId ?? p.sellerId,
-    sellerNickName: p.seller?.nickName ?? p.sellerNickName ?? "익명",
-    bidderId: p.bid?.userId ?? p.bidderId,
-    amount: p.bid?.price ?? p.amount,
-    bids: (p.bids ?? []).map((b: any) => ({
-      bidId: b.bidId,
-      price: b.price ?? b.amount,
-      userId: b.user?.userId ?? b.userId,
-      createdAt: b.createdAt,
+    auctionEndTime: p.auctionEndTime ?? new Date().toISOString(),
+    productStatus: p.productStatus ?? PRODUCT_STATUS[0],
+    paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
+    categoryId: p.categoryId ?? 0,
+    categoryName: p.categoryName ?? "없음",
+    sellerId: p.sellerId ?? 0,
+    sellerNickName: p.sellerNickName ?? "익명",
+    bidId: p.bidId,
+    bidPrice: p.bidPrice,
+    bids: (p.bids ?? []).map(b => ({
+      bidId: b.bidId ?? 0,
+      bidPrice: b.bidPrice ?? 0,
+      userId: b.userId ?? 0,
+      isWinning: b.isWinning ?? false,
+      createdAt: b.createdAt ?? new Date().toISOString(),
     })),
     bid: p.bid
       ? {
-          bidId: p.bid.bidId,
-          price: p.bid.price,
-          userId: p.bid.user?.userId ?? p.bid.userId,
-          createdAt: p.bid.createdAt,
+          bidId: p.bid.bidId ?? 0,
+          bidPrice: p.bid.bidPrice ?? 0,
+          userId: p.bid.userId ?? p.sellerId ?? 0,
+          isWinning: p.bid.isWinning ?? false,
+          createdAt: p.bid.createdAt ?? new Date().toISOString(),
         }
-      : undefined,
+      : null,
   });
 
   const fetchSellingProducts = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/products/seller/${user.userId}`);
+      const res = await fetch(
+        `${API_BASE_URL}/api/products/seller/${user.userId}`
+      );
       if (res.ok) {
-        const data: any[] = await res.json();
+        const data: Partial<Product>[] = await res.json();
         setSellingProducts(data.map(normalizeProduct));
       } else {
         alert("판매 상품 조회 실패");
@@ -169,9 +183,15 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleFetchBookmarkedProducts = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bookmarks/mypage`, { credentials: "include" });
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/bookmarks/mypage`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
       if (res.ok) {
-        const data: any[] = await res.json();
+        const data: Partial<Product>[] = await res.json();
         setBookmarkedProducts(data.map(normalizeProduct));
       } else {
         alert("찜 상품 조회 실패");
@@ -184,7 +204,13 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleFetchReports = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/reports/mypage`, { credentials: "include" });
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/reports/mypage`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
       if (res.ok) {
         const data: Report[] = await res.json();
         setReports(data);
@@ -212,7 +238,9 @@ export default function MyPage({ user, setUser }: Props) {
     }
   };
 
-  const toggleSection = (section: "editing" | "selling" | "bookmarks" | "reports" | "qnas") => {
+  const toggleSection = (
+    section: "editing" | "selling" | "bookmarks" | "reports" | "qnas"
+  ) => {
     const isCurrentlyOpen =
       (section === "editing" && editing) ||
       (section === "selling" && showSelling) ||
@@ -255,24 +283,27 @@ export default function MyPage({ user, setUser }: Props) {
   const getCategoryName = (categoryId?: number) =>
     categories.find((c) => c.categoryId === categoryId)?.name || "없음";
 
-  const goToProductDetail = (productId: number) => navigate(`/products/${productId}`);
+  const goToProductDetail = (productId: number) =>
+    navigate(`/products/${productId}`);
 
   const handleEditProduct = (product: Product) => {
     setEditingProductId(product.productId);
     setProductForm({
       title: product.title,
       content: product.content ?? "",
-      startingPrice: String(product.price ?? 0),
+      startingPrice: String(product.startingPrice ?? 0),
       imageUrl: product.imageUrl ?? "",
       oneMinuteAuction: product.oneMinuteAuction ?? false,
       auctionEndTime: product.auctionEndTime,
       categoryId: product.categoryId ?? null,
-      productStatus: product.productStatus ?? "ACTIVE",
+      productStatus: product.productStatus ?? PRODUCT_STATUS[0],
     });
   };
 
   const handleChangeProductForm = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const value =
       e.target instanceof HTMLSelectElement && e.target.name !== "productStatus"
@@ -282,45 +313,49 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   const handleSaveProduct = async () => {
-  if (!editingProductId) return;
-  if (!productForm.categoryId) {
-    alert("카테고리를 선택해주세요.");
-    return;
-  }
-
-  try {
-    const res = await fetch(`${API_BASE_URL}/api/products/${editingProductId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: productForm.title,
-        startingPrice: productForm.startingPrice,
-        content: productForm.content,
-        categoryId: productForm.categoryId,
-        productStatus: productForm.productStatus,
-        imageUrl: productForm.imageUrl,        // ★ 기존 이미지 URL 포함
-        auctionEndTime: productForm.auctionEndTime,  // ★ 기존 마감 시간 포함
-        oneMinuteAuction: productForm.oneMinuteAuction, // ★ 1분 경매 여부 포함
-      }),
-    });
-
-    if (res.ok) {
-      const updatedProduct = normalizeProduct(await res.json());
-      setSellingProducts((prev) =>
-        prev.map((p) => (p.productId === editingProductId ? updatedProduct : p))
-      );
-      setEditingProductId(null);
-      alert("상품이 수정되었습니다.");
-    } else {
-      const errorText = await res.text();
-      alert("상품 수정 실패: " + errorText);
+    if (!editingProductId) return;
+    if (!productForm.categoryId) {
+      alert("카테고리를 선택해주세요.");
+      return;
     }
-  } catch (err) {
-    console.error(err);
-    alert("서버 오류");
-  }
-};
 
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/products/${editingProductId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: productForm.title,
+            startingPrice: productForm.startingPrice,
+            content: productForm.content,
+            categoryId: productForm.categoryId,
+            productStatus: productForm.productStatus,
+            imageUrl: productForm.imageUrl, // ★ 기존 이미지 URL 포함
+            auctionEndTime: productForm.auctionEndTime, // ★ 기존 마감 시간 포함
+            oneMinuteAuction: productForm.oneMinuteAuction, // ★ 1분 경매 여부 포함
+          }),
+        }
+      );
+
+      if (res.ok) {
+        const updatedProduct = normalizeProduct(await res.json());
+        setSellingProducts((prev) =>
+          prev.map((p) =>
+            p.productId === editingProductId ? updatedProduct : p
+          )
+        );
+        setEditingProductId(null);
+        alert("상품이 수정되었습니다.");
+      } else {
+        const errorText = await res.text();
+        alert("상품 수정 실패: " + errorText);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("서버 오류");
+    }
+  };
 
   const handleCancelProductEdit = () => setEditingProductId(null);
 
@@ -406,41 +441,50 @@ export default function MyPage({ user, setUser }: Props) {
                       <img
                         src={product.imageUrl}
                         alt={product.title}
-                        style={{ width: "150px", cursor: "pointer", borderRadius: "6px", flexShrink: 0 }}
-                        onClick={() => goToProductDetail(product.productId)}
-                      />
-                    ) : (
-                      <div
                         style={{
                           width: "150px",
-                          height: "150px",
-                          background: "#eee",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "#888",
+                          cursor: "pointer",
                           borderRadius: "6px",
                           flexShrink: 0,
                         }}
-                      >
-                        이미지 없음
-                      </div>
+                        onClick={() => goToProductDetail(product.productId)}
+                      />
+                    ) : (
+                      <div className="no-image-txt">이미지 없음</div>
                     )}
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: "bold", fontSize: "18px" }}>{product.title}</div>
+                      <div style={{ fontWeight: "bold", fontSize: "18px" }}>
+                        {product.title}
+                      </div>
                       <div>설명: {product.content}</div>
-                      <div>가격: {product.price?.toLocaleString()}원</div>
-                      <div>카테고리: {getCategoryName(product.categoryId)}</div>
+                      <div>
+                        가격: {product.startingPrice?.toLocaleString()}원
+                      </div>
+                      <div>
+                        카테고리: {getCategoryName(product.categoryId)}
+                      </div>
                       <div>상품 상태: {product.productStatus}</div>
                       <div>결제 상태: {product.paymentStatus}</div>
-                      <div>경매 종료: {new Date(product.auctionEndTime).toLocaleString()}</div>
-                      <div>1분 경매: {product.oneMinuteAuction ? "예" : "아니오"}</div>
-                      <div>판매자: {product.sellerNickName} (ID: {product.sellerId})</div>
+                      <div>
+                        경매 종료:{" "}
+                        {new Date(product.auctionEndTime).toLocaleString()}
+                      </div>
+                      <div>
+                        1분 경매: {product.oneMinuteAuction ? "예" : "아니오"}
+                      </div>
+                      <div>
+                        판매자: {product.sellerId} (ID: {product.sellerId}
+                        )
+                      </div>
                     </div>
                   </div>
 
                   <button
-                    style={{ ...buttonStyle, width: "140px", marginTop: "10px" }}
+                    style={{
+                      ...buttonStyle,
+                      width: "140px",
+                      marginTop: "10px",
+                    }}
                     onClick={() => handleEditProduct(product)}
                   >
                     상품 수정
@@ -456,7 +500,13 @@ export default function MyPage({ user, setUser }: Props) {
                         background: "#f9f9f9",
                       }}
                     >
-                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "10px",
+                        }}
+                      >
                         <input
                           name="title"
                           value={productForm.title}
@@ -500,11 +550,23 @@ export default function MyPage({ user, setUser }: Props) {
                           <option value="PAUSED">일시중지</option>
                         </select>
 
-                        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
-                          <button style={buttonStyle} onClick={handleSaveProduct}>
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "10px",
+                            marginTop: "10px",
+                          }}
+                        >
+                          <button
+                            style={buttonStyle}
+                            onClick={handleSaveProduct}
+                          >
                             저장
                           </button>
-                          <button style={buttonStyle} onClick={handleCancelProductEdit}>
+                          <button
+                            style={buttonStyle}
+                            onClick={handleCancelProductEdit}
+                          >
                             취소
                           </button>
                         </div>
@@ -532,7 +594,11 @@ export default function MyPage({ user, setUser }: Props) {
                     <img
                       src={product.imageUrl}
                       alt={product.title}
-                      style={{ width: "150px", cursor: "pointer", flexShrink: 0 }}
+                      style={{
+                        width: "150px",
+                        cursor: "pointer",
+                        flexShrink: 0,
+                      }}
                       onClick={() => goToProductDetail(product.productId)}
                     />
                   ) : (
@@ -553,10 +619,15 @@ export default function MyPage({ user, setUser }: Props) {
                     </div>
                   )}
                   <div style={{ fontWeight: "bold", fontSize: "18px" }}>
-                    {product.title} - {product.price?.toLocaleString() || product.startingPrice?.toLocaleString()}원
+                    {product.title} -{" "}
+                    {product.startingPrice?.toLocaleString() ||
+                      product.startingPrice?.toLocaleString()}
+                    원
                   </div>
                   <div>{product.content}</div>
-                  <div>카테고리: {getCategoryName(product.categoryId)}</div>
+                  <div>
+                    카테고리: {getCategoryName(product.categoryId)}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -599,13 +670,14 @@ export default function MyPage({ user, setUser }: Props) {
                   <div>작성일: {new Date(qna.createdAt).toLocaleString()}</div>
                   <div>
                     <strong>답변:</strong>
-                    {qna.answers.length === 0 ? (
+                    {(qna.answers ?? []).length === 0 ? (
                       <span> 대기중</span>
                     ) : (
                       <ul>
-                        {qna.answers.map((a) => (
+                        {(qna.answers ?? []).map((a) => (
                           <li key={a.qnaReviewId}>
-                            {a.nickName}: {a.answer} ({new Date(a.createdAt).toLocaleString()})
+                            {a.nickName ?? "익명"}: {a.answer} (
+                            {new Date(a.createdAt).toLocaleString()})
                           </li>
                         ))}
                       </ul>

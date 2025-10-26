@@ -25,6 +25,9 @@ backend/caches/
 *.dylib.lock
 *.jnilib
 
+# generated
+generated/
+
 # Spring / STS
 .apt_generated/
 .classpath

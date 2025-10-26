@@ -53,7 +53,7 @@ export default function ProductList() {
   return (
     <div className="container">
       <div>
-        <h2 className="page-title">진행중인 경매</h2>
+        <h2 className="title-32 mb-1rem">진행중인 경매</h2>
 
         {products.length === 0 ? (
           <div className="empty-state">
@@ -68,16 +68,16 @@ export default function ProductList() {
                 style={{ cursor: "pointer" }}
                 onClick={() => navigate(`/products/${product.productId}`)}
               >
-                <div className="product-image">
+                <div className="product-image height-220">
                   {product.imageUrl ? (
                     <img src={product.imageUrl} alt={product.title} />
                   ) : (
-                    <div className="no-image">이미지 없음</div>
+                    <div className="no-image-txt">이미지 없음</div>
                   )}
                 </div>
 
                 <div className="product-info">
-                  <h3 className="product-title">{product.title}</h3>
+                  <h3 className="title-24 mb-10 text-nowrap color-333 text-ellipsis">{product.title}</h3>
                   {/* price → startingPrice */}
                   <p className="product-price">{formatPrice(product.startingPrice)}</p>
                   <p className="product-time">

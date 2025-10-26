@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import ReactDatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import type { User, ProductForm, Category } from "../types/types";
 import { API_BASE_URL } from "../services/api";
+import SelectBox from "../components/SelectBox";
 
 type Props = {
   user: User | null;
@@ -20,18 +23,27 @@ export default function ProductRegister({ user }: Props) {
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
-  const [minDateTime, setMinDateTime] = useState("");
+  const [minDateTime, setMinDateTime] = useState<Date | undefined>(undefined);
+  const [auctionEndDate, setAuctionEndDate] = useState<Date | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   // 최소 선택 시간 설정
   useEffect(() => {
     const now = new Date();
-    const offset = now.getTimezoneOffset() * 60000;
-    const localNow = new Date(now.getTime() - offset)
-      .toISOString()
-      .slice(0, 16);
-    setMinDateTime(localNow);
+    setMinDateTime(now);
   }, []);
+
+  // DatePicker 변경 시 form도 업데이트
+  const handleDateChange = (date: Date | null) => {
+    setAuctionEndDate(date);
+    if (date) {
+      setForm((prev) => ({
+        ...prev,
+        auctionEndTime: date.toISOString(), // string으로 변환
+      }));
+      setError("");
+    }
+  };
 
   // 카테고리 로드
   useEffect(() => {
@@ -146,9 +158,9 @@ export default function ProductRegister({ user }: Props) {
     return (
       <div className="register-container">
         <div className="register-box">
-          <p className="notice-text">로그인 후 물품을 등록할 수 있습니다</p>
+          <p className="text-18 text-center mb-1rem color-main">로그인 후 물품을 등록할 수 있습니다</p>
           <button onClick={() => navigate("/login")} className="btn-submit">
-            로그인하러 가기
+            로그인하러가기
           </button>
         </div>
       </div>
@@ -158,7 +170,7 @@ export default function ProductRegister({ user }: Props) {
   return (
     <div className="register-container">
       <div className="register-box">
-        <h2 className="register-title">물품 등록</h2>
+        <h2 className="title-32 mb-30 text-center">물품 등록</h2>
 
         <div className="form-group register">
           <label className="label">제목 *</label>
@@ -236,39 +248,33 @@ export default function ProductRegister({ user }: Props) {
           {!form.oneMinuteAuction && (
             <>
               <label className="label">경매 종료 시간 *</label>
-              <input
-                type="datetime-local"
-                value={form.auctionEndTime}
-                min={minDateTime}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setForm({ ...form, auctionEndTime: val });
-                  setError(val ? "" : "경매 종료 시간을 입력해주세요");
-                }}
+              <ReactDatePicker
+                selected={auctionEndDate}
+                onChange={handleDateChange}
+                showTimeSelect
+                timeFormat="HH:mm"
+                timeIntervals={5}
+                dateFormat="yyyy-MM-dd HH:mm"
+                minDate={minDateTime}
+                placeholderText="날짜와 시간을 선택하세요"
                 className="input"
               />
             </>
           )}
 
           <label className="label">카테고리 *</label>
-          <select
-            value={form.categoryId ?? ""}
-            onChange={(e) => {
-              const val = Number(e.target.value);
-              setForm({ ...form, categoryId: val });
-              setError(val ? "" : "카테고리를 선택해주세요");
-            }}
-            className="select"
-          >
-            <option value="" disabled>
-              선택하세요
-            </option>
-            {categories.map((cat) => (
-              <option key={cat.categoryId} value={cat.categoryId}>
-                {cat.name}
-              </option>
-            ))}
-          </select>
+          <SelectBox
+            value={form.categoryId === null ? "" : String(form.categoryId)}
+            onChange={(val) =>
+              setForm({ ...form, categoryId: val === "" ? null : Number(val) })
+            }
+            options={categories.map((c) => ({
+              value: String(c.categoryId),
+              label: c.name,
+            }))}
+            placeholder="카테고리를 선택하세요"
+            className="register-category"
+          />
         </div>
 
         {error && <p className="error-message">{error}</p>}
