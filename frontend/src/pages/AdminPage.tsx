@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { useState, useEffect, useCallback } from "react";
 import type {
   User,
@@ -8,10 +7,6 @@ import type {
   EditProductForm,
 } from "../types/types";
 import { PRODUCT_STATUS } from "../types/types";
-=======
-import { useState, useEffect } from "react";
-import type { User, Product, Report, Category, Inquiry } from "../types/types";
->>>>>>> 50feb50 (1:1 문의 기능 추가)
 import { API_BASE_URL } from "../services/api";
 import {
   BarChart,
@@ -23,15 +18,10 @@ import {
   CartesianGrid,
 } from "recharts";
 
-
 export default function AdminPage() {
-<<<<<<< HEAD
   const [section, setSection] = useState<
     "user" | "product" | "report" | "stats"
   >("user");
-=======
-  const [section, setSection] = useState<"user" | "product" | "report" | "stats" | "inquiry">("user");
->>>>>>> 50feb50 (1:1 문의 기능 추가)
   const [users, setUsers] = useState<User[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -45,16 +35,10 @@ export default function AdminPage() {
   const [filterKeyword, setFilterKeyword] = useState("");
   const [filterCategory, setFilterCategory] = useState<number | null>(null);
 
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
-
   // --- 회원 필터 상태 ---
-<<<<<<< HEAD
   const [userFilterField, setUserFilterField] = useState<
     "userName" | "nickName" | "email" | "phone"
   >("userName");
-=======
-  const [userFilterField, setUserFilterField] = useState<"userName" | "nickName" | "email" | "phone">("userName");
->>>>>>> 50feb50 (1:1 문의 기능 추가)
   const [userFilterKeyword, setUserFilterKeyword] = useState("");
 
   // 상품 수정 상태
@@ -137,76 +121,6 @@ export default function AdminPage() {
     fetchCategories,
   ]);
 
-<<<<<<< HEAD
-=======
-  // --- Fetch Functions ---
-  const fetchUsers = async () => {
-    let url = `${API_BASE_URL}/api/users/admin/search?`;
-    if (userFilterKeyword) {
-      if (userFilterField === "userName") url += `userName=${encodeURIComponent(userFilterKeyword)}`;
-      else if (userFilterField === "nickName") url += `nickName=${encodeURIComponent(userFilterKeyword)}`;
-      else if (userFilterField === "email") url += `email=${encodeURIComponent(userFilterKeyword)}`;
-      else if (userFilterField === "phone") url += `phone=${encodeURIComponent(userFilterKeyword)}`;
-    }
-    const res = await fetch(url);
-    const data = await res.json();
-    setUsers(data);
-  };
-
-  const fetchProducts = async () => {
-    let url = `${API_BASE_URL}/api/products/search?`;
-    if (filterKeyword) url += `keyword=${filterKeyword}&`;
-    if (filterCategory) url += `category=${filterCategory}&`;
-    const res = await fetch(url);
-    const data = await res.json();
-    setProducts(data);
-  };
-
-  const fetchReports = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/reports/admin`);
-    const data = await res.json();
-    setReports(data);
-  };
-
-  const fetchStats = async () => {
-    const res = await fetch(`${API_BASE_URL}/admin/stats`);
-    const data = await res.json();
-    setStats(data);
-  };
-
-  const fetchCategories = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/categories`);
-    const data = await res.json();
-    setCategories(data);
-  };
-
-  const fetchInquiries = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/inquiry/all`); // 관리자용 전체 문의 API
-      if (res.ok) {
-        const data: any[] = await res.json();
-        const mapped: Inquiry[] = data.map(d => ({
-          inquiryId: d.articleId,
-          title: d.title,
-          question: d.content,
-          createdAt: d.createdAt,
-          answers: (d.answers ?? []).map((a: any) => ({
-            inquiryReviewId: a.inquiryReviewId,
-            answer: a.answer,
-            nickName: a.nickName,
-            createdAt: a.createdAt,
-          })),
-        }));
-        setInquiries(mapped);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-
-  // --- Actions ---
->>>>>>> 50feb50 (1:1 문의 기능 추가)
   const handleChangeRole = async (userId: number, newRole: User["role"]) => {
     await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
       method: "PUT",
@@ -291,7 +205,6 @@ export default function AdminPage() {
       <aside className="admin-sidebar">
         <h2>관리자 페이지</h2>
         <ul>
-<<<<<<< HEAD
           <li>
             <button onClick={() => setSection("user")}>회원 관리</button>
           </li>
@@ -303,16 +216,6 @@ export default function AdminPage() {
           </li>
           <li>
             <button onClick={() => setSection("stats")}>통계</button>
-=======
-          <li><button onClick={() => setSection("user")}>회원 관리</button></li>
-          <li><button onClick={() => setSection("product")}>상품 관리</button></li>
-          <li><button onClick={() => setSection("report")}>신고 관리</button></li>
-          <li><button onClick={() => setSection("stats")}>통계</button></li>
-          <li><button onClick={() => { setSection("inquiry"); fetchInquiries(); }}
-          >
-            1:1 문의 관리
-          </button>
->>>>>>> 50feb50 (1:1 문의 기능 추가)
           </li>
         </ul>
       </aside>
@@ -648,44 +551,6 @@ export default function AdminPage() {
             </table>
           </div>
         )}
-
-        {/* 1:1 문의 관리 */}
-        {section === "inquiry" && (
-          <div className="admin-section">
-            <h3>1:1 문의 관리</h3>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>제목</th>
-                  <th>질문</th>
-                  <th>답변</th>
-                  <th>작성일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inquiries.map(inq => (
-                  <tr key={inq.inquiryId}>
-                    <td>{inq.inquiryId}</td>
-                    <td>{inq.title}</td>
-                    <td>{inq.question}</td>
-                    <td>
-                      {inq.answers?.length > 0
-                        ? inq.answers.map(a => (
-                          <div key={a.inquiryReviewId}>
-                            {a.nickName}: {a.answer}
-                          </div>
-                        ))
-                        : <span>대기중</span>}
-                    </td>
-                    <td>{new Date(inq.createdAt).toLocaleString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
 
         {/* 통계 */}
         {section === "stats" && (
