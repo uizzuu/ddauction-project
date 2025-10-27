@@ -185,8 +185,11 @@ export interface QnaAnswer {
   qnaReviewId: number;
   answer: string;
   nickName: string;
+  userId: number;
+  role?: Role;
   createdAt: string;
   updatedAt: string;
+  qnaUserId: number;
 }
 
 export interface Inquiry {

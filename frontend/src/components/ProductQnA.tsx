@@ -21,15 +21,8 @@ export default function ProductQnA({
 }: Props) {
   const [newQuestion, setNewQuestion] = useState({ title: "", question: "" });
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
-
-  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(
-    null
-  );
-  const [editingQuestion, setEditingQuestion] = useState<{
-    title: string;
-    question: string;
-  }>({ title: "", question: "" });
-
+  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<{ title: string; question: string; }>({ title: "", question: "" });
   const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
   const [editingAnswerContent, setEditingAnswerContent] = useState("");
 
@@ -73,7 +66,7 @@ export default function ProductQnA({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({ productId, ...newQuestion, boardName: "qna" }),
       });
@@ -99,7 +92,7 @@ export default function ProductQnA({
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
         },
       });
       fetchQnaList();
@@ -118,7 +111,7 @@ export default function ProductQnA({
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify(editingQuestion),
       });
@@ -133,9 +126,7 @@ export default function ProductQnA({
   // 토글 버튼
   const toggleQna = (qnaId: number) => {
     setOpenQnaIds((prev) =>
-      prev.includes(qnaId)
-        ? prev.filter((id) => id !== qnaId)
-        : [...prev, qnaId]
+      prev.includes(qnaId) ? prev.filter((id) => id !== qnaId) : [...prev, qnaId]
     );
   };
 
@@ -160,7 +151,7 @@ export default function ProductQnA({
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({ answer: editingAnswerContent }),
       });
@@ -181,7 +172,7 @@ export default function ProductQnA({
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
         },
       });
       fetchQnaList();
@@ -200,7 +191,7 @@ export default function ProductQnA({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({ answer }),
       });
@@ -228,7 +219,7 @@ export default function ProductQnA({
         }}
       >
         {/* 질문 작성 */}
-        {user ? (
+        {user && (
           <div className="flex-column gap-8">
             <input
               type="text"
@@ -253,8 +244,6 @@ export default function ProductQnA({
               </button>
             </div>
           </div>
-        ) : (
-          <></>
         )}
 
         {/* 질문 목록 */}
@@ -280,14 +269,13 @@ export default function ProductQnA({
                   className="position-ab top-16 right-8 trans"
                 >
                   <span
-                    className={`custom-select-arrow ${
-                      openQnaIds.includes(q.qnaId) ? "open" : ""
-                    }`}
+                    className={`custom-select-arrow ${openQnaIds.includes(q.qnaId) ? "open" : ""
+                      }`}
                   />
                 </button>
               </div>
 
-              {/* 토글 열렸을 때만 전체 내용 렌더링 */}
+              {/* 토글 열렸을 때 전체 내용 */}
               {openQnaIds.includes(q.qnaId) && (
                 <div className="flex-column gap-4" style={{ marginTop: 8 }}>
                   {/* 질문 수정 모드 */}
@@ -332,11 +320,13 @@ export default function ProductQnA({
                   ) : (
                     <div className="flex-column gap-4">
                       <p className="text-16 color-777 text-nowrap after-wrap">
-                        <span className="after">{q.nickName}</span>
                         <span className="after">
-                          {q.createdAt
-                            ? formatDateTime(q.createdAt)
-                            : "작성일 없음"}
+                          {q.userId === product?.sellerId
+                            ? "판매자"
+                            : q.nickName || "알 수 없음"}
+                        </span>
+                        <span className="after">
+                          {q.createdAt ? formatDateTime(q.createdAt) : "작성일 없음"}
                         </span>
                       </p>
                       <p className="text-16 color-333 text-nowrap mb-1rem">
@@ -419,40 +409,28 @@ export default function ProductQnA({
                             </div>
                           ) : (
                             <>
-                              <p style={{ margin: "4px 0" }}>{a.answer}</p>
-                              <p
-                                style={{
-                                  fontSize: "0.8rem",
-                                  color: "#777",
-                                  margin: 0,
-                                }}
-                              >
-                                답변자: {a.nickName} |{" "}
-                                {a.createdAt ? formatDateTime(a.createdAt) : ""}
+                              {/* 답변 내용 */}
+                              <p className="text-16 color-333 mb-1rem" style={{ whiteSpace: 'pre-wrap' }}>
+                                {a.answer}
                               </p>
-                              {user?.role === "ADMIN" && (
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: 6,
-                                    marginTop: 4,
-                                  }}
-                                >
+
+                              {/* 작성자 / 날짜 */}
+                              <p style={{ fontSize: "0.8rem", color: "#777", margin: 0 }}>
+                                {a.role === "ADMIN" ? "관리자" : "판매자"} | {a.createdAt ? formatDateTime(a.createdAt) : ""}
+                              </p>
+
+
+                              {/* 수정/삭제 버튼 */}
+                              {user && (user.role === "ADMIN" || user.userId === a.userId) && (
+                                <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
                                   <button
-                                    onClick={() =>
-                                      startEditingAnswer(
-                                        a.qnaReviewId,
-                                        a.answer
-                                      )
-                                    }
+                                    onClick={() => startEditingAnswer(a.qnaReviewId, a.answer)}
                                     className="article-btn"
                                   >
                                     수정
                                   </button>
                                   <button
-                                    onClick={() =>
-                                      handleAnswerDelete(a.qnaReviewId)
-                                    }
+                                    onClick={() => handleAnswerDelete(a.qnaReviewId)}
                                     className="article-btn"
                                   >
                                     삭제
@@ -473,16 +451,11 @@ export default function ProductQnA({
                         placeholder="답변 입력"
                         value={answers[q.qnaId] || ""}
                         onChange={(e) =>
-                          setAnswers({
-                            ...answers,
-                            [q.qnaId]: e.target.value,
-                          })
+                          setAnswers({ ...answers, [q.qnaId]: e.target.value })
                         }
                         className="article-textarea article-review"
                       />
-                      <div
-                        style={{ display: "flex", justifyContent: "flex-end" }}
-                      >
+                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
                         <button
                           onClick={() => handleAnswerSubmit(q.qnaId)}
                           className="article-btn"

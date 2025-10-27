@@ -18,6 +18,8 @@ public class QnaReviewDto {
     private String answer;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private User.Role role;
+    private String nickName;
 
     public static QnaReviewDto fromEntity(QnaReview qr) {
         return QnaReviewDto.builder()
@@ -27,6 +29,8 @@ public class QnaReviewDto {
                 .answer(qr.getAnswer())
                 .createdAt(qr.getCreatedAt())
                 .updatedAt(qr.getUpdatedAt())
+                .role(qr.getQnaUser().getRole())
+                .nickName(qr.getQnaUser().getNickName())
                 .build();
     }
 
