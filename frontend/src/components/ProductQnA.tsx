@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import type { User, Qna, Product } from "../types/types";
-import { ROLE } from '../types/types';
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/date";
 
@@ -21,18 +20,10 @@ export default function ProductQnA({
 }: Props) {
   const [newQuestion, setNewQuestion] = useState({ title: "", question: "" });
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
-
-  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(
-    null
-  );
-  const [editingQuestion, setEditingQuestion] = useState<{
-    title: string;
-    question: string;
-  }>({ title: "", question: "" });
-
+  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<{ title: string; question: string; }>({ title: "", question: "" });
   const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
   const [editingAnswerContent, setEditingAnswerContent] = useState("");
-
   const [openQnaIds, setOpenQnaIds] = useState<number[]>([]);
 
   const fetchQnaList = useCallback(async () => {
@@ -53,14 +44,11 @@ export default function ProductQnA({
     if (productId) fetchQnaList();
   }, [productId, fetchQnaList]);
 
-  // 질문 등록
   const handleCreateQuestion = async () => {
     if (qnaList.some(q => q.userId === user?.userId && q.productId === productId)) {
       return alert("본인 글에는 질문을 작성할 수 없습니다.");
     }
-
     if (!newQuestion.question.trim()) return alert("질문 내용을 입력해주세요.");
-
     const token = localStorage.getItem("token");
     if (!token) return alert("로그인 후 질문을 등록할 수 있습니다.");
 
@@ -86,7 +74,6 @@ export default function ProductQnA({
     }
   };
 
-  // 질문 삭제
   const handleQuestionDelete = async (qnaId: number) => {
     if (!window.confirm("질문을 삭제하시겠습니까?")) return;
     try {
@@ -104,7 +91,6 @@ export default function ProductQnA({
     }
   };
 
-  // 질문 수정 저장
   const saveEditingQuestion = async (qnaId: number) => {
     if (!editingQuestion.title.trim() || !editingQuestion.question.trim())
       return alert("내용을 입력해주세요.");
@@ -126,28 +112,22 @@ export default function ProductQnA({
     }
   };
 
-  // 토글 버튼
   const toggleQna = (qnaId: number) => {
     setOpenQnaIds((prev) =>
-      prev.includes(qnaId)
-        ? prev.filter((id) => id !== qnaId)
-        : [...prev, qnaId]
+      prev.includes(qnaId) ? prev.filter((id) => id !== qnaId) : [...prev, qnaId]
     );
   };
 
-  // 답변 권한 확인 함수
   const canAnswer = () => {
     if (!user || !product) return false;
-    return user?.role === ROLE[0] || user?.userId === product.sellerId;
+    return user.role === "ADMIN" || user.userId === product.sellerId;
   };
 
-  // 답변 수정 시작
   const startEditingAnswer = (answerId: number, content: string) => {
     setEditingAnswerId(answerId);
     setEditingAnswerContent(content);
   };
 
-  // 답변 수정 저장
   const saveEditingAnswer = async (answerId: number) => {
     if (!editingAnswerContent.trim()) return alert("내용을 입력해주세요.");
     try {
@@ -168,7 +148,6 @@ export default function ProductQnA({
     }
   };
 
-  // 답변 삭제
   const handleAnswerDelete = async (answerId: number) => {
     if (!window.confirm("답변을 삭제하시겠습니까?")) return;
     try {
@@ -186,7 +165,6 @@ export default function ProductQnA({
     }
   };
 
-  // 답변 등록
   const handleAnswerSubmit = async (qnaId: number) => {
     const answer = answers[qnaId];
     if (!answer?.trim()) return alert("답변 내용을 입력해주세요.");
@@ -194,10 +172,10 @@ export default function ProductQnA({
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/qna/${qnaId}/review`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
-          },
+        },
         body: JSON.stringify({ answer }),
       });
       if (res.ok) {
@@ -224,32 +202,31 @@ export default function ProductQnA({
         }}
       >
         {/* 질문 작성 */}
-        { user ? (
-        <div className="flex-column gap-8">
-          <input
-            type="text"
-            placeholder="질문 제목"
-            value={newQuestion.title}
-            onChange={(e) =>
-              setNewQuestion({ ...newQuestion, title: e.target.value })
-            }
-            className="article-input article-review"
-          />
-          <textarea
-            placeholder="질문 내용"
-            value={newQuestion.question}
-            onChange={(e) =>
-              setNewQuestion({ ...newQuestion, question: e.target.value })
-            }
-            className="article-textarea article-review"
-          />
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button onClick={handleCreateQuestion} className="article-btn">
-              질문 등록
-            </button>
+        {user && (
+          <div className="flex-column gap-8">
+            <input
+              type="text"
+              placeholder="질문 제목"
+              value={newQuestion.title}
+              onChange={(e) =>
+                setNewQuestion({ ...newQuestion, title: e.target.value })
+              }
+              className="article-input article-review"
+            />
+            <textarea
+              placeholder="질문 내용"
+              value={newQuestion.question}
+              onChange={(e) =>
+                setNewQuestion({ ...newQuestion, question: e.target.value })
+              }
+              className="article-textarea article-review"
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={handleCreateQuestion} className="article-btn">
+                질문 등록
+              </button>
+            </div>
           </div>
-        </div>) : (
-          <></>
         )}
 
         {/* 질문 목록 */}
@@ -281,14 +258,13 @@ export default function ProductQnA({
                   className="position-ab trans"
                 >
                   <span
-                    className={`custom-select-arrow ${
-                      openQnaIds.includes(q.qnaId) ? "open" : ""
-                    }`}
+                    className={`custom-select-arrow ${openQnaIds.includes(q.qnaId) ? "open" : ""
+                      }`}
                   />
                 </button>
               </div>
 
-              {/* 토글 열렸을 때만 전체 내용 렌더링 */}
+              {/* 토글 열렸을 때 전체 내용 */}
               {openQnaIds.includes(q.qnaId) && (
                 <div className="flex-column gap-4" style={{ marginTop: 8 }}>
                   {/* 질문 수정 모드 */}
@@ -333,29 +309,24 @@ export default function ProductQnA({
                   ) : (
                     <div className="flex-column gap-4">
                       <p className="text-16 color-777 text-nowrap after-wrap">
-                        <span className="after">{q.nickName}</span>
                         <span className="after">
-                          {q.createdAt
-                            ? formatDateTime(q.createdAt)
-                            : "작성일 없음"}
+                          {q.userId === product?.sellerId
+                            ? "판매자"
+                            : q.nickName || "알 수 없음"}
+                        </span>
+                        <span className="after">
+                          {q.createdAt ? formatDateTime(q.createdAt) : "작성일 없음"}
                         </span>
                       </p>
-                      <p className="text-16 color-333 text-nowrap mb-1rem">
-                        {q.question}
-                      </p>
+                      <p className="text-16 color-333 text-nowrap mb-1rem">{q.question}</p>
 
                       {/* 질문 수정/삭제 버튼 */}
                       {user?.userId === q.userId && (
-                        <div
-                          style={{ display: "flex", gap: 8, marginBottom: 6 }}
-                        >
+                        <div style={{ display: "flex", gap: 8, marginBottom: 6 }}>
                           <button
                             onClick={() => {
                               setEditingQuestionId(q.qnaId);
-                              setEditingQuestion({
-                                title: q.title,
-                                question: q.question,
-                              });
+                              setEditingQuestion({ title: q.title, question: q.question });
                             }}
                             className="article-btn"
                           >
@@ -373,36 +344,20 @@ export default function ProductQnA({
                   )}
 
                   {/* 답변 목록 */}
-                  {q.answers && q.answers?.length > 0 && (
-                    <div
-                      style={{
-                        marginTop: 8,
-                        paddingLeft: 12,
-                        borderLeft: "3px solid #b17576",
-                      }}
-                    >
+                  {q.answers && q.answers.length > 0 && (
+                    <div style={{ marginTop: 8, paddingLeft: 12, borderLeft: "3px solid #b17576" }}>
                       {q.answers.map((a) => (
                         <div key={a.qnaReviewId} style={{ marginBottom: 8 }}>
                           {editingAnswerId === a.qnaReviewId ? (
                             <div>
                               <textarea
                                 value={editingAnswerContent}
-                                onChange={(e) =>
-                                  setEditingAnswerContent(e.target.value)
-                                }
+                                onChange={(e) => setEditingAnswerContent(e.target.value)}
                                 className="article-textarea article-review"
                               />
-                              <div
-                                style={{
-                                  display: "flex",
-                                  gap: 8,
-                                  marginTop: 4,
-                                }}
-                              >
+                              <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
                                 <button
-                                  onClick={() =>
-                                    saveEditingAnswer(a.qnaReviewId)
-                                  }
+                                  onClick={() => saveEditingAnswer(a.qnaReviewId)}
                                   className="article-btn"
                                 >
                                   저장
@@ -420,40 +375,28 @@ export default function ProductQnA({
                             </div>
                           ) : (
                             <>
-                              <p style={{ margin: "4px 0" }}>{a.answer}</p>
-                              <p
-                                style={{
-                                  fontSize: "0.8rem",
-                                  color: "#777",
-                                  margin: 0,
-                                }}
-                              >
-                                답변자: {a.nickName} |{" "}
-                                {a.createdAt ? formatDateTime(a.createdAt) : ""}
+                              {/* 답변 내용 */}
+                              <p className="text-16 color-333 mb-1rem" style={{ whiteSpace: 'pre-wrap' }}>
+                                {a.answer}
                               </p>
-                              {user?.role === "ADMIN" && (
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: 6,
-                                    marginTop: 4,
-                                  }}
-                                >
+
+                              {/* 작성자 / 날짜 */}
+                              <p style={{ fontSize: "0.8rem", color: "#777", margin: 0 }}>
+                                {a.role === "ADMIN" ? "관리자" : "판매자"} | {a.createdAt ? formatDateTime(a.createdAt) : ""}
+                              </p>
+
+
+                              {/* 수정/삭제 버튼 */}
+                              {user && (user.role === "ADMIN" || user.userId === a.userId) && (
+                                <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
                                   <button
-                                    onClick={() =>
-                                      startEditingAnswer(
-                                        a.qnaReviewId,
-                                        a.answer
-                                      )
-                                    }
+                                    onClick={() => startEditingAnswer(a.qnaReviewId, a.answer)}
                                     className="article-btn"
                                   >
                                     수정
                                   </button>
                                   <button
-                                    onClick={() =>
-                                      handleAnswerDelete(a.qnaReviewId)
-                                    }
+                                    onClick={() => handleAnswerDelete(a.qnaReviewId)}
                                     className="article-btn"
                                   >
                                     삭제
@@ -474,16 +417,11 @@ export default function ProductQnA({
                         placeholder="답변 입력"
                         value={answers[q.qnaId] || ""}
                         onChange={(e) =>
-                          setAnswers({
-                            ...answers,
-                            [q.qnaId]: e.target.value,
-                          })
+                          setAnswers({ ...answers, [q.qnaId]: e.target.value })
                         }
                         className="article-textarea article-review"
                       />
-                      <div
-                        style={{ display: "flex", justifyContent: "flex-end" }}
-                      >
+                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
                         <button
                           onClick={() => handleAnswerSubmit(q.qnaId)}
                           className="article-btn"
@@ -493,6 +431,7 @@ export default function ProductQnA({
                       </div>
                     </div>
                   )}
+
                 </div>
               )}
             </div>

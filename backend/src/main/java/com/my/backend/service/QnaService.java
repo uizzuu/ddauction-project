@@ -45,7 +45,7 @@ public class QnaService {
                 .user(user)
                 .product(product)
                 .board(board)
-                .title(title)   // 프론트에서 보낸 제목 그대로
+                .title(title)
                 .question(question)
                 .build();
 
@@ -92,16 +92,18 @@ public class QnaService {
                 answerMap.put("qnaReviewId", r.getQnaReviewId());
                 answerMap.put("answer", r.getAnswer());
                 answerMap.put("nickName", r.getQnaUser().getNickName());
+                answerMap.put("role", r.getQnaUser().getRole().name()); // role 추가
                 answerMap.put("createdAt", r.getCreatedAt());
                 answerList.add(answerMap);
             }
 
             Map<String, Object> qnaMap = new HashMap<>();
             qnaMap.put("qnaId", qna.getQnaId());
-            qnaMap.put("title", qna.getTitle());  // 프론트 제목 그대로
+            qnaMap.put("title", qna.getTitle());
             qnaMap.put("question", qna.getQuestion());
             qnaMap.put("createdAt", qna.getCreatedAt());
             qnaMap.put("nickName", qna.getUser().getNickName());
+            qnaMap.put("role", qna.getUser().getRole().name()); // 질문 작성자 role 추가
             qnaMap.put("userId", qna.getUser().getUserId());
             qnaMap.put("answers", answerList);
 
@@ -132,6 +134,7 @@ public class QnaService {
                 answerMap.put("qnaReviewId", r.getQnaReviewId());
                 answerMap.put("answer", r.getAnswer());
                 answerMap.put("nickName", r.getQnaUser().getNickName());
+                answerMap.put("role", r.getQnaUser().getRole().name()); // role 추가
                 answerMap.put("createdAt", r.getCreatedAt());
                 answerList.add(answerMap);
             }
@@ -141,6 +144,8 @@ public class QnaService {
             qnaMap.put("title", qna.getTitle());
             qnaMap.put("question", qna.getQuestion());
             qnaMap.put("createdAt", qna.getCreatedAt());
+            qnaMap.put("nickName", qna.getUser().getNickName());
+            qnaMap.put("role", qna.getUser().getRole().name()); // 질문 작성자 role 추가
             qnaMap.put("answers", answerList);
 
             result.add(qnaMap);
