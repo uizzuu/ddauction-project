@@ -68,7 +68,7 @@ public class AuthService {
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
             }
 
-            String token = jwtUtil.createJwt(user.getEmail(), user.getRole().name(), 3600000L);
+            String token = jwtUtil.createJwt(user.getUserId(), user.getEmail(), user.getRole().name(), 3600000L);
             TokenResponse tokenResponse = new TokenResponse(token, null);
             log.info("로그인 성공: {}", request.getEmail());
             return ResponseEntity.ok(tokenResponse);
@@ -92,8 +92,8 @@ public class AuthService {
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
             // 새로운 토큰 발급 (예: 1시간 유효)
-            String newAccessToken = jwtUtil.createJwt(user.getEmail(), user.getRole().name(), 3600000L); // 1시간
-            String newRefreshToken = jwtUtil.createJwt(user.getEmail(), user.getRole().name(), 604800000L); // 7일
+            String newAccessToken = jwtUtil.createJwt(user.getUserId(), user.getEmail(), user.getRole().name(), 3600000L); // 1시간
+            String newRefreshToken = jwtUtil.createJwt(user.getUserId(), user.getEmail(), user.getRole().name(), 604800000L); // 7일
 
             TokenResponse tokenResponse = new TokenResponse(newAccessToken, newRefreshToken);
             log.info("토큰 갱신 성공");

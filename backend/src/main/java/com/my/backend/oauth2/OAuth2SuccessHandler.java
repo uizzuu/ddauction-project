@@ -26,10 +26,11 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
                                         Authentication authentication) throws IOException {
         CustomOAuth2User oauthUser = (CustomOAuth2User) authentication.getPrincipal();
 
+        Long userId = oauthUser.getUserId();
         String email = oauthUser.getEmail();  // CustomOAuth2User에서 정의 필요
         String role = oauthUser.getRole();    // CustomOAuth2User에서 정의 필요
 
-        String jwtToken = jwtUtil.createJwt(email, role, 60 * 60 * 1000L); // 1시간
+        String jwtToken = jwtUtil.createJwt(userId, email, role, 60 * 60 * 1000L); // 1시간
 
         Map<String, String> tokenResponse = Map.of("token", jwtToken);
 

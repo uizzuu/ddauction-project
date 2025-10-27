@@ -681,6 +681,11 @@ button:disabled {
   max-height: 160px;
 }
 
+/* transition */
+.trans {
+  transition: all 0.3s;
+}
+
 /* 로딩 스피너 */
 .spinner {
   border: 3px solid #f3f3f3;

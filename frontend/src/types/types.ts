@@ -175,6 +175,7 @@ export interface Qna {
   updatedAt?: string;
   answers?: QnaAnswer[];
   boardId?: number;
+  boardName?: string;
   productId?: number;
   userId: number;
   nickName?: string;

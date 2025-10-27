@@ -20,6 +20,11 @@ public class JWTUtil {
                 Jwts.SIG.HS256.key().build().getAlgorithm());
     }
 
+    public Long getUserId(String token) {
+        return Jwts.parser().verifyWith(secretKey).build().
+            parseSignedClaims(token).getPayload().get("userId", Long.class);
+    }
+
     public String getEmail(String token) {
         return Jwts.parser().verifyWith(secretKey).build().
                 parseSignedClaims(token).getPayload().get("email", String.class);
@@ -35,8 +40,9 @@ public class JWTUtil {
                 parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
 
-    public String createJwt(String email, String role, Long expiredMs) {
+    public String createJwt(Long userId, String email, String role, Long expiredMs) {
         return Jwts.builder()
+                .claim("userId", userId)
                 .claim("email", email)
                 .claim("role", role)
                 .issuedAt(new Date(System.currentTimeMillis()))

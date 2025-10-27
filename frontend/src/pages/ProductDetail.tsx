@@ -49,6 +49,7 @@ export default function ProductDetail({ user }: Props) {
         if (!res.ok) throw new Error("상품 정보를 가져올 수 없습니다.");
         const data: Product = await res.json();
         setProduct(data);
+        setSellerNickName(data.sellerNickName ?? "알 수 없음");
         setRemainingTime(calculateRemainingTime(data.auctionEndTime));
 
         // 찜 수
@@ -62,23 +63,6 @@ export default function ProductDetail({ user }: Props) {
           }
         } catch (e) {
           console.warn("찜 수 조회 실패", e);
-        }
-
-        // 판매자 정보
-        if (data.sellerId) {
-          try {
-            const sellerRes = await fetch(
-              `${API_BASE_URL}/api/users/${data.sellerId}`
-            );
-            if (sellerRes.ok) {
-              const seller: User = await sellerRes.json();
-              setSellerNickName(seller.nickName ?? "알 수 없음");
-            } else {
-              setSellerNickName("알 수 없음");
-            }
-          } catch {
-            setSellerNickName("알 수 없음");
-          }
         }
 
         // 카테고리명
@@ -456,6 +440,7 @@ export default function ProductDetail({ user }: Props) {
 
       <ProductQnA
         user={user}
+        product={product}
         productId={product.productId}
         qnaList={qnaList}
         setQnaList={setQnaList}

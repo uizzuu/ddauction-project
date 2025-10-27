@@ -64,8 +64,9 @@ public class SecurityConfig {
                         .requestMatchers("/login", "/signup", "/", "/join",
                                 "/products", "articles", "categories",
                                 "/api/auth/login", "/api/auth/signup", "/api/users/me",
-                                "/api/categories", "/api/products", "/api/articles",
-                                "/api/bookmarks/**", "/api/categories/**", "/api/products/**", "/api/articles/**").permitAll()
+                                "/api/categories", "/api/products", "/api/articles", "api/qna",
+                                "/api/bookmarks/**", "/api/categories/**", "/api/products/**",
+                                "/api/articles/**", "/api/qna/**").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

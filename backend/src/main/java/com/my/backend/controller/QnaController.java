@@ -1,11 +1,14 @@
 package com.my.backend.controller;
 
+import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.entity.QnaReview;
 import com.my.backend.repository.QnaRepository;
 import com.my.backend.service.QnaService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,9 +26,14 @@ public class QnaController {
     // 질문 작성
     // ============================
     @PostMapping
-    public ResponseEntity<?> createQuestion(@RequestBody Map<String, String> body, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+    public ResponseEntity<?> createQuestion(@RequestBody Map<String, String> body) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        };
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUser().getUserId();
 
         Long productId = Long.parseLong(body.get("productId"));
         String title = body.get("title");        // 프론트에서 받은 제목
@@ -38,9 +46,14 @@ public class QnaController {
     // 답변 작성
     // ============================
     @PostMapping("/{qnaId}/review")
-    public ResponseEntity<?> answerQuestion(@PathVariable Long qnaId, @RequestBody Map<String, String> body, HttpSession session) {
-        Long userId = (Long) session.getAttribute("userId");
-        if (userId == null) return ResponseEntity.status(401).body("로그인이 필요합니다.");
+    public ResponseEntity<?> answerQuestion(@PathVariable Long qnaId, @RequestBody Map<String, String> body) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUser().getUserId();
 
         String answer = body.get("answer");
         return ResponseEntity.ok(qnaService.answerQuestion(qnaId, userId, answer));

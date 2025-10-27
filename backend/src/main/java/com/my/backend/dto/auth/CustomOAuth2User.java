@@ -8,20 +8,25 @@ import java.util.Map;
 
 public class CustomOAuth2User implements OAuth2User {
 
+    private final Long userId;
     private final String email;
     private final String role;
     private final Map<String, Object> attributes;
     private final Collection<? extends GrantedAuthority> authorities;
 
-    public CustomOAuth2User(String email,
+    public CustomOAuth2User(Long userId,
+                            String email,
                             String role,
                             Map<String, Object> attributes,
                             Collection<? extends GrantedAuthority> authorities) {
+        this.userId = userId;
         this.email = email;
         this.role = role;
         this.attributes = attributes;
         this.authorities = authorities;
     }
+
+    public Long getUserId() { return userId; }
 
     public String getEmail() {
         return email;
