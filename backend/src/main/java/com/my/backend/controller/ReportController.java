@@ -1,8 +1,8 @@
 package com.my.backend.controller;
 
 import com.my.backend.dto.ReportDto;
+import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.service.ReportService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,15 +16,21 @@ import java.util.Map;
 public class ReportController {
 
     private final ReportService reportService;
+    private final JWTUtil jwtUtil;
 
-    // 🔥 신고 생성 (세션 기반)
+    // 🔥 신고 생성 (JWT 기반)
     @PostMapping
-    public ResponseEntity<?> reportUser(@RequestBody Map<String, String> body, HttpSession session) {
+    public ResponseEntity<?> reportUser(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestBody Map<String, String> body
+    ) {
         try {
-            Long reporterId = (Long) session.getAttribute("userId");
-            if (reporterId == null) {
+            // Bearer 토큰에서 userId 추출
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
                 return ResponseEntity.status(401).body("로그인이 필요합니다.");
             }
+            String token = authorizationHeader.substring(7);
+            Long reporterId = jwtUtil.getUserId(token);
 
             Long targetId = Long.parseLong(body.get("targetId"));
             String reason = body.get("reason");
@@ -53,13 +59,19 @@ public class ReportController {
 
     // 🔥 마이페이지: 내가 신고한 내역 조회
     @GetMapping("/mypage")
-    public ResponseEntity<?> getMyReports(HttpSession session) {
-        Long reporterId = (Long) session.getAttribute("userId");
-        if (reporterId == null) {
-            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+    public ResponseEntity<?> getMyReports(@RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(401).body("로그인이 필요합니다.");
+            }
+            String token = authorizationHeader.substring(7);
+            Long reporterId = jwtUtil.getUserId(token);
+
+            List<ReportDto> reports = reportService.getReportsByReporter(reporterId);
+            return ResponseEntity.ok(reports);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
-        List<ReportDto> reports = reportService.getReportsByReporter(reporterId);
-        return ResponseEntity.ok(reports);
     }
 
     // 관리자용 전체 신고 조회
@@ -69,4 +81,3 @@ public class ReportController {
         return ResponseEntity.ok(reports);
     }
 }
-//
