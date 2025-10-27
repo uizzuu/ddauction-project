@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import type { Product, Bid, User, Category, Qna } from "../types/types";
 import { API_BASE_URL } from "../services/api";
-import { formatDateTime } from "../utils/date";
+import { formatDateTime } from "../utils/util";
 import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
 
@@ -202,8 +202,8 @@ export default function ProductDetail({ user }: Props) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -249,7 +249,7 @@ export default function ProductDetail({ user }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           targetId: product.sellerId,
@@ -285,10 +285,7 @@ export default function ProductDetail({ user }: Props) {
         {/* 이미지 */}
         <div className="product-image product-detail-image">
           {product.imageUrl ? (
-            <img
-              src={product.imageUrl}
-              alt={product.title}
-            />
+            <img src={product.imageUrl} alt={product.title} />
           ) : (
             <div className="no-image-txt">이미지 없음</div>
           )}

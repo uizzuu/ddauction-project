@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import type { User, Qna, Product } from "../types/types";
-import { ROLE } from '../types/types';
+import { ROLE } from "../types/types";
 import { API_BASE_URL } from "../services/api";
-import { formatDateTime } from "../utils/date";
+import { formatDateTime } from "../utils/util";
 
 type Props = {
   user: User | null;
@@ -55,7 +55,11 @@ export default function ProductQnA({
 
   // 질문 등록
   const handleCreateQuestion = async () => {
-    if (qnaList.some(q => q.userId === user?.userId && q.productId === productId)) {
+    if (
+      qnaList.some(
+        (q) => q.userId === user?.userId && q.productId === productId
+      )
+    ) {
       return alert("본인 글에는 질문을 작성할 수 없습니다.");
     }
 
@@ -69,7 +73,7 @@ export default function ProductQnA({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ productId, ...newQuestion, boardName: "qna" }),
       });
@@ -95,7 +99,7 @@ export default function ProductQnA({
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       fetchQnaList();
@@ -114,7 +118,7 @@ export default function ProductQnA({
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(editingQuestion),
       });
@@ -156,7 +160,7 @@ export default function ProductQnA({
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ answer: editingAnswerContent }),
       });
@@ -177,7 +181,7 @@ export default function ProductQnA({
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
       fetchQnaList();
@@ -194,10 +198,10 @@ export default function ProductQnA({
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/qna/${qnaId}/review`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-          },
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ answer }),
       });
       if (res.ok) {
@@ -224,31 +228,32 @@ export default function ProductQnA({
         }}
       >
         {/* 질문 작성 */}
-        { user ? (
-        <div className="flex-column gap-8">
-          <input
-            type="text"
-            placeholder="질문 제목"
-            value={newQuestion.title}
-            onChange={(e) =>
-              setNewQuestion({ ...newQuestion, title: e.target.value })
-            }
-            className="article-input article-review"
-          />
-          <textarea
-            placeholder="질문 내용"
-            value={newQuestion.question}
-            onChange={(e) =>
-              setNewQuestion({ ...newQuestion, question: e.target.value })
-            }
-            className="article-textarea article-review"
-          />
-          <div style={{ display: "flex", justifyContent: "flex-end" }}>
-            <button onClick={handleCreateQuestion} className="article-btn">
-              질문 등록
-            </button>
+        {user ? (
+          <div className="flex-column gap-8">
+            <input
+              type="text"
+              placeholder="질문 제목"
+              value={newQuestion.title}
+              onChange={(e) =>
+                setNewQuestion({ ...newQuestion, title: e.target.value })
+              }
+              className="article-input article-review"
+            />
+            <textarea
+              placeholder="질문 내용"
+              value={newQuestion.question}
+              onChange={(e) =>
+                setNewQuestion({ ...newQuestion, question: e.target.value })
+              }
+              className="article-textarea article-review"
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={handleCreateQuestion} className="article-btn">
+                질문 등록
+              </button>
+            </div>
           </div>
-        </div>) : (
+        ) : (
           <></>
         )}
 
@@ -268,17 +273,11 @@ export default function ProductQnA({
               className="position-rl"
             >
               {/* 질문 제목 + 토글 버튼 */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
+              <div className="flex-box flex-center flex-between">
                 <p className="title-16 color-333 text-nowrap">{q.title}</p>
                 <button
                   onClick={() => toggleQna(q.qnaId)}
-                  className="position-ab trans"
+                  className="position-ab top-16 right-8 trans"
                 >
                   <span
                     className={`custom-select-arrow ${

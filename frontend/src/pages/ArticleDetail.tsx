@@ -9,7 +9,7 @@ import {
   deleteComment,
 } from "../services/api";
 import type { ArticleDto, User, CommentDto, CommentForm } from "../types/types";
-import { formatDateTime } from "../utils/date";
+import { formatDateTime } from "../utils/util";
 
 interface Props {
   user: User | null;

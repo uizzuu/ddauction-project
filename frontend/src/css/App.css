@@ -44,6 +44,10 @@ a {
   color: #b17576;
 }
 
+.color-fff {
+  color: #fff;
+}
+
 .color-aaa {
   color: #aaa;
 }
@@ -54,6 +58,33 @@ a {
 
 .color-777 {
   color: #777;
+}
+
+.bg-ddd {
+  background-color: #ddd;
+}
+
+.bg-aaa {
+  background-color: #aaa;
+}
+
+.bg-333 {
+  background-color: #333;
+}
+
+.bg-transparent {
+  background-color: transparent;
+}
+
+.filter-dark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4); /* 40% 어두움 */
+  pointer-events: none; /* 클릭 이벤트 통과 */
+  z-index: 1; /* 이미지보다 위, 텍스트보다 아래로 조정 가능 */
 }
 
 /* 텍스트 스타일 */
@@ -95,6 +126,11 @@ a {
   font-weight: 700;
 }
 
+.title-36 {
+  font-size: 36px;
+  font-weight: 700;
+}
+
 .title-56 {
   font-size: 56px;
   font-weight: 700;
@@ -120,6 +156,16 @@ a {
   font-size: 14px;
   margin-bottom: 10px;
   text-align: center;
+}
+
+.hover {
+  transition: color 0.2s;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.hover:hover {
+  color: #b17576;
 }
 
 /* 공통 스타일 */
@@ -268,7 +314,8 @@ a {
   border-color: #b17576;
 }
 
-.search-btn:active, .search-btn:hover {
+.search-btn:active,
+.search-btn:hover {
   color: #b17576;
   border-color: #b17576;
 }
@@ -278,11 +325,11 @@ a {
   font-size: 18px;
 }
 
-.category-checkbox-group{
+.category-checkbox-group {
   white-space: nowrap;
 }
 
-.category-checkbox-group::after{
+.category-checkbox-group::after {
   content: "";
   display: block;
   width: 100%;
@@ -291,7 +338,7 @@ a {
   margin: 1rem 0;
 }
 
-.category-checkbox-group:last-of-type::after{
+.category-checkbox-group:last-of-type::after {
   content: none;
 }
 
@@ -383,11 +430,11 @@ button:disabled {
   position: relative;
 }
 
-.min135{
+.min135 {
   min-width: 135px;
 }
 
-.min118{
+.min118 {
   min-width: 118px;
   flex-shrink: 0;
 }
@@ -493,8 +540,12 @@ button:disabled {
   align-items: center;
 }
 
-.between {
+.flex-between {
   justify-content: space-between;
+}
+
+.flex-end {
+  align-items: end;
 }
 
 .flex-box.gap-4 {
@@ -561,12 +612,31 @@ button:disabled {
 }
 
 /* 크기 제한 */
+.width-4 {
+  width: 4px;
+}
+.width-8 {
+  width: 8px;
+}
+
 .width-fit {
   width: fit-content;
 }
 
 .margin-auto {
   margin: 0 auto;
+}
+
+.width-full {
+  width: 100%;
+}
+
+.height-4 {
+  height: 4px;
+}
+
+.height-8 {
+  height: 8px;
 }
 
 /* HeaderSub > 카테고리 햄버거 버튼 */
@@ -596,6 +666,77 @@ button:disabled {
 
 .height-220 {
   height: 220px;
+}
+
+.height-500 {
+  height: 500px;
+}
+
+.height-full {
+  height: 100%;
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.radius-32 {
+  border-radius: 32px;
+}
+
+.radius-full {
+  border-radius: 100%;
+}
+
+.border-none {
+  border: none;
+}
+
+/* position */
+
+.position-rl {
+  position: relative;
+}
+
+.position-ab {
+  position: absolute;
+}
+
+.z-20 {
+  z-index: 20px;
+}
+
+.top-16 {
+  top: 16px;
+}
+
+.top-half {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.bottom-2rem {
+  bottom: 2rem;
+}
+
+.left-4 {
+  left: 4px;
+}
+
+.left-16 {
+  left: 16px;
+}
+
+.left-2rem {
+  left: 2rem;
+}
+
+.right-4 {
+  right: 4px;
+}
+
+.right-16 {
+  right: 16px;
 }
 
 /* 상품 이미지 */
@@ -628,6 +769,17 @@ button:disabled {
   font-size: 14px;
 }
 
+/* banner */
+.banner-slide {
+  flex: 0 0 100%;
+  position: relative;
+  height: 100%;
+}
+
+.object-cover {
+  object-fit: cover;
+}
+
 /* 구분선 */
 .top-line::before {
   content: "";
@@ -646,6 +798,18 @@ button:disabled {
   margin-top: 20px;
 }
 
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.mb-4 {
+  margin-bottom: 4px;
+}
+
+.mb-8 {
+  margin-bottom: 8px;
+}
+
 .mb-10 {
   margin-bottom: 10px;
 }
@@ -660,6 +824,10 @@ button:disabled {
 
 .mb-48 {
   margin-bottom: 48px;
+}
+
+.mb-60 {
+  margin-bottom: 60px;
 }
 
 .mb-1rem {
@@ -684,6 +852,10 @@ button:disabled {
 /* transition */
 .trans {
   transition: all 0.3s;
+}
+
+.duration-500 {
+  transition-duration: 500;
 }
 
 /* 로딩 스피너 */

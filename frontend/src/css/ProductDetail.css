@@ -1,13 +1,3 @@
-.position-rl {
-  position: relative;
-}
-
-.position-ab {
-  position: absolute;
-  top: 16px;
-  right: 8px;
-}
-
 .after-wrap {
   display: flex;
   align-items: end;

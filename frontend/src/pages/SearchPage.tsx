@@ -3,7 +3,7 @@ import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { API_BASE_URL } from "../services/api";
 import type { Product, Category } from "../types/types";
 import SelectBox from "../components/SelectBox";
-import { formatDateTime } from "../utils/date";
+import { formatDateTime, formatPrice, formatDate } from "../utils/util";
 
 export default function ProductSearchPage() {
   const navigate = useNavigate();
@@ -20,20 +20,6 @@ export default function ProductSearchPage() {
   const [sortOption, setSortOption] = useState<
     "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity"
   >("latest");
-
-  const formatPrice = (price?: number) =>
-    !price ? "가격 미정" : `${price.toLocaleString()}원`;
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = date.getTime() - now.getTime();
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(hours / 24);
-    if (days > 0) return `${days}일 후`;
-    if (hours > 0) return `${hours}시간 후`;
-    return "곧 종료";
-  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -186,7 +172,7 @@ export default function ProductSearchPage() {
           : "전체 검색"}
       </p>
 
-      <div className="flex-box between" style={{ marginBottom: "2rem" }}>
+      <div className="flex-box flex-between" style={{ marginBottom: "2rem" }}>
         <form
           onSubmit={handleSearch}
           className="search-form"
@@ -293,10 +279,14 @@ export default function ProductSearchPage() {
                     )}
                   </div>
                   <div className="product-info flex-column gap-4">
-                    <h3 className="title-24 mb-10 text-nowrap color-333 text-ellipsis">{p.title}</h3>
+                    <h3 className="title-20 mb-4 text-nowrap color-333 text-ellipsis">
+                      {p.title}
+                    </h3>
                     <div>
                       <div className="flex-box gap-8">
-                        <p className="text-16 color-777 text-nowrap">경매 등록가</p>
+                        <p className="text-16 color-777 text-nowrap">
+                          경매 등록가
+                        </p>
                         <p className="title-18 color-333 text-nowrap">
                           {formatPrice(p.startingPrice)}
                         </p>
@@ -304,7 +294,9 @@ export default function ProductSearchPage() {
                       {p.auctionEndTime && (
                         <>
                           <div className="flex-box gap-8">
-                            <p className="text-16 color-777 text-nowrap">남은시간</p>
+                            <p className="text-16 color-777 text-nowrap">
+                              남은시간
+                            </p>
                             <p className="text-16 color-777 text-nowrap">
                               <span className="title-18 color-333 text-nowrap">
                                 {formatDate(p.auctionEndTime)}
@@ -317,15 +309,6 @@ export default function ProductSearchPage() {
                         </>
                       )}
                     </div>
-                    <button
-                      className="btn-bid"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/products/${p.productId}`);
-                      }}
-                    >
-                      입찰하기
-                    </button>
                   </div>
                 </div>
               ))}

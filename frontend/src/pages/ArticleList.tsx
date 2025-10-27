@@ -23,7 +23,7 @@ export default function ArticleList({ user }: Props) {
 
   return (
     <div className="container">
-      <div className="flex-box between">
+      <div className="flex-box flex-between">
         <h2 className="title-32 mb-1rem">게시판</h2>
 
         {user && (
