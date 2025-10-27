@@ -7,6 +7,7 @@ import type {
   Qna,
   ProductForm,
   Category,
+  Inquiry,
 } from "../types/types";
 import { PRODUCT_STATUS, PAYMENT_STATUS } from "../types/types";
 import { API_BASE_URL } from "../services/api";
@@ -132,10 +133,10 @@ export default function MyPage({ user, setUser }: Props) {
     content: p.content ?? "",
     startingPrice: p.startingPrice ?? 0,
     imageUrl: p.imageUrl
-    ? p.imageUrl.startsWith("http")
-      ? p.imageUrl
-      : `${API_BASE_URL}/${p.imageUrl}`
-    : "",
+      ? p.imageUrl.startsWith("http")
+        ? p.imageUrl
+        : `${API_BASE_URL}/${p.imageUrl}`
+      : "",
     oneMinuteAuction: p.oneMinuteAuction ?? false,
     auctionEndTime: p.auctionEndTime ?? new Date().toISOString(),
     productStatus: p.productStatus ?? PRODUCT_STATUS[0],
@@ -155,12 +156,12 @@ export default function MyPage({ user, setUser }: Props) {
     })),
     bid: p.bid
       ? {
-          bidId: p.bid.bidId ?? 0,
-          bidPrice: p.bid.bidPrice ?? 0,
-          userId: p.bid.userId ?? p.sellerId ?? 0,
-          isWinning: p.bid.isWinning ?? false,
-          createdAt: p.bid.createdAt ?? new Date().toISOString(),
-        }
+        bidId: p.bid.bidId ?? 0,
+        bidPrice: p.bid.bidPrice ?? 0,
+        userId: p.bid.userId ?? p.sellerId ?? 0,
+        isWinning: p.bid.isWinning ?? false,
+        createdAt: p.bid.createdAt ?? new Date().toISOString(),
+      }
       : null,
   });
 
@@ -239,7 +240,7 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   const toggleSection = (
-    section: "editing" | "selling" | "bookmarks" | "reports" | "qnas"
+    section: "editing" | "selling" | "bookmarks" | "reports" | "qnas" | "inquiries"
   ) => {
     const isCurrentlyOpen =
       (section === "editing" && editing) ||
@@ -247,6 +248,7 @@ export default function MyPage({ user, setUser }: Props) {
       (section === "bookmarks" && showBookmarks) ||
       (section === "reports" && showReports) ||
       (section === "qnas" && showQnas);
+    (section === "inquiries" && showInquiries);
 
     setEditing(false);
     setShowSelling(false);
@@ -276,6 +278,10 @@ export default function MyPage({ user, setUser }: Props) {
       case "qnas":
         setShowQnas(true);
         handleFetchMyQnas();
+        break;
+      case "inquiries":
+        setShowInquiries(true);
+        handleFetchMyInquiries();
         break;
     }
   };
@@ -359,6 +365,25 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleCancelProductEdit = () => setEditingProductId(null);
 
+  const [showInquiries, setShowInquiries] = useState(false);
+  const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
+
+  const handleFetchMyInquiries = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/inquiries/user/${user.userId}`);
+      if (res.ok) {
+        const data: Inquiry[] = await res.json();
+        setMyInquiries(data);
+      } else {
+        alert("문의 내역 조회 실패");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("서버 오류");
+    }
+  };
+
+
   return (
     <div className="container">
       <button onClick={() => navigate("/")} style={buttonStyle}>
@@ -382,6 +407,9 @@ export default function MyPage({ user, setUser }: Props) {
         </button>
         <button style={buttonStyle} onClick={() => toggleSection("qnas")}>
           내 Q&A
+        </button>
+        <button style={buttonStyle} onClick={() => toggleSection("inquiries")}>
+          1:1 문의 내역
         </button>
       </div>
 
@@ -708,6 +736,43 @@ export default function MyPage({ user, setUser }: Props) {
           회원탈퇴
         </button>
       </div>
+
+      {/* 1:1 문의 내역 */}
+      {showInquiries && (
+        <div style={{ marginBottom: "20px" }}>
+          <h3>1:1 문의 내역</h3>
+          {myInquiries.length === 0 ? (
+            <p>문의 내역이 없습니다.</p>
+          ) : (
+            <ul>
+              {myInquiries.map((i) => (
+                <li key={i.inquiryId}>
+                  <div><strong>제목:</strong> {i.title}</div>
+                  <div><strong>내용:</strong> {i.question}</div>
+                  <div>
+                    <strong>작성일:</strong> {i.createdAt ? new Date(i.createdAt).toLocaleString() : "작성일 없음"}
+                  </div>
+                  <div>
+                    <strong>답변:</strong>{" "}
+                    {i.answers && i.answers.length > 0 ? (
+                      <ul>
+                        {i.answers.map((a) => (
+                          <li key={a.inquiryReviewId}>
+                            {a.nickName ?? "익명"}: {a.answer} ({new Date(a.createdAt).toLocaleString()})
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      "대기중"
+                    )}
+                  </div>
+                </li>
+
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </div>
   );
 }

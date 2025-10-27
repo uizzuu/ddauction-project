@@ -5,6 +5,7 @@ import type {
   Report,
   Category,
   EditProductForm,
+  Inquiry
 } from "../types/types";
 import { PRODUCT_STATUS } from "../types/types";
 import { API_BASE_URL } from "../services/api";
@@ -20,7 +21,7 @@ import {
 
 export default function AdminPage() {
   const [section, setSection] = useState<
-    "user" | "product" | "report" | "stats"
+    "user" | "product" | "report" | "stats" | "inquiry"
   >("user");
   const [users, setUsers] = useState<User[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -34,6 +35,8 @@ export default function AdminPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [filterKeyword, setFilterKeyword] = useState("");
   const [filterCategory, setFilterCategory] = useState<number | null>(null);
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+
 
   // --- 회원 필터 상태 ---
   const [userFilterField, setUserFilterField] = useState<
@@ -200,6 +203,31 @@ export default function AdminPage() {
     }
   };
 
+  const fetchInquiries = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/inquiry/all`);
+      if (res.ok) {
+        const data: any[] = await res.json();
+        const mapped: Inquiry[] = data.map(d => ({
+          inquiryId: d.articleId,
+          title: d.title,
+          question: d.content,
+          createdAt: d.createdAt,
+          answers: (d.answers ?? []).map((a: any) => ({
+            inquiryReviewId: a.inquiryReviewId,
+            answer: a.answer,
+            nickName: a.nickName,
+            createdAt: a.createdAt,
+          })),
+        }));
+        setInquiries(mapped);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
   return (
     <div className="admin-container">
       <aside className="admin-sidebar">
@@ -217,6 +245,12 @@ export default function AdminPage() {
           <li>
             <button onClick={() => setSection("stats")}>통계</button>
           </li>
+          <li>
+            <button onClick={() => { setSection("inquiry"); fetchInquiries(); }}>
+              1:1 문의 관리
+            </button>
+          </li>
+
         </ul>
       </aside>
 
@@ -233,10 +267,10 @@ export default function AdminPage() {
                 onChange={(e) =>
                   setUserFilterField(
                     e.target.value as
-                      | "userName"
-                      | "nickName"
-                      | "email"
-                      | "phone"
+                    | "userName"
+                    | "nickName"
+                    | "email"
+                    | "phone"
                   )
                 }
               >
@@ -575,6 +609,51 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+        {/* 1:1 문의 관리 */}
+        {section === "inquiry" && (
+          <div className="admin-section">
+            <h3>1:1 문의 관리</h3>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>제목</th>
+                  <th>질문</th>
+                  <th>답변</th>
+                  <th>작성일</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inquiries.length > 0 ? (
+                  inquiries.map((inq) => (
+                    <tr key={inq.inquiryId}>
+                      <td>{inq.inquiryId}</td>
+                      <td>{inq.title}</td>
+                      <td>{inq.question}</td>
+                      <td>
+                        {inq.answers?.length > 0 ? (
+                          inq.answers.map((a) => (
+                            <div key={a.inquiryReviewId}>
+                              <strong>{a.nickName}</strong>: {a.answer}
+                            </div>
+                          ))
+                        ) : (
+                          <span style={{ color: "gray" }}>대기중</span>
+                        )}
+                      </td>
+                      <td>{new Date(inq.createdAt).toLocaleString()}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5}>문의 내역이 없습니다.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
       </main>
     </div>
   );
