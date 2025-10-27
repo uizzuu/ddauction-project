@@ -60,7 +60,18 @@ export default function ProductSearchPage() {
       }
       const res = await fetch(url);
       if (!res.ok) throw new Error("상품 불러오기 실패");
-      const data: Product[] = await res.json();
+      let data: Product[] = await res.json();
+
+      // 거래 가능만 보기 필터 적용
+      if (active) {
+        const now = new Date();
+        data = data.filter(
+          (p) =>
+            p.productStatus === "ACTIVE" &&
+            new Date(p.auctionEndTime).getTime() > now.getTime()
+        );
+      }
+
       let sorted = [...data];
 
       // 🔹 인기순일 경우, 각 상품 찜 수 가져오기
@@ -152,7 +163,7 @@ export default function ProductSearchPage() {
     if (keyword) query.append("keyword", keyword.trim());
     if (categoryId) query.append("category", categoryId.toString());
     navigate(`/search?${query.toString()}`);
-  };
+  }
 
   const handleActiveOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setActiveOnly(e.target.checked);

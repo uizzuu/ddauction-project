@@ -89,6 +89,12 @@ export type EditProductForm = {
   productStatus: typeof PRODUCT_STATUS[number];
 };
 
+export interface EditUserForm {
+  nickName: string;
+  password: string;
+  phone: string;
+}
+
 // 서버 요청에 사용할 상품 생성 타입
 export interface CreateProductRequest {
   title: string;
