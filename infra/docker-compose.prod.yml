@@ -3,22 +3,41 @@ services:
   backend:
     image: ${BACKEND_IMAGE}
     container_name: backend
-    pull_policy: always 
+    pull_policy: always
     env_file:
       - .env.prod
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      # AWS RDS
       RDS_ENDPOINT: ${RDS_ENDPOINT}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      # JWT
+      JWT_SECRET: ${JWT_SECRET}
+      # CORS
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      # 결제
+      PAYMENT_PORTONE_IMP_CODE: ${PAYMENT_PORTONE_IMP_CODE}
+      PAYMENT_PORTONE_API_KEY: ${PAYMENT_PORTONE_API_KEY}
+      PAYMENT_PORTONE_API_SECRET: ${PAYMENT_PORTONE_API_SECRET}
+      PAYMENT_PORTONE_CALLBACK_URL: ${PAYMENT_PORTONE_CALLBACK_URL}
+      # 파일 업로드
+      FILE_UPLOAD_DIRECTORY: ${FILE_UPLOAD_DIRECTORY}
     restart: unless-stopped
     ports:
       - "8080:8080"
+    volumes:
+      - upload-data:/uploads
 
   frontend:
     image: ${FRONTEND_IMAGE}
     container_name: frontend
-    pull_policy: always 
+    pull_policy: always
     depends_on:
       - backend
     restart: unless-stopped
     ports:
       - "80:80"
+
+volumes:
+  upload-data:
