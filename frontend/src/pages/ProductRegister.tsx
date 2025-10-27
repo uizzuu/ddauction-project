@@ -135,7 +135,7 @@ export default function ProductRegister({ user }: Props) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`, // 로그인 시 저장된 토큰 사용
+          "Authorization": `Bearer ${token}`, // 로그인 시 저장된 토큰 사용
         },
         body: JSON.stringify(productData),
       });

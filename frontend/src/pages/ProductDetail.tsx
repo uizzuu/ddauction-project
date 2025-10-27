@@ -102,8 +102,9 @@ export default function ProductDetail({ user }: Props) {
             `${API_BASE_URL}/api/bookmarks/check?productId=${id}`,
             {
               headers: {
-                "Authorization": `Bearer ${token}`
-              }
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
             }
           );
           if (bmRes.ok) {
@@ -120,7 +121,7 @@ export default function ProductDetail({ user }: Props) {
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, user?.token]);
 
   // 남은 시간 실시간 업데이트
   useEffect(() => {
@@ -201,8 +202,8 @@ export default function ProductDetail({ user }: Props) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -229,12 +230,13 @@ export default function ProductDetail({ user }: Props) {
     }
   };
 
-
   // 신고
   const handleReport = async () => {
     if (!product) return;
 
-    if (!user) {
+    // 찜하기와 동일하게 token 가져오기
+    const token = user?.token || localStorage.getItem("token");
+    if (!token) {
       alert("로그인 후 신고할 수 있습니다.");
       return;
     }
@@ -245,7 +247,10 @@ export default function ProductDetail({ user }: Props) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/reports`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({
           targetId: product.sellerId,
           reason: reason.trim(),
@@ -280,10 +285,7 @@ export default function ProductDetail({ user }: Props) {
         {/* 이미지 */}
         <div className="product-image product-detail-image">
           {product.imageUrl ? (
-            <img
-              src={product.imageUrl}
-              alt={product.title}
-            />
+            <img src={product.imageUrl} alt={product.title} />
           ) : (
             <div className="no-image-txt">이미지 없음</div>
           )}
