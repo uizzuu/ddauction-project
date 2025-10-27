@@ -137,8 +137,8 @@ public class UserController {
 
     // 로그아웃
     @PostMapping("/logout")
-    public void logout(HttpSession session) {
-        session.invalidate();
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.ok().build();
     }
 
     // 관리자용 회원 정보 수정

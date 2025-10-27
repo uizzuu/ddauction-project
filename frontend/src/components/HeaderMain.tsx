@@ -15,12 +15,12 @@ export default function HeaderMain({ user, setUser }: Props) {
   const handleLogout = async () => {
     try {
       // 1️⃣ 서버 세션 로그아웃 요청 (백엔드에 로그아웃 API가 있어야 함)
-      await fetch("/api/logout", {
+      await fetch("/api/users/logout", {
         method: "POST",
-        credentials: "include", // 쿠키 기반 인증이면 필요
       });
 
       // 2️⃣ 로컬 스토리지 초기화
+      localStorage.removeItem("token");
       localStorage.removeItem("loginUser"); // 로그인 정보를 localStorage에 저장했다면
 
       // 3️⃣ 리액트 상태 초기화
