@@ -95,17 +95,23 @@ export default function ProductDetail({ user }: Props) {
           console.warn("최고 입찰가 조회 실패");
         }
 
-        // 현재 사용자가 찜했는지 여부 (세션 포함)
+        // 현재 사용자가 찜했는지 여부 (JWT 기반)
         try {
+          const token = user?.token || localStorage.getItem("token");
           const bmRes = await fetch(
-            `${API_BASE_URL}/api/bookmarks/check?productId=${id}`
+            `${API_BASE_URL}/api/bookmarks/check?productId=${id}`,
+            {
+              headers: {
+                "Authorization": `Bearer ${token}`
+              }
+            }
           );
           if (bmRes.ok) {
             const bookmarked: boolean = await bmRes.json();
             setIsBookMarked(bookmarked);
           }
-        } catch {
-          console.warn("찜 여부 조회 실패");
+        } catch (err) {
+          console.warn("찜 여부 조회 실패", err);
         }
       } catch (err) {
         console.error(err);
@@ -184,19 +190,21 @@ export default function ProductDetail({ user }: Props) {
   const handleToggleBookmark = async () => {
     if (!product) return;
 
+    // user가 null이거나 token이 없는 경우, localStorage에서 가져오기
+    const token = user?.token || localStorage.getItem("token");
+    if (!token) return alert("로그인 후 찜 해주세요.");
+
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/bookmarks/toggle?productId=${product.productId}`,
         {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          }
         }
       );
-
-      // 로그인 안 된 경우 먼저 처리
-      if (res.status === 401) {
-        alert("로그인 후 찜 해주세요.");
-        return;
-      }
 
       if (!res.ok) {
         const msg = await res.text();
@@ -205,8 +213,7 @@ export default function ProductDetail({ user }: Props) {
       }
 
       const text = await res.text();
-      const bookmarked = text === "찜 완료";
-      setIsBookMarked(bookmarked);
+      setIsBookMarked(text === "찜 완료");
 
       // 찜 수 갱신
       const countRes = await fetch(
@@ -221,6 +228,7 @@ export default function ProductDetail({ user }: Props) {
       alert("찜 기능 실패 (네트워크 오류)");
     }
   };
+
 
   // 신고
   const handleReport = async () => {
@@ -270,16 +278,16 @@ export default function ProductDetail({ user }: Props) {
     <div className="container">
       <div className="flex-box gap-40">
         {/* 이미지 */}
-          <div className="product-image product-detail-image">
-            {product.imageUrl ? (
-              <img
-                src={product.imageUrl}
-                alt={product.title}
-              />
-            ) : (
-              <div className="no-image-txt">이미지 없음</div>
-            )}
-          </div>
+        <div className="product-image product-detail-image">
+          {product.imageUrl ? (
+            <img
+              src={product.imageUrl}
+              alt={product.title}
+            />
+          ) : (
+            <div className="no-image-txt">이미지 없음</div>
+          )}
+        </div>
 
         {/* 상세 설명 */}
         <div
