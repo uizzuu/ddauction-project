@@ -9,8 +9,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.util.List;
 
 public class JWTFilter extends OncePerRequestFilter {
     private final JWTUtil jwtUtil;
@@ -21,50 +25,43 @@ public class JWTFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException, java.io.IOException {
-        //request에서 Authorization 헤더를 찾음
+                                    FilterChain filterChain) throws ServletException, java.io.IOException {
+
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String authorization = request.getHeader("Authorization");
-
-        //Authorization 헤더 검증
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            System.out.println("token null");
             filterChain.doFilter(request, response);
-            //조건이 해당되면 메소드 종료 (필수)
             return;
         }
 
-        System.out.println("authorization now");
-        //Bearer 부분 제거 후 순수 토큰만 획득
-        String token = authorization.split(" ")[1];
-
-        //토큰 소멸 시간 검증
+        String token = authorization.substring(7);
         if (jwtUtil.isExpired(token)) {
-            System.out.println("token expired");
             filterChain.doFilter(request, response);
-            //조건이 해당되면 메소드 종료 (필수)
             return;
         }
 
-        //토큰에서 userEmail과 role 획득
         Long userId = jwtUtil.getUserId(token);
         String userEmail = jwtUtil.getEmail(token);
         String role = jwtUtil.getRole(token);
 
-        //userEntity를 생성하여 값 set
         User user = new User();
         user.setUserId(userId);
         user.setEmail(userEmail);
-        user.setPassword("temppassword");
         user.setRole(User.Role.valueOf(role));
 
-        //UserDetails에 회원 정보 객체 담기
         CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
-        //스프링 시큐리티 인증 토큰 생성
-        Authentication authToken = new UsernamePasswordAuthenticationToken(
-                customUserDetails, null, customUserDetails.getAuthorities());
-        //세션에 사용자 등록
+        // 권한 강제 세팅
+        List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
+
+        Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, authorities);
         SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        System.out.println("Authentication set: " + SecurityContextHolder.getContext().getAuthentication());
 
         filterChain.doFilter(request, response);
     }

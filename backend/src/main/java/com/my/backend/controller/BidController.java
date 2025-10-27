@@ -48,6 +48,7 @@ package com.my.backend.controller;
 
 import com.my.backend.dto.BidChartData;
 import com.my.backend.dto.auth.BidRequest;
+import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.service.BidService;
 import com.my.backend.util.AuthUtil;
 import jakarta.validation.Valid;
@@ -55,9 +56,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -75,11 +78,22 @@ public class BidController {
      */
 
     @PostMapping("/{productId}/bid")
-    public ResponseEntity<?> placeBid(@PathVariable Long productId,
-                                      @Valid @RequestBody BidRequest request,
-                                      Authentication auth) {
-        Long userId = authUtil.extractUserId(auth);
-        return bidService.placeBid(userId, productId, request.getBidPrice());
+    public ResponseEntity<?> placeBid(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable Long productId,
+            @RequestBody Map<String, Long> body) {
+
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(401).body(Map.of(
+                    "error", "인증이 필요합니다.",
+                    "details", "JWT 인증 정보가 없습니다."
+            ));
+        }
+
+        Long userId = principal.getUser().getUserId();
+        Long bidPrice = body.get("bidPrice");
+
+        return bidService.placeBid(userId, productId, bidPrice);
     }
 
     /**

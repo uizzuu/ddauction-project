@@ -151,12 +151,16 @@ export default function ProductDetail({ user }: Props) {
     if (now >= end) return alert("이미 경매가 종료된 상품입니다.");
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/products/${id}/bid`, {
+      const token = user?.token || localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bid`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ bidPrice: bidNum }),
+        body: JSON.stringify({
+          bidPrice: bidNum,
+        }),
       });
 
       if (res.ok) {
@@ -179,7 +183,8 @@ export default function ProductDetail({ user }: Props) {
         alert("입찰 성공!");
       } else {
         const errText = await res.text();
-        alert("입찰 실패: " + errText);
+        console.log("입찰 실패 : " + errText);
+        alert("입찰 실패");
       }
     } catch (err) {
       console.error(err);

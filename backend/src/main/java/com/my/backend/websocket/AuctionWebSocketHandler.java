@@ -339,7 +339,7 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
             List<BidResponse> responseList = bidHistory.stream()
                     .map(b -> BidResponse.builder()
                             .bidId(b.getBidId())
-                            .productId(b.getProduct().getProductId()) // 엔티티 대신 ID
+//                            .productId(b.getProduct().getProductId()) // 엔티티 대신 ID
                             .userId(b.getUser().getUserId())
                             .bidPrice(b.getBidPrice())
                             .createdAt(b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
