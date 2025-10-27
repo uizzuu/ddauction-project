@@ -16,5 +16,5 @@ public class BidChartData {
 
     private Integer bidNumber;           // X축: 입찰번호 (1, 2, 3, ...)
     private Long bidPrice;         // Y축: 입찰 금액
-    private String bidderNickname;       // 추가: 입찰자 닉네임
+    private String bidNickname;       // 추가: 입찰자 닉네임
 }

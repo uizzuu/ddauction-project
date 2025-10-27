@@ -61,13 +61,14 @@ public class SecurityConfig {
 
                 // 경로별 접근 제어
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/bid/*/bids", "/api/bid/*/chart").permitAll()
                         .requestMatchers("/api/bid/**").authenticated()
                         .requestMatchers("/login", "/signup", "/", "/join",
-                                "/products", "articles", "categories",
                                 "/api/auth/login", "/api/auth/signup", "/api/users/me",
+                                "/products", "/articles", "/categories",
                                 "/api/categories", "/api/products", "/api/articles", "api/qna",
-                                "/api/bookmarks/**", "/api/categories/**", "/api/products/**",
-                                "/api/articles/**", "/api/qna/**").permitAll()
+                                "/api/categories/**", "/api/products/**", "/api/articles/**", "/api/qna/**", "/api/bookmarks/**").permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

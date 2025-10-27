@@ -48,6 +48,10 @@ a {
   color: #fff;
 }
 
+.color-ddd {
+  color: #ddd;
+}
+
 .color-aaa {
   color: #aaa;
 }
@@ -196,6 +200,7 @@ a {
 
 .input:focus {
   outline: none;
+  color: #b17576;
   border-color: #b17576;
 }
 
@@ -302,6 +307,7 @@ a {
   font-size: 14px;
   font-weight: 400;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .search-btn {
@@ -311,6 +317,7 @@ a {
 
 :is(.search-select, .search-input):focus {
   outline: 0;
+  color: #b17576;
   border-color: #b17576;
 }
 
@@ -318,6 +325,10 @@ a {
 .search-btn:hover {
   color: #b17576;
   border-color: #b17576;
+}
+
+.border-hover-none:hover {
+  border-color: #ddd;
 }
 
 .no-content-text {
@@ -530,6 +541,20 @@ button:disabled {
   color: #aaa;
 }
 
+.bid-box {
+  width: 100%;
+  padding: 12px 16px;
+  background: #fff;
+  border-style: none;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.bid-box:last-of-type {
+  background-color: #eee;
+}
+
 /* flex */
 .flex-box {
   display: flex;
@@ -537,6 +562,14 @@ button:disabled {
 
 .flex-center {
   justify-content: center;
+  align-items: center;
+}
+
+.flex-center-j {
+  justify-content: center;
+}
+
+.flex-center-a {
   align-items: center;
 }
 
@@ -574,6 +607,10 @@ button:disabled {
 
 .flex-box.gap-40 {
   gap: 40px;
+}
+
+.mb--4 {
+  margin-bottom: -4px;
 }
 
 .flex-column {
@@ -615,8 +652,17 @@ button:disabled {
 .width-4 {
   width: 4px;
 }
+
 .width-8 {
   width: 8px;
+}
+
+.width-13 {
+  width: 16px;
+}
+
+.width-16 {
+  width: 16px;
 }
 
 .width-fit {
@@ -676,8 +722,20 @@ button:disabled {
   height: 100%;
 }
 
+.max-height-3rem {
+  max-height: 3rem;
+}
+
+.max-height-350 {
+  max-height: 350px;
+}
+
 .overflow-hidden {
   overflow: hidden;
+}
+
+.overflow-y-auto {
+  overflow-y: auto;
 }
 
 .radius-32 {
@@ -834,7 +892,34 @@ button:disabled {
   margin-bottom: 1rem;
 }
 
+/* 스크롤바 */
+/* Webkit 기반 브라우저 (Chrome, Edge, Safari) */
+.bid-scroll::-webkit-scrollbar {
+  width: 6px; /* 스크롤바 폭 */
+  border: none;
+}
+
+.bid-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(170, 170, 170, 0.6);
+  border-radius: 3px;
+}
+
+.bid-scroll::-webkit-scrollbar-track {
+  background: transparent; /* 트랙 투명 */
+}
+
+/* Firefox */
+.bid-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(170, 170, 170, 0.6) transparent;
+}
+
 /* padding */
+
+.p-0 {
+  padding: 0;
+}
+
 .pb-20 {
   padding-bottom: 20px;
 }

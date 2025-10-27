@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
+import { ChevronUp, ChevronDown } from "lucide-react";
 import type { Product, Bid, User, Category, Qna } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/util";
@@ -82,13 +83,24 @@ export default function ProductDetail({ user }: Props) {
           }
         }
 
+        // 모든 입찰 내역 가져오기 추가
+        try {
+          const bidsRes = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`);
+          if (bidsRes.ok) {
+            const bids: Bid[] = await bidsRes.json();
+            setProduct((prev) => (prev ? { ...prev, bids } : prev));
+          }
+        } catch {
+          console.warn("입찰 내역 불러오기 실패");
+        }
+
         // 최고 입찰가
         try {
-          const bidRes = await fetch(
+          const highestRes = await fetch(
             `${API_BASE_URL}/api/products/${id}/highest-bid`
           );
-          if (bidRes.ok) {
-            const highest: number = await bidRes.json();
+          if (highestRes.ok) {
+            const highest: number = await highestRes.json();
             setCurrentHighestBid(highest);
           }
         } catch {
@@ -392,7 +404,7 @@ export default function ProductDetail({ user }: Props) {
         </div>
 
         {/* 입찰 박스 */}
-        <div style={{ width: "260px", flexShrink: 0 }}>
+        <div style={{ width: "260px", flexShrink: 0 }} className="height-450">
           <div
             style={{
               backgroundColor: "#fff",
@@ -406,12 +418,18 @@ export default function ProductDetail({ user }: Props) {
               height: "100%",
             }}
           >
-            <div style={{ marginBottom: "8px" }}>
-              {(product.bids ?? []).slice(0, 5).map((b, i) => (
-                <p key={b.bidId} style={{ margin: 0 }}>
-                  {i + 1}번 입찰가: {b.bidPrice.toLocaleString()}원
-                </p>
-              ))}
+            <div className="mb-20 flex-column gap-8 max-height-350 overflow-y-auto bid-scroll">
+              {(product.bids ?? [])
+                .sort((a, b) => a.bidId - b.bidId)
+                .map((b, i) => (
+                  <div key={b.bidId} className="bid-box">
+                    <p className="text-16">{i + 1}번 입찰</p>
+                    <div className="flex-box gap-4 flex-center-a">
+                      <p className="title-20">{b.bidPrice.toLocaleString()}</p>
+                      <p className="title-18">원</p>
+                    </div>
+                  </div>
+                ))}
               {(!product.bids || product.bids.length === 0) && (
                 <p style={{ margin: 0, color: "#888" }}>
                   아직 입찰이 없습니다.
@@ -419,30 +437,40 @@ export default function ProductDetail({ user }: Props) {
               )}
             </div>
 
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div className="max-height-3rem flex-box gap-4">
               <input
-                type="number"
-                value={bidValue}
-                onChange={(e) => setBidValue(e.target.value)}
+                type="text"
+                value={Number(bidValue || 0).toLocaleString()}
+                onChange={(e) => {
+                  const clean = e.target.value.replace(/[^0-9]/g, ""); // 숫자만
+                  setBidValue(clean);
+                }}
                 placeholder="희망 입찰가"
-                style={{
-                  flex: 1,
-                  padding: "6px 8px",
-                  borderRadius: "6px",
-                  border: "1px solid #ccc",
-                }}
+                className="input"
               />
-              <button
-                onClick={handleBid}
-                style={{
-                  padding: "6px 12px",
-                  backgroundColor: "#ef4444",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                }}
+              <div
+                className="flex-column search-btn flex-center border-hover-none"
               >
+                <button
+                  onClick={() =>
+                    setBidValue(String(Number(bidValue || 0) + 1000))
+                  }
+                  className="color-ddd width-fit bg-transparent mb--4 hover"
+                >
+                  <ChevronUp size={20} />
+                </button>
+                <button
+                  onClick={() =>
+                    setBidValue(
+                      String(Math.max(Number(bidValue || 0) - 1000, 0))
+                    )
+                  }
+                  className="color-ddd width-fit bg-transparent hover"
+                >
+                  <ChevronDown size={20} />
+                </button>
+              </div>
+              <button onClick={handleBid} className="search-btn">
                 입찰
               </button>
             </div>
