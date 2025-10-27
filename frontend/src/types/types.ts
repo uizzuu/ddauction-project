@@ -185,5 +185,22 @@ export interface QnaAnswer {
   answer: string;
   nickName: string;
   createdAt: string;
+<<<<<<< HEAD
   updatedAt: string;
+=======
+}
+
+export interface Inquiry {
+  inquiryId: number;
+  title: string;
+  question: string;
+  createdAt: string;
+  answers: {
+    inquiryReviewId: number;
+    answer: string;
+    nickName: string;
+    createdAt: string;
+  }[];
+  
+>>>>>>> 50feb50 (1:1 문의 기능 추가)
 }

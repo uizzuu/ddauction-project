@@ -12,6 +12,8 @@ import MyPage from "../pages/MyPage";
 import ProductDetail from "../pages/ProductDetail";
 import ArticleList from "../pages/ArticleList";
 import AdminPage from '../pages/AdminPage';
+import UserQnaForm from "../pages/UserQnaForm";
+
 
 export {
   HeaderMain,
@@ -24,5 +26,6 @@ export {
   MyPage,
   ProductDetail,
   ArticleList,
-  AdminPage
+  AdminPage,
+  UserQnaForm,
 };

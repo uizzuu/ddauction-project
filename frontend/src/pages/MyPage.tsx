@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+<<<<<<< HEAD
 import type {
   User,
   Product,
@@ -9,6 +10,9 @@ import type {
   Category,
 } from "../types/types";
 import { PRODUCT_STATUS, PAYMENT_STATUS } from "../types/types";
+=======
+import type { User, Product, Report, Qna, ProductForm, Category, Inquiry } from "../types/types";
+>>>>>>> 50feb50 (1:1 문의 기능 추가)
 import { API_BASE_URL } from "../services/api";
 
 type Props = {
@@ -23,6 +27,8 @@ export default function MyPage({ user, setUser }: Props) {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showQnas, setShowQnas] = useState(false);
+  const [showInquiries, setShowInquiries] = useState(false);
+  const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
 
   const [form, setForm] = useState({
     nickName: user?.nickName || "",
@@ -132,10 +138,17 @@ export default function MyPage({ user, setUser }: Props) {
     content: p.content ?? "",
     startingPrice: p.startingPrice ?? 0,
     imageUrl: p.imageUrl
+<<<<<<< HEAD
     ? p.imageUrl.startsWith("http")
       ? p.imageUrl
       : `${API_BASE_URL}/${p.imageUrl}`
     : "",
+=======
+      ? p.imageUrl.startsWith("http")
+        ? p.imageUrl
+        : `${API_BASE_URL}/${p.imageUrl}`
+      : "",
+>>>>>>> 50feb50 (1:1 문의 기능 추가)
     oneMinuteAuction: p.oneMinuteAuction ?? false,
     auctionEndTime: p.auctionEndTime ?? new Date().toISOString(),
     productStatus: p.productStatus ?? PRODUCT_STATUS[0],
@@ -155,6 +168,7 @@ export default function MyPage({ user, setUser }: Props) {
     })),
     bid: p.bid
       ? {
+<<<<<<< HEAD
           bidId: p.bid.bidId ?? 0,
           bidPrice: p.bid.bidPrice ?? 0,
           userId: p.bid.userId ?? p.sellerId ?? 0,
@@ -162,6 +176,14 @@ export default function MyPage({ user, setUser }: Props) {
           createdAt: p.bid.createdAt ?? new Date().toISOString(),
         }
       : null,
+=======
+        bidId: p.bid.bidId,
+        price: p.bid.price,
+        userId: p.bid.user?.userId ?? p.bid.userId,
+        createdAt: p.bid.createdAt,
+      }
+      : undefined,
+>>>>>>> 50feb50 (1:1 문의 기능 추가)
   });
 
   const fetchSellingProducts = async () => {
@@ -238,21 +260,50 @@ export default function MyPage({ user, setUser }: Props) {
     }
   };
 
+<<<<<<< HEAD
   const toggleSection = (
     section: "editing" | "selling" | "bookmarks" | "reports" | "qnas"
   ) => {
+=======
+  const handleFetchMyInquiries = async () => {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/inquiry/user/${user.userId}`, { credentials: "include" });
+    if (res.ok) {
+      const data: any[] = await res.json();
+      const mapped: Inquiry[] = data.map(d => ({
+        inquiryId: d.articleId,
+        title: d.title,
+        question: d.content, // content → question 매핑
+        createdAt: d.createdAt,
+        answers: d.answers ?? [],
+      }));
+      setMyInquiries(mapped);
+    } else {
+      alert("1:1 문의 조회 실패");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("서버 오류");
+  }
+};
+
+
+  const toggleSection = (section: "editing" | "selling" | "bookmarks" | "reports" | "qnas" | "inquiries") => {
+>>>>>>> 50feb50 (1:1 문의 기능 추가)
     const isCurrentlyOpen =
       (section === "editing" && editing) ||
       (section === "selling" && showSelling) ||
       (section === "bookmarks" && showBookmarks) ||
       (section === "reports" && showReports) ||
-      (section === "qnas" && showQnas);
+      (section === "qnas" && showQnas) ||
+      (section === "inquiries" && showInquiries);
 
     setEditing(false);
     setShowSelling(false);
     setShowBookmarks(false);
     setShowReports(false);
     setShowQnas(false);
+    setShowInquiries(false);
     setEditingProductId(null);
 
     if (isCurrentlyOpen) return;
@@ -276,6 +327,10 @@ export default function MyPage({ user, setUser }: Props) {
       case "qnas":
         setShowQnas(true);
         handleFetchMyQnas();
+        break;
+      case "inquiries":
+        setShowInquiries(true);
+        handleFetchMyInquiries();
         break;
     }
   };
@@ -320,6 +375,7 @@ export default function MyPage({ user, setUser }: Props) {
     }
 
     try {
+<<<<<<< HEAD
       const res = await fetch(
         `${API_BASE_URL}/api/products/${editingProductId}`,
         {
@@ -337,13 +393,30 @@ export default function MyPage({ user, setUser }: Props) {
           }),
         }
       );
+=======
+      const res = await fetch(`${API_BASE_URL}/api/products/${editingProductId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: productForm.title,
+          startingPrice: productForm.startingPrice,
+          content: productForm.content,
+          categoryId: productForm.categoryId,
+          productStatus: productForm.productStatus,
+        }),
+      });
+>>>>>>> 50feb50 (1:1 문의 기능 추가)
 
       if (res.ok) {
         const updatedProduct = normalizeProduct(await res.json());
         setSellingProducts((prev) =>
+<<<<<<< HEAD
           prev.map((p) =>
             p.productId === editingProductId ? updatedProduct : p
           )
+=======
+          prev.map((p) => (p.productId === editingProductId ? updatedProduct : p))
+>>>>>>> 50feb50 (1:1 문의 기능 추가)
         );
         setEditingProductId(null);
         alert("상품이 수정되었습니다.");
@@ -382,6 +455,9 @@ export default function MyPage({ user, setUser }: Props) {
         </button>
         <button style={buttonStyle} onClick={() => toggleSection("qnas")}>
           내 Q&A
+        </button>
+        <button style={buttonStyle} onClick={() => toggleSection("inquiries")}>
+          1:1 문의 보기
         </button>
       </div>
 
@@ -689,6 +765,42 @@ export default function MyPage({ user, setUser }: Props) {
           )}
         </div>
       )}
+
+      {/* 1:1 문의 내역 */}
+      {showInquiries && (
+        <div style={{ marginBottom: "20px" }}>
+          <h3>내 1:1 문의</h3>
+          {myInquiries.length === 0 ? (
+            <p>작성한 1:1 문의가 없습니다.</p>
+          ) : (
+            <ul style={{ listStyle: "none", padding: 0 }}>
+              {myInquiries.map((inq) => (
+                <li key={inq.inquiryId} style={{ marginBottom: "15px", border: "1px solid #ddd", padding: "10px", borderRadius: "6px" }}>
+                  <div style={{ fontWeight: "bold" }}>{inq.title}</div>
+                  <div>질문: {inq.question}</div>
+                  <div>작성일: {new Date(inq.createdAt).toLocaleString()}</div>
+                  <div>
+                    <strong>답변:</strong>
+                    {inq.answers.length === 0 ? (
+                      <span> 대기중</span>
+                    ) : (
+                      <ul style={{ listStyle: "disc", paddingLeft: "20px" }}>
+                        {inq.answers.map((a) => (
+                          <li key={a.inquiryReviewId}>
+                            {a.nickName}: {a.answer} ({new Date(a.createdAt).toLocaleString()})
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+
 
       {/* 기타 기능 버튼 */}
       <div style={{ marginTop: "20px" }}>

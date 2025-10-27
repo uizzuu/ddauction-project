@@ -12,9 +12,25 @@ export default function HeaderMain({ user, setUser }: Props) {
   const location = useLocation();
   const [searchKeyword, setSearchKeyword] = useState("");
 
-  const handleLogout = () => {
-    setUser(null);
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      // 1️⃣ 서버 세션 로그아웃 요청 (백엔드에 로그아웃 API가 있어야 함)
+      await fetch("/api/logout", {
+        method: "POST",
+        credentials: "include", // 쿠키 기반 인증이면 필요
+      });
+
+      // 2️⃣ 로컬 스토리지 초기화
+      localStorage.removeItem("loginUser"); // 로그인 정보를 localStorage에 저장했다면
+
+      // 3️⃣ 리액트 상태 초기화
+      setUser(null);
+
+      // 4️⃣ 메인 페이지 이동
+      navigate("/");
+    } catch (err) {
+      console.error("로그아웃 실패", err);
+    }
   };
 
   // URL 쿼리 변화 감지 → input에 동기화
@@ -31,10 +47,8 @@ export default function HeaderMain({ user, setUser }: Props) {
 
     const query = new URLSearchParams();
 
-    // keyword가 비어있지 않으면 추가
     if (trimmed !== "") query.append("keyword", trimmed);
 
-    // 기존 URL에 category 쿼리가 있으면 그대로 유지
     const params = new URLSearchParams(location.search);
     const currentCategory = params.get("category");
     if (currentCategory) query.append("category", currentCategory);
@@ -82,15 +96,24 @@ export default function HeaderMain({ user, setUser }: Props) {
           {user ? (
             <>
               <span className="nav-link user-info">{user.nickName} 님</span>
-              <NavLink to="/myPage" className="nav-link">
+              <NavLink to="/mypage" className="nav-link">
                 마이페이지
+              </NavLink>
+              {/* 1:1 문의 */}
+              <NavLink to="/mypage/qna/new" className="nav-link">
+                1:1 문의
               </NavLink>
               {/* 관리자 전용 버튼 */}
               {user.role === "ADMIN" && (
                 <button
                   onClick={() => navigate("/admin")}
                   className="nav-link"
-                  style={{ background: "#000", color: "#fff", borderRadius: "4px", padding: "4px 8px" }}
+                  style={{
+                    background: "#000",
+                    color: "#fff",
+                    borderRadius: "4px",
+                    padding: "4px 8px",
+                  }}
                 >
                   관리자 페이지
                 </button>
@@ -106,6 +129,10 @@ export default function HeaderMain({ user, setUser }: Props) {
               </NavLink>
               <NavLink to="/signup" className="nav-link">
                 회원가입
+              </NavLink>
+              {/* 1:1 문의 (비로그인 시 필요 시) */}
+              <NavLink to="/login" className="nav-link">
+                1:1 문의
               </NavLink>
             </>
           )}

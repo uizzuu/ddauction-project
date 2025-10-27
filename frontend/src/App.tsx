@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
 import SearchPage from "./pages/SearchPage";
+import UserQnaForm from "./pages/UserQnaForm";
 import {
   HeaderMain,
   HeaderSub,
@@ -48,6 +49,16 @@ export default function App() {
         ) : (<div style={{ padding: "20px" }}>
           접근 권한이 없습니다. 관리자만 접근 가능합니다.
         </div>)} />
+        <Route
+          path="/mypage/qna/new"
+          element={
+            user ? (
+              <UserQnaForm />
+            ) : (
+              <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>
+            )
+          }
+        />
       </Routes>
     </div>
   );
