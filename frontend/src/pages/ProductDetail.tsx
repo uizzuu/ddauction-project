@@ -234,7 +234,9 @@ export default function ProductDetail({ user }: Props) {
   const handleReport = async () => {
     if (!product) return;
 
-    if (!user) {
+    // 찜하기와 동일하게 token 가져오기
+    const token = user?.token || localStorage.getItem("token");
+    if (!token) {
       alert("로그인 후 신고할 수 있습니다.");
       return;
     }
@@ -245,17 +247,15 @@ export default function ProductDetail({ user }: Props) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/reports`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({
           targetId: product.sellerId,
           reason: reason.trim(),
         }),
       });
-
-      if (res.status === 401) {
-        alert("로그인 후 신고할 수 있습니다.");
-        return;
-      }
 
       if (res.ok) {
         alert("신고가 접수되었습니다.");
@@ -268,6 +268,8 @@ export default function ProductDetail({ user }: Props) {
       alert("신고 처리 중 오류가 발생했습니다.");
     }
   };
+
+
 
   if (!product)
     return <div style={{ padding: "16px" }}>상품을 찾을 수 없습니다.</div>;
