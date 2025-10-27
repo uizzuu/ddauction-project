@@ -54,7 +54,7 @@ public class UserController {
         }
 
         UserDto userDto = userService.login(dto.getEmail(), dto.getPassword());
-        String token = jwtUtil.createJwt(userDto.getUserId(),userDto.getEmail(), userDto.getRole().name(), userDto.getNickName(), JWT_EXPIRATION_MS);
+        String token = jwtUtil.createJwt(userDto.getUserId(), userDto.getEmail(), userDto.getRole().name(), userDto.getNickName(), JWT_EXPIRATION_MS);
 
         return ResponseEntity.ok()
                 .header("Authorization", "Bearer " + token)
@@ -79,25 +79,54 @@ public class UserController {
         return ResponseEntity.ok(UserDto.fromEntity(user));
     }
 
-    // 마이페이지 조회 (로그인한 유저 기준) (JWT 기반)
+    // 마이페이지 조회 (JWT 기반)
     @GetMapping("/{id}/mypage")
-    public UserDto getMyPage(@PathVariable Long id, HttpSession session) {
-        Long sessionUserId = (Long) session.getAttribute("userId");
-        if (!id.equals(sessionUserId)) {
-            throw new RuntimeException("권한이 없습니다.");
+    public ResponseEntity<UserDto> getMyPage(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String authHeader) {
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).build();
         }
-        return userService.getUser(id);
+
+        String token = authHeader.replace("Bearer ", "");
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Long jwtUserId = jwtUtil.getUserId(token); // JWT에서 userId 추출
+        if (!id.equals(jwtUserId)) {
+            return ResponseEntity.status(403).build(); // 권한 없음
+        }
+
+        UserDto userDto = userService.getUser(id);
+        return ResponseEntity.ok(userDto);
     }
 
     // 마이페이지 업데이트
     @PutMapping("/{id}/mypage")
-    public UserDto updateMyPage(@PathVariable Long id, @RequestBody UserDto dto, HttpSession session) {
-        Long sessionUserId = (Long) session.getAttribute("userId");
-        if (!id.equals(sessionUserId)) {
-            throw new RuntimeException("권한이 없습니다.");
+    public ResponseEntity<UserDto> updateMyPage(
+            @PathVariable Long id,
+            @RequestBody UserDto dto,
+            @RequestHeader("Authorization") String authHeader) {
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).build();
         }
-        dto.setUserId(id); // PathVariable id를 DTO에 설정
-        return userService.updateUser(dto);
+
+        String token = authHeader.replace("Bearer ", "");
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Long jwtUserId = jwtUtil.getUserId(token); // JWT에서 userId 추출
+        if (!id.equals(jwtUserId)) {
+            return ResponseEntity.status(403).build(); // 권한 없음
+        }
+
+        dto.setUserId(id);
+        UserDto updated = userService.updateUser(dto);
+        return ResponseEntity.ok(updated);
     }
 
     // 유저 삭제
@@ -112,51 +141,31 @@ public class UserController {
         session.invalidate();
     }
 
-//    // 마이페이지 조회 (JWT 기반)
-//    @GetMapping("/mypage")
-//    public ResponseEntity<UserDto> getMyPage(@RequestHeader("Authorization") String authHeader) {
-//        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//            return ResponseEntity.status(401).build();
-//        }
-//
-//        String token = authHeader.replace("Bearer ", "");
-//        if (!jwtUtil.validateToken(token)) {
-//            return ResponseEntity.status(401).build();
-//        }
-//
-//        String email = jwtUtil.getEmail(token);
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-//
-//        return ResponseEntity.ok(UserDto.fromEntity(user));
-//    }
-//
-//    // 마이페이지 업데이트 (JWT 기반)
-//    @PutMapping("/mypage")
-//    public ResponseEntity<UserDto> updateMyPage(@RequestHeader("Authorization") String authHeader,
-//                                                @RequestBody UserDto dto) {
-//        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-//            return ResponseEntity.status(401).build();
-//        }
-//
-//        String token = authHeader.replace("Bearer ", "");
-//        if (!jwtUtil.validateToken(token)) {
-//            return ResponseEntity.status(401).build();
-//        }
-//
-//        String email = jwtUtil.getEmail(token);
-//        User user = userRepository.findByEmail(email)
-//                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
-//
-//        dto.setUserId(user.getUserId());
-//        UserDto updated = userService.updateUser(dto);
-//
-//        return ResponseEntity.ok(updated);
-//    }
-//
-//    // 유저 삭제 (관리자용)
-//    @DeleteMapping("/{id}")
-//    public void deleteUser(@PathVariable Long id) {
-//        userService.deleteUser(id);
-//    }
+    // 관리자용 회원 정보 수정
+    @PutMapping("/{id}/admin")
+    public ResponseEntity<UserDto> updateUserByAdmin(
+            @PathVariable Long id,
+            @RequestBody UserDto dto,
+            @RequestHeader("Authorization") String authHeader) {
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).build();
+        }
+        String token = authHeader.replace("Bearer ", "");
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).build();
+        }
+
+        // JWT에서 role 추출
+        String role = jwtUtil.getRole(token);
+        if (!"ADMIN".equals(role)) {
+            return ResponseEntity.status(403).build(); // 관리자가 아니면 권한 없음
+        }
+
+        dto.setUserId(id);
+        UserDto updated = userService.updateUser(dto);
+        return ResponseEntity.ok(updated);
+    }
+
+
 }

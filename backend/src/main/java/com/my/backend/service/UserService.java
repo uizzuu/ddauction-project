@@ -83,6 +83,11 @@ public class UserService {
             user.setEmail(dto.getEmail());
         }
 
+        // Role 처리 추가
+        if (dto.getRole() != null) {
+            user.setRole(dto.getRole());
+        }
+
         return UserDto.fromEntity(userRepository.save(user));
     }
 

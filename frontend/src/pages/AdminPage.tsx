@@ -66,8 +66,10 @@ export default function AdminPage() {
   });
 
   const fetchUsers = useCallback(async () => {
-    let url = `${API_BASE_URL}/api/users/admin/search?`;
+    let url = `${API_BASE_URL}/api/users`;
+
     if (userFilterKeyword) {
+      url += "?"; // ? 추가
       if (userFilterField === "userName")
         url += `userName=${encodeURIComponent(userFilterKeyword)}`;
       else if (userFilterField === "nickName")
@@ -77,24 +79,63 @@ export default function AdminPage() {
       else if (userFilterField === "phone")
         url += `phone=${encodeURIComponent(userFilterKeyword)}`;
     }
-    const res = await fetch(url);
+
+    const token = localStorage.getItem("token");
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    });
+
+    if (!res.ok) {
+      console.error("회원 조회 실패:", res.status);
+      setUsers([]);
+      return;
+    }
+
     const data = await res.json();
     setUsers(data);
   }, [userFilterKeyword, userFilterField]);
+
 
   const fetchProducts = useCallback(async () => {
     let url = `${API_BASE_URL}/api/products/search?`;
     if (filterKeyword) url += `keyword=${filterKeyword}&`;
     if (filterCategory) url += `category=${filterCategory}&`;
-    const res = await fetch(url);
+
+    const token = localStorage.getItem("token");
+    const res = await fetch(url, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      },
+    });
     const data = await res.json();
     setProducts(data);
   }, [filterKeyword, filterCategory]);
 
   const fetchReports = useCallback(async () => {
-    const res = await fetch(`${API_BASE_URL}/api/reports/admin`);
-    const data = await res.json();
-    setReports(data);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/reports/admin`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+      if (!res.ok) {
+        console.error("신고 조회 실패:", res.status);
+        setReports([]);
+        return;
+      }
+      const data = await res.json();
+      setReports(data);
+    } catch (err) {
+      console.error(err);
+      setReports([]);
+    }
   }, []);
 
   const fetchStats = useCallback(async () => {
@@ -125,9 +166,13 @@ export default function AdminPage() {
   ]);
 
   const handleChangeRole = async (userId: number, newRole: User["role"]) => {
-    await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
+    const token = localStorage.getItem("token");
+    await fetch(`${API_BASE_URL}/api/users/${userId}/admin`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : ""
+      },
       body: JSON.stringify({ role: newRole }),
     });
     fetchUsers();
@@ -143,13 +188,33 @@ export default function AdminPage() {
   };
 
   const handleSaveUserClick = async (userId: number) => {
-    await fetch(`${API_BASE_URL}/api/users/${userId}/mypage`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editUserForm),
-    });
-    setEditingUserId(null);
-    fetchUsers();
+    try {
+      const payload: any = { nickName: editUserForm.nickName, phone: editUserForm.phone };
+      if (editUserForm.password) payload.password = editUserForm.password;
+
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}/admin`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify(payload),
+      });
+
+
+      if (!res.ok) {
+        console.error("회원 수정 실패:", res.status);
+        alert("회원 수정에 실패했습니다.");
+        return;
+      }
+
+      setEditingUserId(null);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+      alert("회원 수정 중 오류가 발생했습니다.");
+    }
   };
 
   const handleCancelUserClick = () => setEditingUserId(null);
@@ -165,13 +230,32 @@ export default function AdminPage() {
   };
 
   const handleSaveProductClick = async (productId: number) => {
-    await fetch(`${API_BASE_URL}/api/products/${productId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editProductForm),
-    });
-    setEditingProductId(null);
-    fetchProducts();
+    try {
+      const payload: any = {
+        title: editProductForm.title,
+        categoryId: editProductForm.categoryId,
+        startingPrice: editProductForm.startingPrice,
+        productStatus: editProductForm.productStatus,
+      };
+
+      const res = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        console.error("상품 수정 실패:", res.status);
+        alert("상품 수정에 실패했습니다.");
+        return;
+      }
+
+      setEditingProductId(null);
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+      alert("상품 수정 중 오류가 발생했습니다.");
+    }
   };
 
   const handleCancelProductClick = () => setEditingProductId(null);
@@ -183,16 +267,31 @@ export default function AdminPage() {
     fetchProducts();
   };
 
-  const handleUpdateReportStatus = async (
-    reportId: number,
-    status: boolean
-  ) => {
-    await fetch(
-      `${API_BASE_URL}/api/reports/${reportId}/status?status=${status}`,
-      { method: "PATCH" }
-    );
-    fetchReports();
+  const handleUpdateReportStatus = async (reportId: number, status: boolean) => {
+    try {
+      const token = localStorage.getItem("token"); // JWT 가져오기
+      const res = await fetch(
+        `${API_BASE_URL}/api/reports/${reportId}/status?status=${status}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        }
+      );
+
+      if (!res.ok) {
+        console.error("신고 상태 변경 실패:", res.status);
+        return;
+      }
+
+      fetchReports(); // 상태 변경 후 화면 갱신
+    } catch (err) {
+      console.error("신고 상태 변경 중 오류 발생:", err);
+    }
   };
+
 
   const handleProductStatusChange = (value: string) => {
     if (PRODUCT_STATUS.includes(value as Product["productStatus"])) {
@@ -297,7 +396,8 @@ export default function AdminPage() {
                   <th>전화번호</th>
                   <th>가입일</th>
                   <th>최종수정일</th>
-                  <th>권한 / 수정</th>
+                  <th>권한</th>
+                  <th>수정</th>
                 </tr>
               </thead>
               <tbody>
@@ -310,10 +410,7 @@ export default function AdminPage() {
                         <input
                           value={editUserForm.nickName}
                           onChange={(e) =>
-                            setEditUserForm({
-                              ...editUserForm,
-                              nickName: e.target.value,
-                            })
+                            setEditUserForm({ ...editUserForm, nickName: e.target.value })
                           }
                         />
                       ) : (
@@ -326,26 +423,31 @@ export default function AdminPage() {
                         <input
                           value={editUserForm.phone}
                           onChange={(e) =>
-                            setEditUserForm({
-                              ...editUserForm,
-                              phone: e.target.value,
-                            })
+                            setEditUserForm({ ...editUserForm, phone: e.target.value })
                           }
                         />
                       ) : (
                         u.phone
                       )}
                     </td>
+                    <td>{u.createdAt ? new Date(u.createdAt).toLocaleString() : "-"}</td>
+                    <td>{u.updatedAt ? new Date(u.updatedAt).toLocaleString() : "-"}</td>
+
+                    {/* 권한 칸 */}
                     <td>
-                      {u.createdAt
-                        ? new Date(u.createdAt).toLocaleString()
-                        : "-"}
+                      <select
+                        value={u.role}
+                        onChange={(e) =>
+                          handleChangeRole(u.userId, e.target.value as User["role"])
+                        }
+                      >
+                        <option value="USER">USER</option>
+                        <option value="BANNED">BANNED</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
                     </td>
-                    <td>
-                      {u.updatedAt
-                        ? new Date(u.updatedAt).toLocaleString()
-                        : "-"}
-                    </td>
+
+                    {/* 수정 칸 */}
                     <td>
                       {editingUserId === u.userId ? (
                         <>
@@ -354,41 +456,20 @@ export default function AdminPage() {
                             placeholder="새 비밀번호"
                             value={editUserForm.password}
                             onChange={(e) =>
-                              setEditUserForm({
-                                ...editUserForm,
-                                password: e.target.value,
-                              })
+                              setEditUserForm({ ...editUserForm, password: e.target.value })
                             }
                           />
-                          <button onClick={() => handleSaveUserClick(u.userId)}>
-                            저장
-                          </button>
+                          <button onClick={() => handleSaveUserClick(u.userId)}>저장</button>
                           <button onClick={handleCancelUserClick}>취소</button>
                         </>
                       ) : (
-                        <>
-                          <select
-                            value={u.role}
-                            onChange={(e) =>
-                              handleChangeRole(
-                                u.userId,
-                                e.target.value as User["role"]
-                              )
-                            }
-                          >
-                            <option value="USER">USER</option>
-                            <option value="BANNED">BANNED</option>
-                            <option value="ADMIN">ADMIN</option>
-                          </select>
-                          <button onClick={() => handleEditUserClick(u)}>
-                            수정
-                          </button>
-                        </>
+                        <button onClick={() => handleEditUserClick(u)}>수정</button>
                       )}
                     </td>
                   </tr>
                 ))}
               </tbody>
+
             </table>
           </div>
         )}
