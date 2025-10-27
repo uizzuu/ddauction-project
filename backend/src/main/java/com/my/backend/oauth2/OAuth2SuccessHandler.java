@@ -29,8 +29,14 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         Long userId = oauthUser.getUserId();
         String email = oauthUser.getEmail();  // CustomOAuth2User에서 정의 필요
         String role = oauthUser.getRole();    // CustomOAuth2User에서 정의 필요
+        String nickName = oauthUser.getNickName();
 
-        String jwtToken = jwtUtil.createJwt(userId, email, role, 60 * 60 * 1000L); // 1시간
+        String jwtToken = jwtUtil.createJwt(
+                oauthUser.getUserId(),
+                oauthUser.getEmail(),
+                oauthUser.getRole(),
+                oauthUser.getNickName(), // nickName 포함
+                60 * 60 * 1000L);
 
         Map<String, String> tokenResponse = Map.of("token", jwtToken);
 

@@ -9,6 +9,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Map;
 
 @Component
 public class JWTUtil {
@@ -40,16 +41,26 @@ public class JWTUtil {
                 parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
 
-    public String createJwt(Long userId, String email, String role, Long expiredMs) {
+    public String createJwt(Long userId,String email, String role, String nickName, Long expiredMs) {
+        Map<String, Object> claims = Map.of(
+                "userId",userId,
+                "email", email,
+                "role", role,
+                "nickName", nickName
+        );
+        return createJwt(claims, expiredMs); // 이미 Map 기반 메서드로 처리
+    }
+    public String createJwt(Map<String, Object> claims, Long expiredMs) {
         return Jwts.builder()
-                .claim("userId", userId)
-                .claim("email", email)
-                .claim("role", role)
+                .setClaims(claims)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(secretKey)
                 .compact();
     }
+
+
+
 
     public boolean validateToken(String token) {
         try {

@@ -54,7 +54,7 @@ public class UserController {
         }
 
         UserDto userDto = userService.login(dto.getEmail(), dto.getPassword());
-        String token = jwtUtil.createJwt(userDto.getUserId(), userDto.getEmail(), userDto.getRole().name(), JWT_EXPIRATION_MS);
+        String token = jwtUtil.createJwt(userDto.getUserId(),userDto.getEmail(), userDto.getRole().name(), userDto.getNickName(), JWT_EXPIRATION_MS);
 
         return ResponseEntity.ok()
                 .header("Authorization", "Bearer " + token)

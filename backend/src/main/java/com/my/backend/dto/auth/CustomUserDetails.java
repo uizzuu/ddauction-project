@@ -22,6 +22,10 @@ public class CustomUserDetails implements UserDetails {
         return this.user;
     }
 
+    public String getNickName() {
+        return user.getNickName();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> collection = new ArrayList<>();
@@ -43,6 +47,7 @@ public class CustomUserDetails implements UserDetails {
     public String getUsername() {
         return user.getUserName();
     }
+
 
     @Override
     public boolean isAccountNonExpired() {

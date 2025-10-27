@@ -89,7 +89,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         // ms, s 충돌 해결 (LoginFilter <-> JWTUtil)
         long expiredMs = 24 * 60 * 60 * 1000L; // 24시간 * 60분 * 60초 * 1000ms
-        String token = jwtUtil.createJwt(customUserDetails.getUser().getUserId(), customUserDetails.getEmail(), role, expiredMs);
+        String token = jwtUtil.createJwt(customUserDetails.getUser().getUserId(),customUserDetails.getEmail(), role,customUserDetails.getNickName(), expiredMs);
         System.out.println("[DEBUG] token = " + token);
 
         if (token != null) {

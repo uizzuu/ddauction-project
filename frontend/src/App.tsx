@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 🔹 useEffect 추가
 import { Routes, Route, useLocation } from "react-router-dom";
+import {jwtDecode} from "jwt-decode"; // 🔹 JWT decode 라이브러리 추가
 import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
 import SearchPage from "./pages/SearchPage";
@@ -28,6 +29,33 @@ export default function App() {
   const noHeaderPaths = ["/login", "/signup"];
   const showHeader = !noHeaderPaths.includes(location.pathname);
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      // 🔹 JWT payload 타입 지정
+      const decoded = jwtDecode<{
+        userId: number;
+        userName: string;
+        nickName: string;
+        role?: "ADMIN" | "USER" | "BANNED";
+      }>(token);
+
+      // 🔹 setUser에 nickName 포함
+      setUser({
+        userId: decoded.userId,
+        userName: decoded.userName,
+        nickName: decoded.nickName,
+        role: decoded.role,
+      });
+    } catch (e) {
+      console.error("JWT decode 실패", e);
+      localStorage.removeItem("token");
+      setUser(null);
+    }
+  }, []);
+
   return (
     <div style={{ minHeight: "100vh" }}>
       {showHeader && <HeaderMain user={user} setUser={setUser} />}
@@ -45,19 +73,10 @@ export default function App() {
         <Route path="/articles/:id/edit" element={<ArticleForm userId={user?.userId ?? null} />} />
         <Route path="/articles/:id" element={<ArticleDetail user={user} />} />
         <Route path="/search" element={<SearchPage />} />
-        <Route path="/admin" element={user?.role === "ADMIN" ? (<AdminPage />
-        ) : (<div style={{ padding: "20px" }}>
-          접근 권한이 없습니다. 관리자만 접근 가능합니다.
-        </div>)} />
+        <Route path="/admin" element={user?.role === "ADMIN" ? (<AdminPage />) : (<div style={{ padding: "20px" }}>접근 권한이 없습니다. 관리자만 접근 가능합니다.</div>)} />
         <Route
           path="/mypage/qna/new"
-          element={
-            user ? (
-              <UserQnaForm />
-            ) : (
-              <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>
-            )
-          }
+          element={user ? (<UserQnaForm />) : (<div style={{ padding: "20px" }}>로그인이 필요합니다.</div>)}
         />
       </Routes>
     </div>
