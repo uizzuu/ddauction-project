@@ -5,9 +5,7 @@ import type {
   Report,
   Category,
   EditProductForm,
-  Inquiry,
-  Qna,
-  EditUserForm,
+  Inquiry
 } from "../types/types";
 import { PRODUCT_STATUS } from "../types/types";
 import { API_BASE_URL } from "../services/api";
@@ -38,6 +36,7 @@ export default function AdminPage() {
   const [filterKeyword, setFilterKeyword] = useState("");
   const [filterCategory, setFilterCategory] = useState<number | null>(null);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+
 
   // --- 회원 필터 상태 ---
   const [userFilterField, setUserFilterField] = useState<
@@ -99,6 +98,7 @@ export default function AdminPage() {
     const data = await res.json();
     setUsers(data);
   }, [userFilterKeyword, userFilterField]);
+
 
   const fetchProducts = useCallback(async () => {
     let url = `${API_BASE_URL}/api/products/search?`;
@@ -171,7 +171,7 @@ export default function AdminPage() {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
+        Authorization: token ? `Bearer ${token}` : ""
       },
       body: JSON.stringify({ role: newRole }),
     });
@@ -189,10 +189,7 @@ export default function AdminPage() {
 
   const handleSaveUserClick = async (userId: number) => {
     try {
-      const payload: Partial<EditUserForm> = {
-        nickName: editUserForm.nickName,
-        phone: editUserForm.phone,
-      };
+      const payload: any = { nickName: editUserForm.nickName, phone: editUserForm.phone };
       if (editUserForm.password) payload.password = editUserForm.password;
 
       const token = localStorage.getItem("token");
@@ -204,6 +201,7 @@ export default function AdminPage() {
         },
         body: JSON.stringify(payload),
       });
+
 
       if (!res.ok) {
         console.error("회원 수정 실패:", res.status);
@@ -233,7 +231,7 @@ export default function AdminPage() {
 
   const handleSaveProductClick = async (productId: number) => {
     try {
-      const payload: EditProductForm = {
+      const payload: any = {
         title: editProductForm.title,
         categoryId: editProductForm.categoryId,
         startingPrice: editProductForm.startingPrice,
@@ -269,10 +267,7 @@ export default function AdminPage() {
     fetchProducts();
   };
 
-  const handleUpdateReportStatus = async (
-    reportId: number,
-    status: boolean
-  ) => {
+  const handleUpdateReportStatus = async (reportId: number, status: boolean) => {
     try {
       const token = localStorage.getItem("token"); // JWT 가져오기
       const res = await fetch(
@@ -297,6 +292,7 @@ export default function AdminPage() {
     }
   };
 
+
   const handleProductStatusChange = (value: string) => {
     if (PRODUCT_STATUS.includes(value as Product["productStatus"])) {
       setEditProductForm({
@@ -308,25 +304,6 @@ export default function AdminPage() {
 
   const fetchInquiries = async () => {
     try {
-<<<<<<< HEAD
-      const res = await fetch(`${API_BASE_URL}/api/inquiry/all`);
-      if (res.ok) {
-        const data: Qna[] = await res.json();
-        const mapped: Inquiry[] = data.map((d) => ({
-          inquiryId: d.qnaId,
-          title: d.title,
-          question: d.question,
-          createdAt: d.createdAt,
-          answers: (d.answers ?? []).map((a) => ({
-            inquiryReviewId: a.qnaReviewId,
-            answer: a.answer,
-            nickName: a.nickName,
-            createdAt: a.createdAt,
-          })),
-        }));
-        setInquiries(mapped);
-      }
-=======
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/inquiry/admin`, {
         headers: {
@@ -395,112 +372,145 @@ export default function AdminPage() {
 
       alert("답변이 등록되었습니다.");
       fetchInquiries(); // 화면 갱신
->>>>>>> b3d018e (1:1문의 기능 활성화)
     } catch (err) {
       console.error(err);
       alert("답변 등록 중 오류가 발생했습니다.");
     }
   };
 
+
   return (
-    <div className="container p-0">
-      <div className="admin-container">
-        <aside className="admin-sidebar">
-          <h2>관리자 페이지</h2>
-          <ul>
-            <li>
-              <button onClick={() => setSection("user")}>회원 관리</button>
-            </li>
-            <li>
-              <button onClick={() => setSection("product")}>상품 관리</button>
-            </li>
-            <li>
-              <button onClick={() => setSection("report")}>신고 관리</button>
-            </li>
-            <li>
-              <button onClick={() => setSection("stats")}>통계</button>
-            </li>
-            <li>
-              <button
-                onClick={() => {
-                  setSection("inquiry");
-                  fetchInquiries();
-                }}
+    <div className="admin-container">
+      <aside className="admin-sidebar">
+        <h2>관리자 페이지</h2>
+        <ul>
+          <li>
+            <button onClick={() => setSection("user")}>회원 관리</button>
+          </li>
+          <li>
+            <button onClick={() => setSection("product")}>상품 관리</button>
+          </li>
+          <li>
+            <button onClick={() => setSection("report")}>신고 관리</button>
+          </li>
+          <li>
+            <button onClick={() => setSection("stats")}>통계</button>
+          </li>
+          <li>
+            <button onClick={() => { setSection("inquiry"); fetchInquiries(); }}>
+              1:1 문의 관리
+            </button>
+          </li>
+
+        </ul>
+      </aside>
+
+      <main className="admin-main">
+        {/* 회원 관리 */}
+        {section === "user" && (
+          <div className="admin-section">
+            <h3>회원 관리</h3>
+
+            {/* --- 회원 필터 UI --- */}
+            <div style={{ marginBottom: "1rem" }}>
+              <select
+                value={userFilterField}
+                onChange={(e) =>
+                  setUserFilterField(
+                    e.target.value as
+                    | "userName"
+                    | "nickName"
+                    | "email"
+                    | "phone"
+                  )
+                }
               >
-                1:1 문의 관리
-              </button>
-            </li>
-          </ul>
-        </aside>
+                <option value="userName">이름</option>
+                <option value="nickName">닉네임</option>
+                <option value="email">이메일</option>
+                <option value="phone">전화번호</option>
+              </select>
+              <input
+                placeholder="검색어 입력"
+                value={userFilterKeyword}
+                onChange={(e) => setUserFilterKeyword(e.target.value)}
+              />
+              <button onClick={fetchUsers}>검색</button>
+            </div>
 
-        <main className="admin-main">
-          {/* 회원 관리 */}
-          {section === "user" && (
-            <div className="admin-section">
-              <h3>회원 관리</h3>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>이름</th>
+                  <th>닉네임</th>
+                  <th>이메일</th>
+                  <th>전화번호</th>
+                  <th>가입일</th>
+                  <th>최종수정일</th>
+                  <th>권한</th>
+                  <th>수정</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.userId}>
+                    <td>{u.userId}</td>
+                    <td>{u.userName}</td>
+                    <td>
+                      {editingUserId === u.userId ? (
+                        <input
+                          value={editUserForm.nickName}
+                          onChange={(e) =>
+                            setEditUserForm({ ...editUserForm, nickName: e.target.value })
+                          }
+                        />
+                      ) : (
+                        u.nickName
+                      )}
+                    </td>
+                    <td>{u.email}</td>
+                    <td>
+                      {editingUserId === u.userId ? (
+                        <input
+                          value={editUserForm.phone}
+                          onChange={(e) =>
+                            setEditUserForm({ ...editUserForm, phone: e.target.value })
+                          }
+                        />
+                      ) : (
+                        u.phone
+                      )}
+                    </td>
+                    <td>{u.createdAt ? new Date(u.createdAt).toLocaleString() : "-"}</td>
+                    <td>{u.updatedAt ? new Date(u.updatedAt).toLocaleString() : "-"}</td>
 
-              {/* --- 회원 필터 UI --- */}
-              <div style={{ marginBottom: "1rem" }}>
-                <select
-                  value={userFilterField}
-                  onChange={(e) =>
-                    setUserFilterField(
-                      e.target.value as
-                        | "userName"
-                        | "nickName"
-                        | "email"
-                        | "phone"
-                    )
-                  }
-                >
-                  <option value="userName">이름</option>
-                  <option value="nickName">닉네임</option>
-                  <option value="email">이메일</option>
-                  <option value="phone">전화번호</option>
-                </select>
-                <input
-                  placeholder="검색어 입력"
-                  value={userFilterKeyword}
-                  onChange={(e) => setUserFilterKeyword(e.target.value)}
-                />
-                <button onClick={fetchUsers}>검색</button>
-              </div>
+                    {/* 권한 칸 */}
+                    <td>
+                      <select
+                        value={u.role}
+                        onChange={(e) =>
+                          handleChangeRole(u.userId, e.target.value as User["role"])
+                        }
+                      >
+                        <option value="USER">USER</option>
+                        <option value="BANNED">BANNED</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                    </td>
 
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>이름</th>
-                    <th>닉네임</th>
-                    <th>이메일</th>
-                    <th>전화번호</th>
-                    <th>가입일</th>
-                    <th>최종수정일</th>
-                    <th>권한</th>
-                    <th>수정</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((u) => (
-                    <tr key={u.userId}>
-                      <td>{u.userId}</td>
-                      <td>{u.userName}</td>
-                      <td>
-                        {editingUserId === u.userId ? (
+                    {/* 수정 칸 */}
+                    <td>
+                      {editingUserId === u.userId ? (
+                        <>
                           <input
-                            value={editUserForm.nickName}
+                            type="password"
+                            placeholder="새 비밀번호"
+                            value={editUserForm.password}
                             onChange={(e) =>
-                              setEditUserForm({
-                                ...editUserForm,
-                                nickName: e.target.value,
-                              })
+                              setEditUserForm({ ...editUserForm, password: e.target.value })
                             }
                           />
-<<<<<<< HEAD
-                        ) : (
-                          u.nickName
-                        )}
-=======
                           <button onClick={() => handleSaveUserClick(u.userId)}>저장</button>
                           <button onClick={handleCancelUserClick}>취소</button>
                         </>
@@ -778,352 +788,26 @@ export default function AdminPage() {
                         <button onClick={() => handleSaveInquiryAnswer(inq.inquiryId, inq.newAnswer)}>
                           답변 등록
                         </button>
->>>>>>> b3d018e (1:1문의 기능 활성화)
                       </td>
-                      <td>{u.email}</td>
-                      <td>
-                        {editingUserId === u.userId ? (
-                          <input
-                            value={editUserForm.phone}
-                            onChange={(e) =>
-                              setEditUserForm({
-                                ...editUserForm,
-                                phone: e.target.value,
-                              })
-                            }
-                          />
-                        ) : (
-                          u.phone
-                        )}
-                      </td>
-                      <td>
-                        {u.createdAt
-                          ? new Date(u.createdAt).toLocaleString()
-                          : "-"}
-                      </td>
-                      <td>
-                        {u.updatedAt
-                          ? new Date(u.updatedAt).toLocaleString()
-                          : "-"}
-                      </td>
-
-                      {/* 권한 칸 */}
-                      <td>
-                        <select
-                          value={u.role}
-                          onChange={(e) =>
-                            handleChangeRole(
-                              u.userId,
-                              e.target.value as User["role"]
-                            )
-                          }
-                        >
-                          <option value="USER">USER</option>
-                          <option value="BANNED">BANNED</option>
-                          <option value="ADMIN">ADMIN</option>
-                        </select>
-                      </td>
-
-                      {/* 수정 칸 */}
-                      <td>
-                        {editingUserId === u.userId ? (
-                          <>
-                            <input
-                              type="password"
-                              placeholder="새 비밀번호"
-                              value={editUserForm.password}
-                              onChange={(e) =>
-                                setEditUserForm({
-                                  ...editUserForm,
-                                  password: e.target.value,
-                                })
-                              }
-                            />
-                            <button
-                              onClick={() => handleSaveUserClick(u.userId)}
-                            >
-                              저장
-                            </button>
-                            <button onClick={handleCancelUserClick}>
-                              취소
-                            </button>
-                          </>
-                        ) : (
-                          <button onClick={() => handleEditUserClick(u)}>
-                            수정
-                          </button>
-                        )}
-                      </td>
+                      <td>{new Date(inq.createdAt).toLocaleString()}</td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* 상품 관리 */}
-          {section === "product" && (
-            <div className="admin-section">
-              <h3>상품 관리</h3>
-              <div style={{ marginBottom: "1rem" }}>
-                <input
-                  placeholder="상품명 검색"
-                  value={filterKeyword}
-                  onChange={(e) => setFilterKeyword(e.target.value)}
-                />
-                <select
-                  value={filterCategory ?? ""}
-                  onChange={(e) =>
-                    setFilterCategory(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                >
-                  <option value="">전체 카테고리</option>
-                  {categories.map((c) => (
-                    <option key={c.categoryId} value={c.categoryId}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-                <button onClick={fetchProducts}>검색</button>
-              </div>
-              <table className="admin-table">
-                <thead>
+                  ))
+                ) : (
                   <tr>
-                    <th>ID</th>
-                    <th>상품명</th>
-                    <th>카테고리</th>
-                    <th>가격</th>
-                    <th>상태</th>
-                    <th>액션</th>
+                    <td colSpan={5}>문의 내역이 없습니다.</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {products.map((p) => (
-                    <tr key={p.productId}>
-                      <td>{p.productId}</td>
-                      <td>
-                        {editingProductId === p.productId ? (
-                          <input
-                            value={editProductForm.title ?? ""}
-                            onChange={(e) =>
-                              setEditProductForm({
-                                ...editProductForm,
-                                title: e.target.value,
-                              })
-                            }
-                          />
-                        ) : (
-                          p.title
-                        )}
-                      </td>
-                      <td>
-                        {editingProductId === p.productId ? (
-                          <select
-                            value={editProductForm.categoryId ?? ""}
-                            onChange={(e) =>
-                              setEditProductForm({
-                                ...editProductForm,
-                                categoryId: Number(e.target.value),
-                              })
-                            }
-                          >
-                            {categories.map((c) => (
-                              <option key={c.categoryId} value={c.categoryId}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          p.categoryName ??
-                          categories.find((c) => c.categoryId === p.categoryId)
-                            ?.name ??
-                          "-"
-                        )}
-                      </td>
-                      <td>
-                        {editingProductId === p.productId ? (
-                          <input
-                            type="number"
-                            value={editProductForm.startingPrice ?? 0}
-                            onChange={(e) =>
-                              setEditProductForm({
-                                ...editProductForm,
-                                startingPrice: Number(e.target.value),
-                              })
-                            }
-                          />
-                        ) : (
-                          p.startingPrice ?? 0
-                        )}
-                      </td>
-                      <td>
-                        {editingProductId === p.productId ? (
-                          <select
-                            value={
-                              editProductForm.productStatus ?? PRODUCT_STATUS[0]
-                            }
-                            onChange={(e) =>
-                              handleProductStatusChange(e.target.value)
-                            }
-                          >
-                            <option value="ACTIVE">판매중</option>
-                            <option value="SOLD">판매완료</option>
-                            <option value="CLOSED">비활성</option>
-                          </select>
-                        ) : (
-                          p.productStatus ?? "-"
-                        )}
-                      </td>
-                      <td>
-                        {editingProductId === p.productId ? (
-                          <>
-                            <button
-                              onClick={() =>
-                                handleSaveProductClick(p.productId)
-                              }
-                            >
-                              저장
-                            </button>
-                            <button onClick={handleCancelProductClick}>
-                              취소
-                            </button>
-                          </>
-                        ) : (
-                          <>
-                            <button onClick={() => handleEditProductClick(p)}>
-                              수정
-                            </button>
-                            <button
-                              className="delete-btn"
-                              onClick={() => handleDeleteProduct(p.productId)}
-                            >
-                              삭제
-                            </button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-          {/* 신고 관리 */}
-          {section === "report" && (
-            <div className="admin-section">
-              <h3>신고 관리</h3>
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>신고자 ID</th>
-                    <th>대상 ID</th>
-                    <th>사유</th>
-                    <th>상태</th>
-                    <th>처리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {reports.map((r) => (
-                    <tr key={r.reportId}>
-                      <td>{r.reportId}</td>
-                      <td>{r.reporterId}</td>
-                      <td>{r.targetId}</td>
-                      <td>{r.reason}</td>
-                      <td>{r.status ? "처리 완료" : "보류 중"}</td>
-                      <td>
-                        <select
-                          defaultValue={r.status ? "true" : "false"}
-                          onChange={(e) =>
-                            handleUpdateReportStatus(
-                              r.reportId,
-                              e.target.value === "true"
-                            )
-                          }
-                        >
-                          <option value="false">보류</option>
-                          <option value="true">처리 완료</option>
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* 통계 */}
-          {section === "stats" && (
-            <div className="admin-section">
-              <h3>통계</h3>
-              <div style={{ width: "100%", height: 300 }}>
-                <ResponsiveContainer>
-                  <BarChart
-                    data={[
-                      { name: "회원", count: stats.userCount ?? 0 },
-                      { name: "상품", count: stats.productCount ?? 0 },
-                      { name: "신고", count: stats.reportCount ?? 0 },
-                    ]}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#8884d8" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          )}
-          {/* 1:1 문의 관리 */}
-          {section === "inquiry" && (
-            <div className="admin-section">
-              <h3>1:1 문의 관리</h3>
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>제목</th>
-                    <th>질문</th>
-                    <th>답변</th>
-                    <th>작성일</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {inquiries.length > 0 ? (
-                    inquiries.map((inq) => (
-                      <tr key={inq.inquiryId}>
-                        <td>{inq.inquiryId}</td>
-                        <td>{inq.title}</td>
-                        <td>{inq.question}</td>
-                        <td>
-                          {inq.answers?.length > 0 ? (
-                            inq.answers.map((a) => (
-                              <div key={a.inquiryReviewId}>
-                                <strong>{a.nickName}</strong>: {a.answer}
-                              </div>
-                            ))
-                          ) : (
-                            <span style={{ color: "gray" }}>대기중</span>
-                          )}
-                        </td>
-                        <td>{new Date(inq.createdAt).toLocaleString()}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5}>문의 내역이 없습니다.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </main>
-      </div>
+      </main>
     </div>
   );
 }
+
+
+
+
+
