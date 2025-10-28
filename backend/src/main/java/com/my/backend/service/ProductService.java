@@ -189,4 +189,9 @@ public class ProductService {
         Product latestProduct = productRepository.findTopByProductStatusOrderByCreatedAtDesc(ProductStatus.ACTIVE);
         return ProductDto.fromEntity(latestProduct);
     }
+
+    public ProductDto getEndingSoonProduct() {
+        Product product = productRepository.findTopByProductStatusOrderByAuctionEndTimeAsc(ProductStatus.ACTIVE);
+        return ProductDto.fromEntity(product);
+    }
 }

@@ -70,6 +70,24 @@ export default function Main() {
     }
   };
 
+  // 마감 임박 상품 배너
+  const fetchEndingSoonProduct = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/products/ending-soon`);
+      if (!res.ok) throw new Error("마감 임박 상품 불러오기 실패");
+
+      const endingSoon: Product = await res.json();
+      setBanners(prev => [
+        prev[0],
+        prev[1],
+        { ...prev[2], image: endingSoon.imageUrl || "/banner3.jpg", text: endingSoon.title, productId: endingSoon.productId }
+      ]);
+    } catch (err) {
+      console.error("❌ 마감 임박 상품 fetch 실패:", err);
+    }
+  };
+
+
   // 전체 상품 리스트
   const fetchProducts = async () => {
     setLoading(true);
@@ -96,6 +114,7 @@ export default function Main() {
   useEffect(() => {
     fetchPopularProduct();
     fetchLatestProduct();
+    fetchEndingSoonProduct();
     fetchProducts();
   }, []);
 
@@ -164,8 +183,8 @@ export default function Main() {
                     {i === 0
                       ? "지금 가장 인기 있는 경매 상품 🔥"
                       : i === 1
-                      ? "오늘의 추천! 신규 등록 상품 🎉"
-                      : "마감 임박! 마지막 기회를 잡으세요 ⚡"}
+                        ? "오늘의 추천! 신규 등록 상품 🎉"
+                        : "마감 임박! 마지막 기회를 잡으세요 ⚡"}
                   </p>
                   {/* 텍스트: 배너 상품 제목 */}
                   <p
@@ -209,9 +228,8 @@ export default function Main() {
         {banners.map((_, i) => (
           <div
             key={i}
-            className={`width-8 height-8 radius-full transition-all ${
-              i === current ? "bg-aaa" : "bg-ddd"
-            }`}
+            className={`width-8 height-8 radius-full transition-all ${i === current ? "bg-aaa" : "bg-ddd"
+              }`}
           />
         ))}
       </div>

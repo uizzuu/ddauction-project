@@ -112,4 +112,11 @@ public class ProductController {
         ProductDto latest = productService.getLatestProduct();
         return ResponseEntity.ok(latest);
     }
+
+    // 마감 임박 상품 조회 (배너용)
+    @GetMapping("/ending-soon")
+    public ResponseEntity<ProductDto> getEndingSoonProduct() {
+        ProductDto product = productService.getEndingSoonProduct();
+        return ResponseEntity.ok(product);
+    }
 }
