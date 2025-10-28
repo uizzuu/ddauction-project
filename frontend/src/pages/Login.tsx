@@ -85,6 +85,10 @@ export default function Login({ setUser }: Props) {
       setErrors((prev) => ({ ...prev, submit: "서버 연결 실패" }));
     }
   };
+  // ✅ 소셜 로그인
+  const handleSocialLogin = (provider: "google" | "naver" | "kakao") => {
+    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
+  };
 
   return (
     <div className="auth-container">
@@ -153,6 +157,30 @@ export default function Login({ setUser }: Props) {
             로그인
           </button>
         </form>
+        
+        {/* 소셜 로그인 버튼 */}
+        <div className="social-login">
+          <button
+            onClick={() => handleSocialLogin("google")}
+            className="btn-social google"
+          >
+            Google 로그인
+          </button>
+          <button
+            onClick={() => handleSocialLogin("naver")}
+            className="btn-social naver"
+          >
+            Naver 로그인
+          </button>
+          <button
+            onClick={() => handleSocialLogin("kakao")}
+            className="btn-social kakao"
+          >
+            Kakao 로그인
+          </button>
+        </div>
+
+
 
         <div className="auth-links">
           <button

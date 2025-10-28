@@ -27,21 +27,15 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         CustomOAuth2User oauthUser = (CustomOAuth2User) authentication.getPrincipal();
 
         Long userId = oauthUser.getUserId();
-        String email = oauthUser.getEmail();  // CustomOAuth2User에서 정의 필요
-        String role = oauthUser.getRole();    // CustomOAuth2User에서 정의 필요
-        String nickName = oauthUser.getNickName();
+        String email = oauthUser.getEmail() != null ? oauthUser.getEmail() : "kakao@noemail.com";
+        String role = oauthUser.getRole();
+        String nickName = oauthUser.getNickName() != null ? oauthUser.getNickName() : "KakaoUser";
 
-        String jwtToken = jwtUtil.createJwt(
-                oauthUser.getUserId(),
-                oauthUser.getEmail(),
-                oauthUser.getRole(),
-                oauthUser.getNickName(), // nickName 포함
-                60 * 60 * 1000L);
+        String jwtToken = jwtUtil.createJwt(userId, email, role, nickName, 60 * 60 * 1000L);
 
-        Map<String, String> tokenResponse = Map.of("token", jwtToken);
-
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(objectMapper.writeValueAsString(tokenResponse));
+        // React 앱 URL로 리다이렉트 + 토큰 전달
+        String redirectUrl = "http://localhost:3000/oauth2/redirect?token=" + jwtToken;
+        response.sendRedirect(redirectUrl);
     }
+
 }

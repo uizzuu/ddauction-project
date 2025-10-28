@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"; // 🔹 useEffect 추가
 import { Routes, Route, useLocation } from "react-router-dom";
-import {jwtDecode} from "jwt-decode"; // 🔹 JWT decode 라이브러리 추가
+import { jwtDecode } from "jwt-decode"; // 🔹 JWT decode 라이브러리 추가
 import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
 import SearchPage from "./pages/SearchPage";
@@ -20,6 +20,7 @@ import {
 } from "./import/import";
 import "./import/import.css";
 import type { User, Category } from "./types/types";
+import OAuthCallback from "./pages/OAuthCallback";
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -77,6 +78,10 @@ export default function App() {
         <Route
           path="/mypage/qna/new"
           element={user ? (<UserQnaForm />) : (<div style={{ padding: "20px" }}>로그인이 필요합니다.</div>)}
+        />
+        <Route
+          path="/oauth2/redirect"
+          element={<OAuthCallback setUser={setUser} />}
         />
       </Routes>
     </div>

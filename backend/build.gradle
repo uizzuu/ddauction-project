@@ -35,7 +35,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
+    // ✅ 변경된 부분 — Authorization Server ❌, Client ✅
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
     // 카카오페이 결제용 HTTP 클라이언트
     //implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'

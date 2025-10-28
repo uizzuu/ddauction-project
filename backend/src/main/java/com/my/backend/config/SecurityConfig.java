@@ -4,6 +4,7 @@ import com.my.backend.myjwt.JWTFilter;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.myjwt.LoginFilter;
 //import com.my.backend.oauth2.OAuth2SuccessHandler;
+import com.my.backend.oauth2.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,13 +24,13 @@ public class SecurityConfig {
 
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
-//    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     public SecurityConfig(AuthenticationConfiguration authenticationConfiguration,
-                          JWTUtil jwtUtil) {
+                          JWTUtil jwtUtil,OAuth2SuccessHandler oAuth2SuccessHandler) {
         this.authenticationConfiguration = authenticationConfiguration;
         this.jwtUtil = jwtUtil;
-//        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
 
     // AuthenticationManager Bean
@@ -45,42 +46,44 @@ public class SecurityConfig {
     }
 
     // Security Filter Chain
+    // Security Filter Chain
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         LoginFilter loginFilter = new LoginFilter(jwtUtil, authenticationManager());
         loginFilter.setFilterProcessesUrl("/api/auth/login");
+
         http
-                // CSRF 비활성화
                 .csrf(csrf -> csrf.disable())
-                // 기본 로그인 폼 비활성화
                 .formLogin(form -> form.disable())
-                // HTTP Basic 비활성화
                 .httpBasic(httpBasic -> httpBasic.disable())
-                // CORS는 필요시 CorsConfigurationSource 빈을 사용
                 .cors(cors -> {})
 
-                // 경로별 접근 제어
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/bid/*/bids", "/api/bid/*/chart").permitAll()
-                        .requestMatchers("/api/bid/**").authenticated()
+                        // OAuth2 관련 경로는 JWT 필터에서 제외
+                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        // 일반 로그인, 회원가입, 공개 API
                         .requestMatchers("/login", "/signup", "/", "/join",
-                                "/api/auth/login", "/api/auth/signup", "/api/users/me",
                                 "/products", "/articles", "/categories",
-                                "/api/categories", "/api/products", "/api/articles", "api/qna",
-                                "/api/categories/**", "/api/products/**", "/api/articles/**", "/api/qna/**", "/api/bookmarks/**").permitAll()
+                                "/api/auth/login", "/api/auth/signup", "/api/users/me",
+                                "/api/categories", "/api/products", "/api/articles", "/api/qna",
+                                "/api/bookmarks/**", "/api/categories/**", "/api/products/**",
+                                "/api/articles/**", "/api/qna/**"
+                        ).permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                // JWT 필터
+
+                // JWT 필터는 OAuth2 경로 제외
                 .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
-                // LoginFilter 등록
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
-                // 세션 설정
+
+                // OAuth2 로그인 성공 핸들러
+                .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2SuccessHandler))
+
+                // 세션 Stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        // OAuth2 로그인 성공 핸들러
-//                .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2SuccessHandler));
 
         return http.build();
     }
+
 }
