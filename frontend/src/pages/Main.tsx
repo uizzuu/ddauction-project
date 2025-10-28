@@ -11,7 +11,42 @@ export default function Main() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [current, setCurrent] = useState(0);
-  const [imageFailed, setImageFailed] = useState(false);
+  const [imageFailed, setImageFailed] = useState<boolean[]>([false, false, false]);
+  const [banners, setBanners] = useState([
+    {
+      id: 1,
+      image: "/banner1.jpg",
+      text: "지금 가장 인기 있는 경매 상품 🔥",
+      productId: null as number | null,
+    },
+    { id: 2, image: "/banner2.jpg", text: "오늘의 추천! 신규 등록 상품 🎉" },
+    { id: 3, image: "/banner3.jpg", text: "마감 임박! 마지막 기회를 잡으세요 ⚡" },
+  ]);
+
+  const fetchPopularProduct = async () => {
+    try {
+      const url = `${API_BASE_URL}/api/products/top-bookmarked`;
+      const res = await fetch(url, { method: "GET" });
+      if (!res.ok) throw new Error("인기 상품 불러오기 실패");
+
+      const popular = await res.json();
+      if (popular && popular.length > 0) {
+        const top = popular[0];
+        setBanners((prev) => [
+          {
+            ...prev[0],
+            image: top.imageUrl || "/banner1.jpg",
+            text: top.title,
+            productId: top.productId,
+          },
+          prev[1],
+          prev[2],
+        ]);
+      }
+    } catch (err) {
+      console.error("❌ 인기 상품 fetch 실패:", err);
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -36,30 +71,16 @@ export default function Main() {
   };
 
   useEffect(() => {
+    fetchPopularProduct();
     fetchProducts();
   }, []);
 
-  // 배너 슬라이드 데이터
-  const banners = [
-    {
-      id: 1,
-      image: "/banner1.jpg",
-      text: "지금 가장 인기 있는 경매 상품 🔥",
-    },
-    {
-      id: 2,
-      image: "/banner2.jpg",
-      text: "오늘의 추천! 신규 등록 상품 🎉",
-    },
-    {
-      id: 3,
-      image: "/banner3.jpg",
-      text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
-    },
-  ];
-
   useEffect(() => {
-    setImageFailed(false);
+    setImageFailed((prev) => {
+      const copy = [...prev];
+      copy[current] = false;
+      return copy;
+    });
   }, [current]);
 
   const handlePrev = () =>
@@ -69,7 +90,7 @@ export default function Main() {
 
   return (
     <div className="container">
-      {/* ✅ 메인 배너 섹션 */}
+      {/* 메인 배너 섹션 */}
       <div className="position-rl width-full height-500 overflow-hidden radius-32">
         <div
           className="flex-box width-full height-full trans duration-500"
@@ -79,26 +100,63 @@ export default function Main() {
             <div
               key={i}
               className="banner-slide position-rl width-full height-500"
+              onClick={() => b.productId && navigate(`/products/${b.productId}`)}
+              style={{ cursor: b.productId ? "pointer" : "default" }}
             >
-              {b.image && !imageFailed ? (
+              {b.image && !imageFailed[i] ? (
                 <>
                   <img
                     src={b.image}
                     alt={`배너 ${i + 1}`}
                     className="width-full height-500 object-cover"
-                    onError={() => setImageFailed(true)}
-                    onLoad={() => setImageFailed(false)}
+                    onError={() =>
+                      setImageFailed((prev) => {
+                        const copy = [...prev];
+                        copy[i] = true;
+                        return copy;
+                      })
+                    }
+                    onLoad={() =>
+                      setImageFailed((prev) => {
+                        const copy = [...prev];
+                        copy[i] = false;
+                        return copy;
+                      })
+                    }
                   />
                   <div className="filter-dark"></div>
+                  {/* 텍스트: 위쪽 고정 문구 */}
+                  <p
+                    className="color-fff title-24 z-10"
+                    style={{
+                      position: "absolute",
+                      bottom: "4rem",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      textAlign: "center",
+                      textShadow: "0 2px 6px rgba(0,0,0,0.6)"
+                    }}
+                  >
+                    지금 가장 인기 있는 경매 상품 🔥
+                  </p>
+                  {/* 텍스트: 배너 상품 제목 */}
+                  <p
+                    className="color-fff title-36 z-10"
+                    style={{
+                      position: "absolute",
+                      bottom: "2rem",
+                      left: "50%",
+                      transform: "translateX(-50%)",
+                      textAlign: "center",
+                      textShadow: "0 2px 6px rgba(0,0,0,0.6)"
+                    }}
+                  >
+                    {b.text}
+                  </p>
                 </>
               ) : (
                 <div className="no-image-txt bg-333">이미지 없음</div>
               )}
-
-              {/* 텍스트 */}
-              <p className="color-fff title-36 position-ab bottom-2rem left-2rem z-10">
-                {b.text}
-              </p>
             </div>
           ))}
         </div>
@@ -130,6 +188,7 @@ export default function Main() {
         ))}
       </div>
 
+      {/* 상품 리스트 */}
       <div className="product-area">
         <div className="flex-box flex-between flex-end mb-20">
           <div>
@@ -167,9 +226,7 @@ export default function Main() {
                   </h3>
                   <div>
                     <div className="flex-box gap-8">
-                      <p className="text-16 color-777 text-nowrap">
-                        경매 등록가
-                      </p>
+                      <p className="text-16 color-777 text-nowrap">경매 등록가</p>
                       <p className="title-18 color-333 text-nowrap">
                         {formatPrice(p.startingPrice)}
                       </p>
@@ -177,9 +234,7 @@ export default function Main() {
                     {p.auctionEndTime && (
                       <>
                         <div className="flex-box gap-8">
-                          <p className="text-16 color-777 text-nowrap">
-                            남은시간
-                          </p>
+                          <p className="text-16 color-777 text-nowrap">남은시간</p>
                           <p className="text-16 color-777 text-nowrap">
                             <span className="title-18 color-333 text-nowrap">
                               {formatDate(p.auctionEndTime)}

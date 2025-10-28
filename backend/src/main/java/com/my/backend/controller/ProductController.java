@@ -4,6 +4,7 @@ import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.entity.User;
+import com.my.backend.service.BookMarkService;
 import com.my.backend.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -20,6 +21,7 @@ import java.util.List;
 public class ProductController {
 
     private final ProductService productService;
+    private final BookMarkService bookMarkService;
 
     // 전체 상품 조회 (로그인 불필요)
     @GetMapping
@@ -96,5 +98,11 @@ public class ProductController {
 
         List<ProductDto> result = productService.searchProducts(keyword, category, productStatus);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/top-bookmarked")
+    public ResponseEntity<List<ProductDto>> getTopBookmarkedProducts() {
+        List<ProductDto> topProducts = bookMarkService.getTopBookmarkedProducts(1); // 1개만 가져오기
+        return ResponseEntity.ok(topProducts);
     }
 }

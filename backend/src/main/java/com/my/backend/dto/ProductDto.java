@@ -19,7 +19,7 @@ public class ProductDto {
 
     private Long sellerId;
 
-    private String sellerNickName; //  추가
+    private String sellerNickName;
 
     private String title;
 
