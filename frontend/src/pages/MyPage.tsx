@@ -24,7 +24,15 @@ export default function MyPage({ user, setUser }: Props) {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showQnas, setShowQnas] = useState(false);
-  
+
+
+  const [showReviews, setShowReviews] = useState(false);
+  const [myReviews, setMyReviews] = useState<any[]>([]);
+  const [averageRating, setAverageRating] = useState(0);
+  const [targetUserId, setTargetUserId] = useState<number>(0);
+  const [rating, setRating] = useState<number>(5);
+  const [comments, setComments] = useState<string>("");
+
 
   const [form, setForm] = useState({
     nickName: user?.nickName || "",
@@ -53,6 +61,31 @@ export default function MyPage({ user, setUser }: Props) {
 
   const navigate = useNavigate();
 
+
+  // ❗ 여기 기존 useEffect 위쪽 또는 바로 아래에 넣기
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    fetch(`${API_BASE_URL}/api/users/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("유저 정보 불러오기 실패");
+        return res.json();
+      })
+      .then(data => setUser(data))
+      .catch(err => {
+        console.error(err);
+        navigate("/");
+      });
+  }, [navigate, setUser]);
+
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/categories`)
       .then((res) => res.json())
@@ -60,10 +93,8 @@ export default function MyPage({ user, setUser }: Props) {
       .catch((err) => console.error("카테고리 불러오기 실패", err));
   }, []);
 
-  if (!user) {
-    navigate("/");
-    return null;
-  }
+
+
 
   const buttonStyle = {
     padding: "12px 24px",
@@ -83,15 +114,14 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   const handleUpdate = async () => {
+    if (!user) return alert("로그인이 필요합니다.");
+
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/users/${user.userId}/mypage`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}/mypage`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
       if (res.ok) {
         const updatedUser = await res.json();
         setUser(updatedUser);
@@ -108,7 +138,9 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   const handleDelete = async () => {
+    if (!user) return alert("로그인이 필요합니다.");
     if (!confirm("정말 회원 탈퇴하시겠습니까?")) return;
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}`, {
         method: "DELETE",
@@ -126,6 +158,7 @@ export default function MyPage({ user, setUser }: Props) {
       alert("서버 오류");
     }
   };
+
 
   // ★ 이미지 URL 절대 경로 처리
   const normalizeProduct = (p: Partial<Product>): Product => ({
@@ -167,10 +200,9 @@ export default function MyPage({ user, setUser }: Props) {
   });
 
   const fetchSellingProducts = async () => {
+    if (!user) return; // null 체크
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/products/seller/${user.userId}`
-      );
+      const res = await fetch(`${API_BASE_URL}/api/products/seller/${user.userId}`);
       if (res.ok) {
         const data: Partial<Product>[] = await res.json();
         setSellingProducts(data.map(normalizeProduct));
@@ -226,6 +258,7 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   const handleFetchMyQnas = async () => {
+    if (!user) return; // null 체크
     try {
       const res = await fetch(`${API_BASE_URL}/api/qna/user/${user.userId}`);
       if (res.ok) {
@@ -241,15 +274,16 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
   const toggleSection = (
-    section: "editing" | "selling" | "bookmarks" | "reports" | "qnas" | "inquiries"
+    section: "editing" | "selling" | "bookmarks" | "reports" | "qnas" | "inquiries" | "reviews"
   ) => {
     const isCurrentlyOpen =
       (section === "editing" && editing) ||
       (section === "selling" && showSelling) ||
       (section === "bookmarks" && showBookmarks) ||
       (section === "reports" && showReports) ||
-      (section === "qnas" && showQnas);
-    (section === "inquiries" && showInquiries);
+      (section === "qnas" && showQnas) ||
+      (section === "inquiries" && showInquiries) ||
+      (section === "reviews" && showReviews);
 
     setEditing(false);
     setShowSelling(false);
@@ -257,6 +291,7 @@ export default function MyPage({ user, setUser }: Props) {
     setShowReports(false);
     setShowQnas(false);
     setEditingProductId(null);
+    setShowReviews(false);
 
     if (isCurrentlyOpen) return;
 
@@ -283,6 +318,11 @@ export default function MyPage({ user, setUser }: Props) {
       case "inquiries":
         setShowInquiries(true);
         handleFetchMyInquiries();
+        break;
+      case "reviews":
+        if (!user) return alert("로그인이 필요합니다.");
+        setShowReviews(true);
+        fetchMyReviews();
         break;
     }
   };
@@ -404,6 +444,50 @@ export default function MyPage({ user, setUser }: Props) {
   };
 
 
+  const fetchMyReviews = async () => {
+    if (!user) return; // user 없으면 fetch 중단
+    try {
+      const res = await fetch(`${API_BASE_URL}/reviews/user/${user.userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setMyReviews(data);
+      }
+      const avgRes = await fetch(`${API_BASE_URL}/reviews/user/${user.userId}/average`);
+      if (avgRes.ok) {
+        const data = await avgRes.json();
+        setAverageRating(data.averageRating);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("리뷰 불러오기 실패");
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!targetUserId || !rating) return alert("리뷰 대상과 평점을 입력해주세요.");
+    try {
+      const res = await fetch(`${API_BASE_URL}/reviews/${targetUserId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating, comments }),
+      });
+      if (res.ok) {
+        alert("리뷰가 등록되었습니다.");
+        fetchMyReviews();
+        setTargetUserId(0);
+        setComments("");
+        setRating(5);
+      } else {
+        alert("리뷰 등록 실패");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("서버 오류");
+    }
+  };
+
+
+
 
   return (
     <div className="container">
@@ -431,6 +515,9 @@ export default function MyPage({ user, setUser }: Props) {
         </button>
         <button style={buttonStyle} onClick={() => toggleSection("inquiries")}>
           1:1 문의 내역
+        </button>
+        <button style={buttonStyle} onClick={() => toggleSection("reviews")}>
+          리뷰 관리
         </button>
       </div>
 
@@ -807,7 +894,72 @@ export default function MyPage({ user, setUser }: Props) {
           )}
         </div>
       )}
+      {showInquiries && (
+        <div> ... 문의 내역 ... </div>
+      )}
+
+      {showReviews && (
+        <div style={{ marginBottom: "20px" }}>
+          <h3>리뷰 관리</h3>
+
+          <h4>⭐ 내 평균 평점: {averageRating.toFixed(1)}점</h4>
+
+          <div style={{ marginBottom: "20px" }}>
+            <h4>📋 내가 받은 리뷰</h4>
+            {myReviews.length === 0 ? (
+              <p>받은 리뷰가 없습니다.</p>
+            ) : (
+              <ul>
+                {myReviews.map((r, idx) => (
+                  <li key={idx} style={{ marginBottom: "10px" }}>
+                    <strong>평점:</strong> {r.rating}점 <br />
+                    <strong>내용:</strong> {r.comments} <br />
+                    <small>
+                      작성일:{" "}
+                      {r.createdAt
+                        ? new Date(r.createdAt).toLocaleString()
+                        : "날짜 없음"}
+                    </small>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <hr />
+
+          <div style={{ marginTop: "20px" }}>
+            <h4>✏️ 리뷰 작성</h4>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={rating}
+              onChange={(e) => setRating(Number(e.target.value))}
+              style={{ marginRight: "10px" }}
+            />
+            <input
+              type="number"
+              placeholder="대상 유저 ID"
+              value={targetUserId || ""}
+              onChange={(e) => setTargetUserId(Number(e.target.value))}
+              style={{ marginRight: "10px" }}
+            />
+            <input
+              type="text"
+              placeholder="리뷰 내용 입력"
+              value={comments}
+              onChange={(e) => setComments(e.target.value)}
+              style={{ width: "300px", marginRight: "10px" }}
+            />
+            <button style={buttonStyle} onClick={handleSubmitReview}>
+              리뷰 등록
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
 }
+      
