@@ -64,6 +64,47 @@ export default function AdminPage() {
     password: "",
     phone: "",
   });
+   // ===================================
+  // 통계 데이터 가져오기
+  // ===================================
+ const fetchStats = useCallback(async () => {
+  try {
+    const token = localStorage.getItem("token"); // 로그인 후 저장된 토큰
+    if (!token) {
+      console.error("토큰이 없습니다. 관리자 로그인 필요");
+      return;
+    }
+
+    const res = await fetch(`${API_BASE_URL}/admin/stats`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // 토큰 포함
+      },
+    });
+
+    if (!res.ok) {
+      console.error("통계 데이터 조회 실패:", res.status);
+      return;
+    }
+
+    const data = await res.json();
+    setStats({
+      userCount: data.userCount,
+      productCount: data.productCount,
+      reportCount: data.reportCount,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+}, []);
+
+
+  useEffect(() => {
+    if (section === "stats") {
+      fetchStats();
+    }
+  }, [section, fetchStats]);
+
 
   const fetchUsers = useCallback(async () => {
     let url = `${API_BASE_URL}/api/users`;
@@ -138,11 +179,11 @@ export default function AdminPage() {
     }
   }, []);
 
-  const fetchStats = useCallback(async () => {
-    const res = await fetch(`${API_BASE_URL}/admin/stats`);
-    const data = await res.json();
-    setStats(data);
-  }, []);
+  // const fetchStats = useCallback(async () => {
+  //   const res = await fetch(`${API_BASE_URL}/admin/stats`);
+  //   const data = await res.json();
+  //   setStats(data);
+  // }, []);
 
   const fetchCategories = useCallback(async () => {
     const res = await fetch(`${API_BASE_URL}/api/categories`);
@@ -742,6 +783,7 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+        
         {/* 1:1 문의 관리 */}
         {section === "inquiry" && (
           <div className="admin-section">
