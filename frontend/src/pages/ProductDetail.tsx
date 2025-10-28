@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import type { Product, Bid, User, Category, Qna } from "../types/types";
 import { API_BASE_URL } from "../services/api";
@@ -19,6 +19,8 @@ export default function ProductDetail({ user }: Props) {
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
+  const navigate = useNavigate();
+  const isSeller = user?.userId === product?.sellerId;
 
   // 찜 관련 state
   const [isBookMarked, setIsBookMarked] = useState(false);
@@ -377,6 +379,23 @@ export default function ProductDetail({ user }: Props) {
           </div>
 
           <p>판매자: {sellerNickName}</p>
+          {isSeller && (
+            <button
+              style={{
+                backgroundColor: "#4caf50",
+                color: "#fff",
+                border: "none",
+                padding: "8px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                marginTop: "8px",
+              }}
+              onClick={() => navigate(`/products/${product.productId}/edit`)}
+            >
+              상품 수정
+            </button>
+          )}
           <p>카테고리: {product.categoryName ?? "없음"}</p>
           <p style={{ color: "#555", fontSize: "0.9rem" }}>
             등록시간:{" "}
