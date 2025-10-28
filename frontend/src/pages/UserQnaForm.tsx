@@ -23,15 +23,17 @@ export default function UserQnaForm() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/inquiry`, { // 여기 수정됨
+      const token = localStorage.getItem("token");
+
+      const res = await fetch(`${API_BASE_URL}/api/inquiry`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
         },
-        credentials: "include", // 세션 쿠키 전송
         body: JSON.stringify({
           title,
-          question: content, // 백엔드에서 question 필드로 받음
+          question: content,
         }),
       });
 
@@ -40,7 +42,7 @@ export default function UserQnaForm() {
         try {
           const errData = await res.json();
           errMsg = errData.message || errMsg;
-        } catch (_) {}
+        } catch (_) { }
         throw new Error(errMsg);
       }
 

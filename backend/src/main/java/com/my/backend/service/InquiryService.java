@@ -1,14 +1,15 @@
 package com.my.backend.service;
 
-import com.my.backend.entity.Qna;
-import com.my.backend.entity.QnaReview;
+import com.my.backend.dto.board.ArticleDto;
+import com.my.backend.dto.board.CommentDto;
 import com.my.backend.entity.User;
 import com.my.backend.entity.board.Article;
 import com.my.backend.entity.board.Board;
-import com.my.backend.repository.QnaReviewRepository;
+import com.my.backend.entity.board.Comment;
 import com.my.backend.repository.UserRepository;
 import com.my.backend.repository.board.ArticleRepository;
 import com.my.backend.repository.board.BoardRepository;
+import com.my.backend.repository.board.CommentRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,7 @@ public class InquiryService {
     private final ArticleRepository articleRepository;
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
-    private final QnaReviewRepository qnaReviewRepository; // 답변 연결용
+    private final CommentRepository commentRepository;
 
     // -----------------------------
     // 유저 1:1 문의 작성
@@ -32,7 +33,6 @@ public class InquiryService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자가 없습니다."));
 
-        // 1:1 문의 게시판 가져오기 (없으면 생성)
         Board board = boardRepository.findByBoardName("1:1 문의")
                 .orElseGet(() -> boardRepository.save(Board.builder().boardName("1:1 문의").build()));
 
@@ -47,10 +47,10 @@ public class InquiryService {
     }
 
     // -----------------------------
-    // 관리자 답변 작성
+    // 관리자 답변 작성 (Comment 사용)
     // -----------------------------
     @Transactional
-    public QnaReview answerInquiry(Long articleId, Long adminId, String answer) {
+    public Comment answerInquiry(Long articleId, Long adminId, String answer) {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new IllegalArgumentException("문의글이 없습니다."));
         User admin = userRepository.findById(adminId)
@@ -60,27 +60,22 @@ public class InquiryService {
             throw new IllegalArgumentException("관리자만 답변 가능");
         }
 
-        QnaReview review = QnaReview.builder()
-                .qnaUser(admin)
-                .qna(Qna.builder()
-                        .title(article.getTitle())
-                        .question(article.getContent())
-                        .build())
-                .answer(answer)
+        Comment comment = Comment.builder()
+                .article(article)
+                .user(admin)
+                .content(answer)
                 .build();
 
-        return qnaReviewRepository.save(review);
+        return commentRepository.save(comment);
     }
 
     // -----------------------------
-    // 유저가 자신의 문의글 + 답변 조회
+    // 유저가 자신의 문의글 조회
     // -----------------------------
     public List<Article> getMyInquiries(Long userId) {
-        // 1:1 문의 게시판 가져오기
         Board board = boardRepository.findByBoardName("1:1 문의")
                 .orElseThrow(() -> new IllegalArgumentException("1:1 문의 게시판 없음"));
 
-        // 유저 + 1:1 문의 게시판 기준 조회
         return articleRepository.findByUserUserIdAndBoard(userId, board);
     }
 
@@ -90,8 +85,16 @@ public class InquiryService {
     public List<Article> getAllInquiries() {
         Board board = boardRepository.findByBoardName("1:1 문의")
                 .orElseThrow(() -> new IllegalArgumentException("1:1 문의 게시판 없음"));
+
         return articleRepository.findByBoard(board);
     }
 
-
+    // -----------------------------
+    // 특정 Article의 답변(Comment) 조회
+    // -----------------------------
+    public List<CommentDto> getCommentsByArticle(Long articleId) {
+        return commentRepository.findByArticleArticleId(articleId).stream()
+                .map(CommentDto::fromEntity)
+                .toList();
+    }
 }

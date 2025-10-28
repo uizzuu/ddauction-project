@@ -308,6 +308,7 @@ export default function AdminPage() {
 
   const fetchInquiries = async () => {
     try {
+<<<<<<< HEAD
       const res = await fetch(`${API_BASE_URL}/api/inquiry/all`);
       if (res.ok) {
         const data: Qna[] = await res.json();
@@ -325,8 +326,79 @@ export default function AdminPage() {
         }));
         setInquiries(mapped);
       }
+=======
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/inquiry/admin`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
+
+      if (!res.ok) {
+        console.error("문의 조회 실패:", res.status);
+        setInquiries([]);
+        return;
+      }
+
+      const data: any[] = await res.json();
+      console.log("📬 관리자 문의 데이터:", data);
+
+      // Inquiry 타입에 맞춰서 매핑
+      const mapped: Inquiry[] = data.map((d, idx) => {
+        // content 안에 [답변]:이 있는 경우 분리
+        const [questionPart, answerPart] = d.content.split("[답변]:");
+
+        return {
+          inquiryId: d.articleId,
+          title: d.title,
+          question: questionPart.trim(),
+          createdAt: d.createdAt,
+          answers: answerPart
+            ? [
+              {
+                inquiryReviewId: idx + 1, // 백엔드에서 답변 id가 따로 없으니 임시 번호
+                answer: answerPart.trim(),
+                nickName: "관리자",
+                createdAt: d.updatedAt,
+              },
+            ]
+            : [],
+          newAnswer: "",
+        };
+      });
+
+      setInquiries(mapped);
+    } catch (err) {
+      console.error("문의 불러오기 실패:", err);
+      setInquiries([]);
+    }
+  };
+
+
+
+
+  const handleSaveInquiryAnswer = async (inquiryId: number, answer?: string) => {
+    if (!answer) return alert("답변을 입력해주세요.");
+
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/inquiry/${inquiryId}/answer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+        body: JSON.stringify({ answer }),
+      });
+      if (!res.ok) throw new Error("답변 저장 실패");
+
+      alert("답변이 등록되었습니다.");
+      fetchInquiries(); // 화면 갱신
+>>>>>>> b3d018e (1:1문의 기능 활성화)
     } catch (err) {
       console.error(err);
+      alert("답변 등록 중 오류가 발생했습니다.");
     }
   };
 
@@ -424,9 +496,289 @@ export default function AdminPage() {
                               })
                             }
                           />
+<<<<<<< HEAD
                         ) : (
                           u.nickName
                         )}
+=======
+                          <button onClick={() => handleSaveUserClick(u.userId)}>저장</button>
+                          <button onClick={handleCancelUserClick}>취소</button>
+                        </>
+                      ) : (
+                        <button onClick={() => handleEditUserClick(u)}>수정</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+
+            </table>
+          </div>
+        )}
+
+        {/* 상품 관리 */}
+        {section === "product" && (
+          <div className="admin-section">
+            <h3>상품 관리</h3>
+            <div style={{ marginBottom: "1rem" }}>
+              <input
+                placeholder="상품명 검색"
+                value={filterKeyword}
+                onChange={(e) => setFilterKeyword(e.target.value)}
+              />
+              <select
+                value={filterCategory ?? ""}
+                onChange={(e) =>
+                  setFilterCategory(
+                    e.target.value ? Number(e.target.value) : null
+                  )
+                }
+              >
+                <option value="">전체 카테고리</option>
+                {categories.map((c) => (
+                  <option key={c.categoryId} value={c.categoryId}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <button onClick={fetchProducts}>검색</button>
+            </div>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>상품명</th>
+                  <th>카테고리</th>
+                  <th>가격</th>
+                  <th>상태</th>
+                  <th>액션</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map((p) => (
+                  <tr key={p.productId}>
+                    <td>{p.productId}</td>
+                    <td>
+                      {editingProductId === p.productId ? (
+                        <input
+                          value={editProductForm.title ?? ""}
+                          onChange={(e) =>
+                            setEditProductForm({
+                              ...editProductForm,
+                              title: e.target.value,
+                            })
+                          }
+                        />
+                      ) : (
+                        p.title
+                      )}
+                    </td>
+                    <td>
+                      {editingProductId === p.productId ? (
+                        <select
+                          value={editProductForm.categoryId ?? ""}
+                          onChange={(e) =>
+                            setEditProductForm({
+                              ...editProductForm,
+                              categoryId: Number(e.target.value),
+                            })
+                          }
+                        >
+                          {categories.map((c) => (
+                            <option key={c.categoryId} value={c.categoryId}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        p.categoryName ??
+                        categories.find(
+                          (c) => c.categoryId === p.categoryId
+                        )?.name ??
+                        "-"
+                      )}
+                    </td>
+                    <td>
+                      {editingProductId === p.productId ? (
+                        <input
+                          type="number"
+                          value={editProductForm.startingPrice ?? 0}
+                          onChange={(e) =>
+                            setEditProductForm({
+                              ...editProductForm,
+                              startingPrice: Number(e.target.value),
+                            })
+                          }
+                        />
+                      ) : (
+                        p.startingPrice ?? 0
+                      )}
+                    </td>
+                    <td>
+                      {editingProductId === p.productId ? (
+                        <select
+                          value={
+                            editProductForm.productStatus ?? PRODUCT_STATUS[0]
+                          }
+                          onChange={(e) =>
+                            handleProductStatusChange(e.target.value)
+                          }
+                        >
+                          <option value="ACTIVE">판매중</option>
+                          <option value="SOLD">판매완료</option>
+                          <option value="CLOSED">비활성</option>
+                        </select>
+                      ) : (
+                        p.productStatus ?? "-"
+                      )}
+                    </td>
+                    <td>
+                      {editingProductId === p.productId ? (
+                        <>
+                          <button
+                            onClick={() => handleSaveProductClick(p.productId)}
+                          >
+                            저장
+                          </button>
+                          <button onClick={handleCancelProductClick}>
+                            취소
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => handleEditProductClick(p)}>
+                            수정
+                          </button>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDeleteProduct(p.productId)}
+                          >
+                            삭제
+                          </button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 신고 관리 */}
+        {section === "report" && (
+          <div className="admin-section">
+            <h3>신고 관리</h3>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>신고자 ID</th>
+                  <th>대상 ID</th>
+                  <th>사유</th>
+                  <th>상태</th>
+                  <th>처리</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reports.map((r) => (
+                  <tr key={r.reportId}>
+                    <td>{r.reportId}</td>
+                    <td>{r.reporterId}</td>
+                    <td>{r.targetId}</td>
+                    <td>{r.reason}</td>
+                    <td>{r.status ? "처리 완료" : "보류 중"}</td>
+                    <td>
+                      <select
+                        defaultValue={r.status ? "true" : "false"}
+                        onChange={(e) =>
+                          handleUpdateReportStatus(
+                            r.reportId,
+                            e.target.value === "true"
+                          )
+                        }
+                      >
+                        <option value="false">보류</option>
+                        <option value="true">처리 완료</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* 통계 */}
+        {section === "stats" && (
+          <div className="admin-section">
+            <h3>통계</h3>
+            <div style={{ width: "100%", height: 300 }}>
+              <ResponsiveContainer>
+                <BarChart
+                  data={[
+                    { name: "회원", count: stats.userCount ?? 0 },
+                    { name: "상품", count: stats.productCount ?? 0 },
+                    { name: "신고", count: stats.reportCount ?? 0 },
+                  ]}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+        {/* 1:1 문의 관리 */}
+        {section === "inquiry" && (
+          <div className="admin-section">
+            <h3>1:1 문의 관리</h3>
+            <table className="admin-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>제목</th>
+                  <th>질문</th>
+                  <th>답변</th>
+                  <th>작성일</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inquiries.length > 0 ? (
+                  inquiries.map((inq) => (
+                    <tr key={inq.inquiryId}>
+                      <td>{inq.inquiryId}</td>
+                      <td>{inq.title}</td>
+                      <td>{inq.question}</td>
+                      <td>
+                        {inq.answers?.length > 0 && inq.answers.map((a) => (
+                          <div key={a.inquiryReviewId}>
+                            <strong>{a.nickName}</strong>: {a.answer}
+                          </div>
+                        ))}
+
+                        {/* 관리자가 새 답변 작성 가능 */}
+                        <input
+                          type="text"
+                          placeholder="답변 입력"
+                          value={inq.newAnswer}
+                          onChange={(e) => {
+                            setInquiries(prev =>
+                              prev.map(i =>
+                                i.inquiryId === inq.inquiryId
+                                  ? { ...i, newAnswer: e.target.value }
+                                  : i
+                              )
+                            );
+                          }}
+                        />
+                        <button onClick={() => handleSaveInquiryAnswer(inq.inquiryId, inq.newAnswer)}>
+                          답변 등록
+                        </button>
+>>>>>>> b3d018e (1:1문의 기능 활성화)
                       </td>
                       <td>{u.email}</td>
                       <td>

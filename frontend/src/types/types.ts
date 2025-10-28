@@ -209,4 +209,5 @@ export interface Inquiry {
     nickName: string;
     createdAt: string;
   }[];
+  newAnswer?: string;
 }

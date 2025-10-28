@@ -24,6 +24,7 @@ export default function MyPage({ user, setUser }: Props) {
   const [showBookmarks, setShowBookmarks] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showQnas, setShowQnas] = useState(false);
+  
 
   const [form, setForm] = useState({
     nickName: user?.nickName || "",
@@ -369,11 +370,30 @@ export default function MyPage({ user, setUser }: Props) {
   const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
 
   const handleFetchMyInquiries = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
     try {
-      const res = await fetch(`${API_BASE_URL}/api/inquiries/user/${user.userId}`);
+      const res = await fetch(`${API_BASE_URL}/api/inquiry/user`, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+
       if (res.ok) {
-        const data: Inquiry[] = await res.json();
-        setMyInquiries(data);
+        const dataFromServer: any[] = await res.json();
+        const mappedData: Inquiry[] = dataFromServer.map((i) => ({
+          inquiryId: i.inquiryId,
+          title: i.title,
+          question: i.content,
+          createdAt: i.createdAt,
+          answers: i.answers ?? [],  // 여기서 서버 답변이 안 들어올 경우 빈 배열
+        }));
+        setMyInquiries(mappedData);
       } else {
         alert("문의 내역 조회 실패");
       }
@@ -382,6 +402,7 @@ export default function MyPage({ user, setUser }: Props) {
       alert("서버 오류");
     }
   };
+
 
 
   return (
@@ -696,27 +717,36 @@ export default function MyPage({ user, setUser }: Props) {
                   <div style={{ fontWeight: "bold" }}>{qna.title}</div>
                   <div>질문: {qna.question}</div>
                   <div>작성일: {new Date(qna.createdAt).toLocaleString()}</div>
-                  <div>
-                    <strong>답변:</strong>
-                    {(qna.answers ?? []).length === 0 ? (
-                      <span> 대기중</span>
-                    ) : (
+
+                  {/* 답변 상태 */}
+                  {qna.answers && qna.answers.length > 0 && (
+                    <div>
+                      <strong>답변 완료</strong>
                       <ul>
-                        {(qna.answers ?? []).map((a) => (
+                        {qna.answers.map((a) => (
                           <li key={a.qnaReviewId}>
                             {a.nickName ?? "익명"}: {a.answer} (
                             {new Date(a.createdAt).toLocaleString()})
                           </li>
                         ))}
                       </ul>
-                    )}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* 실제 답변 내용 */}
+                  {(qna.answers ?? []).map((a) => (
+                    <div key={a.qnaReviewId} style={{ marginLeft: "10px" }}>
+                      {a.nickName ?? "익명"}: {a.answer} (
+                      {new Date(a.createdAt).toLocaleString()})
+                    </div>
+                  ))}
                 </li>
               ))}
             </ul>
           )}
         </div>
       )}
+
 
       {/* 기타 기능 버튼 */}
       <div style={{ marginTop: "20px" }}>
@@ -745,34 +775,39 @@ export default function MyPage({ user, setUser }: Props) {
             <p>문의 내역이 없습니다.</p>
           ) : (
             <ul>
-              {myInquiries.map((i) => (
-                <li key={i.inquiryId}>
-                  <div><strong>제목:</strong> {i.title}</div>
-                  <div><strong>내용:</strong> {i.question}</div>
-                  <div>
-                    <strong>작성일:</strong> {i.createdAt ? new Date(i.createdAt).toLocaleString() : "작성일 없음"}
-                  </div>
-                  <div>
-                    <strong>답변:</strong>{" "}
-                    {i.answers && i.answers.length > 0 ? (
-                      <ul>
-                        {i.answers.map((a) => (
-                          <li key={a.inquiryReviewId}>
-                            {a.nickName ?? "익명"}: {a.answer} ({new Date(a.createdAt).toLocaleString()})
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      "대기중"
-                    )}
-                  </div>
-                </li>
+              {myInquiries.map((i) => {
+                const answers = i.answers ?? []; // null 방지
+                return (
+                  <li key={i.inquiryId} style={{ marginBottom: "15px" }}>
+                    <div><strong>제목:</strong> {i.title}</div>
+                    <div><strong>내용:</strong> {i.question}</div>
+                    <div>
+                      <strong>작성일:</strong>{" "}
+                      {i.createdAt ? new Date(i.createdAt).toLocaleString() : "작성일 없음"}
+                    </div>
 
-              ))}
+                    {/* 답변 내용 */}
+                    {answers.length > 0 && (
+                      <div style={{ marginLeft: "10px", marginTop: "5px" }}>
+                        {answers.map((a) => (
+                          <div key={a.inquiryReviewId}>
+                            {a.nickName ?? "익명"}: {a.answer} (
+                            {a.createdAt
+                              ? new Date(a.createdAt).toLocaleString()
+                              : "작성일 없음"}
+                            )
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
       )}
+
     </div>
   );
 }
