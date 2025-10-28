@@ -106,7 +106,9 @@ public class BidService {
 
     private static final long MIN_BID_INCREMENT = 1000; // 최소 입찰 단위
 
-    /** 입찰하기 */
+    /**
+     * 입찰하기
+     */
     public ResponseEntity<?> placeBid(Long userId, Long productId, Long bidPrice) {
         if (userId == null) {
             return ResponseEntity.status(401).body(Map.of("error", "인증이 필요합니다."));
@@ -133,16 +135,17 @@ public class BidService {
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
             // =-=-=-=-=-=-=-=-= 입찰 관련 비즈니스 로직 시작
-            // 현재 최고 입찰 가격
+            // 현재 최고 입찰 가격 조회 (첫 입찰도 안전하게 처리)
             Bid top = bidRepository.findTopByProductProductIdOrderByCreatedAtDesc(productId);
-
-            // 현재 최고 입찰가
-            Long current = top.getBidPrice();
+            Long current = (top != null) ? top.getBidPrice() : 0L;   // 첫 입찰이면 0원
             Long minNext = current + MIN_BID_INCREMENT;
 
-            // 현재 최고 입찰가 보다 1,000원 높아야 입찰 가능
-            if (bidPrice.compareTo(minNext) < 0)
-                throw new IllegalArgumentException(String.format("입찰가는 현재가보다 최소 %,d원 이상 높아야 합니다.", MIN_BID_INCREMENT));
+            // 현재 최고 입찰가보다 1,000원 이상 높아야 입찰 가능
+            if (bidPrice.compareTo(minNext) < 0) {
+                throw new IllegalArgumentException(
+                        String.format("입찰가는 현재가보다 최소 %,d원 이상 높아야 합니다.", MIN_BID_INCREMENT)
+                );
+            }
 
             // =-=-=-=-=-=-=-=-= 입찰 관련 비즈니스 로직 끝
 
@@ -164,7 +167,7 @@ public class BidService {
                     bid.getBidId(), productId, userId, bidPrice);
 
             BidResponse resp = new BidResponse(
-                      bid.getBidId(),
+                    bid.getBidId(),
                     productId,
                     userId,
                     bid.getBidPrice(),
@@ -187,7 +190,9 @@ public class BidService {
         }
     }
 
-    /** 상품별 입찰 내역 조회 */
+    /**
+     * 상품별 입찰 내역 조회
+     */
     @Transactional(readOnly = true)
     public ResponseEntity<?> getBidHistory(Long productId) {
         try {
@@ -217,7 +222,9 @@ public class BidService {
         }
     }
 
-    /** 최고 입찰자 조회 */
+    /**
+     * 최고 입찰자 조회
+     */
     @Transactional(readOnly = true)
     public Bid getHighestBid(Long productId) {
         return bidRepository.findTopByProductProductIdOrderByCreatedAtDesc(productId);
