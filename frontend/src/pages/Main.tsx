@@ -11,7 +11,7 @@ export default function Main() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [current, setCurrent] = useState(0);
-  const [imageFailed, setImageFailed] = useState<boolean[]>([false, false, false]);
+  const [imageLoaded, setImageLoaded] = useState<boolean[]>([false, false, false]);
   const [banners, setBanners] = useState([
     {
       id: 1,
@@ -119,18 +119,19 @@ export default function Main() {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    setImageFailed((prev) => {
-      const copy = [...prev];
-      copy[current] = false;
-      return copy;
-    });
-  }, [current]);
-
   const handlePrev = () =>
     setCurrent((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
   const handleNext = () =>
     setCurrent((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
+
+  // ✅ 자동 슬라이드 추가
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrent(prev => (prev === banners.length - 1 ? 0 : prev + 1));
+    }, 5000); // 5초마다 자동 이동
+
+    return () => clearInterval(interval); // 컴포넌트 언마운트 시 정리
+  }, [banners.length]);
 
   return (
     <div className="container">
@@ -147,64 +148,63 @@ export default function Main() {
               onClick={() => b.productId && navigate(`/products/${b.productId}`)}
               style={{ cursor: b.productId ? "pointer" : "default" }}
             >
-              {b.image && !imageFailed[i] ? (
+              {b.image ? (
                 <>
                   <img
                     src={b.image}
                     alt={`배너 ${i + 1}`}
                     className="width-full height-500 object-cover"
-                    onError={() =>
-                      setImageFailed((prev) => {
+                    style={{ display: imageLoaded[i] ? "block" : "none" }}
+                    onLoad={() =>
+                      setImageLoaded(prev => {
                         const copy = [...prev];
                         copy[i] = true;
                         return copy;
                       })
                     }
-                    onLoad={() =>
-                      setImageFailed((prev) => {
+                    onError={() =>
+                      setImageLoaded(prev => {
                         const copy = [...prev];
                         copy[i] = false;
                         return copy;
                       })
                     }
                   />
+                  {!imageLoaded[i] && (
+                    <div className="no-image-txt bg-333">이미지 로딩중...</div>
+                  )}
                   <div className="filter-dark"></div>
-                  {/* 텍스트: 위쪽 고정 문구 */}
-                  <p
-                    className="color-fff title-24 z-10"
-                    style={{
-                      position: "absolute",
-                      bottom: "4rem",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      textAlign: "center",
-                      textShadow: "0 2px 6px rgba(0,0,0,0.6)"
-                    }}
-                  >
+
+                  {/* 텍스트 */}
+                  <p className="color-fff title-24 z-10" style={{
+                    position: "absolute",
+                    bottom: "4rem",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    textAlign: "center",
+                    textShadow: "0 2px 6px rgba(0,0,0,0.6)"
+                  }}>
                     {i === 0
                       ? "지금 가장 인기 있는 경매 상품 🔥"
                       : i === 1
                         ? "오늘의 추천! 신규 등록 상품 🎉"
                         : "마감 임박! 마지막 기회를 잡으세요 ⚡"}
                   </p>
-                  {/* 텍스트: 배너 상품 제목 */}
-                  <p
-                    className="color-fff title-36 z-10"
-                    style={{
-                      position: "absolute",
-                      bottom: "2rem",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      textAlign: "center",
-                      textShadow: "0 2px 6px rgba(0,0,0,0.6)"
-                    }}
-                  >
+                  <p className="color-fff title-36 z-10" style={{
+                    position: "absolute",
+                    bottom: "2rem",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    textAlign: "center",
+                    textShadow: "0 2px 6px rgba(0,0,0,0.6)"
+                  }}>
                     {b.text}
                   </p>
                 </>
               ) : (
                 <div className="no-image-txt bg-333">이미지 없음</div>
               )}
+
             </div>
           ))}
         </div>
