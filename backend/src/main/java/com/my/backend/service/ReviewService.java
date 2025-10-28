@@ -7,7 +7,6 @@ import com.my.backend.repository.ReviewRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -20,7 +19,6 @@ public class ReviewService {
     private final UserRepository userRepository;
 
     // 리뷰 작성
-    @Transactional
     public ReviewDto createReview(Long targetUserId, ReviewDto dto) {
         User targetUser = userRepository.findById(targetUserId)
                 .orElseThrow(() -> new RuntimeException("대상 유저 없음"));
@@ -32,7 +30,6 @@ public class ReviewService {
     }
 
     // 특정 유저 리뷰 조회
-    @Transactional(readOnly = true)
     public List<ReviewDto> getReviewsForUser(Long userId) {
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("대상 유저 없음"));
@@ -44,7 +41,6 @@ public class ReviewService {
     }
 
     // 특정 유저 평균 평점
-    @Transactional(readOnly = true)
     public double getAverageRating(Long userId) {
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("대상 유저 없음"));

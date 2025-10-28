@@ -465,12 +465,20 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleSubmitReview = async () => {
     if (!targetUserId || !rating) return alert("리뷰 대상과 평점을 입력해주세요.");
+
+    const token = localStorage.getItem("token");
+    if (!token) return alert("로그인이 필요합니다.");
+
     try {
       const res = await fetch(`${API_BASE_URL}/reviews/${targetUserId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}` // ✅ 토큰 추가
+        },
         body: JSON.stringify({ rating, comments }),
       });
+
       if (res.ok) {
         alert("리뷰가 등록되었습니다.");
         fetchMyReviews();
@@ -478,13 +486,15 @@ export default function MyPage({ user, setUser }: Props) {
         setComments("");
         setRating(5);
       } else {
-        alert("리뷰 등록 실패");
+        const errorText = await res.text();
+        alert("리뷰 등록 실패: " + errorText);
       }
     } catch (err) {
       console.error(err);
       alert("서버 오류");
     }
   };
+
 
 
 
@@ -962,4 +972,3 @@ export default function MyPage({ user, setUser }: Props) {
     </div>
   );
 }
-      
