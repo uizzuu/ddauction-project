@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { ChevronUp, ChevronDown } from "lucide-react";
-import type { Product, Bid, User, Category, Qna } from "../types/types";
+import type { Product, User, Category, Qna } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/util";
 import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
+import { AuctionBox } from "../components/AuctionBox";
 
 type Props = {
   user: User | null;
@@ -15,7 +15,7 @@ type Props = {
 export default function ProductDetail({ user }: Props) {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<Product | null>(null);
-  const [bidValue, setBidValue] = useState("");
+  // const [bidValue, setBidValue] = useState("");
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
@@ -84,15 +84,15 @@ export default function ProductDetail({ user }: Props) {
         }
 
         // 모든 입찰 내역 가져오기 추가
-        try {
-          const bidsRes = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`);
-          if (bidsRes.ok) {
-            const bids: Bid[] = await bidsRes.json();
-            setProduct((prev) => (prev ? { ...prev, bids } : prev));
-          }
-        } catch {
-          console.warn("입찰 내역 불러오기 실패");
-        }
+        // try {
+        //   const bidsRes = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`);
+        //   if (bidsRes.ok) {
+        //     const bids: Bid[] = await bidsRes.json();
+        //     setProduct((prev) => (prev ? { ...prev, bids } : prev));
+        //   }
+        // } catch {
+        //   console.warn("입찰 내역 불러오기 실패");
+        // }
 
         // 최고 입찰가
         try {
@@ -145,64 +145,64 @@ export default function ProductDetail({ user }: Props) {
   }, [product]);
 
   // 입찰 처리
-  const handleBid = async () => {
-    const bidNum = Number(bidValue);
-    if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
-      return alert("올바른 금액을 입력해주세요 (0보다 큰 숫자)");
-    }
-    if (!product) return;
+  // const handleBid = async () => {
+  //   const bidNum = Number(bidValue);
+  //   if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
+  //     return alert("올바른 금액을 입력해주세요 (0보다 큰 숫자)");
+  //   }
+  //   if (!product) return;
 
-    if (bidNum <= currentHighestBid) {
-      return alert(
-        `입찰가가 현재 최고 입찰가(${currentHighestBid.toLocaleString()}원)보다 높아야 합니다.`
-      );
-    }
+  //   if (bidNum <= currentHighestBid) {
+  //     return alert(
+  //       `입찰가가 현재 최고 입찰가(${currentHighestBid.toLocaleString()}원)보다 높아야 합니다.`
+  //     );
+  //   }
 
-    const now = new Date();
-    const end = new Date(product.auctionEndTime);
-    if (now >= end) return alert("이미 경매가 종료된 상품입니다.");
+  //   const now = new Date();
+  //   const end = new Date(product.auctionEndTime);
+  //   if (now >= end) return alert("이미 경매가 종료된 상품입니다.");
 
-    try {
-      const token = user?.token || localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bid`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          bidPrice: bidNum,
-        }),
-      });
+  //   try {
+  //     const token = user?.token || localStorage.getItem("token");
+  //     const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bid`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  //       },
+  //       body: JSON.stringify({
+  //         bidPrice: bidNum,
+  //       }),
+  //     });
 
-      if (res.ok) {
-        const newBidServer: { bidId: number; bidPrice: number } =
-          await res.json();
+  //     if (res.ok) {
+  //       const newBidServer: { bidId: number; bidPrice: number } =
+  //         await res.json();
 
-        const newBid: Bid = {
-          bidId: newBidServer.bidId,
-          userId: product.sellerId ?? 0,
-          bidPrice: newBidServer.bidPrice,
-          isWinning: false,
-          createdAt: new Date().toISOString(),
-        };
+  //       const newBid: Bid = {
+  //         bidId: newBidServer.bidId,
+  //         userId: product.sellerId ?? 0,
+  //         bidPrice: newBidServer.bidPrice,
+  //         isWinning: false,
+  //         createdAt: new Date().toISOString(),
+  //       };
 
-        setProduct((prev) =>
-          prev ? { ...prev, bids: [...(prev.bids ?? []), newBid] } : prev
-        );
-        setCurrentHighestBid(newBidServer.bidPrice);
-        setBidValue("");
-        alert("입찰 성공!");
-      } else {
-        const errText = await res.text();
-        console.log("입찰 실패 : " + errText);
-        alert("입찰 실패");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
+  //       setProduct((prev) =>
+  //         prev ? { ...prev, bids: [...(prev.bids ?? []), newBid] } : prev
+  //       );
+  //       setCurrentHighestBid(newBidServer.bidPrice);
+  //       setBidValue("");
+  //       alert("입찰 성공!");
+  //     } else {
+  //       const errText = await res.text();
+  //       console.log("입찰 실패 : " + errText);
+  //       alert("입찰 실패");
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("서버 오류");
+  //   }
+  // };
 
   // 찜 토글
   const handleToggleBookmark = async () => {
@@ -402,9 +402,11 @@ export default function ProductDetail({ user }: Props) {
             {product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
-
+  <AuctionBox productId={product.productId} />
+  <ProductBidGraph bids={product.bids ?? []} />
         {/* 입찰 박스 */}
-        <div style={{ width: "260px", flexShrink: 0 }} className="height-450">
+        {/* <AuctionBox productId={product.productId} /> */}
+        {/* <div style={{ width: "260px", flexShrink: 0 }} className="height-450">
           <div
             style={{
               backgroundColor: "#fff",
@@ -476,10 +478,10 @@ export default function ProductDetail({ user }: Props) {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* 새로운 입찰 그래프 컴포넌트 사용 */}
-      <ProductBidGraph bids={product.bids ?? []} />
+      {/* <ProductBidGraph bids={product.bids ?? []} /> */}
 
       <ProductQnA
         user={user}
@@ -488,6 +490,7 @@ export default function ProductDetail({ user }: Props) {
         qnaList={qnaList}
         setQnaList={setQnaList}
       />
+    </div>
     </div>
   );
 }

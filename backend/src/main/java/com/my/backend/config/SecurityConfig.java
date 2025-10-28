@@ -67,7 +67,7 @@ public class SecurityConfig {
                                 "/api/auth/login", "/api/auth/signup", "/api/users/me",
                                 "/api/categories", "/api/products", "/api/articles", "/api/qna",
                                 "/api/bookmarks/**", "/api/categories/**", "/api/products/**",
-                                "/api/articles/**", "/api/qna/**"
+                                "/api/articles/**", "/api/qna/**","/ws/**"
                         ).permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
