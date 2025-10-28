@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { ChevronUp, ChevronDown } from "lucide-react";
-import type { Product, Bid, User, Category, Qna } from "../types/types";
+import type { Product, Bid, User, Category, Qna, ProductStatus } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/util";
 import ProductQnA from "../components/ProductQnA";
@@ -19,8 +19,44 @@ export default function ProductDetail({ user }: Props) {
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
-  const navigate = useNavigate();
   const isSeller = user?.userId === product?.sellerId;
+
+  const [editing, setEditing] = useState(false);
+  const [productForm, setProductForm] = useState<{
+    title: string;
+    startingPrice: number;
+    content: string;
+    categoryId: number | "";
+    productStatus: ProductStatus;
+    imageUrl: string;          // 추가
+    auctionEndTime: string;    // 추가
+  }>({
+    title: "",
+    startingPrice: 0,
+    content: "",
+    categoryId: "",
+    productStatus: "ACTIVE",
+    imageUrl: "",              // 초기값
+    auctionEndTime: "",        // 초기값
+  });
+
+  //카테고리
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/categories`);
+        if (res.ok) {
+          const data: Category[] = await res.json();
+          setCategories(data);
+        }
+      } catch (err) {
+        console.warn("카테고리 조회 실패", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // 찜 관련 state
   const [isBookMarked, setIsBookMarked] = useState(false);
@@ -205,6 +241,45 @@ export default function ProductDetail({ user }: Props) {
       alert("서버 오류");
     }
   };
+
+  // 저장
+  const handleSaveProduct = async () => {
+    if (!product) return;
+    try {
+      const token = user?.token || localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/products/${product.productId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          title: productForm.title,
+          startingPrice: productForm.startingPrice,
+          content: productForm.content,
+          categoryId: productForm.categoryId || null, // ""이면 null로
+          productStatus: productForm.productStatus,
+          imageUrl: productForm.imageUrl,
+          auctionEndTime: productForm.auctionEndTime,
+        }),
+      });
+      if (res.ok) {
+        const updated: Product = await res.json();
+        setProduct(updated);
+        setEditing(false);
+        alert("상품이 수정되었습니다.");
+      } else {
+        const msg = await res.text();
+        alert("수정 실패: " + msg);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("수정 중 오류 발생");
+    }
+  };
+
+
+
 
   // 찜 토글
   const handleToggleBookmark = async () => {
@@ -391,7 +466,19 @@ export default function ProductDetail({ user }: Props) {
                 fontSize: "0.9rem",
                 marginTop: "8px",
               }}
-              onClick={() => navigate(`/products/${product.productId}/edit`)}
+              onClick={() => {
+                if (!product) return;
+                setProductForm({
+                  title: product.title,
+                  startingPrice: product.startingPrice ?? 0,
+                  content: product.content ?? "",
+                  categoryId: product.categoryId,
+                  productStatus: product.productStatus,
+                  imageUrl: product.imageUrl ?? "",             // 추가
+                  auctionEndTime: product.auctionEndTime ?? "", // 추가
+                });
+                setEditing(true);
+              }}
             >
               상품 수정
             </button>
@@ -496,6 +583,148 @@ export default function ProductDetail({ user }: Props) {
           </div>
         </div>
       </div>
+
+      {editing && (
+        <div
+          style={{
+            marginTop: "16px",
+            padding: "16px",
+            border: "1px solid #ddd",
+            borderRadius: "8px",
+            backgroundColor: "#fafafa",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            maxWidth: "500px",
+          }}
+        >
+          {/* 상품명 */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label style={{ marginBottom: "4px", fontWeight: "500" }}>상품명</label>
+            <input
+              name="title"
+              value={productForm.title}
+              onChange={(e) =>
+                setProductForm({ ...productForm, title: e.target.value })
+              }
+              placeholder="상품명을 입력하세요"
+              style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
+            />
+          </div>
+
+          {/* 가격 */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label style={{ marginBottom: "4px", fontWeight: "500" }}>가격</label>
+            <input
+              name="startingPrice"
+              type="number"
+              value={productForm.startingPrice}
+              onChange={(e) =>
+                setProductForm({
+                  ...productForm,
+                  startingPrice: Number(e.target.value),
+                })
+              }
+              placeholder="숫자만 입력"
+              style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
+            />
+          </div>
+
+          {/* 상세 설명 */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label style={{ marginBottom: "4px", fontWeight: "500" }}>상세 설명</label>
+            <textarea
+              name="content"
+              value={productForm.content}
+              onChange={(e) =>
+                setProductForm({ ...productForm, content: e.target.value })
+              }
+              placeholder="상품 상세 설명을 입력하세요"
+              rows={4}
+              style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc", resize: "vertical" }}
+            />
+          </div>
+
+          {/* 카테고리 */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label style={{ marginBottom: "4px", fontWeight: "500" }}>카테고리</label>
+            <select
+              name="categoryId"
+              value={productForm.categoryId}
+              onChange={(e) =>
+                setProductForm({
+                  ...productForm,
+                  categoryId: Number(e.target.value),
+                })
+              }
+              style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
+            >
+              <option value="">카테고리 선택</option>
+              {categories.map((c) => (
+                <option key={c.categoryId} value={c.categoryId}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* 상품 상태 */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <label style={{ marginBottom: "4px", fontWeight: "500" }}>상태</label>
+            <select
+              name="productStatus"
+              value={productForm.productStatus}
+              onChange={(e) =>
+                setProductForm({
+                  ...productForm,
+                  productStatus: e.target.value as ProductStatus,
+                })
+              }
+              style={{ padding: "8px", borderRadius: "6px", border: "1px solid #ccc" }}
+            >
+              <option value="ACTIVE">판매중</option>
+              <option value="SOLD">판매완료</option>
+              <option value="CLOSED">종료</option>
+            </select>
+          </div>
+
+          {/* 버튼 */}
+          <div style={{ display: "flex", gap: "8px", marginTop: "8px" }}>
+            <button
+              onClick={handleSaveProduct}
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: "6px",
+                border: "none",
+                backgroundColor: "#4caf50",
+                color: "#fff",
+                cursor: "pointer",
+                fontWeight: "500",
+              }}
+            >
+              저장
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              style={{
+                flex: 1,
+                padding: "10px",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+                backgroundColor: "#fff",
+                cursor: "pointer",
+                fontWeight: "500",
+              }}
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      )}
+
+
+
 
       {/* 새로운 입찰 그래프 컴포넌트 사용 */}
       <ProductBidGraph bids={product.bids ?? []} />
