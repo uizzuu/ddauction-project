@@ -95,7 +95,8 @@ export default function Main() {
       const res = await fetch(`${API_BASE_URL}/api/products`);
       if (!res.ok) throw new Error("상품 불러오기 실패");
       const data: Product[] = await res.json();
-      const sorted = data
+      const activeProducts = data.filter(p => p.productStatus === 'ACTIVE'); // 판매중만
+      const sorted = activeProducts
         .sort(
           (a, b) =>
             new Date(b.createdAt || "").getTime() -
