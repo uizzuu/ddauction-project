@@ -28,4 +28,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             ProductStatus status,
             LocalDateTime endTime
     );
+    // 활성화 상품 중 최신 등록 상품 하나 조회
+    Product findTopByProductStatusOrderByCreatedAtDesc(ProductStatus productStatus);
 }

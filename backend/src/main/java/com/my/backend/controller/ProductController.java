@@ -105,4 +105,11 @@ public class ProductController {
         List<ProductDto> topProducts = bookMarkService.getTopBookmarkedProducts(1); // 1개만 가져오기
         return ResponseEntity.ok(topProducts);
     }
+
+    // 최신 등록 상품 조회 (배너용)
+    @GetMapping("/latest")
+    public ResponseEntity<ProductDto> getLatestProduct() {
+        ProductDto latest = productService.getLatestProduct();
+        return ResponseEntity.ok(latest);
+    }
 }

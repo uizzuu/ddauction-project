@@ -183,4 +183,10 @@ public class ProductService {
         return paymentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제 정보가 존재하지 않습니다."));
     }
+
+    // 최신 등록 상품 1개 조회
+    public ProductDto getLatestProduct() {
+        Product latestProduct = productRepository.findTopByProductStatusOrderByCreatedAtDesc(ProductStatus.ACTIVE);
+        return ProductDto.fromEntity(latestProduct);
+    }
 }

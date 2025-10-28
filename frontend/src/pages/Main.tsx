@@ -19,17 +19,17 @@ export default function Main() {
       text: "지금 가장 인기 있는 경매 상품 🔥",
       productId: null as number | null,
     },
-    { id: 2, image: "/banner2.jpg", text: "오늘의 추천! 신규 등록 상품 🎉" },
-    { id: 3, image: "/banner3.jpg", text: "마감 임박! 마지막 기회를 잡으세요 ⚡" },
+    { id: 2, image: "/banner2.jpg", text: "오늘의 추천! 신규 등록 상품 🎉", productId: null as number | null },
+    { id: 3, image: "/banner3.jpg", text: "마감 임박! 마지막 기회를 잡으세요 ⚡", productId: null as number | null },
   ]);
 
+  // 인기 상품 배너
   const fetchPopularProduct = async () => {
     try {
-      const url = `${API_BASE_URL}/api/products/top-bookmarked`;
-      const res = await fetch(url, { method: "GET" });
+      const res = await fetch(`${API_BASE_URL}/api/products/top-bookmarked`);
       if (!res.ok) throw new Error("인기 상품 불러오기 실패");
 
-      const popular = await res.json();
+      const popular: Product[] = await res.json();
       if (popular && popular.length > 0) {
         const top = popular[0];
         setBanners((prev) => [
@@ -48,6 +48,29 @@ export default function Main() {
     }
   };
 
+  // 최신 등록 상품 배너
+  const fetchLatestProduct = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/products/latest`);
+      if (!res.ok) throw new Error("최신 상품 불러오기 실패");
+
+      const latest: Product = await res.json();
+      setBanners((prev) => [
+        prev[0],
+        {
+          ...prev[1],
+          image: latest.imageUrl || "/banner2.jpg",
+          text: latest.title,
+          productId: latest.productId,
+        },
+        prev[2],
+      ]);
+    } catch (err) {
+      console.error("❌ 최신 상품 fetch 실패:", err);
+    }
+  };
+
+  // 전체 상품 리스트
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -72,6 +95,7 @@ export default function Main() {
 
   useEffect(() => {
     fetchPopularProduct();
+    fetchLatestProduct();
     fetchProducts();
   }, []);
 
@@ -137,7 +161,11 @@ export default function Main() {
                       textShadow: "0 2px 6px rgba(0,0,0,0.6)"
                     }}
                   >
-                    지금 가장 인기 있는 경매 상품 🔥
+                    {i === 0
+                      ? "지금 가장 인기 있는 경매 상품 🔥"
+                      : i === 1
+                      ? "오늘의 추천! 신규 등록 상품 🎉"
+                      : "마감 임박! 마지막 기회를 잡으세요 ⚡"}
                   </p>
                   {/* 텍스트: 배너 상품 제목 */}
                   <p
