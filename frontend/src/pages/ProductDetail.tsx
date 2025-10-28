@@ -402,8 +402,6 @@ export default function ProductDetail({ user }: Props) {
             {product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
-  <AuctionBox productId={product.productId} />
-  <ProductBidGraph bids={product.bids ?? []} />
         {/* 입찰 박스 */}
         {/* <AuctionBox productId={product.productId} /> */}
         {/* <div style={{ width: "260px", flexShrink: 0 }} className="height-450">
@@ -480,17 +478,36 @@ export default function ProductDetail({ user }: Props) {
         </div>
       </div> */}
 
-      {/* 새로운 입찰 그래프 컴포넌트 사용 */}
-      {/* <ProductBidGraph bids={product.bids ?? []} /> */}
+        {/* 새로운 입찰 그래프 컴포넌트 사용 */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            width: "100%", // 부모 전체 너비
+          }}
+        >
+          <div style={{ width: "100%" }}>
+            <AuctionBox productId={product.productId}  />
+          </div>
 
-      <ProductQnA
-        user={user}
-        product={product}
-        productId={product.productId}
-        qnaList={qnaList}
-        setQnaList={setQnaList}
-      />
-    </div>
+          <div style={{ width: "100%" }}>
+            <ProductBidGraph bids={product.bids ?? []} />
+          </div>
+
+          <div style={{ width: "100%" }}>
+            <ProductQnA
+              user={user}
+              product={product}
+              productId={product.productId}
+              qnaList={qnaList}
+              setQnaList={setQnaList}
+            />
+          </div>
+        </div>
+
+
+      </div>
     </div>
   );
 }
