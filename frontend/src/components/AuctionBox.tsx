@@ -9,7 +9,11 @@ interface AuctionBoxProps {
 }
 
 export const AuctionBox = ({ productId }: AuctionBoxProps) => {
-  const { bids: liveBids, currentHighestBid, placeBid } = useAuction({ productId });
+  const {
+    bids: liveBids,
+    currentHighestBid,
+    placeBid,
+  } = useAuction({ productId });
   const [bidValue, setBidValue] = useState("");
   const [allBids, setAllBids] = useState<Bid[]>([]);
 
@@ -41,15 +45,23 @@ export const AuctionBox = ({ productId }: AuctionBoxProps) => {
   }, [productId]);
 
   // 초기 fetch + 실시간 입찰 합치기, 중복 제거
-  const mergedBids = [...allBids, ...liveBids].reduce<Bid[]>((acc, bid) => {
-    if (!acc.find((b) => b.bidId === bid.bidId)) {
-      acc.push(bid);
-    }
-    return acc;
-  }, []).sort((a, b) => a.bidId - b.bidId); // bidId 기준 정렬
+  const mergedBids = [...allBids, ...liveBids]
+    .reduce<Bid[]>((acc, bid) => {
+      if (!acc.find((b) => b.bidId === bid.bidId)) {
+        acc.push(bid);
+      }
+      return acc;
+    }, [])
+    .sort((a, b) => a.bidId - b.bidId); // bidId 기준 정렬
 
   // 입찰 처리
   const handleBid = async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      return alert("로그인이 필요합니다.");
+    }
+
     const bidNum = Number(bidValue);
 
     if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
@@ -78,9 +90,16 @@ export const AuctionBox = ({ productId }: AuctionBoxProps) => {
         setBidValue("");
         alert("입찰 성공!");
       } else {
-        const errText = await res.text();
-        console.error("입찰 실패:", errText);
-        alert("입찰 실패");
+        try {
+          const data = await res.json();
+          if (data.error) {
+            alert(data.error); // 서버에서 온 메시지 그대로 alert
+          } else {
+            alert("입찰 실패");
+          }
+        } catch {
+          alert("입찰 실패");
+        }
       }
     } catch (err) {
       console.error("입찰 중 오류:", err);
@@ -135,9 +154,7 @@ export const AuctionBox = ({ productId }: AuctionBoxProps) => {
 
           <div className="flex-column search-btn flex-center border-hover-none">
             <button
-              onClick={() =>
-                setBidValue(String(Number(bidValue || 0) + 1000))
-              }
+              onClick={() => setBidValue(String(Number(bidValue || 0) + 1000))}
               className="color-ddd width-fit bg-transparent mb--4 hover"
             >
               <ChevronUp size={20} />

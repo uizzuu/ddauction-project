@@ -253,20 +253,13 @@ export default function ProductQnA({
           qnaList.map((q) => (
             <div
               key={q.qnaId}
-              style={{
-                borderTop: "1px solid #eee",
-                paddingTop: 12,
-                marginTop: 12,
-                paddingLeft: 8,
-              }}
-              className="position-rl"
             >
               {/* 질문 제목 + 토글 버튼 */}
-              <div className="flex-box flex-center flex-between">
-                <p className="title-16 color-333 text-nowrap">{q.title}</p>
+              <div className="flex-box flex-center flex-between width-full">
+                <p className="title-16 color-333 text-nowrap width-full">{q.title}</p>
                 <button
                   onClick={() => toggleQna(q.qnaId)}
-                  className="position-ab top-16 right-8 trans"
+                  className="top-16 right-8 trans"
                 >
                   <span
                     className={`custom-select-arrow ${openQnaIds.includes(q.qnaId) ? "open" : ""

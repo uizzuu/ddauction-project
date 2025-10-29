@@ -16,11 +16,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
 
 import java.io.IOException;
+import java.net.URI;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -313,49 +316,51 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
-        // 클라이언트에서 query param으로 productId 전달
-        String productIdParam = session.getUri().getQuery(); // 예: "productId=1"
-        Long productId = Long.parseLong(productIdParam.split("=")[1]);
-
-        // 1️⃣ 세션 등록
-        Set<WebSocketSession> webSocketSessionSet = productSessions.get(productId);
-        if (webSocketSessionSet == null) {
-            webSocketSessionSet = ConcurrentHashMap.newKeySet();
-            webSocketSessionSet.add(session);
-            productSessions.put(productId, webSocketSessionSet);
-        } else {
-            webSocketSessionSet.add(session);
+        URI uri = session.getUri();
+        if (uri == null || uri.getQuery() == null) {
+            log.warn("쿼리 파라미터 없음 - 연결 종료됨: {}", session.getId());
+            session.close(CloseStatus.BAD_DATA);
+            return;
         }
 
-        // 2️⃣ 입찰 내역 가져오기
-        List<Bid> bidHistory = bidHistoryMap.get(productId);
-        if (bidHistory == null) {
-            bidHistory = bidRepository.findByProductProductIdOrderByCreatedAtDesc(productId);
-            bidHistoryMap.put(productId, bidHistory);
-        }
-
-        // 3️⃣ DTO 변환 후 전송
+        // productId 파싱
+        String query = uri.getQuery(); // 예: "productId=1"
+        Long productId = null;
         try {
-            List<BidResponse> responseList = bidHistory.stream()
-                    .map(b -> BidResponse.builder()
-                            .bidId(b.getBidId())
-//                            .productId(b.getProduct().getProductId()) // 엔티티 대신 ID
-                            .userId(b.getUser().getUserId())
-                            .bidPrice(b.getBidPrice())
-                            .createdAt(b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                            .build())
-                    .toList();
+            Map<String, String> queryMap = Arrays.stream(query.split("&"))
+                    .map(param -> param.split("="))
+                    .filter(arr -> arr.length == 2)
+                    .collect(Collectors.toMap(a -> a[0], a -> a[1]));
+            productId = Long.parseLong(queryMap.get("productId"));
+        } catch (Exception e) {
+            log.error("productId 파싱 실패: {}", query, e);
+            session.close(CloseStatus.BAD_DATA);
+            return;
+        }
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new JavaTimeModule());
+        // 세션 등록
+        productSessions.computeIfAbsent(productId, k -> ConcurrentHashMap.newKeySet()).add(session);
 
-            String json = objectMapper.writeValueAsString(responseList);
+        // 입찰 내역 가져오기
+        List<Bid> bidHistory = bidHistoryMap.computeIfAbsent(productId,
+                id -> bidRepository.findByProductProductIdOrderByCreatedAtDesc(id));
 
-            if (session.isOpen()) {
-                session.sendMessage(new TextMessage(json));
-            }
-        } catch (IOException e) {
-            log.error("WebSocket 초기 입찰 내역 전송 실패", e);
+        // DTO 변환
+        List<BidResponse> responseList = bidHistory.stream()
+                .map(b -> BidResponse.builder()
+                        .bidId(b.getBidId())
+                        .userId(b.getUser().getUserId())
+                        .bidPrice(b.getBidPrice())
+                        .createdAt(b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+                        .build())
+                .toList();
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        String json = objectMapper.writeValueAsString(responseList);
+
+        if (session.isOpen()) {
+            session.sendMessage(new TextMessage(json));
         }
 
         log.info("새 세션 연결: {}, productId={}", session.getId(), productId);

@@ -61,13 +61,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // OAuth2 관련 경로는 JWT 필터에서 제외
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         // 일반 로그인, 회원가입, 공개 API
                         .requestMatchers("/login", "/signup", "/", "/join",
                                 "/products", "/articles", "/categories",
                                 "/api/auth/login", "/api/auth/signup", "/api/users/me",
                                 "/api/categories", "/api/products", "/api/articles", "/api/qna",
                                 "/api/bookmarks/**", "/api/categories/**", "/api/products/**",
-                                "/api/articles/**", "/api/qna/**","/ws/**"
+                                "/api/articles/**", "/api/qna/**"
                         ).permitAll()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
