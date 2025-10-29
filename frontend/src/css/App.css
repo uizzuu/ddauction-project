@@ -74,10 +74,12 @@ a {
 
 .bg-333 {
   background-color: #333;
+  background: #333;
 }
 
 .bg-transparent {
   background-color: transparent;
+  background: transparent;
 }
 
 .filter-dark {
@@ -363,7 +365,7 @@ button {
   border: none;
   outline: none;
   transition: all 0.2s;
-  background: #fff;
+  background: transparent;
 }
 
 button:disabled {
@@ -549,6 +551,7 @@ button:disabled {
   border: 1px solid #ddd;
   border-radius: 12px;
   white-space: nowrap;
+  overflow: hidden;
 }
 
 .bid-box:last-of-type {
@@ -571,6 +574,10 @@ button:disabled {
 
 .flex-center-a {
   align-items: center;
+}
+
+.flex-left-a {
+  align-items: start;
 }
 
 .flex-between {
@@ -665,6 +672,10 @@ button:disabled {
   width: 16px;
 }
 
+.width-200 {
+  width: 300px;
+}
+
 .width-fit {
   width: fit-content;
 }
@@ -716,6 +727,10 @@ button:disabled {
 
 .height-500 {
   height: 500px;
+}
+
+.height-fit {
+  height: fit-content;
 }
 
 .height-full {
@@ -812,6 +827,12 @@ button:disabled {
 }
 
 .product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bid-box img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -922,6 +943,10 @@ button:disabled {
 
 .p-0 {
   padding: 0;
+}
+
+.p-20-30 {
+  padding: 20px 30px;
 }
 
 .pb-20 {

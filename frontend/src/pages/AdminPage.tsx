@@ -5,19 +5,19 @@ import type {
   Report,
   Category,
   EditProductForm,
-  Inquiry
+  Inquiry,
 } from "../types/types";
 import { PRODUCT_STATUS } from "../types/types";
 import { API_BASE_URL } from "../services/api";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
+
+// 분리된 컴포넌트 임포트
+import UserManagement from "../components/admin/UserManagement";
+import ProductManagement from "../components/admin/ProductManagement";
+import ReportManagement from "../components/admin/ReportManagement";
+import StatsManagement from "../components/admin/StatsManagement";
+import InquiryManagement from "../components/admin/InquiryManagement";
+
+// Recharts 관련 import 제거됨
 
 export default function AdminPage() {
   const [section, setSection] = useState<
@@ -33,12 +33,13 @@ export default function AdminPage() {
   }>({});
 
   const [categories, setCategories] = useState<Category[]>([]);
-  const [filterKeyword, setFilterKeyword] = useState("");
-  const [filterCategory, setFilterCategory] = useState<number | null>(null);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
 
+  // --- 상품 필터 상태 (ProductManagement로 props 전달) ---
+  const [filterKeyword, setFilterKeyword] = useState("");
+  const [filterCategory, setFilterCategory] = useState<number | null>(null);
 
-  // --- 회원 필터 상태 ---
+  // --- 회원 필터 상태 (UserManagement로 props 전달) ---
   const [userFilterField, setUserFilterField] = useState<
     "userName" | "nickName" | "email" | "phone"
   >("userName");
@@ -64,53 +65,47 @@ export default function AdminPage() {
     password: "",
     phone: "",
   });
-   // ===================================
-  // 통계 데이터 가져오기
+
   // ===================================
- const fetchStats = useCallback(async () => {
-  try {
-    const token = localStorage.getItem("token"); // 로그인 후 저장된 토큰
-    if (!token) {
-      console.error("토큰이 없습니다. 관리자 로그인 필요");
-      return;
+  // 데이터 Fetch 함수
+  // ===================================
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("토큰이 없습니다. 관리자 로그인 필요");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/admin/stats`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        console.error("통계 데이터 조회 실패:", res.status);
+        return;
+      }
+
+      const data = await res.json();
+      setStats({
+        userCount: data.userCount,
+        productCount: data.productCount,
+        reportCount: data.reportCount,
+      });
+    } catch (err) {
+      console.error(err);
     }
-
-    const res = await fetch(`${API_BASE_URL}/admin/stats`, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // 토큰 포함
-      },
-    });
-
-    if (!res.ok) {
-      console.error("통계 데이터 조회 실패:", res.status);
-      return;
-    }
-
-    const data = await res.json();
-    setStats({
-      userCount: data.userCount,
-      productCount: data.productCount,
-      reportCount: data.reportCount,
-    });
-  } catch (err) {
-    console.error(err);
-  }
-}, []);
-
-
-  useEffect(() => {
-    if (section === "stats") {
-      fetchStats();
-    }
-  }, [section, fetchStats]);
-
+  }, []);
 
   const fetchUsers = useCallback(async () => {
     let url = `${API_BASE_URL}/api/users`;
 
     if (userFilterKeyword) {
-      url += "?"; // ? 추가
+      url += "?";
       if (userFilterField === "userName")
         url += `userName=${encodeURIComponent(userFilterKeyword)}`;
       else if (userFilterField === "nickName")
@@ -138,8 +133,7 @@ export default function AdminPage() {
 
     const data = await res.json();
     setUsers(data);
-  }, [userFilterKeyword, userFilterField]);
-
+  }, [userFilterKeyword, userFilterField]); // 의존성 유지
 
   const fetchProducts = useCallback(async () => {
     let url = `${API_BASE_URL}/api/products/search?`;
@@ -155,7 +149,7 @@ export default function AdminPage() {
     });
     const data = await res.json();
     setProducts(data);
-  }, [filterKeyword, filterCategory]);
+  }, [filterKeyword, filterCategory]); // 의존성 유지
 
   const fetchReports = useCallback(async () => {
     try {
@@ -179,40 +173,78 @@ export default function AdminPage() {
     }
   }, []);
 
-  // const fetchStats = useCallback(async () => {
-  //   const res = await fetch(`${API_BASE_URL}/admin/stats`);
-  //   const data = await res.json();
-  //   setStats(data);
-  // }, []);
-
   const fetchCategories = useCallback(async () => {
     const res = await fetch(`${API_BASE_URL}/api/categories`);
     const data = await res.json();
     setCategories(data);
   }, []);
 
-  useEffect(() => {
-    if (section === "user") fetchUsers();
-    else if (section === "product") fetchProducts();
-    else if (section === "report") fetchReports();
-    else if (section === "stats") fetchStats();
-    fetchCategories();
-  }, [
-    section,
-    fetchUsers,
-    fetchProducts,
-    fetchReports,
-    fetchStats,
-    fetchCategories,
-  ]);
+  const fetchInquiries = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/inquiry/admin`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
+      });
 
+      if (!res.ok) {
+        console.error("문의 조회 실패:", res.status);
+        setInquiries([]);
+        return;
+      }
+
+      const data: {
+        articleId: number;
+        title: string;
+        content: string;
+        createdAt: string;
+        updatedAt: string;
+      }[] = await res.json();
+
+      // Inquiry 타입에 맞춰서 매핑 및 답변 분리 로직 유지
+      const mapped: Inquiry[] = data.map((d, idx) => {
+        const [questionPart, answerPart] = d.content.split("[답변]:");
+
+        return {
+          inquiryId: d.articleId,
+          title: d.title,
+          question: questionPart.trim(),
+          createdAt: d.createdAt,
+          answers: answerPart
+            ? [
+                {
+                  inquiryReviewId: idx + 1, // 백엔드에서 답변 id가 따로 없으니 임시 번호
+                  answer: answerPart.trim(),
+                  nickName: "관리자",
+                  createdAt: d.updatedAt,
+                },
+              ]
+            : [],
+          newAnswer: "", // 답변 상태를 로컬에서 관리하기 위해 추가
+        };
+      });
+
+      setInquiries(mapped);
+    } catch (err) {
+      console.error("문의 불러오기 실패:", err);
+      setInquiries([]);
+    }
+  }, []);
+
+  // ===================================
+  // CRUD/Action Handler 함수
+  // ===================================
+
+  // 회원 관리 핸들러
   const handleChangeRole = async (userId: number, newRole: User["role"]) => {
     const token = localStorage.getItem("token");
     await fetch(`${API_BASE_URL}/api/users/${userId}/admin`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : ""
+        Authorization: token ? `Bearer ${token}` : "",
       },
       body: JSON.stringify({ role: newRole }),
     });
@@ -230,7 +262,14 @@ export default function AdminPage() {
 
   const handleSaveUserClick = async (userId: number) => {
     try {
-      const payload: any = { nickName: editUserForm.nickName, phone: editUserForm.phone };
+      const payload: {
+        nickName: string;
+        password?: string;
+        phone: string;
+      } = {
+        nickName: editUserForm.nickName,
+        phone: editUserForm.phone,
+      };
       if (editUserForm.password) payload.password = editUserForm.password;
 
       const token = localStorage.getItem("token");
@@ -242,7 +281,6 @@ export default function AdminPage() {
         },
         body: JSON.stringify(payload),
       });
-
 
       if (!res.ok) {
         console.error("회원 수정 실패:", res.status);
@@ -260,6 +298,7 @@ export default function AdminPage() {
 
   const handleCancelUserClick = () => setEditingUserId(null);
 
+  // 상품 관리 핸들러
   const handleEditProductClick = (product: Product) => {
     setEditingProductId(product.productId);
     setEditProductForm({
@@ -272,16 +311,25 @@ export default function AdminPage() {
 
   const handleSaveProductClick = async (productId: number) => {
     try {
-      const payload: any = {
+      const payload: {
+        title: string;
+        categoryId?: number;
+        startingPrice?: number;
+        productStatus: Product["productStatus"];
+      } = {
         title: editProductForm.title,
         categoryId: editProductForm.categoryId,
         startingPrice: editProductForm.startingPrice,
         productStatus: editProductForm.productStatus,
       };
 
+      const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: token ? `Bearer ${token}` : "",
+        },
         body: JSON.stringify(payload),
       });
 
@@ -302,15 +350,29 @@ export default function AdminPage() {
   const handleCancelProductClick = () => setEditingProductId(null);
 
   const handleDeleteProduct = async (productId: number) => {
-    await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
       method: "DELETE",
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+      },
     });
+
+    if (!res.ok) {
+      alert("상품 삭제에 실패했습니다.");
+      console.error("상품 삭제 실패:", res.status);
+      return;
+    }
     fetchProducts();
   };
 
-  const handleUpdateReportStatus = async (reportId: number, status: boolean) => {
+  // 신고 관리 핸들러
+  const handleUpdateReportStatus = async (
+    reportId: number,
+    status: boolean
+  ) => {
     try {
-      const token = localStorage.getItem("token"); // JWT 가져오기
+      const token = localStorage.getItem("token");
       const res = await fetch(
         `${API_BASE_URL}/api/reports/${reportId}/status?status=${status}`,
         {
@@ -327,529 +389,162 @@ export default function AdminPage() {
         return;
       }
 
-      fetchReports(); // 상태 변경 후 화면 갱신
+      fetchReports();
     } catch (err) {
       console.error("신고 상태 변경 중 오류 발생:", err);
     }
   };
 
-
-  const handleProductStatusChange = (value: string) => {
-    if (PRODUCT_STATUS.includes(value as Product["productStatus"])) {
-      setEditProductForm({
-        ...editProductForm,
-        productStatus: value as Product["productStatus"],
-      });
-    }
-  };
-
-  const fetchInquiries = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/inquiry/admin`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-
-      if (!res.ok) {
-        console.error("문의 조회 실패:", res.status);
-        setInquiries([]);
-        return;
-      }
-
-      const data: any[] = await res.json();
-      console.log("📬 관리자 문의 데이터:", data);
-
-      // Inquiry 타입에 맞춰서 매핑
-      const mapped: Inquiry[] = data.map((d, idx) => {
-        // content 안에 [답변]:이 있는 경우 분리
-        const [questionPart, answerPart] = d.content.split("[답변]:");
-
-        return {
-          inquiryId: d.articleId,
-          title: d.title,
-          question: questionPart.trim(),
-          createdAt: d.createdAt,
-          answers: answerPart
-            ? [
-              {
-                inquiryReviewId: idx + 1, // 백엔드에서 답변 id가 따로 없으니 임시 번호
-                answer: answerPart.trim(),
-                nickName: "관리자",
-                createdAt: d.updatedAt,
-              },
-            ]
-            : [],
-          newAnswer: "",
-        };
-      });
-
-      setInquiries(mapped);
-    } catch (err) {
-      console.error("문의 불러오기 실패:", err);
-      setInquiries([]);
-    }
-  };
-
-
-
-
-  const handleSaveInquiryAnswer = async (inquiryId: number, answer?: string) => {
+  // 문의 관리 핸들러
+  const handleSaveInquiryAnswer = async (
+    inquiryId: number,
+    answer?: string
+  ) => {
     if (!answer) return alert("답변을 입력해주세요.");
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/inquiry/${inquiryId}/answer`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        body: JSON.stringify({ answer }),
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/inquiry/${inquiryId}/answer`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+          body: JSON.stringify({ answer }),
+        }
+      );
       if (!res.ok) throw new Error("답변 저장 실패");
 
       alert("답변이 등록되었습니다.");
-      fetchInquiries(); // 화면 갱신
+      fetchInquiries();
     } catch (err) {
       console.error(err);
       alert("답변 등록 중 오류가 발생했습니다.");
     }
   };
 
+  // ===================================
+  // useEffect - 데이터 로딩
+  // ===================================
+
+  useEffect(() => {
+    fetchCategories(); // 카테고리는 모든 섹션에서 필요할 수 있으므로 항상 로드
+  }, [fetchCategories]);
+
+  useEffect(() => {
+    if (section === "user") fetchUsers();
+    else if (section === "product") fetchProducts();
+    else if (section === "report") fetchReports();
+    else if (section === "stats") fetchStats();
+    else if (section === "inquiry") fetchInquiries();
+  }, [
+    section,
+    fetchUsers,
+    fetchProducts,
+    fetchReports,
+    fetchStats,
+    fetchInquiries,
+  ]);
+
+  // ===================================
+  // 렌더링
+  // ===================================
 
   return (
-    <div className="admin-container">
-      <aside className="admin-sidebar">
-        <h2>관리자 페이지</h2>
-        <ul>
-          <li>
-            <button onClick={() => setSection("user")}>회원 관리</button>
-          </li>
-          <li>
-            <button onClick={() => setSection("product")}>상품 관리</button>
-          </li>
-          <li>
-            <button onClick={() => setSection("report")}>신고 관리</button>
-          </li>
-          <li>
-            <button onClick={() => setSection("stats")}>통계</button>
-          </li>
-          <li>
-            <button onClick={() => { setSection("inquiry"); fetchInquiries(); }}>
-              1:1 문의 관리
-            </button>
-          </li>
-
-        </ul>
-      </aside>
-
-      <main className="admin-main">
-        {/* 회원 관리 */}
-        {section === "user" && (
-          <div className="admin-section">
-            <h3>회원 관리</h3>
-
-            {/* --- 회원 필터 UI --- */}
-            <div style={{ marginBottom: "1rem" }}>
-              <select
-                value={userFilterField}
-                onChange={(e) =>
-                  setUserFilterField(
-                    e.target.value as
-                    | "userName"
-                    | "nickName"
-                    | "email"
-                    | "phone"
-                  )
-                }
+    <div className="container p-0">
+      <div className="admin-container">
+        <aside className="admin-sidebar">
+          <h2>관리자 페이지</h2>
+          <ul>
+            <li>
+              <button onClick={() => setSection("user")}>회원 관리</button>
+            </li>
+            <li>
+              <button onClick={() => setSection("product")}>상품 관리</button>
+            </li>
+            <li>
+              <button onClick={() => setSection("report")}>신고 관리</button>
+            </li>
+            <li>
+              <button onClick={() => setSection("stats")}>통계</button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
+                  setSection("inquiry");
+                }}
               >
-                <option value="userName">이름</option>
-                <option value="nickName">닉네임</option>
-                <option value="email">이메일</option>
-                <option value="phone">전화번호</option>
-              </select>
-              <input
-                placeholder="검색어 입력"
-                value={userFilterKeyword}
-                onChange={(e) => setUserFilterKeyword(e.target.value)}
-              />
-              <button onClick={fetchUsers}>검색</button>
-            </div>
+                1:1 문의 관리
+              </button>
+            </li>
+          </ul>
+        </aside>
 
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>이름</th>
-                  <th>닉네임</th>
-                  <th>이메일</th>
-                  <th>전화번호</th>
-                  <th>가입일</th>
-                  <th>최종수정일</th>
-                  <th>권한</th>
-                  <th>수정</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.userId}>
-                    <td>{u.userId}</td>
-                    <td>{u.userName}</td>
-                    <td>
-                      {editingUserId === u.userId ? (
-                        <input
-                          value={editUserForm.nickName}
-                          onChange={(e) =>
-                            setEditUserForm({ ...editUserForm, nickName: e.target.value })
-                          }
-                        />
-                      ) : (
-                        u.nickName
-                      )}
-                    </td>
-                    <td>{u.email}</td>
-                    <td>
-                      {editingUserId === u.userId ? (
-                        <input
-                          value={editUserForm.phone}
-                          onChange={(e) =>
-                            setEditUserForm({ ...editUserForm, phone: e.target.value })
-                          }
-                        />
-                      ) : (
-                        u.phone
-                      )}
-                    </td>
-                    <td>{u.createdAt ? new Date(u.createdAt).toLocaleString() : "-"}</td>
-                    <td>{u.updatedAt ? new Date(u.updatedAt).toLocaleString() : "-"}</td>
+        <main className="admin-main">
+          {/* 회원 관리 컴포넌트 */}
+          {section === "user" && (
+            <UserManagement
+              users={users}
+              editingUserId={editingUserId}
+              editUserForm={editUserForm}
+              setEditUserForm={setEditUserForm}
+              handleEditUserClick={handleEditUserClick}
+              handleSaveUserClick={handleSaveUserClick}
+              handleCancelUserClick={handleCancelUserClick}
+              handleChangeRole={handleChangeRole}
+              // 필터링 관련 props
+              userFilterField={userFilterField}
+              setUserFilterField={setUserFilterField}
+              userFilterKeyword={userFilterKeyword}
+              setUserFilterKeyword={setUserFilterKeyword}
+              fetchUsers={fetchUsers}
+            />
+          )}
 
-                    {/* 권한 칸 */}
-                    <td>
-                      <select
-                        value={u.role}
-                        onChange={(e) =>
-                          handleChangeRole(u.userId, e.target.value as User["role"])
-                        }
-                      >
-                        <option value="USER">USER</option>
-                        <option value="BANNED">BANNED</option>
-                        <option value="ADMIN">ADMIN</option>
-                      </select>
-                    </td>
+          {/* 상품 관리 컴포넌트 */}
+          {section === "product" && (
+            <ProductManagement
+              products={products}
+              categories={categories}
+              editingProductId={editingProductId}
+              editProductForm={editProductForm}
+              setEditProductForm={setEditProductForm}
+              handleEditProductClick={handleEditProductClick}
+              handleSaveProductClick={handleSaveProductClick}
+              handleCancelProductClick={handleCancelProductClick}
+              handleDeleteProduct={handleDeleteProduct}
+              // 필터링 관련 props
+              filterKeyword={filterKeyword}
+              setFilterKeyword={setFilterKeyword}
+              filterCategory={filterCategory}
+              setFilterCategory={setFilterCategory}
+              fetchProducts={fetchProducts}
+            />
+          )}
 
-                    {/* 수정 칸 */}
-                    <td>
-                      {editingUserId === u.userId ? (
-                        <>
-                          <input
-                            type="password"
-                            placeholder="새 비밀번호"
-                            value={editUserForm.password}
-                            onChange={(e) =>
-                              setEditUserForm({ ...editUserForm, password: e.target.value })
-                            }
-                          />
-                          <button onClick={() => handleSaveUserClick(u.userId)}>저장</button>
-                          <button onClick={handleCancelUserClick}>취소</button>
-                        </>
-                      ) : (
-                        <button onClick={() => handleEditUserClick(u)}>수정</button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+          {/* 신고 관리 컴포넌트 */}
+          {section === "report" && (
+            <ReportManagement
+              reports={reports}
+              handleUpdateReportStatus={handleUpdateReportStatus}
+            />
+          )}
 
-            </table>
-          </div>
-        )}
+          {/* 통계 컴포넌트 */}
+          {section === "stats" && <StatsManagement stats={stats} />}
 
-        {/* 상품 관리 */}
-        {section === "product" && (
-          <div className="admin-section">
-            <h3>상품 관리</h3>
-            <div style={{ marginBottom: "1rem" }}>
-              <input
-                placeholder="상품명 검색"
-                value={filterKeyword}
-                onChange={(e) => setFilterKeyword(e.target.value)}
-              />
-              <select
-                value={filterCategory ?? ""}
-                onChange={(e) =>
-                  setFilterCategory(
-                    e.target.value ? Number(e.target.value) : null
-                  )
-                }
-              >
-                <option value="">전체 카테고리</option>
-                {categories.map((c) => (
-                  <option key={c.categoryId} value={c.categoryId}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <button onClick={fetchProducts}>검색</button>
-            </div>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>상품명</th>
-                  <th>카테고리</th>
-                  <th>가격</th>
-                  <th>상태</th>
-                  <th>액션</th>
-                </tr>
-              </thead>
-              <tbody>
-                {products.map((p) => (
-                  <tr key={p.productId}>
-                    <td>{p.productId}</td>
-                    <td>
-                      {editingProductId === p.productId ? (
-                        <input
-                          value={editProductForm.title ?? ""}
-                          onChange={(e) =>
-                            setEditProductForm({
-                              ...editProductForm,
-                              title: e.target.value,
-                            })
-                          }
-                        />
-                      ) : (
-                        p.title
-                      )}
-                    </td>
-                    <td>
-                      {editingProductId === p.productId ? (
-                        <select
-                          value={editProductForm.categoryId ?? ""}
-                          onChange={(e) =>
-                            setEditProductForm({
-                              ...editProductForm,
-                              categoryId: Number(e.target.value),
-                            })
-                          }
-                        >
-                          {categories.map((c) => (
-                            <option key={c.categoryId} value={c.categoryId}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        p.categoryName ??
-                        categories.find(
-                          (c) => c.categoryId === p.categoryId
-                        )?.name ??
-                        "-"
-                      )}
-                    </td>
-                    <td>
-                      {editingProductId === p.productId ? (
-                        <input
-                          type="number"
-                          value={editProductForm.startingPrice ?? 0}
-                          onChange={(e) =>
-                            setEditProductForm({
-                              ...editProductForm,
-                              startingPrice: Number(e.target.value),
-                            })
-                          }
-                        />
-                      ) : (
-                        p.startingPrice ?? 0
-                      )}
-                    </td>
-                    <td>
-                      {editingProductId === p.productId ? (
-                        <select
-                          value={
-                            editProductForm.productStatus ?? PRODUCT_STATUS[0]
-                          }
-                          onChange={(e) =>
-                            handleProductStatusChange(e.target.value)
-                          }
-                        >
-                          <option value="ACTIVE">판매중</option>
-                          <option value="SOLD">판매완료</option>
-                          <option value="CLOSED">비활성</option>
-                        </select>
-                      ) : (
-                        p.productStatus ?? "-"
-                      )}
-                    </td>
-                    <td>
-                      {editingProductId === p.productId ? (
-                        <>
-                          <button
-                            onClick={() => handleSaveProductClick(p.productId)}
-                          >
-                            저장
-                          </button>
-                          <button onClick={handleCancelProductClick}>
-                            취소
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button onClick={() => handleEditProductClick(p)}>
-                            수정
-                          </button>
-                          <button
-                            className="delete-btn"
-                            onClick={() => handleDeleteProduct(p.productId)}
-                          >
-                            삭제
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 신고 관리 */}
-        {section === "report" && (
-          <div className="admin-section">
-            <h3>신고 관리</h3>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>신고자 ID</th>
-                  <th>대상 ID</th>
-                  <th>사유</th>
-                  <th>상태</th>
-                  <th>처리</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((r) => (
-                  <tr key={r.reportId}>
-                    <td>{r.reportId}</td>
-                    <td>{r.reporterId}</td>
-                    <td>{r.targetId}</td>
-                    <td>{r.reason}</td>
-                    <td>{r.status ? "처리 완료" : "보류 중"}</td>
-                    <td>
-                      <select
-                        defaultValue={r.status ? "true" : "false"}
-                        onChange={(e) =>
-                          handleUpdateReportStatus(
-                            r.reportId,
-                            e.target.value === "true"
-                          )
-                        }
-                      >
-                        <option value="false">보류</option>
-                        <option value="true">처리 완료</option>
-                      </select>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* 통계 */}
-        {section === "stats" && (
-          <div className="admin-section">
-            <h3>통계</h3>
-            <div style={{ width: "100%", height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart
-                  data={[
-                    { name: "회원", count: stats.userCount ?? 0 },
-                    { name: "상품", count: stats.productCount ?? 0 },
-                    { name: "신고", count: stats.reportCount ?? 0 },
-                  ]}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#8884d8" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        )}
-        
-        {/* 1:1 문의 관리 */}
-        {section === "inquiry" && (
-          <div className="admin-section">
-            <h3>1:1 문의 관리</h3>
-            <table className="admin-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>제목</th>
-                  <th>질문</th>
-                  <th>답변</th>
-                  <th>작성일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {inquiries.length > 0 ? (
-                  inquiries.map((inq) => (
-                    <tr key={inq.inquiryId}>
-                      <td>{inq.inquiryId}</td>
-                      <td>{inq.title}</td>
-                      <td>{inq.question}</td>
-                      <td>
-                        {inq.answers?.length > 0 && inq.answers.map((a) => (
-                          <div key={a.inquiryReviewId}>
-                            <strong>{a.nickName}</strong>: {a.answer}
-                          </div>
-                        ))}
-
-                        {/* 관리자가 새 답변 작성 가능 */}
-                        <input
-                          type="text"
-                          placeholder="답변 입력"
-                          value={inq.newAnswer}
-                          onChange={(e) => {
-                            setInquiries(prev =>
-                              prev.map(i =>
-                                i.inquiryId === inq.inquiryId
-                                  ? { ...i, newAnswer: e.target.value }
-                                  : i
-                              )
-                            );
-                          }}
-                        />
-                        <button onClick={() => handleSaveInquiryAnswer(inq.inquiryId, inq.newAnswer)}>
-                          답변 등록
-                        </button>
-                      </td>
-                      <td>{new Date(inq.createdAt).toLocaleString()}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5}>문의 내역이 없습니다.</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-      </main>
+          {/* 1:1 문의 관리 컴포넌트 */}
+          {section === "inquiry" && (
+            <InquiryManagement
+              inquiries={inquiries}
+              setInquiries={setInquiries}
+              handleSaveInquiryAnswer={handleSaveInquiryAnswer}
+            />
+          )}
+        </main>
+      </div>
     </div>
   );
 }
-
-
-
-
-

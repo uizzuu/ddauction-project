@@ -211,3 +211,9 @@ export interface Inquiry {
   }[];
   newAnswer?: string;
 }
+
+export type Review = {
+  rating: number;
+  comments: string;
+  createdAt?: string;
+}
