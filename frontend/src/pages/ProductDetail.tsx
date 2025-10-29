@@ -446,81 +446,6 @@ export default function ProductDetail({ user }: Props) {
             {product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
-        {/* 입찰 박스 */}
-        {/* <AuctionBox productId={product.productId} /> */}
-        {/* <div style={{ width: "260px", flexShrink: 0 }} className="height-450">
-          <div
-            style={{
-              backgroundColor: "#fff",
-              borderRadius: "12px",
-              padding: "12px",
-              boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "flex-end",
-              gap: "8px",
-              height: "100%",
-            }}
-          >
-            <div className="mb-20 flex-column gap-8 max-height-350 overflow-y-auto bid-scroll">
-              {(product.bids ?? [])
-                .sort((a, b) => a.bidId - b.bidId)
-                .map((b, i) => (
-                  <div key={b.bidId} className="bid-box">
-                    <p className="text-16">{i + 1}번 입찰</p>
-                    <div className="flex-box gap-4 flex-center-a">
-                      <p className="title-20">{b.bidPrice.toLocaleString()}</p>
-                      <p className="title-18">원</p>
-                    </div>
-                  </div>
-                ))}
-              {(!product.bids || product.bids.length === 0) && (
-                <p style={{ margin: 0, color: "#888" }}>
-                  아직 입찰이 없습니다.
-                </p>
-              )}
-            </div>
-
-            <div className="max-height-3rem flex-box gap-4">
-              <input
-                type="text"
-                value={Number(bidValue || 0).toLocaleString()}
-                onChange={(e) => {
-                  const clean = e.target.value.replace(/[^0-9]/g, ""); // 숫자만
-                  setBidValue(clean);
-                }}
-                placeholder="희망 입찰가"
-                className="input"
-              />
-              <div
-                className="flex-column search-btn flex-center border-hover-none"
-              >
-                <button
-                  onClick={() =>
-                    setBidValue(String(Number(bidValue || 0) + 1000))
-                  }
-                  className="color-ddd width-fit bg-transparent mb--4 hover"
-                >
-                  <ChevronUp size={20} />
-                </button>
-                <button
-                  onClick={() =>
-                    setBidValue(
-                      String(Math.max(Number(bidValue || 0) - 1000, 0))
-                    )
-                  }
-                  className="color-ddd width-fit bg-transparent hover"
-                >
-                  <ChevronDown size={20} />
-                </button>
-              </div>
-              <button onClick={handleBid} className="search-btn">
-                입찰
-              </button>
-            </div>
-          </div>
-        </div>
-      </div> */}
 
         {/* 새로운 입찰 그래프 컴포넌트 사용 */}
         <div
@@ -537,7 +462,6 @@ export default function ProductDetail({ user }: Props) {
           <div style={{ width: "100%" }}>
             <ProductBidGraph bids={mergedBids} />
           </div>
-
           <div style={{ width: "100%" }}>
             <ProductQnA
               user={user}
@@ -548,9 +472,16 @@ export default function ProductDetail({ user }: Props) {
             />
           </div>
         </div>
-
-
+        <AuctionBox productId={product.productId} />
       </div>
+        <ProductBidGraph bids={product.bids ?? []} />
+        <ProductQnA
+          user={user}
+          product={product}
+          productId={product.productId}
+          qnaList={qnaList}
+          setQnaList={setQnaList}
+        />
     </div>
   );
 }
