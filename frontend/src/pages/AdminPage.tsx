@@ -7,7 +7,6 @@ import type {
   EditProductForm,
   Inquiry,
 } from "../types/types";
-import { PRODUCT_STATUS } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 
 // 분리된 컴포넌트 임포트
@@ -49,9 +48,11 @@ export default function AdminPage() {
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [editProductForm, setEditProductForm] = useState<EditProductForm>({
     title: "",
+    content: "",
     categoryId: undefined,
-    startingPrice: undefined,
-    productStatus: PRODUCT_STATUS[0],
+    startingPrice: 0,
+    productStatus: "ACTIVE",
+    auctionEndTime: "",
   });
 
   // 회원 수정 상태
@@ -303,9 +304,11 @@ export default function AdminPage() {
     setEditingProductId(product.productId);
     setEditProductForm({
       title: product.title,
+      content: product.content ?? "",
       categoryId: product.categoryId,
       startingPrice: product.startingPrice,
       productStatus: product.productStatus,
+      auctionEndTime: product.auctionEndTime,
     });
   };
 

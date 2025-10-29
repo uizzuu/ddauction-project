@@ -20,7 +20,6 @@ import { useAuction } from "../hooks/useAuction";
 type Props = {
   user: User | null;
   setUser: (user: User | null) => void;
-  onSave: () => void;
 };
 
 export default function ProductDetail({ user }: Props) {
