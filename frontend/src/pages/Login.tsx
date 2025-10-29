@@ -82,7 +82,7 @@ export default function Login({ setUser }: Props) {
         }));
       }
     } catch {
-      setErrors((prev) => ({ ...prev, submit: "서버 연결 실패" }));
+      setErrors((prev) => ({ ...prev, submit: "로그인 실패" }));
     }
   };
   // ✅ 소셜 로그인

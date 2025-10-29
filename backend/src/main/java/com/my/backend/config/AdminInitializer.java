@@ -21,36 +21,37 @@ public class AdminInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+
         // --- 관리자 계정 초기화 ---
-        // findByEmail의 결과로 User 객체 반환 -> isEmpty는 주로 List, Map과 같은 객체에 많이 활용
-        if (userRepository.findByEmail("admin@example.com") == null) {
+        if (userRepository.findByEmail("admin@example.com").isEmpty()) {
             User admin = User.builder()
                     .userName("관리자")
                     .nickName("admin")
                     .email("admin@example.com")
-                    .password(passwordEncoder.encode("admin123"))
+                    .password(passwordEncoder.encode("Admin1234!"))
                     .phone("01000000000")
                     .role(User.Role.ADMIN)
                     .build();
 
             userRepository.save(admin);
-            System.out.println("관리자 계정 생성 완료!");
+            System.out.println("✅ 관리자 계정 생성 완료!");
+        } else {
+            System.out.println("⚠️ 관리자 계정이 이미 존재합니다.");
         }
 
         // --- 카테고리 초기화 ---
-        if (categoryRepository.count() == 0) { // 카테고리가 비어있으면
+        if (categoryRepository.count() == 0) {
             List<String> categories = List.of(
                     "디지털기기", "생활가전", "가구/인테리어", "생활/주방", "유아동",
                     "도서", "의류", "잡화", "뷰티/미용", "스포츠레저",
                     "취미/게임/음반", "티켓/교환권", "반려동물용품", "식물", "기타 물품"
             );
 
-            // Builder 방식으로 Category 객체 생성
-            categories.forEach(name -> categoryRepository.save(
-                    Category.builder().name(name).build()
-            ));
+            categories.forEach(name ->
+                    categoryRepository.save(Category.builder().name(name).build())
+            );
 
-            System.out.println("카테고리 초기값 생성 완료!");
+            System.out.println("✅ 카테고리 초기값 생성 완료!");
         }
     }
 }

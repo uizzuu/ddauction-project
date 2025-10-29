@@ -23,13 +23,52 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JWTUtil jwtUtil;
 
+    // -------------------- 검증 메서드 --------------------
+    private boolean isValidName(String name) {
+        return name != null && name.matches("^[가-힣a-zA-Z]+$");
+    }
+
+    private boolean isValidNickName(String nickName) {
+        return nickName != null && nickName.matches("^[가-힣a-zA-Z0-9]{3,12}$");
+    }
+
+    private boolean isValidEmail(String email) {
+        return email != null && email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    }
+
+    private boolean isValidPhone(String phone) {
+        return phone != null && phone.matches("^\\d{10,11}$");
+    }
+
+    private boolean isValidPassword(String password) {
+        if (password == null) return false;
+        // 최소 8자 이상, 대문자 1개 이상, 소문자 1개 이상, 숫자 1개 이상, 특수문자 !*@# 1개 이상
+        return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!*@#]).{8,}$");
+    }
+
+
+    // -------------------- 회원가입 --------------------
     public ResponseEntity<?> register(RegisterRequest request) {
         try {
-            // 입력 정규화 (선택 권장)
             String username = request.getUserName().trim();
             String nickname = request.getNickName().trim();
             String email = request.getEmail().trim().toLowerCase();
+            String password = request.getPassword();
+            String phone = request.getPhone();
 
+            // 입력 검증
+            if (!isValidName(username))
+                throw new IllegalArgumentException("이름은 한글 또는 영문만 입력 가능합니다.");
+            if (!isValidNickName(nickname))
+                throw new IllegalArgumentException("닉네임은 3~12자, 한글/영문/숫자만 가능");
+            if (!isValidEmail(email))
+                throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+            if (!isValidPhone(phone))
+                throw new IllegalArgumentException("전화번호는 10~11자리 숫자여야 합니다.");
+            if (!isValidPassword(password))
+                throw new IllegalArgumentException("비밀번호는 8자리 이상, 대소문자+숫자+특수문자 !*@# 1개 이상 포함해야 합니다.");
+
+            // 중복 체크
             if (userRepository.existsByNickName(nickname))
                 throw new IllegalArgumentException("이미 사용중인 닉네임입니다.");
             if (userRepository.existsByEmail(email))
@@ -38,8 +77,8 @@ public class AuthService {
             User user = User.builder()
                     .userName(username)
                     .nickName(nickname)
-                    .password(passwordEncoder.encode(request.getPassword()))
-                    .phone(request.getPhone())
+                    .password(passwordEncoder.encode(password))
+                    .phone(phone)
                     .email(email)
                     .role(User.Role.USER)
                     .build();
@@ -53,9 +92,7 @@ public class AuthService {
         }
     }
 
-    // AuthService.java의 login 메서드만 교체하세요
-// (파일 전체가 아니라 이 메서드만 교체!)
-
+    // -------------------- 로그인 --------------------
     @Transactional(readOnly = true)
     public ResponseEntity<?> login(LoginRequest request) {
         try {
@@ -68,7 +105,13 @@ public class AuthService {
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
             }
 
-            String token = jwtUtil.createJwt(user.getUserId(), user.getEmail(), user.getRole().name(),user.getNickName(), 3600000L);
+            String token = jwtUtil.createJwt(
+                    user.getUserId(),
+                    user.getEmail(),
+                    user.getRole().name(),
+                    user.getNickName(),
+                    3600000L
+            );
             TokenResponse tokenResponse = new TokenResponse(token, null);
             log.info("로그인 성공: {}", request.getEmail());
             return ResponseEntity.ok(tokenResponse);
@@ -78,6 +121,7 @@ public class AuthService {
         }
     }
 
+    // -------------------- 토큰 갱신 --------------------
     public ResponseEntity<?> refreshToken(String token) {
         try {
             if (!jwtUtil.validateToken(token) || jwtUtil.isExpired(token)) {
@@ -87,13 +131,23 @@ public class AuthService {
             String email = jwtUtil.getEmail(token);
             log.info("토큰 검증 성공: {}", email);
 
-            // 이메일로 사용자 조회
             User user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-            // 새로운 토큰 발급 (예: 1시간 유효)
-            String newAccessToken = jwtUtil.createJwt(user.getUserId(),user.getEmail(), user.getRole().name(),user.getNickName(), 3600000L); // 1시간
-            String newRefreshToken = jwtUtil.createJwt(user.getUserId(),user.getEmail(), user.getRole().name(),user.getNickName(), 604800000L); // 7일
+            String newAccessToken = jwtUtil.createJwt(
+                    user.getUserId(),
+                    user.getEmail(),
+                    user.getRole().name(),
+                    user.getNickName(),
+                    3600000L
+            );
+            String newRefreshToken = jwtUtil.createJwt(
+                    user.getUserId(),
+                    user.getEmail(),
+                    user.getRole().name(),
+                    user.getNickName(),
+                    604800000L
+            );
 
             TokenResponse tokenResponse = new TokenResponse(newAccessToken, newRefreshToken);
             log.info("토큰 갱신 성공");
@@ -102,6 +156,5 @@ public class AuthService {
             log.warn("토큰 갱신 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
-
     }
 }
