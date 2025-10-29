@@ -10,9 +10,13 @@ export default function Main() {
 
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
+  const [banners, setBanners] = useState<
+    { id: number; image?: string; text: string; product?: Product }[]
+  >([]);
   const [current, setCurrent] = useState(0);
   const [imageFailed, setImageFailed] = useState(false);
 
+  // 상품 목록 불러오기 (신상 상품)
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -35,31 +39,51 @@ export default function Main() {
     }
   };
 
+  // 배너용 상품 불러오기
+  const fetchBannerProducts = async () => {
+    try {
+      const [topRes, latestRes, endingRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/products/top-bookmarked`),
+        fetch(`${API_BASE_URL}/api/products/latest`),
+        fetch(`${API_BASE_URL}/api/products/ending-soon`),
+      ]);
+
+      const [topData, latestData, endingData]: [Product[], Product, Product] =
+        await Promise.all([
+          topRes.json(),
+          latestRes.json(),
+          endingRes.json(),
+        ]);
+
+      setBanners([
+        {
+          id: 1,
+          image: topData[0]?.imageUrl ?? "/banner1.jpg",
+          text: "지금 가장 인기 있는 경매 상품 🔥",
+          product: topData[0],
+        },
+        {
+          id: 2,
+          image: latestData?.imageUrl ?? "/banner2.jpg",
+          text: "오늘의 추천! 신규 등록 상품 🎉",
+          product: latestData,
+        },
+        {
+          id: 3,
+          image: endingData?.imageUrl ?? "/banner3.jpg",
+          text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
+          product: endingData,
+        },
+      ]);
+    } catch (err) {
+      console.error("배너 상품 불러오기 실패:", err);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
+    fetchBannerProducts();
   }, []);
-
-  // 배너 슬라이드 데이터
-  const banners = [
-    {
-      id: 1,
-      image: "/banner1.jpg",
-      text: "지금 가장 인기 있는 경매 상품 🔥",
-      productId: 1,
-    },
-    {
-      id: 2,
-      image: "/banner2.jpg",
-      text: "오늘의 추천! 신규 등록 상품 🎉",
-      productId: 2,
-    },
-    {
-      id: 3,
-      image: "/banner3.jpg",
-      text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
-      productId: 3,
-    },
-  ];
 
   useEffect(() => {
     setImageFailed(false);
@@ -70,18 +94,18 @@ export default function Main() {
   const handleNext = () =>
     setCurrent((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
 
-  // ✅ 자동 슬라이드 기능만 추가
+  // 자동 슬라이드
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrent((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
-    }, 5000); // 5초마다 이동
+    }, 5000);
 
-    return () => clearInterval(interval); // 컴포넌트 언마운트 시 정리
+    return () => clearInterval(interval);
   }, [banners.length]);
 
   return (
     <div className="container">
-      {/* ✅ 메인 배너 섹션 */}
+      {/* 메인 배너 */}
       <div className="position-rl width-full height-500 overflow-hidden radius-32">
         <div
           className="flex-box width-full height-full trans duration-500"
@@ -92,9 +116,9 @@ export default function Main() {
               key={i}
               className="banner-slide position-rl width-full height-500"
               onClick={() =>
-                b.productId && navigate(`/products/${b.productId}`)
+                b.product && navigate(`/products/${b.product.productId}`)
               }
-              style={{ cursor: b.productId ? "pointer" : "default" }}
+              style={{ cursor: b.product ? "pointer" : "default" }}
             >
               {b.image && !imageFailed ? (
                 <>
@@ -110,8 +134,6 @@ export default function Main() {
               ) : (
                 <div className="no-image-txt bg-333">이미지 없음</div>
               )}
-
-              {/* 텍스트 */}
               <p className="color-fff title-36 position-ab bottom-2rem left-2rem z-10">
                 {b.text}
               </p>
@@ -119,7 +141,6 @@ export default function Main() {
           ))}
         </div>
 
-        {/* 좌우 버튼 */}
         <button
           onClick={handlePrev}
           className="position-ab left-16 top-half color-fff trans bg-transparent z-20"
@@ -146,6 +167,7 @@ export default function Main() {
         ))}
       </div>
 
+      {/* 신상 상품 영역 */}
       <div className="product-area">
         <div className="flex-box flex-between flex-end mb-20">
           <div>

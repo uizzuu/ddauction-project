@@ -194,7 +194,10 @@ public class ProductService {
     }
 
     public ProductDto getEndingSoonProduct() {
-        Product product = productRepository.findTopByProductStatusOrderByAuctionEndTimeAsc(ProductStatus.ACTIVE);
+        Product product = productRepository
+                .findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
+                        ProductStatus.ACTIVE, LocalDateTime.now()
+                );
         return ProductDto.fromEntity(product);
     }
 
