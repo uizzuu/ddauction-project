@@ -35,7 +35,8 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     Product findTopByProductStatusOrderByCreatedAtDesc(ProductStatus productStatus);
 
     // 곧 종료되는 상품 1개 조회
-    Product findTopByProductStatusOrderByAuctionEndTimeAsc(ProductStatus productStatus);
+    Product findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
+            ProductStatus productStatus, LocalDateTime now);
 
     Page<Product> findByTitleContaining(String keyword, Pageable pageable);
     Page<Product> findByCategory_CategoryId(Long categoryId, Pageable pageable);
