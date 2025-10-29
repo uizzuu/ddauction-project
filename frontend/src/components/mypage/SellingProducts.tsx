@@ -49,7 +49,7 @@ export default function SellingProducts({
             >
               <div style={{ display: "flex", gap: "15px" }} >
                 <div 
-                    className="bid-box width-200">
+                    className="bid-box width-200 height-200 overflow-hidden p-0">
                 {product.imageUrl ? (
                   <img
                     src={product.imageUrl}
