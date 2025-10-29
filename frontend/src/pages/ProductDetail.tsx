@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import type { Product, User, Category, Qna } from "../types/types";
+import type { Product, User, Category, Qna, Bid } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/util";
 import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
+import { useAuction } from "../hooks/useAuction";
 
 type Props = {
   user: User | null;
@@ -19,6 +20,10 @@ export default function ProductDetail({ user }: Props) {
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
+
+  //
+  const [allBids, setAllBids] = useState<Bid[]>([]);
+  const { bids: liveBids } = useAuction({ productId: Number(id) });
 
   // 찜 관련 state
   const [isBookMarked, setIsBookMarked] = useState(false);
@@ -52,6 +57,8 @@ export default function ProductDetail({ user }: Props) {
         setProduct(data);
         setSellerNickName(data.sellerNickName ?? "알 수 없음");
         setRemainingTime(calculateRemainingTime(data.auctionEndTime));
+
+
 
         // 찜 수
         try {
@@ -134,6 +141,43 @@ export default function ProductDetail({ user }: Props) {
 
     fetchProduct();
   }, [id, user?.token]);
+
+  // 초기 입찰 내역 fetch
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchAllBids = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        const text = await res.text();
+        try {
+          const data: Bid[] = JSON.parse(text);
+          setAllBids(data);
+        } catch {
+          console.error("입찰 내역 불러오기 실패, 서버 응답:", text);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAllBids();
+  }, [id]);
+
+  // 입찰 합치기
+  const mergedBids = [...allBids, ...liveBids]
+    .reduce<Bid[]>((acc, bid) => {
+      if (!acc.find((b) => b.bidId === bid.bidId)) acc.push(bid);
+      return acc;
+    }, [])
+    .sort((a, b) => a.bidId - b.bidId);
 
   // 남은 시간 실시간 업데이트
   useEffect(() => {
@@ -402,20 +446,111 @@ export default function ProductDetail({ user }: Props) {
             {product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
+        {/* 입찰 박스 */}
+        {/* <AuctionBox productId={product.productId} /> */}
+        {/* <div style={{ width: "260px", flexShrink: 0 }} className="height-450">
+          <div
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: "12px",
+              padding: "12px",
+              boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "flex-end",
+              gap: "8px",
+              height: "100%",
+            }}
+          >
+            <div className="mb-20 flex-column gap-8 max-height-350 overflow-y-auto bid-scroll">
+              {(product.bids ?? [])
+                .sort((a, b) => a.bidId - b.bidId)
+                .map((b, i) => (
+                  <div key={b.bidId} className="bid-box">
+                    <p className="text-16">{i + 1}번 입찰</p>
+                    <div className="flex-box gap-4 flex-center-a">
+                      <p className="title-20">{b.bidPrice.toLocaleString()}</p>
+                      <p className="title-18">원</p>
+                    </div>
+                  </div>
+                ))}
+              {(!product.bids || product.bids.length === 0) && (
+                <p style={{ margin: 0, color: "#888" }}>
+                  아직 입찰이 없습니다.
+                </p>
+              )}
+            </div>
+
+            <div className="max-height-3rem flex-box gap-4">
+              <input
+                type="text"
+                value={Number(bidValue || 0).toLocaleString()}
+                onChange={(e) => {
+                  const clean = e.target.value.replace(/[^0-9]/g, ""); // 숫자만
+                  setBidValue(clean);
+                }}
+                placeholder="희망 입찰가"
+                className="input"
+              />
+              <div
+                className="flex-column search-btn flex-center border-hover-none"
+              >
+                <button
+                  onClick={() =>
+                    setBidValue(String(Number(bidValue || 0) + 1000))
+                  }
+                  className="color-ddd width-fit bg-transparent mb--4 hover"
+                >
+                  <ChevronUp size={20} />
+                </button>
+                <button
+                  onClick={() =>
+                    setBidValue(
+                      String(Math.max(Number(bidValue || 0) - 1000, 0))
+                    )
+                  }
+                  className="color-ddd width-fit bg-transparent hover"
+                >
+                  <ChevronDown size={20} />
+                </button>
+              </div>
+              <button onClick={handleBid} className="search-btn">
+                입찰
+              </button>
+            </div>
+          </div>
+        </div>
+      </div> */}
 
         {/* 새로운 입찰 그래프 컴포넌트 사용 */}
-        <AuctionBox productId={product.productId} />
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+            width: "100%", // 부모 전체 너비
+          }}
+        >
+          <div style={{ width: "100%" }}>
+            <AuctionBox productId={product.productId} />
+          </div>
+          <div style={{ width: "100%" }}>
+            <ProductBidGraph bids={mergedBids} />
+          </div>
+
+          <div style={{ width: "100%" }}>
+            <ProductQnA
+              user={user}
+              product={product}
+              productId={product.productId}
+              qnaList={qnaList}
+              setQnaList={setQnaList}
+            />
+          </div>
+        </div>
+
+
       </div>
-
-        <ProductBidGraph bids={product.bids ?? []} />
-
-        <ProductQnA
-          user={user}
-          product={product}
-          productId={product.productId}
-          qnaList={qnaList}
-          setQnaList={setQnaList}
-        />
     </div>
   );
 }
