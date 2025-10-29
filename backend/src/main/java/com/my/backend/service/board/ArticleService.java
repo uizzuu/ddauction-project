@@ -24,8 +24,8 @@ public class ArticleService {
     private final BoardRepository boardRepository;
 
     // DTO 직접 반환하는 커스텀 쿼리 이용 전체 글 조회
-    public List<ArticleDto> getAllArticles() {
-        return articleRepository.findAllUserNicknameAndBoardName();
+    public List<ArticleDto> getArticlesByBoardId(Long boardId) {
+        return articleRepository.findAllByBoardId(boardId);
     }
 
     // 페이징 조회 (엔티티 → DTO 매핑)

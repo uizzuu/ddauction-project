@@ -5,6 +5,7 @@ import com.my.backend.entity.board.Article;
 import com.my.backend.entity.board.Board;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,8 +18,9 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
             "a.articleId, u.userId, u.nickName, b.boardId, b.boardName, a.title, a.content, a.createdAt, a.updatedAt) " +
             "FROM Article a " +
             "JOIN a.user u " +
-            "JOIN a.board b")
-    List<ArticleDto> findAllUserNicknameAndBoardName();
+            "JOIN a.board b " +
+            "WHERE b.boardId = :boardId")
+    List<ArticleDto> findAllByBoardId(@Param("boardId") Long boardId);
 
     // 유저 ID로 글 조회
     List<Article> findByUserUserId(Long userId);
@@ -28,4 +30,5 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     // 유저 ID + 게시판 기준으로 글 조회 (1:1 문의 조회에 사용)
     List<Article> findByUserUserIdAndBoard(Long userId, Board board);
+
 }
