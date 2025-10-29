@@ -448,33 +448,10 @@ export default function ProductDetail({ user }: Props) {
         </div>
 
         {/* 새로운 입찰 그래프 컴포넌트 사용 */}
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-            width: "100%", // 부모 전체 너비
-          }}
-        >
-          <div style={{ width: "100%" }}>
-            <AuctionBox productId={product.productId} />
-          </div>
-          <div style={{ width: "100%" }}>
-            <ProductBidGraph bids={mergedBids} />
-          </div>
-          <div style={{ width: "100%" }}>
-            <ProductQnA
-              user={user}
-              product={product}
-              productId={product.productId}
-              qnaList={qnaList}
-              setQnaList={setQnaList}
-            />
-          </div>
-        </div>
+        
         <AuctionBox productId={product.productId} />
       </div>
-        <ProductBidGraph bids={product.bids ?? []} />
+        <ProductBidGraph bids={mergedBids} />
         <ProductQnA
           user={user}
           product={product}
