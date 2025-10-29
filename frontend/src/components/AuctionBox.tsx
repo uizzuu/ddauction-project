@@ -173,10 +173,6 @@ export const AuctionBox = ({ productId }: AuctionBoxProps) => {
             입찰
           </button>
         </div>
-
-        {/* <p style={{ marginTop: "8px", fontWeight: 600 }}>
-          현재 최고 입찰: {currentHighestBid.toLocaleString()}원
-        </p> */}
       </div>
     </div>
   );

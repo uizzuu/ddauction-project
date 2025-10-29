@@ -72,39 +72,27 @@ export default function Signup() {
   };
 
   const handleSubmit = async () => {
-    if (!validateAll()) return;
+  if (!validateAll()) return;
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(form),
+    });
 
-      if (response.ok) {
-        alert("회원가입 성공!");
-        navigate("/login");
-        // 서버에서 JSON으로 에러 메시지를 보내는 경우 처리
-        let message = "회원가입 실패";
-        try {
-          const data = await response.json();
-          if (data.message) message = data.message;
-          else if (data.errors && data.errors.length > 0)
-            message = data.errors[0].defaultMessage;
-        } catch {
-          message = `회원가입 실패 (${response.status})`;
-        }
+    const data = await response.json(); // 항상 메시지 읽기
 
-        setErrors((prev) => ({
-          ...prev,
-          submit: message,
-        }));
-      }
-    } catch {
-      // 실제 네트워크 문제
-      setErrors((prev) => ({ ...prev, submit: "서버와 연결되지 않았습니다." }));
+    if (response.ok) {
+      alert("회원가입 성공!");
+      navigate("/login");
+    } else {
+      setErrors((prev) => ({ ...prev, submit: data || "회원가입 실패" }));
     }
-  };
+  } catch (err) {
+    setErrors((prev) => ({ ...prev, submit: "회원가입 실패" }));
+  }
+};
 
   return (
     <div className="auth-container">

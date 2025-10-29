@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import type { Product, User, Category, Qna } from "../types/types";
+import type { Product, User, Category, Qna, Bid } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/util";
 import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
+import { useAuction } from "../hooks/useAuction";
 
 type Props = {
   user: User | null;
@@ -19,6 +20,10 @@ export default function ProductDetail({ user }: Props) {
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
+
+  //
+  const [allBids, setAllBids] = useState<Bid[]>([]);
+  const { bids: liveBids } = useAuction({ productId: Number(id) });
 
   // 찜 관련 state
   const [isBookMarked, setIsBookMarked] = useState(false);
@@ -52,6 +57,8 @@ export default function ProductDetail({ user }: Props) {
         setProduct(data);
         setSellerNickName(data.sellerNickName ?? "알 수 없음");
         setRemainingTime(calculateRemainingTime(data.auctionEndTime));
+
+
 
         // 찜 수
         try {
@@ -134,6 +141,43 @@ export default function ProductDetail({ user }: Props) {
 
     fetchProduct();
   }, [id, user?.token]);
+
+  // 초기 입찰 내역 fetch
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchAllBids = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        const text = await res.text();
+        try {
+          const data: Bid[] = JSON.parse(text);
+          setAllBids(data);
+        } catch {
+          console.error("입찰 내역 불러오기 실패, 서버 응답:", text);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchAllBids();
+  }, [id]);
+
+  // 입찰 합치기
+  const mergedBids = [...allBids, ...liveBids]
+    .reduce<Bid[]>((acc, bid) => {
+      if (!acc.find((b) => b.bidId === bid.bidId)) acc.push(bid);
+      return acc;
+    }, [])
+    .sort((a, b) => a.bidId - b.bidId);
 
   // 남은 시간 실시간 업데이트
   useEffect(() => {
@@ -404,11 +448,10 @@ export default function ProductDetail({ user }: Props) {
         </div>
 
         {/* 새로운 입찰 그래프 컴포넌트 사용 */}
+        
         <AuctionBox productId={product.productId} />
       </div>
-
-        <ProductBidGraph bids={product.bids ?? []} />
-
+        <ProductBidGraph bids={mergedBids} />
         <ProductQnA
           user={user}
           product={product}
