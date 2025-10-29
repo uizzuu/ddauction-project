@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import ReactDatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import type {
   Product,
   User,
@@ -9,7 +11,7 @@ import type {
   EditProductForm,
 } from "../types/types";
 import { API_BASE_URL } from "../services/api";
-import { formatDateTime } from "../utils/util";
+import { formatDateTime } from '../utils/util';
 import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
@@ -18,6 +20,7 @@ import { useAuction } from "../hooks/useAuction";
 type Props = {
   user: User | null;
   setUser: (user: User | null) => void;
+  onSave: () => void;
 };
 
 export default function ProductDetail({ user }: Props) {
@@ -43,7 +46,14 @@ export default function ProductDetail({ user }: Props) {
     categoryId: undefined,
     startingPrice: 0,
     productStatus: "ACTIVE",
+    auctionEndTime: "",
   });
+
+  // 경매 진행중일 때 수정 막기
+  const isEditingDisabled = product
+  ? product.productStatus === "ACTIVE" &&
+    new Date(product.auctionEndTime).getTime() > new Date().getTime()
+  : false;
 
   const calculateRemainingTime = (endTime: string) => {
     const now = new Date();
@@ -267,6 +277,7 @@ export default function ProductDetail({ user }: Props) {
       startingPrice: product.startingPrice ?? 0,
       categoryId: product.categoryId,
       productStatus: product.productStatus ?? "ACTIVE",
+      auctionEndTime: product.auctionEndTime,
     });
   };
 
@@ -478,29 +489,16 @@ export default function ProductDetail({ user }: Props) {
                   gap: "10px",
                 }}
               >
+                <label className="label title-16">상품명</label>
                 <input
                   name="title"
                   value={productForm.title}
                   onChange={handleChangeProductForm}
                   placeholder="상품명"
                   className="input"
+                  disabled={isEditingDisabled}
                 />
-                <input
-                  name="startingPrice"
-                  type="number"
-                  value={productForm.startingPrice}
-                  onChange={handleChangeProductForm}
-                  placeholder="가격"
-                  className="input"
-                />
-                <textarea
-                  name="content"
-                  value={productForm.content}
-                  onChange={handleChangeProductForm}
-                  placeholder="설명"
-                  rows={3}
-                  className="textarea"
-                />
+                <label className="label title-16">카테고리</label>
                 <select
                   name="categoryId"
                   value={productForm.categoryId ?? ""}
@@ -511,6 +509,7 @@ export default function ProductDetail({ user }: Props) {
                       categoryId: val === "" ? undefined : Number(val),
                     }));
                   }}
+                  disabled={isEditingDisabled}
                 >
                   <option value="">카테고리 선택</option>
                   {product?.categoryId && (
@@ -519,10 +518,60 @@ export default function ProductDetail({ user }: Props) {
                     </option>
                   )}
                 </select>
+                <label className="label title-16">경매 종료 시간</label>
+                <ReactDatePicker
+                  selected={
+                    productForm.auctionEndTime
+                      ? new Date(productForm.auctionEndTime)
+                      : null
+                  }
+                  onChange={(date: Date | null) =>
+                    setProductForm((prev) => ({
+                      ...prev,
+                      auctionEndTime: date
+                        ? date.toISOString()
+                        : prev.auctionEndTime,
+                    }))
+                  }
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={5}
+                  dateFormat="yyyy-MM-dd HH:mm"
+                  minDate={(() => {
+                    const now = new Date();
+                    const originalEnd = new Date(
+                      product?.auctionEndTime ?? now
+                    );
+                    return now > originalEnd ? now : originalEnd;
+                  })()}
+                  className="input"
+                />
+                <label className="label title-16">경매등록가</label>
+                <input
+                  name="startingPrice"
+                  type="number"
+                  value={productForm.startingPrice}
+                  onChange={handleChangeProductForm}
+                  placeholder="가격"
+                  className="input"
+                  disabled={isEditingDisabled}
+                />
+                <label className="label title-16">상세설명</label>
+                <textarea
+                  name="content"
+                  value={productForm.content}
+                  onChange={handleChangeProductForm}
+                  placeholder="설명"
+                  rows={3}
+                  className="textarea"
+                  disabled={isEditingDisabled}
+                />
+                <label className="label title-16">판매상태</label>
                 <select
                   name="productStatus"
                   value={productForm.productStatus}
                   onChange={handleChangeProductForm}
+                  disabled={isEditingDisabled}
                 >
                   <option value="ACTIVE">판매중</option>
                   <option value="SOLD">판매완료</option>
@@ -544,6 +593,8 @@ export default function ProductDetail({ user }: Props) {
                   : "알 수 없음"}{" "}
                 <br />
                 남은시간: {remainingTime}
+                <br/>
+                ({formatDateTime(product.auctionEndTime)})
               </p>
 
               <p>경매등록가: {auctionStartingPrice.toLocaleString()}원</p>

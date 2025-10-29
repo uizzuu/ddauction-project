@@ -21,11 +21,6 @@ export default function ProductSearchPage() {
     "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity"
   >("latest");
 
-  // ▼ 페이지네이션 상태
-  const [currentPage, setCurrentPage] = useState(0);
-  const [totalPages, setTotalPages] = useState(1);
-  const PAGE_SIZE = 2; // 한 페이지에 보여줄 상품 수
-
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -51,7 +46,6 @@ export default function ProductSearchPage() {
       | "priceDesc"
       | "timeLeft"
       | "popularity" = "latest",
-    page: number = 0 // ▼ 페이지네이션 적용
   ) => {
     setLoading(true);
     try {
@@ -129,18 +123,10 @@ export default function ProductSearchPage() {
             break;
         }
       }
-
-      // ▼ 페이지네이션: 총 페이지 계산 후 현재 페이지 상품 slice
-      setTotalPages(Math.ceil(sorted.length / PAGE_SIZE));
-      const pagedProducts = sorted.slice(
-        page * PAGE_SIZE,
-        (page + 1) * PAGE_SIZE
-      );
-      setProducts(pagedProducts);
+      setProducts(sorted);
     } catch (err) {
       console.error("❌ 상품 검색 중 오류 발생:", err);
       setProducts([]);
-      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -150,13 +136,11 @@ export default function ProductSearchPage() {
     const params = new URLSearchParams(location.search);
     const kw = params.get("keyword") || "";
     const cat = params.get("category") ? Number(params.get("category")) : "";
-    const page = params.get("page") ? Number(params.get("page")) : 0;
 
     setKeyword(kw);
     setCategoryId(cat);
-    setCurrentPage(page);
 
-    fetchProducts(kw, cat, activeOnly, sortOption, page);
+    fetchProducts(kw, cat, activeOnly, sortOption);
   }, [location.search, activeOnly, sortOption]);
 
   const handleCategoryChange = (id: number) => {
@@ -179,19 +163,6 @@ export default function ProductSearchPage() {
 
   const handleActiveOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setActiveOnly(e.target.checked);
-  };
-
-  // ▼ 페이지네이션 버튼
-  const goPrevPage = () => {
-    if (currentPage > 0) updatePage(currentPage - 1);
-  };
-  const goNextPage = () => {
-    if (currentPage + 1 < totalPages) updatePage(currentPage + 1);
-  };
-  const updatePage = (page: number) => {
-    const query = new URLSearchParams(location.search);
-    query.set("page", page.toString());
-    navigate(`/search?${query.toString()}`);
   };
 
   return (
@@ -349,27 +320,6 @@ export default function ProductSearchPage() {
             </div>
           ) : (
             <p className="no-content-text">검색 결과가 없습니다.</p>
-          )}
-
-          {/* ▼ 페이지네이션 */}
-          {totalPages > 1 && (
-            <div className="pagination flex-box gap-8" style={{ marginTop: "2rem" }}>
-              <button onClick={goPrevPage} disabled={currentPage === 0}>
-                이전
-              </button>
-              {Array.from({ length: totalPages }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => updatePage(i)}
-                  className={i === currentPage ? "active-page" : ""}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button onClick={goNextPage} disabled={currentPage + 1 === totalPages}>
-                다음
-              </button>
-            </div>
           )}
         </div>
       </div>

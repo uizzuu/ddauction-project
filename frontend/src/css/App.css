@@ -200,6 +200,12 @@ a {
   resize: none;
 }
 
+:is(.input, .textarea, .select):disabled {
+  background-color: #f0f0f0; /* 연한 회색 배경 */
+  color: #999;               /* 글자 색도 연하게 */
+  cursor: not-allowed;       /* 마우스 커서도 막힘 느낌 */
+}
+
 .input:focus {
   outline: none;
   color: #b17576;
@@ -967,7 +973,7 @@ button:disabled {
 /* SearchPage > datepicker, 카테고리옵션 조절 */
 
 .react-datepicker-popper {
-  z-index: 100;
+  z-index: 500;
 }
 
 .register-category .custom-select-options {

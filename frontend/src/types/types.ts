@@ -88,6 +88,7 @@ export type EditProductForm = {
   categoryId?: number;
   startingPrice?: number;
   productStatus: typeof PRODUCT_STATUS[number];
+  auctionEndTime: string;
 };
 
 export interface EditUserForm {
