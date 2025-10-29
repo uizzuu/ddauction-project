@@ -15,6 +15,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 @RequiredArgsConstructor
 public class ProductService {
@@ -193,5 +196,37 @@ public class ProductService {
     public ProductDto getEndingSoonProduct() {
         Product product = productRepository.findTopByProductStatusOrderByAuctionEndTimeAsc(ProductStatus.ACTIVE);
         return ProductDto.fromEntity(product);
+    }
+
+    public Page<ProductDto> searchProductsPaged(String keyword, Long categoryId, ProductStatus status, Pageable pageable) {
+        Page<Product> products;
+
+        boolean hasKeyword = keyword != null && !keyword.isEmpty();
+        boolean hasCategory = categoryId != null;
+        boolean hasStatus = status != null;
+
+        if (hasKeyword && hasCategory && hasStatus) {
+            products = productRepository.findByTitleContainingAndCategory_CategoryIdAndProductStatus(
+                    keyword, categoryId, status, pageable);
+        } else if (hasKeyword && hasCategory) {
+            products = productRepository.findByTitleContainingAndCategory_CategoryId(
+                    keyword, categoryId, pageable);
+        } else if (hasKeyword && hasStatus) {
+            products = productRepository.findByTitleContainingAndProductStatus(
+                    keyword, status, pageable);
+        } else if (hasCategory && hasStatus) {
+            products = productRepository.findByCategory_CategoryIdAndProductStatus(
+                    categoryId, status, pageable);
+        } else if (hasKeyword) {
+            products = productRepository.findByTitleContaining(keyword, pageable);
+        } else if (hasCategory) {
+            products = productRepository.findByCategory_CategoryId(categoryId, pageable);
+        } else if (hasStatus) {
+            products = productRepository.findByProductStatus(status, pageable);
+        } else {
+            products = productRepository.findAll(pageable);
+        }
+
+        return products.map(ProductDto::fromEntity);
     }
 }
