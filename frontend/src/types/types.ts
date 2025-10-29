@@ -84,6 +84,7 @@ export interface ProductForm {
 // 상품 수정 데이터 타입
 export type EditProductForm = {
   title: string;
+  content: string;
   categoryId?: number;
   startingPrice?: number;
   productStatus: typeof PRODUCT_STATUS[number];

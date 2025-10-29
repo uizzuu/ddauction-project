@@ -111,6 +111,7 @@ export default function SellingProducts({
                       value={productForm.title}
                       onChange={handleChangeProductForm}
                       placeholder="상품명"
+                      className="input"
                     />
                     <input
                       name="startingPrice"
@@ -118,6 +119,7 @@ export default function SellingProducts({
                       value={productForm.startingPrice}
                       onChange={handleChangeProductForm}
                       placeholder="가격"
+                      className="input"
                     />
                     <textarea
                       name="content"
@@ -125,6 +127,7 @@ export default function SellingProducts({
                       onChange={handleChangeProductForm}
                       placeholder="설명"
                       rows={3}
+                      className="textarea"
                     />
                     <select
                       name="categoryId"

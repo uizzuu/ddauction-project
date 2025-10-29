@@ -21,6 +21,11 @@ export default function ProductSearchPage() {
     "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity"
   >("latest");
 
+  // ▼ 페이지네이션 상태
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const PAGE_SIZE = 2; // 한 페이지에 보여줄 상품 수
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -45,7 +50,8 @@ export default function ProductSearchPage() {
       | "priceAsc"
       | "priceDesc"
       | "timeLeft"
-      | "popularity" = "latest"
+      | "popularity" = "latest",
+    page: number = 0 // ▼ 페이지네이션 적용
   ) => {
     setLoading(true);
     try {
@@ -62,7 +68,7 @@ export default function ProductSearchPage() {
       if (!res.ok) throw new Error("상품 불러오기 실패");
       let data: Product[] = await res.json();
 
-      // 거래 가능만 보기 필터 적용
+      // 거래 가능만 보기 필터
       if (active) {
         const now = new Date();
         data = data.filter(
@@ -74,7 +80,7 @@ export default function ProductSearchPage() {
 
       let sorted = [...data];
 
-      // 🔹 인기순일 경우, 각 상품 찜 수 가져오기
+      // 인기순 정렬
       if (sort === "popularity") {
         const productsWithBookmarkCount = await Promise.all(
           sorted.map(async (p) => {
@@ -106,16 +112,12 @@ export default function ProductSearchPage() {
             break;
           case "priceAsc":
             sorted.sort(
-              (a, b) =>
-                (a.startingPrice ?? a.startingPrice ?? 0) -
-                (b.startingPrice ?? b.startingPrice ?? 0)
+              (a, b) => (a.startingPrice ?? 0) - (b.startingPrice ?? 0)
             );
             break;
           case "priceDesc":
             sorted.sort(
-              (a, b) =>
-                (b.startingPrice ?? b.startingPrice ?? 0) -
-                (a.startingPrice ?? a.startingPrice ?? 0)
+              (a, b) => (b.startingPrice ?? 0) - (a.startingPrice ?? 0)
             );
             break;
           case "timeLeft":
@@ -128,10 +130,17 @@ export default function ProductSearchPage() {
         }
       }
 
-      setProducts(sorted);
+      // ▼ 페이지네이션: 총 페이지 계산 후 현재 페이지 상품 slice
+      setTotalPages(Math.ceil(sorted.length / PAGE_SIZE));
+      const pagedProducts = sorted.slice(
+        page * PAGE_SIZE,
+        (page + 1) * PAGE_SIZE
+      );
+      setProducts(pagedProducts);
     } catch (err) {
       console.error("❌ 상품 검색 중 오류 발생:", err);
       setProducts([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -141,12 +150,13 @@ export default function ProductSearchPage() {
     const params = new URLSearchParams(location.search);
     const kw = params.get("keyword") || "";
     const cat = params.get("category") ? Number(params.get("category")) : "";
+    const page = params.get("page") ? Number(params.get("page")) : 0;
 
     setKeyword(kw);
     setCategoryId(cat);
+    setCurrentPage(page);
 
-    // URL 기반으로 바로 fetch
-    fetchProducts(kw, cat, activeOnly, sortOption);
+    fetchProducts(kw, cat, activeOnly, sortOption, page);
   }, [location.search, activeOnly, sortOption]);
 
   const handleCategoryChange = (id: number) => {
@@ -154,6 +164,7 @@ export default function ProductSearchPage() {
     const query = new URLSearchParams();
     if (keyword) query.append("keyword", keyword.trim());
     if (newCat) query.append("category", newCat.toString());
+    query.append("page", "0");
     navigate(`/search?${query.toString()}`);
   };
 
@@ -162,11 +173,25 @@ export default function ProductSearchPage() {
     const query = new URLSearchParams();
     if (keyword) query.append("keyword", keyword.trim());
     if (categoryId) query.append("category", categoryId.toString());
+    query.append("page", "0");
     navigate(`/search?${query.toString()}`);
-  }
+  };
 
   const handleActiveOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setActiveOnly(e.target.checked);
+  };
+
+  // ▼ 페이지네이션 버튼
+  const goPrevPage = () => {
+    if (currentPage > 0) updatePage(currentPage - 1);
+  };
+  const goNextPage = () => {
+    if (currentPage + 1 < totalPages) updatePage(currentPage + 1);
+  };
+  const updatePage = (page: number) => {
+    const query = new URLSearchParams(location.search);
+    query.set("page", page.toString());
+    navigate(`/search?${query.toString()}`);
   };
 
   return (
@@ -175,9 +200,7 @@ export default function ProductSearchPage() {
         {keyword || categoryId
           ? `${keyword ? `${keyword} ` : ""}${
               categoryId
-                ? `${
-                    categories.find((c) => c.categoryId === categoryId)?.name
-                  } `
+                ? `${categories.find((c) => c.categoryId === categoryId)?.name} `
                 : ""
             }검색`
           : "전체 검색"}
@@ -326,6 +349,27 @@ export default function ProductSearchPage() {
             </div>
           ) : (
             <p className="no-content-text">검색 결과가 없습니다.</p>
+          )}
+
+          {/* ▼ 페이지네이션 */}
+          {totalPages > 1 && (
+            <div className="pagination flex-box gap-8" style={{ marginTop: "2rem" }}>
+              <button onClick={goPrevPage} disabled={currentPage === 0}>
+                이전
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => updatePage(i)}
+                  className={i === currentPage ? "active-page" : ""}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button onClick={goNextPage} disabled={currentPage + 1 === totalPages}>
+                다음
+              </button>
+            </div>
           )}
         </div>
       </div>

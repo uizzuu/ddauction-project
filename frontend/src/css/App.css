@@ -562,6 +562,10 @@ button:disabled {
   display: flex;
 }
 
+.flex-top-a {
+  align-items: start;
+}
+
 .flex-center {
   justify-content: center;
   align-items: center;
@@ -948,6 +952,10 @@ button:disabled {
   padding: 0;
 }
 
+.p-2-4 {
+  padding: 2px 4px;
+}
+
 .p-20-30 {
   padding: 20px 30px;
 }
@@ -992,5 +1000,23 @@ button:disabled {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+.highlight-flash {
+  background-color: #f0f8ff;
+  transition: background-color 1.5s ease;
+}
+
+.highlight-flash {
+  animation: highlightFade 3s forwards;
+}
+
+@keyframes highlightFade {
+  0% {
+    background-color: #f0f8ff;
+  }
+  100% {
+    background-color: transparent;
   }
 }

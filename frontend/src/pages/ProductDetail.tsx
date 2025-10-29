@@ -1,6 +1,13 @@
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import type { Product, User, Category, Qna, Bid } from "../types/types";
+import { useNavigate, useParams } from "react-router-dom";
+import type {
+  Product,
+  User,
+  Category,
+  Qna,
+  Bid,
+  EditProductForm,
+} from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/util";
 import ProductQnA from "../components/ProductQnA";
@@ -15,24 +22,29 @@ type Props = {
 
 export default function ProductDetail({ user }: Props) {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const productId = Number(id);
   const [product, setProduct] = useState<Product | null>(null);
-  // const [bidValue, setBidValue] = useState("");
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
-
-  //
   const [allBids, setAllBids] = useState<Bid[]>([]);
-  const { bids: liveBids } = useAuction({ productId: Number(id) });
+  const { bids: liveBids } = useAuction({ productId });
 
-  // 찜 관련 state
   const [isBookMarked, setIsBookMarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(0);
 
-  // QnA 관련 state
   const [qnaList, setQnaList] = useState<Qna[]>([]);
 
-  // 남은 시간 계산
+  const [editingProductId, setEditingProductId] = useState<number | null>(null);
+  const [productForm, setProductForm] = useState<EditProductForm>({
+    title: "",
+    content: "",
+    categoryId: undefined,
+    startingPrice: 0,
+    productStatus: "ACTIVE",
+  });
+
   const calculateRemainingTime = (endTime: string) => {
     const now = new Date();
     const end = new Date(endTime);
@@ -45,10 +57,19 @@ export default function ProductDetail({ user }: Props) {
     return `${days}일 ${hours}시간 ${minutes}분 ${seconds}초`;
   };
 
+  // 남은 시간 실시간 업데이트
+  useEffect(() => {
+    if (!product) return;
+    const interval = setInterval(() => {
+      const remaining = calculateRemainingTime(product.auctionEndTime);
+      setRemainingTime(remaining);
+      if (remaining === "경매 종료") clearInterval(interval);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [product]);
+
   // 상품 정보 + 초기 데이터 가져오기
   useEffect(() => {
-    if (!id) return;
-
     const fetchProduct = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
@@ -57,8 +78,6 @@ export default function ProductDetail({ user }: Props) {
         setProduct(data);
         setSellerNickName(data.sellerNickName ?? "알 수 없음");
         setRemainingTime(calculateRemainingTime(data.auctionEndTime));
-
-
 
         // 찜 수
         try {
@@ -90,17 +109,6 @@ export default function ProductDetail({ user }: Props) {
           }
         }
 
-        // 모든 입찰 내역 가져오기 추가
-        // try {
-        //   const bidsRes = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`);
-        //   if (bidsRes.ok) {
-        //     const bids: Bid[] = await bidsRes.json();
-        //     setProduct((prev) => (prev ? { ...prev, bids } : prev));
-        //   }
-        // } catch {
-        //   console.warn("입찰 내역 불러오기 실패");
-        // }
-
         // 최고 입찰가
         try {
           const highestRes = await fetch(
@@ -114,21 +122,23 @@ export default function ProductDetail({ user }: Props) {
           console.warn("최고 입찰가 조회 실패");
         }
 
-        // 현재 사용자가 찜했는지 여부 (JWT 기반)
+        // 현재 사용자가 찜했는지 여부
         try {
           const token = user?.token || localStorage.getItem("token");
-          const bmRes = await fetch(
-            `${API_BASE_URL}/api/bookmarks/check?productId=${id}`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
+          if (token) {
+            const bmRes = await fetch(
+              `${API_BASE_URL}/api/bookmarks/check?productId=${id}`,
+              {
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            if (bmRes.ok) {
+              const bookmarked: boolean = await bmRes.json();
+              setIsBookMarked(bookmarked);
             }
-          );
-          if (bmRes.ok) {
-            const bookmarked: boolean = await bmRes.json();
-            setIsBookMarked(bookmarked);
           }
         } catch (err) {
           console.warn("찜 여부 조회 실패", err);
@@ -144,8 +154,6 @@ export default function ProductDetail({ user }: Props) {
 
   // 초기 입찰 내역 fetch
   useEffect(() => {
-    if (!id) return;
-
     const fetchAllBids = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -156,11 +164,11 @@ export default function ProductDetail({ user }: Props) {
           },
         });
 
-        const text = await res.text();
-        try {
-          const data: Bid[] = JSON.parse(text);
+        if (res.ok) {
+          const data: Bid[] = await res.json();
           setAllBids(data);
-        } catch {
+        } else {
+          const text = await res.text();
           console.error("입찰 내역 불러오기 실패, 서버 응답:", text);
         }
       } catch (err) {
@@ -171,88 +179,16 @@ export default function ProductDetail({ user }: Props) {
     fetchAllBids();
   }, [id]);
 
+  if (!id) return <div>잘못된 접근입니다.</div>;
+  if (isNaN(productId)) return <div>잘못된 접근입니다.</div>;
+
   // 입찰 합치기
-  const mergedBids = [...allBids, ...liveBids]
-    .reduce<Bid[]>((acc, bid) => {
-      if (!acc.find((b) => b.bidId === bid.bidId)) acc.push(bid);
-      return acc;
-    }, [])
-    .sort((a, b) => a.bidId - b.bidId);
+  const mergedBids = Array.from(
+    new Map([...allBids, ...liveBids].map((b) => [b.bidId, b])).values()
+  ).sort((a, b) => a.bidId - b.bidId);
 
-  // 남은 시간 실시간 업데이트
-  useEffect(() => {
-    if (!product) return;
-    const interval = setInterval(() => {
-      setRemainingTime(calculateRemainingTime(product.auctionEndTime));
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [product]);
-
-  // 입찰 처리
-  // const handleBid = async () => {
-  //   const bidNum = Number(bidValue);
-  //   if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
-  //     return alert("올바른 금액을 입력해주세요 (0보다 큰 숫자)");
-  //   }
-  //   if (!product) return;
-
-  //   if (bidNum <= currentHighestBid) {
-  //     return alert(
-  //       `입찰가가 현재 최고 입찰가(${currentHighestBid.toLocaleString()}원)보다 높아야 합니다.`
-  //     );
-  //   }
-
-  //   const now = new Date();
-  //   const end = new Date(product.auctionEndTime);
-  //   if (now >= end) return alert("이미 경매가 종료된 상품입니다.");
-
-  //   try {
-  //     const token = user?.token || localStorage.getItem("token");
-  //     const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bid`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  //       },
-  //       body: JSON.stringify({
-  //         bidPrice: bidNum,
-  //       }),
-  //     });
-
-  //     if (res.ok) {
-  //       const newBidServer: { bidId: number; bidPrice: number } =
-  //         await res.json();
-
-  //       const newBid: Bid = {
-  //         bidId: newBidServer.bidId,
-  //         userId: product.sellerId ?? 0,
-  //         bidPrice: newBidServer.bidPrice,
-  //         isWinning: false,
-  //         createdAt: new Date().toISOString(),
-  //       };
-
-  //       setProduct((prev) =>
-  //         prev ? { ...prev, bids: [...(prev.bids ?? []), newBid] } : prev
-  //       );
-  //       setCurrentHighestBid(newBidServer.bidPrice);
-  //       setBidValue("");
-  //       alert("입찰 성공!");
-  //     } else {
-  //       const errText = await res.text();
-  //       console.log("입찰 실패 : " + errText);
-  //       alert("입찰 실패");
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert("서버 오류");
-  //   }
-  // };
-
-  // 찜 토글
   const handleToggleBookmark = async () => {
     if (!product) return;
-
-    // user가 null이거나 token이 없는 경우, localStorage에서 가져오기
     const token = user?.token || localStorage.getItem("token");
     if (!token) return alert("로그인 후 찜 해주세요.");
 
@@ -277,7 +213,6 @@ export default function ProductDetail({ user }: Props) {
       const text = await res.text();
       setIsBookMarked(text === "찜 완료");
 
-      // 찜 수 갱신
       const countRes = await fetch(
         `${API_BASE_URL}/api/bookmarks/count?productId=${product.productId}`
       );
@@ -291,19 +226,13 @@ export default function ProductDetail({ user }: Props) {
     }
   };
 
-  // 신고
   const handleReport = async () => {
     if (!product) return;
-
-    // 찜하기와 동일하게 token 가져오기
     const token = user?.token || localStorage.getItem("token");
-    if (!token) {
-      alert("로그인 후 신고할 수 있습니다.");
-      return;
-    }
+    if (!token) return alert("로그인 후 신고할 수 있습니다.");
 
     const reason = prompt("신고 사유를 입력해주세요:");
-    if (!reason?.trim()) return alert("신고 사유는 필수입니다.");
+    if (!reason?.trim()) return;
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/reports`, {
@@ -318,14 +247,8 @@ export default function ProductDetail({ user }: Props) {
         }),
       });
 
-      if (res.status === 401) {
-        alert("로그인 후 신고할 수 있습니다.");
-        return;
-      }
-
-      if (res.ok) {
-        alert("신고가 접수되었습니다.");
-      } else {
+      if (res.ok) alert("신고가 접수되었습니다.");
+      else {
         const msg = await res.text();
         alert("신고 실패: " + msg);
       }
@@ -333,6 +256,99 @@ export default function ProductDetail({ user }: Props) {
       console.error(err);
       alert("신고 처리 중 오류가 발생했습니다.");
     }
+  };
+
+  const handleEditProduct = () => {
+    if (!product) return;
+    setEditingProductId(product.productId);
+    setProductForm({
+      title: product.title,
+      content: product.content ?? "",
+      startingPrice: product.startingPrice ?? 0,
+      categoryId: product.categoryId,
+      productStatus: product.productStatus ?? "ACTIVE",
+    });
+  };
+
+  const handleSaveProduct = async () => {
+    if (!product) return;
+    try {
+      const token = user?.token || localStorage.getItem("token");
+      if (!token) return alert("로그인 후 수정 가능합니다.");
+
+      const res = await fetch(
+        `${API_BASE_URL}/api/products/${product.productId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(productForm),
+        }
+      );
+
+      if (!res.ok) {
+        const msg = await res.text();
+        alert("상품 수정 실패: " + msg);
+        return;
+      }
+
+      const updatedProduct: Product = await res.json();
+      setProduct(updatedProduct);
+      setEditingProductId(null);
+      alert("상품이 수정되었습니다.");
+    } catch (err) {
+      console.error(err);
+      alert("상품 수정 실패");
+    }
+  };
+
+  const handleCancelProductEdit = () => {
+    setEditingProductId(null);
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!product) return;
+    if (!confirm("상품을 삭제하시겠습니까?")) return;
+
+    try {
+      const token = user?.token || localStorage.getItem("token");
+      const res = await fetch(
+        `${API_BASE_URL}/api/products/${product.productId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (res.ok) {
+        alert("상품이 삭제되었습니다.");
+        navigate("/my-products");
+      } else alert("삭제 실패");
+    } catch (err) {
+      console.error(err);
+      alert("삭제 실패");
+    }
+  };
+
+  const handleChangeProductForm = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
+    const { name, value } = e.target;
+    setProductForm((prev) => ({
+      ...prev,
+      [name]: name === "startingPrice" ? Number(value) : value,
+    }));
+  };
+
+  const getCategoryName = (categoryId?: number) => {
+    if (!categoryId) return "없음";
+    return product?.categoryName ?? "알 수 없음";
   };
 
   if (!product)
@@ -343,7 +359,6 @@ export default function ProductDetail({ user }: Props) {
   return (
     <div className="container">
       <div className="flex-box gap-40">
-        {/* 이미지 */}
         <div className="product-image product-detail-image">
           {product.imageUrl ? (
             <img src={product.imageUrl} alt={product.title} />
@@ -352,7 +367,6 @@ export default function ProductDetail({ user }: Props) {
           )}
         </div>
 
-        {/* 상세 설명 */}
         <div
           style={{
             flex: 1,
@@ -360,79 +374,182 @@ export default function ProductDetail({ user }: Props) {
             display: "flex",
             flexDirection: "column",
             gap: "12px",
+            position: "relative",
           }}
         >
           <h2 style={{ fontSize: "1.5rem", fontWeight: "bold" }}>
             {product.title}
           </h2>
 
-          {/* 찜 + 신고 버튼 */}
-          <div
-            style={{
-              display: "flex",
-              gap: "4px",
-              fontSize: "0.9rem",
-              color: "#555",
-            }}
-          >
-            <button
-              onClick={handleToggleBookmark}
-              style={{
-                backgroundColor: "#fff",
-                color: "#aaa",
-                border: "1px solid #ddd",
-                borderRadius: "6px",
-                padding: "2px 8px",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-              }}
-            >
-              <div className="flex-box gap-4 flex-center">
-                <svg
-                  width="12"
-                  height="11"
-                  viewBox="-0.5 -0.5 13 12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M6 11L5.13 10.2087C2.04 7.40926 0 5.55695 0 3.297C0 1.44469 1.452 0 3.3 0C4.344 0 5.346 0.485559 6 1.24687C6.654 0.485559 7.656 0 8.7 0C10.548 0 12 1.44469 12 3.297C12 5.55695 9.96 7.40926 6.87 10.2087L6 11Z"
-                    fill={isBookMarked ? "#b17576" : "#fff"}
-                    stroke="#b17576"
-                  />
-                </svg>
-                <p>{bookmarkCount}</p>
+          <div className="flex-box flex-between flex-top-a">
+            <div className="flex-box gap-4">
+              <button
+                onClick={handleToggleBookmark}
+                style={{
+                  backgroundColor: "#fff",
+                  color: "#aaa",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  padding: "2px 8px",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
+                }}
+              >
+                <div className="flex-box gap-4 flex-center">
+                  <svg
+                    width="12"
+                    height="11"
+                    viewBox="-0.5 -0.5 13 12"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M6 11L5.13 10.2087C2.04 7.40926 0 5.55695 0 3.297C0 1.44469 1.452 0 3.3 0C4.344 0 5.346 0.485559 6 1.24687C6.654 0.485559 7.656 0 8.7 0C10.548 0 12 1.44469 12 3.297C12 5.55695 9.96 7.40926 6.87 10.2087L6 11Z"
+                      fill={isBookMarked ? "#b17576" : "#fff"}
+                      stroke="#b17576"
+                    />
+                  </svg>
+                  <p>{bookmarkCount}</p>
+                </div>
+              </button>
+              <button
+                style={{
+                  backgroundColor: "#fff",
+                  color: "#aaa",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  padding: "2px 8px",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
+                }}
+                onClick={handleReport}
+              >
+                신고
+              </button>
+            </div>
+            {user?.userId === product.sellerId && (
+              <div className="flex-box gap-4">
+                {!editingProductId ? (
+                  <>
+                    <button onClick={handleEditProduct} className="edit-btn">
+                      수정
+                    </button>
+                    <button onClick={handleDeleteProduct} className="edit-btn">
+                      삭제
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleCancelProductEdit}
+                      className="edit-btn"
+                    >
+                      취소
+                    </button>
+                    <button onClick={handleSaveProduct} className="edit-btn">
+                      저장
+                    </button>
+                  </>
+                )}
               </div>
-            </button>
-            <button
-              style={{
-                backgroundColor: "#fff",
-                color: "#aaa",
-                border: "1px solid #ddd",
-                borderRadius: "6px",
-                padding: "2px 8px",
-                cursor: "pointer",
-                fontSize: "0.8rem",
-              }}
-              onClick={handleReport}
-            >
-              신고
-            </button>
+            )}
           </div>
 
-          <p>판매자: {sellerNickName}</p>
-          <p>카테고리: {product.categoryName ?? "없음"}</p>
-          <p style={{ color: "#555", fontSize: "0.9rem" }}>
-            등록시간:{" "}
-            {product.createdAt
-              ? formatDateTime(product.createdAt)
-              : "알 수 없음"}{" "}
-            <br />
-            남은시간: {remainingTime}
-          </p>
+          {editingProductId && (
+            <div
+              style={{
+                height: "320px",
+                marginTop: "15px",
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "8px",
+                background: "#f9f9f9",
+                position: "absolute",
+                width: "100%",
+                zIndex: 10,
+                top: "64px",
+                overflowY: "auto",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <input
+                  name="title"
+                  value={productForm.title}
+                  onChange={handleChangeProductForm}
+                  placeholder="상품명"
+                  className="input"
+                />
+                <input
+                  name="startingPrice"
+                  type="number"
+                  value={productForm.startingPrice}
+                  onChange={handleChangeProductForm}
+                  placeholder="가격"
+                  className="input"
+                />
+                <textarea
+                  name="content"
+                  value={productForm.content}
+                  onChange={handleChangeProductForm}
+                  placeholder="설명"
+                  rows={3}
+                  className="textarea"
+                />
+                <select
+                  name="categoryId"
+                  value={productForm.categoryId ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setProductForm((prev) => ({
+                      ...prev,
+                      categoryId: val === "" ? undefined : Number(val),
+                    }));
+                  }}
+                >
+                  <option value="">카테고리 선택</option>
+                  {product?.categoryId && (
+                    <option value={product.categoryId}>
+                      {getCategoryName(product.categoryId)}
+                    </option>
+                  )}
+                </select>
+                <select
+                  name="productStatus"
+                  value={productForm.productStatus}
+                  onChange={handleChangeProductForm}
+                >
+                  <option value="ACTIVE">판매중</option>
+                  <option value="SOLD">판매완료</option>
+                  <option value="PAUSED">일시중지</option>
+                </select>
+              </div>
+            </div>
+          )}
 
-          <p>경매등록가: {auctionStartingPrice.toLocaleString()}원</p>
-          <p>현재 최고 입찰가: {currentHighestBid.toLocaleString()}원</p>
+          {/* 상품 정보: 수정 모드일 때 안보임 */}
+          {!editingProductId && (
+            <>
+              <p>판매자: {sellerNickName}</p>
+              <p>카테고리: {product.categoryName ?? "없음"}</p>
+              <p style={{ color: "#555", fontSize: "0.9rem" }}>
+                등록시간:{" "}
+                {product.createdAt
+                  ? formatDateTime(product.createdAt)
+                  : "알 수 없음"}{" "}
+                <br />
+                남은시간: {remainingTime}
+              </p>
+
+              <p>경매등록가: {auctionStartingPrice.toLocaleString()}원</p>
+              <p>현재 최고 입찰가: {currentHighestBid.toLocaleString()}원</p>
+            </>
+          )}
 
           <div
             style={{
@@ -447,18 +564,16 @@ export default function ProductDetail({ user }: Props) {
           </div>
         </div>
 
-        {/* 새로운 입찰 그래프 컴포넌트 사용 */}
-        
         <AuctionBox productId={product.productId} />
       </div>
-        <ProductBidGraph bids={mergedBids} />
-        <ProductQnA
-          user={user}
-          product={product}
-          productId={product.productId}
-          qnaList={qnaList}
-          setQnaList={setQnaList}
-        />
+      <ProductBidGraph bids={mergedBids} />
+      <ProductQnA
+        user={user}
+        product={product}
+        productId={product.productId}
+        qnaList={qnaList}
+        setQnaList={setQnaList}
+      />
     </div>
   );
 }
