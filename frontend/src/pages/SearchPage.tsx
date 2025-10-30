@@ -45,7 +45,7 @@ export default function ProductSearchPage() {
       | "priceAsc"
       | "priceDesc"
       | "timeLeft"
-      | "popularity" = "latest"
+      | "popularity" = "latest",
   ) => {
     setLoading(true);
     try {
@@ -62,7 +62,7 @@ export default function ProductSearchPage() {
       if (!res.ok) throw new Error("상품 불러오기 실패");
       let data: Product[] = await res.json();
 
-      // 거래 가능만 보기 필터 적용
+      // 거래 가능만 보기 필터
       if (active) {
         const now = new Date();
         data = data.filter(
@@ -74,7 +74,7 @@ export default function ProductSearchPage() {
 
       let sorted = [...data];
 
-      // 🔹 인기순일 경우, 각 상품 찜 수 가져오기
+      // 인기순 정렬
       if (sort === "popularity") {
         const productsWithBookmarkCount = await Promise.all(
           sorted.map(async (p) => {
@@ -106,16 +106,12 @@ export default function ProductSearchPage() {
             break;
           case "priceAsc":
             sorted.sort(
-              (a, b) =>
-                (a.startingPrice ?? a.startingPrice ?? 0) -
-                (b.startingPrice ?? b.startingPrice ?? 0)
+              (a, b) => (a.startingPrice ?? 0) - (b.startingPrice ?? 0)
             );
             break;
           case "priceDesc":
             sorted.sort(
-              (a, b) =>
-                (b.startingPrice ?? b.startingPrice ?? 0) -
-                (a.startingPrice ?? a.startingPrice ?? 0)
+              (a, b) => (b.startingPrice ?? 0) - (a.startingPrice ?? 0)
             );
             break;
           case "timeLeft":
@@ -127,7 +123,6 @@ export default function ProductSearchPage() {
             break;
         }
       }
-
       setProducts(sorted);
     } catch (err) {
       console.error("❌ 상품 검색 중 오류 발생:", err);
@@ -145,7 +140,6 @@ export default function ProductSearchPage() {
     setKeyword(kw);
     setCategoryId(cat);
 
-    // URL 기반으로 바로 fetch
     fetchProducts(kw, cat, activeOnly, sortOption);
   }, [location.search, activeOnly, sortOption]);
 
@@ -154,6 +148,7 @@ export default function ProductSearchPage() {
     const query = new URLSearchParams();
     if (keyword) query.append("keyword", keyword.trim());
     if (newCat) query.append("category", newCat.toString());
+    query.append("page", "0");
     navigate(`/search?${query.toString()}`);
   };
 
@@ -162,8 +157,9 @@ export default function ProductSearchPage() {
     const query = new URLSearchParams();
     if (keyword) query.append("keyword", keyword.trim());
     if (categoryId) query.append("category", categoryId.toString());
+    query.append("page", "0");
     navigate(`/search?${query.toString()}`);
-  }
+  };
 
   const handleActiveOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setActiveOnly(e.target.checked);
@@ -175,9 +171,7 @@ export default function ProductSearchPage() {
         {keyword || categoryId
           ? `${keyword ? `${keyword} ` : ""}${
               categoryId
-                ? `${
-                    categories.find((c) => c.categoryId === categoryId)?.name
-                  } `
+                ? `${categories.find((c) => c.categoryId === categoryId)?.name} `
                 : ""
             }검색`
           : "전체 검색"}

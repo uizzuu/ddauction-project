@@ -35,8 +35,9 @@ public class Product {
 
     private Long startingPrice;
 
-    @Column(length = 1000)
-    private String imageUrl;
+    @ManyToOne
+    @JoinColumn(name = "image_id", nullable = false)
+    private Image image;
 
     private boolean oneMinuteAuction;
 

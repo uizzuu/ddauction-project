@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Bid } from "../types/types";
+import { API_BASE_URL } from "../services/api";
 
 interface UseAuctionProps {
   productId: number;
@@ -11,7 +12,12 @@ export const useAuction = ({ productId }: UseAuctionProps) => {
   const [currentHighestBid, setCurrentHighestBid] = useState(0);
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://localhost:8080/ws/auction?productId=${productId}`);
+    const wsUrl =
+      API_BASE_URL.replace("http", "ws") + `/ws/auction?productId=${productId}`;
+    const ws = new WebSocket(wsUrl);
+    // const ws = new WebSocket(
+    //   `ws://localhost:8080/ws/auction?productId=${productId}`
+    // );
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -22,9 +28,8 @@ export const useAuction = ({ productId }: UseAuctionProps) => {
       const bidList: Bid[] = JSON.parse(event.data);
       setBids(bidList);
 
-      const highest = bidList.length > 0
-        ? Math.max(...bidList.map(b => b.bidPrice))
-        : 0;
+      const highest =
+        bidList.length > 0 ? Math.max(...bidList.map((b) => b.bidPrice)) : 0;
       setCurrentHighestBid(highest);
     };
 

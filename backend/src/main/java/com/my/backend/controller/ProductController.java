@@ -10,6 +10,10 @@ import com.my.backend.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -149,5 +153,20 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("success", false, "message", e.getMessage()));
         }
+    }
+
+    @GetMapping("/search-paged")
+    public ResponseEntity<Page<ProductDto>> searchProductsPaged(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long category,
+            @RequestParam(required = false) ProductStatus productStatus,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+
+        Page<ProductDto> result = productService.searchProductsPaged(keyword, category, productStatus, pageable);
+
+        return ResponseEntity.ok(result);
     }
 }

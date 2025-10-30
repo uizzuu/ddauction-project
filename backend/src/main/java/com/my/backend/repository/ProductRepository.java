@@ -2,12 +2,15 @@ package com.my.backend.repository;
 
 import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.entity.Product;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
     // 판매자 기준 조회
     List<Product> findByUserUserId(Long userId);
@@ -32,5 +35,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     Product findTopByProductStatusOrderByCreatedAtDesc(ProductStatus productStatus);
 
     // 곧 종료되는 상품 1개 조회
-    Product findTopByProductStatusOrderByAuctionEndTimeAsc(ProductStatus productStatus);
+    Product findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
+            ProductStatus productStatus, LocalDateTime now);
+
+    Page<Product> findByTitleContaining(String keyword, Pageable pageable);
+    Page<Product> findByCategory_CategoryId(Long categoryId, Pageable pageable);
+    Page<Product> findByProductStatus(ProductStatus productStatus, Pageable pageable);
+
+    // 조합 검색 - Pageable 버전
+    Page<Product> findByTitleContainingAndCategory_CategoryId(String keyword, Long categoryId, Pageable pageable);
+    Page<Product> findByTitleContainingAndProductStatus(String keyword, ProductStatus productStatus, Pageable pageable);
+    Page<Product> findByCategory_CategoryIdAndProductStatus(Long categoryId, ProductStatus productStatus, Pageable pageable);
+    Page<Product> findByTitleContainingAndCategory_CategoryIdAndProductStatus(
+            String keyword, Long categoryId, ProductStatus productStatus, Pageable pageable);
 }

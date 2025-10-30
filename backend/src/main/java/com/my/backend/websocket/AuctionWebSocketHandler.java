@@ -366,9 +366,52 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
         log.info("새 세션 연결: {}, productId={}", session.getId(), productId);
     }
 
-
     @Override
-    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {}
+//    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {}
+    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws IOException {
+        String payload = message.getPayload().toString();
+        log.info("입찰 메시지 수신: {}", payload);
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, Object> msg = mapper.readValue(payload, Map.class);
+
+            Long productId = null;
+            if (session.getUri() != null && session.getUri().getQuery() != null) {
+                String query = session.getUri().getQuery(); // e.g. productId=1
+                Map<String, String> queryMap = Arrays.stream(query.split("&"))
+                        .map(param -> param.split("="))
+                        .filter(arr -> arr.length == 2)
+                        .collect(Collectors.toMap(a -> a[0], a -> a[1]));
+                productId = Long.parseLong(queryMap.get("productId"));
+            }
+
+            if (productId == null) {
+                log.warn("productId 없음, 무시");
+                return;
+            }
+
+            // 클라이언트에서 보낸 입찰가
+            Double bidPriceDouble = Double.valueOf(msg.get("bidPrice").toString());
+            Long bidPrice = bidPriceDouble.longValue();
+
+            // DB 저장
+            Product product = productRepository.findById(productId).orElse(null);
+            if (product == null) return;
+
+            Bid bid = new Bid();
+            bid.setProduct(product);
+            bid.setBidPrice(bidPrice);
+            bidRepository.save(bid);
+
+            // 모든 세션에 전송
+            broadcastBidList(productId, bid);
+
+        } catch (Exception e) {
+            log.error("입찰 메시지 처리 실패: {}", e.getMessage(), e);
+        }
+    }
+
 
     // 특정 상품에 대해서만 전송
     public void broadcastBidList(Long productId, Bid bid) {

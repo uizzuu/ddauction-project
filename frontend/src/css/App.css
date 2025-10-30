@@ -74,10 +74,12 @@ a {
 
 .bg-333 {
   background-color: #333;
+  background: #333;
 }
 
 .bg-transparent {
   background-color: transparent;
+  background: transparent;
 }
 
 .filter-dark {
@@ -198,14 +200,24 @@ a {
   resize: none;
 }
 
+:is(.input, .textarea, .select):disabled {
+  background-color: #f0f0f0; /* 연한 회색 배경 */
+  color: #999;               /* 글자 색도 연하게 */
+  cursor: not-allowed;       /* 마우스 커서도 막힘 느낌 */
+}
+
 .input:focus {
   outline: none;
   color: #b17576;
   border-color: #b17576;
 }
 
+input::placeholder {
+  color: #ddd;
+}
+
 .input::placeholder {
-  color: #666;
+  color: #ddd;
 }
 
 .form-group {
@@ -363,7 +375,7 @@ button {
   border: none;
   outline: none;
   transition: all 0.2s;
-  background: #fff;
+  background: transparent;
 }
 
 button:disabled {
@@ -560,6 +572,10 @@ button:disabled {
   display: flex;
 }
 
+.flex-top-a {
+  align-items: start;
+}
+
 .flex-center {
   justify-content: center;
   align-items: center;
@@ -571,6 +587,10 @@ button:disabled {
 
 .flex-center-a {
   align-items: center;
+}
+
+.flex-left-a {
+  align-items: start;
 }
 
 .flex-between {
@@ -665,6 +685,10 @@ button:disabled {
   width: 16px;
 }
 
+.width-200 {
+  width: 300px;
+}
+
 .width-fit {
   width: fit-content;
 }
@@ -710,12 +734,20 @@ button:disabled {
   height: 70px;
 }
 
+.height-200 {
+  height: 200px;
+}
+
 .height-220 {
   height: 220px;
 }
 
 .height-500 {
   height: 500px;
+}
+
+.height-fit {
+  height: fit-content;
 }
 
 .height-full {
@@ -812,6 +844,12 @@ button:disabled {
 }
 
 .product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bid-box img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -924,6 +962,14 @@ button:disabled {
   padding: 0;
 }
 
+.p-2-4 {
+  padding: 2px 4px;
+}
+
+.p-20-30 {
+  padding: 20px 30px;
+}
+
 .pb-20 {
   padding-bottom: 20px;
 }
@@ -931,7 +977,7 @@ button:disabled {
 /* SearchPage > datepicker, 카테고리옵션 조절 */
 
 .react-datepicker-popper {
-  z-index: 100;
+  z-index: 500;
 }
 
 .register-category .custom-select-options {
@@ -964,5 +1010,23 @@ button:disabled {
   }
   100% {
     transform: rotate(360deg);
+  }
+}
+
+.highlight-flash {
+  background-color: #f0f8ff;
+  transition: background-color 1.5s ease;
+}
+
+.highlight-flash {
+  animation: highlightFade 3s forwards;
+}
+
+@keyframes highlightFade {
+  0% {
+    background-color: #f0f8ff;
+  }
+  100% {
+    background-color: transparent;
   }
 }

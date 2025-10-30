@@ -19,8 +19,9 @@ public class ArticleController {
 
     // 1. 전체 게시글 목록 조회
     @GetMapping
-    public ResponseEntity<List<ArticleDto>> getAllArticles() {
-        List<ArticleDto> articles = articleService.getAllArticles();
+    public ResponseEntity<List<ArticleDto>> getAllArticles(@RequestParam Long boardId) {
+        // boardId에 해당하는 글만 조회
+        List<ArticleDto> articles = articleService.getArticlesByBoardId(boardId);
         return ResponseEntity.ok(articles);
     }
 

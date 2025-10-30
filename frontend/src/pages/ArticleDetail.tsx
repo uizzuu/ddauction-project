@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, NavLink } from "react-router-dom";
 import {
   getArticleById,
@@ -23,9 +23,15 @@ export default function ArticleDetail({ user }: Props) {
   const [comments, setComments] = useState<CommentDto[]>([]);
   const [commentContent, setCommentContent] = useState("");
 
-  // 댓글 수정 관련 상태
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingContent, setEditingContent] = useState("");
+
+  // 페이지네이션
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const COMMENTS_PER_PAGE = 50;
+
+  const commentRefs = useRef<Record<number, HTMLLIElement | null>>({});
 
   // 게시글 조회
   useEffect(() => {
@@ -35,18 +41,35 @@ export default function ArticleDetail({ user }: Props) {
       .catch((err) => console.error("게시글 조회 실패:", err));
   }, [id]);
 
-  // 댓글 목록 조회
-  useEffect(() => {
+  // 댓글 불러오기 함수 (페이징 적용)
+  const loadComments = async (pageNum: number) => {
     if (!id) return;
-    getCommentsByArticleId(Number(id))
-      .then(setComments)
-      .catch((err) => console.error("댓글 조회 실패:", err));
+    try {
+      const allComments = await getCommentsByArticleId(Number(id));
+      const start = (pageNum - 1) * COMMENTS_PER_PAGE;
+      const pagedComments = allComments.slice(start, start + COMMENTS_PER_PAGE);
+
+      if (pageNum === 1) {
+        setComments(pagedComments);
+      } else {
+        setComments((prev) => [...prev, ...pagedComments]);
+      }
+
+      setHasMore(start + COMMENTS_PER_PAGE < allComments.length);
+    } catch (err) {
+      console.error("댓글 조회 실패:", err);
+    }
+  };
+
+  // 초기 댓글 로드
+  useEffect(() => {
+    setPage(1);
+    loadComments(1);
   }, [id]);
 
   // 댓글 작성
   const handleCommentSubmit = async () => {
     if (!id || !user) return;
-
     if (!commentContent.trim()) {
       alert("댓글 내용을 입력해주세요.");
       return;
@@ -61,29 +84,24 @@ export default function ArticleDetail({ user }: Props) {
     try {
       await createComment(Number(id), form);
       setCommentContent("");
-      const updated = await getCommentsByArticleId(Number(id));
-      setComments(updated);
+      setPage(1);
+      loadComments(1); // 작성 후 댓글 최신화
     } catch {
       alert("댓글 등록에 실패했습니다.");
     }
   };
 
-  // 댓글 수정 시작
+  // 댓글 수정
   const startEditing = (comment: CommentDto) => {
     setEditingCommentId(comment.commentId!);
     setEditingContent(comment.content);
   };
-
-  // 댓글 수정 취소
   const cancelEditing = () => {
     setEditingCommentId(null);
     setEditingContent("");
   };
-
-  // 댓글 수정 저장
   const saveEditing = async () => {
-    if (!editingCommentId) return;
-
+    if (!editingCommentId || !id || !user) return;
     if (!editingContent.trim()) {
       alert("댓글 내용을 입력해주세요.");
       return;
@@ -92,14 +110,15 @@ export default function ArticleDetail({ user }: Props) {
     const form: CommentForm = {
       content: editingContent,
       articleId: Number(id),
-      userId: user!.userId,
+      userId: user.userId,
     };
 
     try {
       await updateComment(editingCommentId, form);
-      const updatedComments = await getCommentsByArticleId(Number(id));
-      setComments(updatedComments);
-      cancelEditing();
+      setEditingCommentId(null);
+      setEditingContent("");
+      setPage(1);
+      loadComments(1); // 수정 후 댓글 최신화
     } catch {
       alert("댓글 수정 실패");
     }
@@ -108,10 +127,9 @@ export default function ArticleDetail({ user }: Props) {
   // 댓글 삭제
   const handleCommentDelete = async (commentId: number) => {
     if (!window.confirm("댓글을 삭제하시겠습니까?")) return;
-
     try {
       await deleteComment(commentId);
-      setComments(comments.filter((c) => c.commentId !== commentId));
+      setComments((prev) => prev.filter((c) => c.commentId !== commentId));
     } catch {
       alert("댓글 삭제 실패");
     }
@@ -131,6 +149,53 @@ export default function ArticleDetail({ user }: Props) {
     }
   };
 
+  // @번호 클릭 시 해당 댓글로 스크롤
+  const handleMentionClick = (mention: string) => {
+    const num = Number(mention.replace("@", ""));
+    if (isNaN(num) || num < 1 || num > comments.length) return;
+
+    const target = comments[num - 1];
+    if (!target || !target.commentId) return;
+
+    const el = commentRefs.current[target.commentId];
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.remove("highlight-flash");
+      void el.offsetWidth;
+      el.classList.add("highlight-flash");
+    }
+  };
+
+  // 댓글 입력창에 @번호 자동 추가
+  const handleReplyClick = (index: number) => {
+    const mention = `@${index + 1} `;
+    setCommentContent((prev) => {
+      if (prev.includes(mention)) return prev;
+      return prev.trim() ? prev + " " + mention : mention;
+    });
+    const textarea = document.querySelector<HTMLTextAreaElement>(
+      ".article-textarea.article-review"
+    );
+    textarea?.focus();
+  };
+
+  const renderCommentContent = (text: string) => {
+    const parts = text.split(/(@\S+)/g);
+    return parts.map((part, i) =>
+      part.startsWith("@") ? (
+        <span
+          key={i}
+          onClick={() => handleMentionClick(part)}
+          style={{ color: "#007bff", cursor: "pointer", fontWeight: 500 }}
+        >
+          {part}
+        </span>
+      ) : (
+        <span key={i}>{part}</span>
+      )
+    );
+  };
+
   if (!article) return <div>로딩 중...</div>;
 
   return (
@@ -138,102 +203,132 @@ export default function ArticleDetail({ user }: Props) {
       {/* 글 영역 */}
       <div className="flex-column gap-12">
         <h2>{article.title}</h2>
-        <div className="flex-box gap-4">
-          <strong>{article.nickName ?? "알 수 없음"}</strong>
-          <p>{formatDateTime(article.createdAt)}</p>
+        <div className="flex-box flex-between flex-top-a">
+          <div className="flex-box gap-4">
+            <strong>{article.nickName ?? "알 수 없음"}</strong>
+            <p>{formatDateTime(article.createdAt)}</p>
+          </div>
+          {user?.userId === article.userId && (
+            <div className="flex-box gap-4">
+              <button
+                onClick={() => navigate(`/articles/${article.articleId}/edit`)}
+                className="edit-btn"
+              >
+                수정
+              </button>
+              <button onClick={handleDelete} className="edit-btn">
+                삭제
+              </button>
+            </div>
+          )}
         </div>
 
         <div
           dangerouslySetInnerHTML={{ __html: article.content }}
           className="article-content"
         />
-
-        {/* 게시글 수정/삭제 버튼 */}
-        {user?.userId === article.userId && (
-          <div className="flex-box gap-4">
-            <button
-              onClick={() => navigate(`/articles/${article.articleId}/edit`)}
-              className="article-btn"
-            >
-              수정
-            </button>
-            <button onClick={handleDelete} className="article-btn">
-              삭제
-            </button>
-          </div>
-        )}
       </div>
 
       {/* 댓글 영역 */}
       <div className="flex-column gap-24 mt-20 top-line">
         <p className="title-24">{comments.length}개의 댓글</p>
-
         {comments.length === 0 && <p>댓글이 없습니다.</p>}
 
         <ul className="flex-column gap-16">
-          {comments.map((comment) => (
-            <li key={comment.commentId} className="flex-column gap-8">
-              <div className="flex-box gap-4">
-                <strong>{comment.nickName ?? "알 수 없음"}</strong>
-                <span style={{ color: "#888", fontSize: "0.9rem" }}>
-                  {formatDateTime(comment.createdAt)}
-                </span>
+          {comments.map((comment, index) => (
+            <li
+              key={comment.commentId}
+              ref={(el) => {
+                if (comment.commentId != null)
+                  commentRefs.current[comment.commentId] = el;
+              }}
+              className="flex-column gap-4 comment-item"
+            >
+              <div className="flex-box flex-between flex-top-a">
+                <div className="flex-box gap-4">
+                  <strong
+                    style={{ cursor: "pointer" }}
+                    onClick={() => handleReplyClick(index)}
+                  >
+                    {index + 1}. {comment.nickName ?? "알 수 없음"}
+                  </strong>
+                  <span style={{ color: "#888", fontSize: "0.9rem" }}>
+                    {formatDateTime(comment.createdAt)}
+                  </span>
+                </div>
+
+                <div className="flex-box gap-4">
+                  {editingCommentId === comment.commentId ? (
+                    <>
+                      <button onClick={saveEditing} className="edit-btn">
+                        저장
+                      </button>
+                      <button onClick={cancelEditing} className="edit-btn">
+                        취소
+                      </button>
+                    </>
+                  ) : (
+                    user?.userId === comment.userId && (
+                      <>
+                        <button
+                          onClick={() => startEditing(comment)}
+                          className="edit-btn"
+                        >
+                          수정
+                        </button>
+                        <button
+                          onClick={() =>
+                            handleCommentDelete(comment.commentId!)
+                          }
+                          className="edit-btn"
+                        >
+                          삭제
+                        </button>
+                      </>
+                    )
+                  )}
+                </div>
               </div>
 
               {editingCommentId === comment.commentId ? (
-                <div className="flex-column gap-8">
-                  <textarea
-                    value={editingContent}
-                    onChange={(e) => setEditingContent(e.target.value)}
-                    rows={3}
-                    className="article-textarea article-review-li"
-                  />
-                  <div className="flex-box gap-4">
-                    <button onClick={saveEditing} className="article-btn">
-                      저장
-                    </button>
-                    <button onClick={cancelEditing} className="article-btn">
-                      취소
-                    </button>
-                  </div>
-                </div>
+                <textarea
+                  value={editingContent}
+                  onChange={(e) => setEditingContent(e.target.value)}
+                  rows={3}
+                  className="article-textarea article-review-li"
+                />
               ) : (
-                <>
-                  <p>{comment.content}</p>
-                  {user?.userId === comment.userId && (
-                    <div className="flex-box gap-4">
-                      <button
-                        onClick={() => startEditing(comment)}
-                        className="article-btn"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => handleCommentDelete(comment.commentId!)}
-                        className="article-btn"
-                      >
-                        삭제
-                      </button>
-                    </div>
-                  )}
-                </>
+                <p>{renderCommentContent(comment.content)}</p>
               )}
             </li>
           ))}
         </ul>
 
+        {hasMore && (
+          <button
+            onClick={() => {
+              const nextPage = page + 1;
+              setPage(nextPage);
+              loadComments(nextPage);
+            }}
+            className="text-16 color-aaa"
+          >
+            더보기 +
+          </button>
+        )}
+
         {user ? (
-          <div className="flex-column gap-24 top-line">
-            <p className="title-18">댓글쓰기</p>
+          <div className="flex-column gap-12 top-line">
+            <p className="title-18 mt-10">댓글쓰기</p>
             <textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
               rows={3}
               style={{ width: "100%" }}
-              placeholder="댓글을 입력하세요."
+              placeholder="댓글을 입력하세요. (예: @닉네임 으로 언급)"
               className="article-textarea article-review"
             />
-            <div className="btn-wrap">
+            <div className="width-full flex-column flex-left-a">
               <button onClick={handleCommentSubmit} className="article-btn">
                 댓글 등록
               </button>

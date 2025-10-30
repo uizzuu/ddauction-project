@@ -15,6 +15,7 @@ build/
 backend/caches/
 **/caches/
 **/gradle-8.14.3-bin/
+**/gradle-8.14-bin/
 **/groovy-dsl/
 **/transforms/
 **/registry.bin

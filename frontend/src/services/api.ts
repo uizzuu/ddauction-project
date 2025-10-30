@@ -11,7 +11,7 @@ import type {
   CommentDto,
   CommentForm,
 } from "../types/types";
-import {jwtDecode} from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 const API_BASE = "/api";
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
@@ -168,8 +168,9 @@ export async function getCategories(): Promise<Category[]> {
 
 // ------------------- 게시글 API ------------------- //
 
-export async function getArticles(): Promise<ArticleDto[]> {
-  const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles`);
+export async function getArticles(params?: { boardId?: number }): Promise<ArticleDto[]> {
+  const query = params?.boardId ? `?boardId=${params.boardId}` : "";
+  const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles${query}`);
   if (!response.ok) throw new Error("게시글 목록 조회 실패");
   return response.json();
 }

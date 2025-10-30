@@ -25,13 +25,10 @@ public class ProductDto {
 
     private String content;
 
-    private Long amount; // 추가
-
-
     @Min(value = 1, message = "시작 가격은 1원 이상이어야 합니다.")
     private Long startingPrice;
 
-    private String imageUrl;
+    private Long imageId;
 
     private boolean oneMinuteAuction;
 
@@ -65,8 +62,7 @@ public class ProductDto {
                 .title(product.getTitle())
                 .content(product.getContent())
                 .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice() : null)
-                .imageUrl(product.getImageUrl())
-                .amount(product.getAmount())
+                .imageId(product.getImage()!= null ? product.getImage().getImageId() : null)
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
                 .productStatus(product.getProductStatus())
@@ -79,15 +75,14 @@ public class ProductDto {
                 .build();
     }
 
-    public Product toEntity(User seller, Bid bid, Payment payment, Category category) {
+    public Product toEntity(User seller, Bid bid, Payment payment, Category category, Image image) {
         return Product.builder()
                 .productId(this.productId)
                 .user(seller)
                 .title(this.title)
                 .content(this.content)
                 .startingPrice(this.startingPrice)
-                .amount(this.amount)
-                .imageUrl(this.imageUrl)
+                .image(image)
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)
                 .productStatus(this.productStatus)

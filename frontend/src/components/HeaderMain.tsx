@@ -96,6 +96,15 @@ export default function HeaderMain({ user, setUser }: Props) {
           {user ? (
             <>
               <span className="nav-link user-info">{user.nickName} 님</span>
+              {/* 관리자 전용 버튼 */}
+              {user.role === "ADMIN" && (
+                <NavLink
+                  to="/admin"
+                  className="nav-link"
+                >
+                  관리자 페이지
+                </NavLink>
+              )}
               <NavLink to="/mypage" className="nav-link">
                 마이페이지
               </NavLink>
@@ -103,21 +112,6 @@ export default function HeaderMain({ user, setUser }: Props) {
               <NavLink to="/mypage/qna/new" className="nav-link">
                 1:1 문의
               </NavLink>
-              {/* 관리자 전용 버튼 */}
-              {user.role === "ADMIN" && (
-                <button
-                  onClick={() => navigate("/admin")}
-                  className="nav-link"
-                  style={{
-                    background: "#000",
-                    color: "#fff",
-                    borderRadius: "4px",
-                    padding: "4px 8px",
-                  }}
-                >
-                  관리자 페이지
-                </button>
-              )}
               <button onClick={handleLogout} className="nav-link">
                 로그아웃
               </button>

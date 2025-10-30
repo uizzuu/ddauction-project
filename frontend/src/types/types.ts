@@ -84,9 +84,11 @@ export interface ProductForm {
 // 상품 수정 데이터 타입
 export type EditProductForm = {
   title: string;
+  content: string;
   categoryId?: number;
   startingPrice?: number;
   productStatus: typeof PRODUCT_STATUS[number];
+  auctionEndTime: string;
 };
 
 export interface EditUserForm {
@@ -210,4 +212,10 @@ export interface Inquiry {
     createdAt: string;
   }[];
   newAnswer?: string;
+}
+
+export type Review = {
+  rating: number;
+  comments: string;
+  createdAt?: string;
 }

@@ -1,73 +1,46 @@
-import { useState, useEffect } from "react";
-import { useAuction } from "../hooks/useAuction";
+import { useState, useEffect, useRef } from "react";
+// import { useAuction } from "../hooks/useAuction";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { API_BASE_URL } from "../services/api";
 import type { Bid } from "../types/types";
 
 interface AuctionBoxProps {
   productId: number;
+  mergedBids: Bid[];
+  currentHighestBid: number;
+  placeBid: (bidPrice: number) => void;
 }
 
-export const AuctionBox = ({ productId }: AuctionBoxProps) => {
-  const {
-    bids: liveBids,
-    currentHighestBid,
-    placeBid,
-  } = useAuction({ productId });
+export const AuctionBox = ({
+  productId,
+  mergedBids,
+  currentHighestBid,
+  placeBid,
+}: AuctionBoxProps) => {
   const [bidValue, setBidValue] = useState("");
-  const [allBids, setAllBids] = useState<Bid[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isBidding, setIsBidding] = useState(false);
 
-  // 초기 입찰 내역 fetch
+  // 새 입찰이 들어올 때마다 스크롤 아래로
   useEffect(() => {
-    const fetchAllBids = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`${API_BASE_URL}/api/bid/${productId}/bids`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-
-        const text = await res.text(); // 우선 텍스트로 읽기
-        try {
-          const data: Bid[] = JSON.parse(text);
-          setAllBids(data);
-        } catch {
-          console.error("입찰 내역 불러오기 실패, 서버 응답:", text);
-        }
-      } catch (err) {
-        console.error("입찰 내역 불러오기 오류:", err);
-      }
-    };
-
-    fetchAllBids();
-  }, [productId]);
-
-  // 초기 fetch + 실시간 입찰 합치기, 중복 제거
-  const mergedBids = [...allBids, ...liveBids]
-    .reduce<Bid[]>((acc, bid) => {
-      if (!acc.find((b) => b.bidId === bid.bidId)) {
-        acc.push(bid);
-      }
-      return acc;
-    }, [])
-    .sort((a, b) => a.bidId - b.bidId); // bidId 기준 정렬
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+  }, [mergedBids]);
 
   // 입찰 처리
   const handleBid = async () => {
     const token = localStorage.getItem("token");
-
-    if (!token) {
-      return alert("로그인이 필요합니다.");
-    }
+    if (!token) return alert("로그인이 필요합니다.");
+    if (isBidding) return;
 
     const bidNum = Number(bidValue);
-
     if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
       return alert("올바른 금액을 입력해주세요 (0보다 큰 숫자)");
     }
-
     if (bidNum <= currentHighestBid) {
       return alert(
         `입찰가가 현재 최고 입찰가(${currentHighestBid.toLocaleString()}원)보다 높아야 합니다.`
@@ -75,37 +48,36 @@ export const AuctionBox = ({ productId }: AuctionBoxProps) => {
     }
 
     try {
-      const token = localStorage.getItem("token");
+      setIsBidding(true);
       const res = await fetch(`${API_BASE_URL}/api/bid/${productId}/bid`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ bidPrice: bidNum }),
       });
 
       if (res.ok) {
-        placeBid(bidNum);
+        placeBid(bidNum); // 함수 호출
         setBidValue("");
         alert("입찰 성공!");
       } else {
-        try {
-          const data = await res.json();
-          if (data.error) {
-            alert(data.error); // 서버에서 온 메시지 그대로 alert
-          } else {
-            alert("입찰 실패");
-          }
-        } catch {
-          alert("입찰 실패");
-        }
+        const data = await res.json().catch(() => ({}));
+        alert(data.error ?? "입찰 실패");
       }
     } catch (err) {
       console.error("입찰 중 오류:", err);
       alert("서버 오류");
+    } finally {
+      setIsBidding(false);
     }
   };
+
+  const placeholderText =
+    currentHighestBid > 0
+      ? `${currentHighestBid.toLocaleString()}`
+      : "0";
 
   return (
     <div style={{ width: "260px", flexShrink: 0 }} className="height-450">
@@ -123,7 +95,10 @@ export const AuctionBox = ({ productId }: AuctionBoxProps) => {
         }}
       >
         {/* 입찰 리스트 */}
-        <div className="mb-20 flex-column gap-8 max-height-350 overflow-y-auto bid-scroll">
+        <div
+          ref={scrollRef}
+          className="mb-20 flex-column gap-8 max-height-350 overflow-y-auto bid-scroll"
+        >
           {mergedBids.length > 0 ? (
             mergedBids.map((b, i) => (
               <div key={b.bidId} className="bid-box">
@@ -143,12 +118,12 @@ export const AuctionBox = ({ productId }: AuctionBoxProps) => {
         <div className="max-height-3rem flex-box gap-4">
           <input
             type="text"
-            value={Number(bidValue || 0).toLocaleString()}
+            value={bidValue ? Number(bidValue).toLocaleString() : ""}
             onChange={(e) => {
               const clean = e.target.value.replace(/[^0-9]/g, "");
               setBidValue(clean);
             }}
-            placeholder="희망 입찰가"
+            placeholder={placeholderText}
             className="input"
           />
 
@@ -169,8 +144,12 @@ export const AuctionBox = ({ productId }: AuctionBoxProps) => {
             </button>
           </div>
 
-          <button onClick={handleBid} className="search-btn">
-            입찰
+          <button
+            onClick={handleBid}
+            className="search-btn"
+            disabled={isBidding}
+          >
+            {isBidding ? "입찰 중..." : "입찰"}
           </button>
         </div>
       </div>

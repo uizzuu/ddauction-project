@@ -10,11 +10,13 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import com.my.backend.repository.BidRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +27,7 @@ public class ProductService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final PaymentRepository paymentRepository;
+    private final ImageRepository imageRepository;
 
     // 전체 상품 조회
     public List<ProductDto> getAllProducts() {
@@ -48,43 +51,17 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-//    // 상품 생성
-//    public ProductDto createProduct(ProductDto dto) {
-//        User seller = findUserOrThrow(dto.getSellerId());
-//        Category category = findCategoryOrThrow(dto.getCategoryId());
-//        Bid bid = findBidOrNull(dto.getBidId());
-//        Payment payment = findPaymentOrNull(dto.getPaymentId());
-//
-//        Product product = dto.toEntity(seller, bid, payment, category);
-//        Product saved = productRepository.save(product);
-//
-//        return ProductDto.fromEntity(saved);
-//    }
-
     // 상품 생성
     public ProductDto createProduct(ProductDto dto) {
         User seller = findUserOrThrow(dto.getSellerId());
         Category category = findCategoryOrThrow(dto.getCategoryId());
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
+        Image image = findImageOrNull(dto.getImageId());
 
-        Product product = dto.toEntity(seller, bid, payment, category);
-
-        //  금액 검증 및 자동 보정
-        if (product.getAmount() == null || product.getAmount() <= 0) {
-            // price 또는 startingPrice가 있다면 amount를 세팅
-            if (dto.getStartingPrice() != null && dto.getStartingPrice() > 0) {
-                product.setAmount(dto.getStartingPrice());
-            } else {
-                throw new IllegalArgumentException("상품 금액이 설정되지 않았습니다. amount 또는 startingPrice를 입력하세요.");
-            }
-        }
-
-        // 기본 상태값 설정 (혹시 DTO에서 안 들어왔을 경우)
-        if (product.getProductStatus() == null) {
-            product.setProductStatus(ProductStatus.ACTIVE);
-        }
+        Product product = dto.toEntity(seller, bid, payment, category, image);
         Product saved = productRepository.save(product);
+
         return ProductDto.fromEntity(saved);
     }
 
@@ -94,13 +71,14 @@ public class ProductService {
         Category category = findCategoryOrThrow(dto.getCategoryId());
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
+        Image image = findImageOrNull(dto.getImageId());
 
         product.setTitle(dto.getTitle());
         product.setContent(dto.getContent());
         if (dto.getStartingPrice() != null) {
             product.setStartingPrice(dto.getStartingPrice());
         }
-        product.setImageUrl(dto.getImageUrl());
+        product.setImage(image);
         product.setOneMinuteAuction(dto.isOneMinuteAuction());
         product.setAuctionEndTime(dto.getAuctionEndTime());
         product.setProductStatus(dto.getProductStatus());
@@ -120,44 +98,19 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-//    입찰 등록
-//    public BidDto placeBid(Long productId, Long userId, Long price) {
-//        Product product = findProductOrThrow(productId);
-//        User user = findUserOrThrow(userId);
-//
-//        Long highestBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
-//                .map(Bid::getBidPrice)
-//                .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
-//
-//        if (price <= highestBid) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "입찰 금액은 현재 최고 입찰가보다 높아야 합니다.");
-//        }
-//
-//        Bid bid = Bid.builder()
-//                .product(product)
-//                .user(user)
-//                .bidPrice(price)
-//                .createdAt(LocalDateTime.now())
-//                .build();
-//
-//        Bid saved = bidRepository.save(bid);
-//        return BidDto.fromEntity(saved);
-//    }
-
-    //  입찰 등록 (DB에 최고가 반영)
+    // 입찰 등록
     public BidDto placeBid(Long productId, Long userId, Long price) {
         Product product = findProductOrThrow(productId);
         User user = findUserOrThrow(userId);
 
         Long highestBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
                 .map(Bid::getBidPrice)
-                .orElse(product.getStartingPrice());
+                .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
 
         if (price <= highestBid) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "입찰 금액은 현재 최고 입찰가보다 높아야 합니다.");
         }
 
-        // 새로운 입찰 저장
         Bid bid = Bid.builder()
                 .product(product)
                 .user(user)
@@ -165,14 +118,8 @@ public class ProductService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        Bid savedBid = bidRepository.save(bid);
-
-        //  최고 입찰가를 DB에 반영
-        product.setAmount(price);
-        product.setBid(savedBid);
-        productRepository.save(product);
-
-        return BidDto.fromEntity(savedBid);
+        Bid saved = bidRepository.save(bid);
+        return BidDto.fromEntity(saved);
     }
 
     // 최고 입찰가 조회
@@ -242,6 +189,13 @@ public class ProductService {
         return paymentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제 정보가 존재하지 않습니다."));
     }
+    private Image findImageOrNull(Long id) {
+        if (id == null) return null;
+        return imageRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이미지가 존재하지 않습니다."));
+    }
+
+
 
     // 최신 등록 상품 1개 조회
     public ProductDto getLatestProduct() {
@@ -250,7 +204,10 @@ public class ProductService {
     }
 
     public ProductDto getEndingSoonProduct() {
-        Product product = productRepository.findTopByProductStatusOrderByAuctionEndTimeAsc(ProductStatus.ACTIVE);
+        Product product = productRepository
+                .findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
+                        ProductStatus.ACTIVE, LocalDateTime.now()
+                );
         return ProductDto.fromEntity(product);
     }
     // 낙찰자 선정
@@ -258,5 +215,37 @@ public class ProductService {
         Bid highest = bidRepository.findTopByProductProductIdOrderByBidPriceDescCreatedAtAsc(productId);
         if (highest == null) return false;
         return highest.getUser().getUserId().equals(userId);
+    }
+
+    public Page<ProductDto> searchProductsPaged(String keyword, Long categoryId, ProductStatus status, Pageable pageable) {
+        Page<Product> products;
+
+        boolean hasKeyword = keyword != null && !keyword.isEmpty();
+        boolean hasCategory = categoryId != null;
+        boolean hasStatus = status != null;
+
+        if (hasKeyword && hasCategory && hasStatus) {
+            products = productRepository.findByTitleContainingAndCategory_CategoryIdAndProductStatus(
+                    keyword, categoryId, status, pageable);
+        } else if (hasKeyword && hasCategory) {
+            products = productRepository.findByTitleContainingAndCategory_CategoryId(
+                    keyword, categoryId, pageable);
+        } else if (hasKeyword && hasStatus) {
+            products = productRepository.findByTitleContainingAndProductStatus(
+                    keyword, status, pageable);
+        } else if (hasCategory && hasStatus) {
+            products = productRepository.findByCategory_CategoryIdAndProductStatus(
+                    categoryId, status, pageable);
+        } else if (hasKeyword) {
+            products = productRepository.findByTitleContaining(keyword, pageable);
+        } else if (hasCategory) {
+            products = productRepository.findByCategory_CategoryId(categoryId, pageable);
+        } else if (hasStatus) {
+            products = productRepository.findByProductStatus(status, pageable);
+        } else {
+            products = productRepository.findAll(pageable);
+        }
+
+        return products.map(ProductDto::fromEntity);
     }
 }

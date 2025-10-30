@@ -43,7 +43,10 @@ public class BidService {
      */
     public ResponseEntity<?> placeBid(Long userId, Long productId, Long bidPrice) {
         if (userId == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "인증이 필요합니다."));
+            log.warn("입찰 시도 실패: userId가 null입니다. productId={}", productId);
+            // 401 Unauthorized 대신, 인증이 필수인데 데이터가 누락된 상황으로 간주하여
+            // IllegalArgumentException을 던져서 catch 블록에서 400 Bad Request를 반환하도록 처리
+            return ResponseEntity.status(401).body(Map.of("error", "로그인 세션이 만료되었거나 유효하지 않습니다."));
         }
 
         try {
@@ -135,15 +138,21 @@ public class BidService {
             List<Bid> bids = bidRepository.findByProductProductIdOrderByCreatedAtDesc(product.getProductId());
 
             List<BidController.BidHistoryItem> resp = bids.stream()
-                    .map(b -> new BidController.BidHistoryItem(
-                            b.getBidId(),
-                            b.getProduct().getProductId(),
-                            b.getUser().getUserId(),
-                            b.getBidPrice(),
-                            b.getCreatedAt() == null
-                                    ? null
-                                    : b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                    ))
+                    .map(b -> {
+                        User user = b.getUser(); // User 객체 획득
+                        Long userId = (user != null) ? user.getUserId() : null; // 널 체크
+                        // 사용자 닉네임이 필요하다면 여기서 처리해야 합니다. BidHistoryItem에 닉네임 필드가 없으므로 생략.
+
+                        return new BidController.BidHistoryItem(
+                                b.getBidId(),
+                                b.getProduct().getProductId(),
+                                userId, // 널 가능성 처리
+                                b.getBidPrice(),
+                                b.getCreatedAt() == null
+                                        ? null
+                                        : b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                        );
+                    })
                     .toList();
 
             return ResponseEntity.ok(resp);
