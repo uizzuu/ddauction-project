@@ -55,10 +55,10 @@ app:
 
 payment:
   portone:
-    imp-code: ${PAYMENT_PORTONE_IMP_CODE}
-    api-key: ${PAYMENT_PORTONE_API_KEY}
-    api-secret: ${PAYMENT_PORTONE_API_SECRET}
-    callback-url: ${PAYMENT_PORTONE_CALLBACK_URL}
+    imp-code: imp38147237
+    api-key: 4607256811104714
+    api-secret: z58ewwrg9BBTHYZZtKIIR6IH8nqjqarA5J9kgcrdgAJxeWYGjC7S1nQ4AyHExUeuoG8o4UoJQtFevkgL
+    callback-url: http://localhost:8080/api/payments/portone/callback
 
 # ===================================
 # 로컬 환경
@@ -70,7 +70,7 @@ spring:
       on-profile: local
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL:jdbc:mysql://localhost:3306/ddauction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/auction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:1111}
   jpa:
@@ -100,7 +100,7 @@ spring:
       on-profile: prod
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${RDS_ENDPOINT}:3306/ddauction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${RDS_ENDPOINT}:3306/auction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:

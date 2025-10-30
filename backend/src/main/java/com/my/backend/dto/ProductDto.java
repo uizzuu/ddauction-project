@@ -11,8 +11,6 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
-import static com.my.backend.entity.QImage.image;
-
 @Data
 @Builder
 public class ProductDto {
@@ -95,4 +93,3 @@ public class ProductDto {
                 .build();
     }
 }
-//

@@ -17,6 +17,8 @@ import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
 import { useAuction } from "../hooks/useAuction";
+import PaymentButton from "../components/PaymentButton";
+import { checkWinner } from "../services/api";
 
 type Props = {
   user: User | null;
@@ -30,17 +32,23 @@ export default function ProductDetail({ user }: Props) {
   const [product, setProduct] = useState<Product | null>(null);
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
+  const [currentHighestBid, setCurrentHighestBid] = useState(0);
   const [_initialHighestBid, setInitialHighestBid] = useState(0);
   const [allBids, setAllBids] = useState<Bid[]>([]);
+  const { bids: liveBids } = useAuction({ productId: Number(id) });
+  const [isWinner, setIsWinner] = useState(false); //추가
+  const [isAuctionEnded, setIsAuctionEnded] = useState(false); //추가
   const {
     bids: liveBids,
     currentHighestBid,
     placeBid: livePlaceBid,
   } = useAuction({ productId });
 
+  // 찜 관련 state
   const [isBookMarked, setIsBookMarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(0);
 
+  // QnA 관련 state
   const [qnaList, setQnaList] = useState<Qna[]>([]);
 
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
@@ -88,6 +96,11 @@ export default function ProductDetail({ user }: Props) {
     return `${days}일 ${hours}시간 ${minutes}분 ${seconds}초`;
   };
 
+  useEffect(() => {
+  console.log("현재 로그인 유저:", user);
+  console.log("상품 ID:", id);
+}, [user, id]);
+
   // 남은 시간 실시간 업데이트
   useEffect(() => {
     if (!product) return;
@@ -101,6 +114,8 @@ export default function ProductDetail({ user }: Props) {
 
   // 상품 정보 + 초기 데이터 가져오기
   useEffect(() => {
+    if (!id) return;
+
     const fetchProduct = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
@@ -140,6 +155,17 @@ export default function ProductDetail({ user }: Props) {
           }
         }
 
+        // 모든 입찰 내역 가져오기 추가
+        // try {
+        //   const bidsRes = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`);
+        //   if (bidsRes.ok) {
+        //     const bids: Bid[] = await bidsRes.json();
+        //     setProduct((prev) => (prev ? { ...prev, bids } : prev));
+        //   }
+        // } catch {
+        //   console.warn("입찰 내역 불러오기 실패");
+        // }
+
         // 최고 입찰가
         try {
           const highestRes = await fetch(
@@ -153,7 +179,7 @@ export default function ProductDetail({ user }: Props) {
           console.warn("최고 입찰가 조회 실패");
         }
 
-        // 현재 사용자가 찜했는지 여부
+        // 현재 사용자가 찜했는지 여부 (JWT 기반)
         try {
           const token = user?.token || localStorage.getItem("token");
           if (token) {
@@ -209,6 +235,40 @@ export default function ProductDetail({ user }: Props) {
   useEffect(() => {
     fetchAllBids();
   }, [fetchAllBids]); // useCallback으로 만든 fetchAllBids를 의존성 배열에 넣습니다.
+    if (!product) return;
+    const interval = setInterval(() => {
+      setRemainingTime(calculateRemainingTime(product.auctionEndTime));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [product]);
+
+  // 최고낙찰자 여부 확인
+useEffect(() => {
+  if (!id || !user?.userId) return;
+  const fetchWinner = async () => {
+    try {
+      const data = await checkWinner(Number(id));
+      setIsWinner(data.isWinner);
+    } catch (e) {
+      console.warn("낙찰자 확인 실패:", e);
+    }
+  };
+  fetchWinner();
+
+   // 종료된 상태면 5초마다 한번씩 재확인 (낙찰 상태 반영 늦을 경우 대비)
+  if (isAuctionEnded) {
+    const interval = setInterval(fetchWinner, 5000);
+    return () => clearInterval(interval);
+  }
+}, [id, user]);
+
+  // 입찰 처리
+  // const handleBid = async () => {
+  //   const bidNum = Number(bidValue);
+  //   if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
+  //     return alert("올바른 금액을 입력해주세요 (0보다 큰 숫자)");
+  //   }
+  //   if (!product) return;
 
   // AuctionBox에 전달할 새로운 placeBid 함수 정의
   const handlePlaceBid = useCallback(
@@ -272,6 +332,8 @@ export default function ProductDetail({ user }: Props) {
 
   const handleReport = async () => {
     if (!product) return;
+
+    // 찜하기와 동일하게 token 가져오기
     const token = user?.token || localStorage.getItem("token");
     if (!token) return alert("로그인 후 신고할 수 있습니다.");
 
@@ -670,33 +732,23 @@ export default function ProductDetail({ user }: Props) {
           </div>
         </div>
 
-
-        {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
-        {remainingTime === "경매 종료" && (
-          <div style={{ textAlign: "center", marginTop: "30px" }}>
-            <button
-              onClick={() => navigate("/payment")} // ✅ 결제 페이지로 이동
-              style={{
-                backgroundColor: "#ff6600",
-                color: "#fff",
-                border: "none",
-                borderRadius: "8px",
-                padding: "14px 28px",
-                fontSize: "1rem",
-                cursor: "pointer",
-              }}
-            >
-              결제하기
-            </button>
-          </div>
+        {/* 경매 종료 후, 현재 사용자가 최고 낙찰자인 경우에만 결제 버튼 노출 */}
+        {isAuctionEnded && isWinner && product && user && (
+        <div style={{ marginTop: "40px" }}>
+        <PaymentButton
+        product={product}
+        user={user}
+        isWinner={true}
+        onPaymentComplete={() => {
+        alert("결제가 완료되었습니다!");
+        window.location.reload(); // 결제 후 새로고침으로 상태 반영
+       }}
+        />
+        </div>
         )}
 
-        <AuctionBox
-          productId={product.productId}
-          mergedBids={mergedBids}
-          currentHighestBid={currentHighestBid}
-          placeBid={handlePlaceBid}
-        />
+        {/* 새로운 입찰 그래프 컴포넌트 사용 */}
+        <AuctionBox productId={product.productId} />
       </div>
       <ProductBidGraph bids={mergedBids} startingPrice={product?.startingPrice ?? 0}/>
       <ProductQnA

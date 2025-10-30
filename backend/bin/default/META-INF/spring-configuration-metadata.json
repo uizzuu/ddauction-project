@@ -1,0 +1,66 @@
+{
+  "groups": [
+    {
+      "name": "jwt",
+      "type": "com.my.backend.config.JwtProperties",
+      "sourceType": "com.my.backend.config.JwtProperties"
+    },
+    {
+      "name": "payment",
+      "type": "com.my.backend.config.PaymentProperties",
+      "sourceType": "com.my.backend.config.PaymentProperties"
+    },
+    {
+      "name": "payment.portone",
+      "type": "com.my.backend.config.PaymentProperties$PortOne",
+      "sourceType": "com.my.backend.config.PaymentProperties",
+      "sourceMethod": "public com.my.backend.config.PaymentProperties.PortOne getPortone() "
+    }
+  ],
+  "properties": [
+    {
+      "name": "jwt.access-token-expiration",
+      "type": "java.lang.Long",
+      "sourceType": "com.my.backend.config.JwtProperties"
+    },
+    {
+      "name": "jwt.refresh-token-expiration",
+      "type": "java.lang.Long",
+      "sourceType": "com.my.backend.config.JwtProperties"
+    },
+    {
+      "name": "jwt.secret",
+      "type": "java.lang.String",
+      "sourceType": "com.my.backend.config.JwtProperties"
+    },
+    {
+      "name": "payment.portone.api-key",
+      "type": "java.lang.String",
+      "sourceType": "com.my.backend.config.PaymentProperties$PortOne"
+    },
+    {
+      "name": "payment.portone.api-secret",
+      "type": "java.lang.String",
+      "sourceType": "com.my.backend.config.PaymentProperties$PortOne"
+    },
+    {
+      "name": "payment.portone.callback-url",
+      "type": "java.lang.String",
+      "sourceType": "com.my.backend.config.PaymentProperties$PortOne"
+    },
+    {
+      "name": "payment.portone.imp-code",
+      "type": "java.lang.String",
+      "sourceType": "com.my.backend.config.PaymentProperties$PortOne"
+    },
+    {
+      "name": "payment.provider",
+      "type": "java.lang.String",
+      "sourceType": "com.my.backend.config.PaymentProperties"
+    }
+  ],
+  "hints": [],
+  "ignored": {
+    "properties": []
+  }
+}

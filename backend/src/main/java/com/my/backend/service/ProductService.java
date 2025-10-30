@@ -210,6 +210,12 @@ public class ProductService {
                 );
         return ProductDto.fromEntity(product);
     }
+    // 낙찰자 선정
+    public boolean isWinner(Long productId, Long userId) {
+        Bid highest = bidRepository.findTopByProductProductIdOrderByBidPriceDescCreatedAtAsc(productId);
+        if (highest == null) return false;
+        return highest.getUser().getUserId().equals(userId);
+    }
 
     public Page<ProductDto> searchProductsPaged(String keyword, Long categoryId, ProductStatus status, Pageable pageable) {
         Page<Product> products;

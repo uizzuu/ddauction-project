@@ -26,6 +26,8 @@ public class CustomUserDetails implements UserDetails {
         return user.getNickName();
     }
 
+    public Long getUserId() {return user.getUserId();}
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> collection = new ArrayList<>();

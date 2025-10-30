@@ -84,14 +84,19 @@ public class AuctionSchedulerService {
             }
 
             // 최고가 입찰자 1명만 조회 (동일가일 때 먼저 입찰한 사람 우선)
-            Bid highest = bidRepository.findTopByProductProductIdOrderByCreatedAtDesc(productId);
-
+            Bid highest = bidRepository.findTopByProductProductIdOrderByBidPriceDescCreatedAtAsc(productId);
 
             if (highest != null) {
                 // 상품 상태 전이
                 product.setProductStatus(ProductStatus.CLOSED);
                 product.setPaymentStatus(PaymentStatus.PENDING); // 결제 대기
                 product.setPaymentUserId(highest.getUser().getUserId());
+
+                //  낙찰자 표시
+                highest.setWinning(true);
+
+                //  변경된 입찰 정보 저장
+                bidRepository.save(highest);
 
                 // 최종가 반영 (price가 현재가라면 그대로 업데이트)
                 if (highest.getBidPrice() != null) {
