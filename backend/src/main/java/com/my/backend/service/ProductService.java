@@ -27,6 +27,7 @@ public class ProductService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final PaymentRepository paymentRepository;
+    private final ImageRepository imageRepository;
 
     // 전체 상품 조회
     public List<ProductDto> getAllProducts() {
@@ -56,8 +57,9 @@ public class ProductService {
         Category category = findCategoryOrThrow(dto.getCategoryId());
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
+        Image image =
 
-        Product product = dto.toEntity(seller, bid, payment, category);
+        Product product = dto.toEntity(seller, bid, payment, category, Image.builder().build());
         Product saved = productRepository.save(product);
 
         return ProductDto.fromEntity(saved);
@@ -75,7 +77,7 @@ public class ProductService {
         if (dto.getStartingPrice() != null) {
             product.setStartingPrice(dto.getStartingPrice());
         }
-        product.setImageUrl(dto.getImageUrl());
+        product.setImage(imageUrl());
         product.setOneMinuteAuction(dto.isOneMinuteAuction());
         product.setAuctionEndTime(dto.getAuctionEndTime());
         product.setProductStatus(dto.getProductStatus());
