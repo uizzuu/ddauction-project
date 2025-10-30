@@ -35,9 +35,8 @@ public class Product {
 
     private Long startingPrice;
 
-    @ManyToOne
-    @JoinColumn(name = "image_id")
-    private Image image;
+    @Column(length = 1000)
+    private String imageUrl;
 
     private boolean oneMinuteAuction;
 
@@ -49,7 +48,7 @@ public class Product {
 
     // paymentStatus NN 설정 충돌, nullable true => false 변경
     @Enumerated(EnumType.STRING)
-    @JoinColumn(name = "payment_status", nullable = false)
+    @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
 
     @CreatedDate
