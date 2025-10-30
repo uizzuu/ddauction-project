@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -29,9 +29,13 @@ export default function ProductDetail({ user }: Props) {
   const [product, setProduct] = useState<Product | null>(null);
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
-  const [currentHighestBid, setCurrentHighestBid] = useState(0);
+  const [initialHighestBid, setInitialHighestBid] = useState(0);
   const [allBids, setAllBids] = useState<Bid[]>([]);
-  const { bids: liveBids } = useAuction({ productId });
+  const {
+    bids: liveBids,
+    currentHighestBid,
+    placeBid: livePlaceBid,
+  } = useAuction({ productId });
 
   const [isBookMarked, setIsBookMarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(0);
@@ -47,6 +51,13 @@ export default function ProductDetail({ user }: Props) {
     productStatus: "ACTIVE",
     auctionEndTime: "",
   });
+
+  const mergedBids = useMemo(() => {
+    return [...allBids, ...liveBids].sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+  }, [allBids, liveBids]);
 
   const originalEndDate = product?.auctionEndTime
     ? new Date(product.auctionEndTime)
@@ -129,7 +140,7 @@ export default function ProductDetail({ user }: Props) {
           );
           if (highestRes.ok) {
             const highest: number = await highestRes.json();
-            setCurrentHighestBid(highest);
+            setInitialHighestBid(highest);
           }
         } catch {
           console.warn("최고 입찰가 조회 실패");
@@ -166,39 +177,79 @@ export default function ProductDetail({ user }: Props) {
   }, [id, user?.token]);
 
   // 초기 입찰 내역 fetch
-  useEffect(() => {
-    const fetchAllBids = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`, {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
+  // useEffect(() => {
+  //   const fetchAllBids = async () => {
+  //     try {
+  //       const token = localStorage.getItem("token");
+  //       const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`, {
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  //         },
+  //       });
 
-        if (res.ok) {
-          const data: Bid[] = await res.json();
-          setAllBids(data);
-        } else {
-          const text = await res.text();
-          console.error("입찰 내역 불러오기 실패, 서버 응답:", text);
-        }
-      } catch (err) {
-        console.error(err);
+  //       if (res.ok) {
+  //         const data: Bid[] = await res.json();
+  //         setAllBids(data);
+  //       } else {
+  //         const text = await res.text();
+  //         console.error("입찰 내역 불러오기 실패, 서버 응답:", text);
+  //       }
+  //     } catch (err) {
+  //       console.error(err);
+  //     }
+  //   };
+
+  //   fetchAllBids();
+  // }, [id]);
+
+  // 입찰 내역을 가져오는 함수를 컴포넌트 내부에 정의
+  const fetchAllBids = useCallback(async () => {
+    try {
+      const token = user?.token || localStorage.getItem("token"); // user를 의존성에 추가하기 위해 user?.token을 사용
+      const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`, {
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (res.ok) {
+        const data: Bid[] = await res.json();
+        setAllBids(data);
+      } else {
+        const text = await res.text();
+        console.error("입찰 내역 불러오기 실패, 서버 응답:", text);
       }
-    };
+    } catch (err) {
+      console.error(err);
+    }
+  }, [id, user?.token]); // id와 user?.token을 의존성에 추가
 
+  // 초기 로딩 시 입찰 내역 fetch
+  useEffect(() => {
     fetchAllBids();
-  }, [id]);
+  }, [fetchAllBids]); // useCallback으로 만든 fetchAllBids를 의존성 배열에 넣습니다.
+
+  // AuctionBox에 전달할 새로운 placeBid 함수 정의
+  const handlePlaceBid = useCallback(
+    async (bidPrice: number) => {
+      // useAuction 훅의 livePlaceBid를 호출 (웹소켓 업데이트 역할)
+      livePlaceBid(bidPrice);
+      // ⭐ 서버에서 전체 입찰 내역을 다시 가져와 allBids를 갱신
+      await fetchAllBids();
+    },
+    [livePlaceBid, fetchAllBids]
+  );
+
+  const auctionStartingPrice = product?.startingPrice ?? "알 수 없음";
+
+  const highestBid = useMemo(() => {
+    if (mergedBids.length === 0) return auctionStartingPrice;
+    return Math.max(...mergedBids.map((b) => b.bidPrice));
+  }, [mergedBids, auctionStartingPrice]);
 
   if (!id) return <div>잘못된 접근입니다.</div>;
   if (isNaN(productId)) return <div>잘못된 접근입니다.</div>;
-
-  // 입찰 합치기
-  const mergedBids = Array.from(
-    new Map([...allBids, ...liveBids].map((b) => [b.bidId, b])).values()
-  ).sort((a, b) => a.bidId - b.bidId);
 
   const handleToggleBookmark = async () => {
     if (!product) return;
@@ -290,6 +341,15 @@ export default function ProductDetail({ user }: Props) {
       const token = user?.token || localStorage.getItem("token");
       if (!token) return alert("로그인 후 수정 가능합니다.");
 
+      const payload = {
+        ...productForm,
+        categoryId: productForm.categoryId ?? null, // undefined -> null로 변환
+        startingPrice: Number(productForm.startingPrice || 0),
+        auctionEndTime: productForm.auctionEndTime
+          ? new Date(productForm.auctionEndTime).toISOString()
+          : null,
+      };
+
       const res = await fetch(
         `${API_BASE_URL}/api/products/${product.productId}`,
         {
@@ -298,23 +358,30 @@ export default function ProductDetail({ user }: Props) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(productForm),
+          body: JSON.stringify(payload),
         }
       );
 
+      let data;
+      try {
+        data = await res.json();
+      } catch {
+        data = await res.text();
+      }
+
       if (!res.ok) {
-        const msg = await res.text();
-        alert("상품 수정 실패: " + msg);
+        alert(
+          "상품 수정 실패: " + (data?.message || data || "알 수 없는 오류")
+        );
         return;
       }
 
-      const updatedProduct: Product = await res.json();
-      setProduct(updatedProduct);
+      setProduct(data as Product);
       setEditingProductId(null);
       alert("상품이 수정되었습니다.");
     } catch (err) {
       console.error(err);
-      alert("상품 수정 실패");
+      alert("상품 수정 실패 (네트워크 오류)");
     }
   };
 
@@ -367,8 +434,6 @@ export default function ProductDetail({ user }: Props) {
 
   if (!product)
     return <div style={{ padding: "16px" }}>상품을 찾을 수 없습니다.</div>;
-
-  const auctionStartingPrice = product.startingPrice ?? 0;
 
   return (
     <div className="container">
@@ -608,7 +673,7 @@ export default function ProductDetail({ user }: Props) {
               </p>
 
               <p>경매등록가: {auctionStartingPrice.toLocaleString()}원</p>
-              <p>현재 최고 입찰가: {currentHighestBid.toLocaleString()}원</p>
+              <p>현재 최고 입찰가: {highestBid.toLocaleString()}원</p>
             </>
           )}
 
@@ -625,7 +690,12 @@ export default function ProductDetail({ user }: Props) {
           </div>
         </div>
 
-        <AuctionBox productId={product.productId} />
+        <AuctionBox
+          productId={product.productId}
+          mergedBids={mergedBids}
+          currentHighestBid={currentHighestBid}
+          placeBid={handlePlaceBid}
+        />
       </div>
       <ProductBidGraph bids={mergedBids} />
       <ProductQnA
