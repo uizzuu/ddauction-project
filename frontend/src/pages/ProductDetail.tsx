@@ -677,7 +677,7 @@ export default function ProductDetail({ user }: Props) {
           placeBid={handlePlaceBid}
         />
       </div>
-      <ProductBidGraph bids={mergedBids} />
+      <ProductBidGraph bids={mergedBids} startingPrice={product?.startingPrice ?? 0}/>
       <ProductQnA
         user={user}
         product={product}

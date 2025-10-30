@@ -3,9 +3,10 @@ import type { Bid } from "../types/types";
 
 type Props = {
   bids: Bid[];
+  startingPrice: number;
 };
 
-export default function ProductBidGraph({ bids }: Props) {
+export default function ProductBidGraph({ bids, startingPrice }: Props) {
   const graphData = bids.map((b, i) => ({
     name: `${i + 1}`,
     bidPrice: b.bidPrice,
@@ -28,7 +29,7 @@ export default function ProductBidGraph({ bids }: Props) {
           <LineChart data={graphData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
-            <YAxis />
+            <YAxis domain={[startingPrice, "auto"]} />
             <Tooltip />
             <Line type="monotone" dataKey="bidPrice" stroke="#000" strokeWidth={2} />
           </LineChart>
