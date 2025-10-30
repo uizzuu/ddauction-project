@@ -21,5 +21,10 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 
     List<Bid> findByProductProductIdOrderByCreatedAtAsc(@Param("productId") Long productId);
 
+    Bid findTopByProductProductIdOrderByBidPriceDescCreatedAtAsc(Long productId);
 
-}
+    //  추가
+    List<Bid> findByProduct_ProductIdAndUser_UserId(Long productId, Long userId);
+
+    }
+

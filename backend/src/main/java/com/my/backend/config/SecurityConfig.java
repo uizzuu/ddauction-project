@@ -59,22 +59,51 @@ public class SecurityConfig {
                 .cors(cors -> {})
 
                 .authorizeHttpRequests(auth -> auth
-                        // OAuth2 관련 경로는 JWT 필터에서 제외
+//                        // OAuth2 관련 경로는 JWT 필터에서 제외
+//                        .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+//                        .requestMatchers("/ws/**").permitAll()
+//                        // 일반 로그인, 회원가입, 공개 API
+//                        .requestMatchers("/login", "/signup", "/", "/join",
+//                                "/products", "/articles", "/categories",
+//                                "/api/auth/login", "/api/auth/signup", "/api/users/me",
+//                                "/api/categories", "/api/products", "/api/articles", "/api/qna",
+//                                "/api/bookmarks/**", "/api/categories/**", "/api/products/**",
+//                                "/api/articles/**", "/api/qna/**"
+//                        ).permitAll()
+//                        .requestMatchers("/admin").hasRole("ADMIN")
+//                        .anyRequest().authenticated()
+//                )
+                        //  OAuth2 관련 경로는 공개
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        // 일반 로그인, 회원가입, 공개 API
-                        .requestMatchers("/login", "/signup", "/", "/join",
-                                "/products", "/articles", "/categories",
-                                "/api/auth/login", "/api/auth/signup", "/api/users/me",
-                                "/api/categories", "/api/products", "/api/articles", "/api/qna",
-                                "/api/bookmarks/**", "/api/categories/**", "/api/products/**",
-                                "/api/articles/**", "/api/qna/**"
+
+                        //  로그인/회원가입, 기본 공개 API
+                        .requestMatchers(
+                                "/login", "/signup", "/", "/join",
+                                "/api/auth/**",
+                                "/api/categories/**",
+                                "/api/products",            // 상품 목록 (GET)
+                                "/api/products/*",          // 상품 상세 (GET)
+                                "/api/products/*/highest-bid", // 최고 입찰가 (공개)
+                                "/api/bookmarks/count",     // 찜 개수 (공개)
+                                "/api/bookmarks/check",     // 찜 여부 (공개)
+                                "/api/articles/**",
+                                "/api/qna/**"
                         ).permitAll()
-                        .requestMatchers("/admin").hasRole("ADMIN")
+
+                        //  인증 필요한 API
+                        .requestMatchers(
+                                "/api/payments/**",              // 결제
+                                "/api/products/*/check-winner",  // 낙찰자 확인
+                                "/api/bookmarks/toggle",         // 찜 등록/해제
+                                "/api/bid/**"                    // 입찰
+                        ).authenticated()
+
+                        //  그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
 
-                // JWT 필터는 OAuth2 경로 제외
+                        // JWT 필터는 OAuth2 경로 제외
                 .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
 

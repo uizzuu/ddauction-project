@@ -25,6 +25,9 @@ public class ProductDto {
 
     private String content;
 
+    private Long amount; // 추가
+
+
     @Min(value = 1, message = "시작 가격은 1원 이상이어야 합니다.")
     private Long startingPrice;
 
@@ -63,6 +66,7 @@ public class ProductDto {
                 .content(product.getContent())
                 .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice() : null)
                 .imageUrl(product.getImageUrl())
+                .amount(product.getAmount())
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
                 .productStatus(product.getProductStatus())
@@ -82,6 +86,7 @@ public class ProductDto {
                 .title(this.title)
                 .content(this.content)
                 .startingPrice(this.startingPrice)
+                .amount(this.amount)
                 .imageUrl(this.imageUrl)
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)

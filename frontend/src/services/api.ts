@@ -256,3 +256,105 @@ export async function deleteComment(commentId: number): Promise<void> {
 
   if (!response.ok) throw new Error("댓글 삭제 실패");
 }
+
+// ------------------- 결제 API ------------------- //
+
+/**
+ * 결제 준비 - PortOne 결제창에 필요한 정보 조회
+ */
+export async function preparePayment(productId: number, userId: number): Promise<{
+  impCode: string;
+  merchantUid: string;
+  name: string;
+  amount: number;
+  buyerEmail: string;
+  buyerName: string;
+  buyerTel: string;
+}> {
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/payments/portone/prepare`,
+    {
+    method: "POST",
+      body: JSON.stringify({ productId }),
+     }
+   );
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`결제 준비 실패: ${errorText}`);
+  }
+  return response.json();
+}
+
+/**
+ * 결제 완료 후 서버 검증
+ */
+export async function completePayment(
+  impUid: string,
+  productId: number,
+  merchantUid: string
+): Promise<{ success: boolean; code?: number; message?: string }> {
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/payments/portone/complete`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        imp_uid: impUid,
+        productId,
+        merchant_uid: merchantUid,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`결제 검증 실패: ${errorText}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * 경매 종료 후 현재 사용자가 최고낙찰자인지 확인
+ * (JWT 인증 기반 - userId 파라미터 불필요)
+ */
+export async function checkWinner(
+  productId: number
+): Promise<{ isWinner: boolean; winnerId?: number; winningBidPrice?: number }> {
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/products/${productId}/check-winner`
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`낙찰자 확인 실패: ${errorText}`);
+  }
+  return response.json();
+}
+/**
+ * 결제 취소
+ */
+export async function cancelPayment(
+  impUid: string,
+  productId: number,
+  reason?: string
+): Promise<{ message: string }> {
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/payments/portone/cancel`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        imp_uid: impUid,
+        productId,
+        reason: reason ?? "사용자 요청 취소",
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`결제 취소 실패: ${errorText}`);
+  }
+
+  return response.json();
+}
+

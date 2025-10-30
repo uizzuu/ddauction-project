@@ -3,6 +3,7 @@ package com.my.backend.controller;
 import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ProductDto;
+import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.entity.User;
 import com.my.backend.service.BookMarkService;
 import com.my.backend.service.ProductService;
@@ -11,9 +12,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/products")
@@ -118,5 +122,32 @@ public class ProductController {
     public ResponseEntity<ProductDto> getEndingSoonProduct() {
         ProductDto product = productService.getEndingSoonProduct();
         return ResponseEntity.ok(product);
+    }
+
+    @GetMapping("/{productId}/check-winner")
+    public ResponseEntity<?> checkWinner(@PathVariable Long productId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "로그인이 필요합니다."));
+        }
+
+        try {
+            // JWT 로그인 시 CustomUserDetails가 principal로 들어 있음
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            Long userId = userDetails.getUserId();
+
+            boolean isWinner = productService.isWinner(productId, userId);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "isWinner", isWinner
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", e.getMessage()));
+        }
     }
 }

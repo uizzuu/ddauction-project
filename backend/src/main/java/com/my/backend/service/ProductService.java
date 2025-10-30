@@ -10,6 +10,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import com.my.backend.repository.BidRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -47,6 +48,19 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+//    // 상품 생성
+//    public ProductDto createProduct(ProductDto dto) {
+//        User seller = findUserOrThrow(dto.getSellerId());
+//        Category category = findCategoryOrThrow(dto.getCategoryId());
+//        Bid bid = findBidOrNull(dto.getBidId());
+//        Payment payment = findPaymentOrNull(dto.getPaymentId());
+//
+//        Product product = dto.toEntity(seller, bid, payment, category);
+//        Product saved = productRepository.save(product);
+//
+//        return ProductDto.fromEntity(saved);
+//    }
+
     // 상품 생성
     public ProductDto createProduct(ProductDto dto) {
         User seller = findUserOrThrow(dto.getSellerId());
@@ -55,8 +69,22 @@ public class ProductService {
         Payment payment = findPaymentOrNull(dto.getPaymentId());
 
         Product product = dto.toEntity(seller, bid, payment, category);
-        Product saved = productRepository.save(product);
 
+        //  금액 검증 및 자동 보정
+        if (product.getAmount() == null || product.getAmount() <= 0) {
+            // price 또는 startingPrice가 있다면 amount를 세팅
+            if (dto.getStartingPrice() != null && dto.getStartingPrice() > 0) {
+                product.setAmount(dto.getStartingPrice());
+            } else {
+                throw new IllegalArgumentException("상품 금액이 설정되지 않았습니다. amount 또는 startingPrice를 입력하세요.");
+            }
+        }
+
+        // 기본 상태값 설정 (혹시 DTO에서 안 들어왔을 경우)
+        if (product.getProductStatus() == null) {
+            product.setProductStatus(ProductStatus.ACTIVE);
+        }
+        Product saved = productRepository.save(product);
         return ProductDto.fromEntity(saved);
     }
 
@@ -92,19 +120,44 @@ public class ProductService {
         productRepository.deleteById(id);
     }
 
-    // 입찰 등록
+//    입찰 등록
+//    public BidDto placeBid(Long productId, Long userId, Long price) {
+//        Product product = findProductOrThrow(productId);
+//        User user = findUserOrThrow(userId);
+//
+//        Long highestBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
+//                .map(Bid::getBidPrice)
+//                .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
+//
+//        if (price <= highestBid) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "입찰 금액은 현재 최고 입찰가보다 높아야 합니다.");
+//        }
+//
+//        Bid bid = Bid.builder()
+//                .product(product)
+//                .user(user)
+//                .bidPrice(price)
+//                .createdAt(LocalDateTime.now())
+//                .build();
+//
+//        Bid saved = bidRepository.save(bid);
+//        return BidDto.fromEntity(saved);
+//    }
+
+    //  입찰 등록 (DB에 최고가 반영)
     public BidDto placeBid(Long productId, Long userId, Long price) {
         Product product = findProductOrThrow(productId);
         User user = findUserOrThrow(userId);
 
         Long highestBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
                 .map(Bid::getBidPrice)
-                .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
+                .orElse(product.getStartingPrice());
 
         if (price <= highestBid) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "입찰 금액은 현재 최고 입찰가보다 높아야 합니다.");
         }
 
+        // 새로운 입찰 저장
         Bid bid = Bid.builder()
                 .product(product)
                 .user(user)
@@ -112,8 +165,14 @@ public class ProductService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        Bid saved = bidRepository.save(bid);
-        return BidDto.fromEntity(saved);
+        Bid savedBid = bidRepository.save(bid);
+
+        //  최고 입찰가를 DB에 반영
+        product.setAmount(price);
+        product.setBid(savedBid);
+        productRepository.save(product);
+
+        return BidDto.fromEntity(savedBid);
     }
 
     // 최고 입찰가 조회
@@ -193,5 +252,11 @@ public class ProductService {
     public ProductDto getEndingSoonProduct() {
         Product product = productRepository.findTopByProductStatusOrderByAuctionEndTimeAsc(ProductStatus.ACTIVE);
         return ProductDto.fromEntity(product);
+    }
+    // 낙찰자 선정
+    public boolean isWinner(Long productId, Long userId) {
+        Bid highest = bidRepository.findTopByProductProductIdOrderByBidPriceDescCreatedAtAsc(productId);
+        if (highest == null) return false;
+        return highest.getUser().getUserId().equals(userId);
     }
 }

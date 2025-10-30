@@ -22,6 +22,13 @@ import "./import/import.css";
 import type { User, Category } from "./types/types";
 import OAuthCallback from "./pages/OAuthCallback";
 
+//결제관련선언
+declare global {
+  interface Window {
+    IMP_?: { init: (code: string) => void };
+  }
+}
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [category, setCategory] = useState<Category[]>([]);
@@ -29,6 +36,15 @@ export default function App() {
 
   const noHeaderPaths = ["/login", "/signup"];
   const showHeader = !noHeaderPaths.includes(location.pathname);
+
+  // 결제관련 Effect
+  useEffect(() => {
+  if (window.IMP) {
+    const impCode = import.meta.env.VITE_PORTONE_IMP_CODE || "imp38147237";
+    window.IMP.init(impCode);
+    console.log(" PortOne 초기화:", impCode);
+  }
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -86,4 +102,6 @@ export default function App() {
       </Routes>
     </div>
   );
+
+
 }
