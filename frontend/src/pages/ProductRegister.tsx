@@ -85,59 +85,59 @@ export default function ProductRegister({ user }: Props) {
 
     const token = localStorage.getItem("token");
     if (!token || !user) {
-      // user 체크와 token 체크 합침
       alert("로그인이 필요합니다");
       navigate("/login");
       return;
     }
 
-    // auctionEndTime 안전 처리
     let auctionEndTime: string;
     if (form.oneMinuteAuction) {
       const end = new Date();
       end.setMinutes(end.getMinutes() + 1);
-      auctionEndTime = end.toISOString().slice(0, 19);
+      auctionEndTime = end.toISOString();
     } else {
       const end = new Date(form.auctionEndTime);
       if (isNaN(end.getTime())) {
         setError("경매 종료 시간이 유효하지 않습니다");
         return;
       }
-      auctionEndTime = end.toISOString().slice(0, 19);
+      auctionEndTime = end.toISOString();
     }
 
-    // startingPrice 문자열 숫자로 변환, 콤마 제거
     const startingPriceNumber = Math.max(
       Number(form.startingPrice.replace(/[^0-9]/g, "")),
       1
     );
-    if (!startingPriceNumber || startingPriceNumber <= 0) {
-      setError("시작 가격은 1원 이상이어야 합니다");
-      return;
-    }
 
     try {
-      // 서버 전송용 데이터
-      const productData = {
+      const formData = new FormData();
+
+      // product 데이터 JSON으로 Blob 처리
+      const productBlob = new Blob([JSON.stringify({
         title: form.title,
         content: form.content,
-        startingPrice: startingPriceNumber.toString(), // 문자열
-        imageUrl: form.imageUrl,
+        startingPrice: startingPriceNumber.toString(),
         oneMinuteAuction: form.oneMinuteAuction,
         auctionEndTime,
         sellerId: user.userId,
         categoryId: form.categoryId,
-        productStatus: "ACTIVE", // enum 값
+        productStatus: "ACTIVE",
         paymentStatus: "PENDING",
-      };
+      })], { type: "application/json" });
 
-      const response = await fetch(`${API_BASE_URL}/api/products`, {
+      formData.append("product", productBlob); // Spring 쪽 @RequestPart("dto")로 받음
+
+      // 이미지 파일 추가
+      if (form.images) {
+        Array.from(form.images).forEach((file) => formData.append("files", file));
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/products/with-images`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`, // 로그인 시 저장된 토큰 사용
+          Authorization: `Bearer ${token}`, // Content-Type는 자동 처리
         },
-        body: JSON.stringify(productData),
+        body: formData,
       });
 
       if (response.ok) {
@@ -153,6 +153,7 @@ export default function ProductRegister({ user }: Props) {
       setError("서버 연결 실패");
     }
   };
+
 
   if (!user) {
     return (
@@ -223,14 +224,35 @@ export default function ProductRegister({ user }: Props) {
             className="input"
           />
 
-          <label className="label">이미지 URL</label>
+          <label className="label">상품 이미지 *</label>
           <input
-            type="text"
-            placeholder="https://..."
-            value={form.imageUrl}
-            onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+            type="file"
+            multiple
+            onChange={(e) => {
+              const files = e.target.files;
+              if (!files) return; // null이면 그냥 종료
+              setForm(prev => ({
+                ...prev,
+                images: [...(prev.images || []), ...Array.from(files)],
+              }));
+            }}
             className="input"
           />
+
+          <div className="selected-files">
+            {(form.images || []).map((file, idx) => (
+              <div key={idx} className="file-item">
+                {file.name}
+                <button type="button" onClick={() =>
+                  setForm(prev => ({
+                    ...prev,
+                    images: prev.images?.filter((_, i) => i !== idx)
+                  }))
+                }>삭제</button>
+              </div>
+            ))}
+          </div>
+
 
           <div className="checkbox-group">
             <label className="checkbox-label">

@@ -1,16 +1,22 @@
 package com.my.backend.service;
 
 import com.my.backend.common.enums.ProductStatus;
+import com.my.backend.config.FileUploadConfig;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.dto.BidDto;
 import com.my.backend.entity.*;
 import com.my.backend.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -242,4 +248,57 @@ public class ProductService {
 
         return products.map(ProductDto::fromEntity);
     }
+
+    private final FileUploadConfig fileUploadConfig; // @RequiredArgsConstructor 덕분에 주입됨
+
+    @Transactional
+    public ProductDto createProductWithImages(ProductDto dto, MultipartFile[] files) {
+        User seller = findUserOrThrow(dto.getSellerId());
+        Category category = findCategoryOrThrow(dto.getCategoryId());
+        Bid bid = findBidOrNull(dto.getBidId());
+        Payment payment = findPaymentOrNull(dto.getPaymentId());
+
+        String uploadDir = fileUploadConfig.getUploadDir(); // config에서 가져오기
+
+        // 1️⃣ 대표 이미지
+        Image mainImage = null;
+        if (files != null && files.length > 0) {
+            try {
+                String filename = System.currentTimeMillis() + "_" + files[0].getOriginalFilename();
+                Path path = Paths.get(uploadDir).resolve(filename).toAbsolutePath();
+                Files.createDirectories(path.getParent());
+                files[0].transferTo(path.toFile());
+                mainImage = Image.builder().imagePath("/uploads/" + filename).build();
+            } catch (Exception e) {
+                throw new RuntimeException("대표 이미지 저장 실패", e);
+            }
+        }
+
+        // Product 저장
+        Product product = dto.toEntity(seller, bid, payment, category, mainImage);
+        productRepository.save(product);
+
+        // 나머지 이미지 저장
+        if (files != null) {
+            for (MultipartFile file : files) {
+                try {
+                    String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                    Path path = Paths.get(uploadDir).resolve(filename).toAbsolutePath();
+                    Files.createDirectories(path.getParent());
+                    file.transferTo(path.toFile());
+
+                    Image image = Image.builder()
+                            .imagePath("/uploads/" + filename)
+                            .product(product)
+                            .build();
+                    imageRepository.save(image);
+                } catch (Exception e) {
+                    throw new RuntimeException("추가 이미지 저장 실패", e);
+                }
+            }
+        }
+
+        return ProductDto.fromEntity(product);
+    }
+
 }

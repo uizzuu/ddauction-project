@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -137,5 +138,14 @@ public class ProductController {
         Page<ProductDto> result = productService.searchProductsPaged(keyword, category, productStatus, pageable);
 
         return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/with-images")
+    public ResponseEntity<ProductDto> createProductWithImages(
+            @RequestPart("product") @Valid ProductDto dto,
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
+
+        ProductDto created = productService.createProductWithImages(dto, files);
+        return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 }

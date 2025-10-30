@@ -80,6 +80,7 @@ export interface ProductForm {
   oneMinuteAuction: boolean;
   auctionEndTime: string;
   categoryId: number | null;
+   images?: File[];
 }
 
 // 상품 수정 데이터 타입
