@@ -29,7 +29,7 @@ export default function ProductDetail({ user }: Props) {
   const [product, setProduct] = useState<Product | null>(null);
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
-  const [initialHighestBid, setInitialHighestBid] = useState(0);
+  const [_initialHighestBid, setInitialHighestBid] = useState(0);
   const [allBids, setAllBids] = useState<Bid[]>([]);
   const {
     bids: liveBids,
