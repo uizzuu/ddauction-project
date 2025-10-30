@@ -27,6 +27,7 @@ public class ProductService {
     private final UserRepository userRepository;
     private final CategoryRepository categoryRepository;
     private final PaymentRepository paymentRepository;
+    private final ImageRepository imageRepository;
 
     // 전체 상품 조회
     public List<ProductDto> getAllProducts() {
@@ -56,8 +57,9 @@ public class ProductService {
         Category category = findCategoryOrThrow(dto.getCategoryId());
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
+        Image image = findImageOrNull(dto.getImageId());
 
-        Product product = dto.toEntity(seller, bid, payment, category);
+        Product product = dto.toEntity(seller, bid, payment, category, image);
         Product saved = productRepository.save(product);
 
         return ProductDto.fromEntity(saved);
@@ -69,13 +71,14 @@ public class ProductService {
         Category category = findCategoryOrThrow(dto.getCategoryId());
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
+        Image image = findImageOrNull(dto.getImageId());
 
         product.setTitle(dto.getTitle());
         product.setContent(dto.getContent());
         if (dto.getStartingPrice() != null) {
             product.setStartingPrice(dto.getStartingPrice());
         }
-        product.setImageUrl(dto.getImageUrl());
+        product.setImage(image);
         product.setOneMinuteAuction(dto.isOneMinuteAuction());
         product.setAuctionEndTime(dto.getAuctionEndTime());
         product.setProductStatus(dto.getProductStatus());
@@ -186,6 +189,13 @@ public class ProductService {
         return paymentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제 정보가 존재하지 않습니다."));
     }
+    private Image findImageOrNull(Long id) {
+        if (id == null) return null;
+        return imageRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이미지가 존재하지 않습니다."));
+    }
+
+
 
     // 최신 등록 상품 1개 조회
     public ProductDto getLatestProduct() {

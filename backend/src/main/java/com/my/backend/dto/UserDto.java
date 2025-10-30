@@ -1,5 +1,6 @@
 package com.my.backend.dto;
 
+import com.my.backend.entity.Address;
 import com.my.backend.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +23,7 @@ public class UserDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private User.Role role;
-
+    private Long addressId;
 
     public static UserDto fromEntity(User user) {
         return UserDto.builder()
@@ -35,11 +36,12 @@ public class UserDto {
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .role(user.getRole())
+                .addressId(user.getAddress() != null ? user.getAddress().getAddressId() : null)
                 .build();
     }
 
 
-    public User toEntity() {
+    public User toEntity(Address address) {
         return User.builder()
                 .userId(this.userId)
                 .userName(this.userName)
@@ -48,6 +50,7 @@ public class UserDto {
                 .phone(this.phone)
                 .email(this.email)
                 .role(this.role)
+                .address(address)
                 .build();
     }
 }

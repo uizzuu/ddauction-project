@@ -11,6 +11,8 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+import static com.my.backend.entity.QImage.image;
+
 @Data
 @Builder
 public class ProductDto {
@@ -28,7 +30,7 @@ public class ProductDto {
     @Min(value = 1, message = "시작 가격은 1원 이상이어야 합니다.")
     private Long startingPrice;
 
-    private String imageUrl;
+    private Long imageId;
 
     private boolean oneMinuteAuction;
 
@@ -62,7 +64,7 @@ public class ProductDto {
                 .title(product.getTitle())
                 .content(product.getContent())
                 .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice() : null)
-                .imageUrl(product.getImageUrl())
+                .imageId(product.getImage()!= null ? product.getImage().getImageId() : null)
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
                 .productStatus(product.getProductStatus())
@@ -75,14 +77,14 @@ public class ProductDto {
                 .build();
     }
 
-    public Product toEntity(User seller, Bid bid, Payment payment, Category category) {
+    public Product toEntity(User seller, Bid bid, Payment payment, Category category, Image image) {
         return Product.builder()
                 .productId(this.productId)
                 .user(seller)
                 .title(this.title)
                 .content(this.content)
                 .startingPrice(this.startingPrice)
-                .imageUrl(this.imageUrl)
+                .image(image)
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)
                 .productStatus(this.productStatus)
@@ -93,3 +95,4 @@ public class ProductDto {
                 .build();
     }
 }
+//

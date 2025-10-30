@@ -57,7 +57,7 @@ export default function ProductDetail({ user }: Props) {
     const combinedBids = [...allBids, ...liveBids];
     const uniqueBidsMap = new Map<number, Bid>();
     combinedBids.forEach(bid => {
-        uniqueBidsMap.set(bid.bidId, bid); 
+      uniqueBidsMap.set(bid.bidId, bid);
     });
     const uniqueBids = Array.from(uniqueBidsMap.values()).sort(
       (a, b) =>
@@ -73,7 +73,7 @@ export default function ProductDetail({ user }: Props) {
   // 경매 진행중일 때 수정 막기
   const isEditingDisabled = product
     ? product.productStatus === "ACTIVE" &&
-      new Date(product.auctionEndTime).getTime() > new Date().getTime()
+    new Date(product.auctionEndTime).getTime() > new Date().getTime()
     : false;
 
   const calculateRemainingTime = (endTime: string) => {
@@ -588,14 +588,14 @@ export default function ProductDetail({ user }: Props) {
                   minDate={originalEndDate} // 날짜 제한
                   minTime={
                     productForm.auctionEndTime &&
-                    new Date(productForm.auctionEndTime).toDateString() ===
+                      new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? originalEndDate // 같은 날이면 기존 종료시간 이전 선택 불가
                       : new Date(0, 0, 0, 0, 0) // 다른 날이면 제한 없음 (0시 기준)
                   }
                   maxTime={
                     productForm.auctionEndTime &&
-                    new Date(productForm.auctionEndTime).toDateString() ===
+                      new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? new Date(23, 11, 31, 23, 59) // 같은 날이면 하루 끝까지 허용
                       : new Date(23, 11, 31, 23, 59) // 다른 날도 하루 끝까지
@@ -669,6 +669,27 @@ export default function ProductDetail({ user }: Props) {
             {product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
+
+
+        {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
+        {remainingTime === "경매 종료" && (
+          <div style={{ textAlign: "center", marginTop: "30px" }}>
+            <button
+              onClick={() => navigate("/payment")} // ✅ 결제 페이지로 이동
+              style={{
+                backgroundColor: "#ff6600",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                padding: "14px 28px",
+                fontSize: "1rem",
+                cursor: "pointer",
+              }}
+            >
+              결제하기
+            </button>
+          </div>
+        )}
 
         <AuctionBox
           productId={product.productId}

@@ -1,11 +1,15 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.UserDto;
+import com.my.backend.entity.Address;
 import com.my.backend.entity.User;
+import com.my.backend.repository.AddressRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +21,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AddressRepository addressRepository;
 
     // 모든 유저 조회
     public List<UserDto> getAllUsers() {
@@ -39,7 +44,8 @@ public class UserService {
             validatePassword(dto.getPassword()); // 비밀번호 유효성 검사
             dto.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
-        User saved = userRepository.save(dto.toEntity());
+        Address address = findAddressOrNull(dto.getAddressId());
+        User saved = userRepository.save(dto.toEntity(address));
         return UserDto.fromEntity(saved);
     }
 
@@ -87,6 +93,11 @@ public class UserService {
         if (dto.getRole() != null) {
             user.setRole(dto.getRole());
         }
+        if (dto.getAddressId() != null) {
+            Address address = findAddressOrNull(dto.getAddressId());
+            user.setAddress(address);
+        }
+
 
         return UserDto.fromEntity(userRepository.save(user));
     }
@@ -104,5 +115,10 @@ public class UserService {
             throw new IllegalArgumentException("비밀번호에 최소 1개의 숫자가 포함되어야 합니다.");
         if (!password.matches(".*[!*@#].*"))
             throw new IllegalArgumentException("비밀번호에 최소 1개의 특수문자(!*@#)가 포함되어야 합니다.");
+    }
+    private Address findAddressOrNull(Long id) {
+        if (id == null) return null;
+        return addressRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "주소 정보가 존재하지 않습니다."));
     }
 }

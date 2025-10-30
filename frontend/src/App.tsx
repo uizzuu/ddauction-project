@@ -5,6 +5,7 @@ import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
 import SearchPage from "./pages/SearchPage";
 import UserQnaForm from "./pages/UserQnaForm";
+import PaymentPage from "./pages/PaymentPage";
 import {
   HeaderMain,
   HeaderSub,
@@ -82,6 +83,17 @@ export default function App() {
         <Route
           path="/oauth2/redirect"
           element={<OAuthCallback setUser={setUser} />}
+        />
+        <Route path="/payment" element={<PaymentPage />} />
+        <Route
+          path="/payment"
+          element={
+            user?.isWinner ? (
+              <PaymentPage user={user} />
+            ) : (
+              <div style={{ padding: "20px" }}>최고낙찰자만 접근 가능합니다.</div>
+            )
+          }
         />
       </Routes>
     </div>
