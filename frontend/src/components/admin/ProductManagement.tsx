@@ -136,7 +136,7 @@ export default function ProductManagement({
                     onChange={(e) =>
                       setEditProductForm({
                         ...editProductForm,
-                        startingPrice: Number(e.target.value),
+                        startingPrice: e.target.value,
                       })
                     }
                   />

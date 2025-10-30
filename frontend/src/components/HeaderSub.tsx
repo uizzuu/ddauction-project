@@ -30,7 +30,7 @@ export default function HeaderSub({ category, setCategory }: Props) {
       }
     };
     fetchCategories();
-  }, [setCategory]);
+  }, []);
 
   return (
     <header className="header header-line header-sub">

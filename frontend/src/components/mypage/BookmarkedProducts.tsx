@@ -1,4 +1,5 @@
 import type { Product } from "../../types/types";
+import { API_BASE_URL } from "../../services/api";
 
 type Props = {
   bookmarkedProducts: Product[];
@@ -31,9 +32,9 @@ export default function BookmarkedProducts({
                 alignItems: "center",
               }}
             >
-              {product.imageUrl ? (
+              {product.images && product.images.length > 0 ? (
                 <img
-                  src={product.imageUrl}
+                  src={`${API_BASE_URL}/${product.images[0].imagePath}`}
                   alt={product.title}
                   style={{
                     width: "150px",

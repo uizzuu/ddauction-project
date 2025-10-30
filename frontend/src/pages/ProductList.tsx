@@ -93,8 +93,8 @@ export default function ProductList() {
                   onClick={() => navigate(`/products/${product.productId}`)}
                 >
                   <div className="product-image height-220">
-                    {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={product.title} />
+                    {product.images && product.images.length > 0 ? (
+                      <img src={product.images[0].imagePath} alt={product.title} />
                     ) : (
                       <div className="no-image-txt">이미지 없음</div>
                     )}

@@ -15,8 +15,8 @@ export default function ProductRegister({ user }: Props) {
   const [form, setForm] = useState<ProductForm>({
     title: "",
     content: "",
-    startingPrice: "0",
-    imageUrl: "",
+    startingPrice: "",
+    images: [],
     oneMinuteAuction: false,
     auctionEndTime: "",
     categoryId: null,
