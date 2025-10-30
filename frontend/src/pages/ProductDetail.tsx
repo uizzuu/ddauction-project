@@ -11,7 +11,7 @@ import type {
   EditProductForm,
 } from "../types/types";
 import { API_BASE_URL } from "../services/api";
-import { formatDateTime } from '../utils/util';
+import { formatDateTime } from "../utils/util";
 import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
@@ -48,11 +48,15 @@ export default function ProductDetail({ user }: Props) {
     auctionEndTime: "",
   });
 
+  const originalEndDate = product?.auctionEndTime
+    ? new Date(product.auctionEndTime)
+    : new Date();
+
   // 경매 진행중일 때 수정 막기
   const isEditingDisabled = product
-  ? product.productStatus === "ACTIVE" &&
-    new Date(product.auctionEndTime).getTime() > new Date().getTime()
-  : false;
+    ? product.productStatus === "ACTIVE" &&
+      new Date(product.auctionEndTime).getTime() > new Date().getTime()
+    : false;
 
   const calculateRemainingTime = (endTime: string) => {
     const now = new Date();
@@ -536,13 +540,21 @@ export default function ProductDetail({ user }: Props) {
                   timeFormat="HH:mm"
                   timeIntervals={5}
                   dateFormat="yyyy-MM-dd HH:mm"
-                  minDate={(() => {
-                    const now = new Date();
-                    const originalEnd = new Date(
-                      product?.auctionEndTime ?? now
-                    );
-                    return now > originalEnd ? now : originalEnd;
-                  })()}
+                  minDate={originalEndDate} // 날짜 제한
+                  minTime={
+                    productForm.auctionEndTime &&
+                    new Date(productForm.auctionEndTime).toDateString() ===
+                      originalEndDate.toDateString()
+                      ? originalEndDate // 같은 날이면 기존 종료시간 이전 선택 불가
+                      : new Date(0, 0, 0, 0, 0) // 다른 날이면 제한 없음 (0시 기준)
+                  }
+                  maxTime={
+                    productForm.auctionEndTime &&
+                    new Date(productForm.auctionEndTime).toDateString() ===
+                      originalEndDate.toDateString()
+                      ? new Date(23, 11, 31, 23, 59) // 같은 날이면 하루 끝까지 허용
+                      : new Date(23, 11, 31, 23, 59) // 다른 날도 하루 끝까지
+                  }
                   className="input"
                 />
                 <label className="label title-16">경매등록가</label>
@@ -592,8 +604,7 @@ export default function ProductDetail({ user }: Props) {
                   : "알 수 없음"}{" "}
                 <br />
                 남은시간: {remainingTime}
-                <br/>
-                ({formatDateTime(product.auctionEndTime)})
+                <br />({formatDateTime(product.auctionEndTime)})
               </p>
 
               <p>경매등록가: {auctionStartingPrice.toLocaleString()}원</p>
