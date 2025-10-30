@@ -2,9 +2,11 @@ package com.my.backend.controller;
 
 import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidDto;
+import com.my.backend.dto.ImageDto;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.entity.User;
 import com.my.backend.service.BookMarkService;
+import com.my.backend.service.ImageService;
 import com.my.backend.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -27,6 +29,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final BookMarkService bookMarkService;
+    private final ImageService imageService;
 
     // 전체 상품 조회 (로그인 불필요)
     @GetMapping
@@ -140,7 +143,7 @@ public class ProductController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/with-images")
+    @PostMapping("/image-path")
     public ResponseEntity<ProductDto> createProductWithImages(
             @RequestPart("product") @Valid ProductDto dto,
             @RequestPart(value = "files", required = false) MultipartFile[] files) {
@@ -148,4 +151,7 @@ public class ProductController {
         ProductDto created = productService.createProductWithImages(dto, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
+
+    // 특정 상품 이미지 목록 조회
+//    @GetMapping("/{id}/images")
 }

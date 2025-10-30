@@ -1,6 +1,7 @@
 package com.my.backend.dto;
 
 import com.my.backend.entity.Image;
+import com.my.backend.entity.Product;
 import lombok.Builder;
 import lombok.Data;
 
@@ -21,15 +22,10 @@ public class ImageDto {
     }
 
     // DTO -> Entity 변환
-    public Image toEntity() {
-        Image image = Image.builder()
-                .imageId(this.imageId)
+    public Image toEntity(Product product) {
+        return Image.builder()
                 .imagePath(this.imagePath)
+                .product(product) // 반드시 FK 연결
                 .build();
-
-        // Product는 필요하면 나중에 set 해주기
-        // image.setProduct(product);
-
-        return image;
     }
 }

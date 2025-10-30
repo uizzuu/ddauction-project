@@ -289,7 +289,6 @@ public class ProductService {
 
                     Image image = Image.builder()
                             .imagePath("/uploads/" + filename)
-                            .product(product)
                             .build();
                     imageRepository.save(image);
                 } catch (Exception e) {
