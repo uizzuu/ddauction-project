@@ -65,6 +65,10 @@ public class User {
     @Column(nullable = false)
     private Role role;
 
+    @ManyToOne
+    @JoinColumn(name = "address_id")
+    private Address address;
+
     public enum Role {
         USER, ADMIN, BANNED
     }
