@@ -19,6 +19,7 @@ export const AuctionBox = ({
 }: AuctionBoxProps) => {
   const [bidValue, setBidValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [isBidding, setIsBidding] = useState(false);
 
   // 새 입찰이 들어올 때마다 스크롤 아래로
   useEffect(() => {
@@ -34,6 +35,7 @@ export const AuctionBox = ({
   const handleBid = async () => {
     const token = localStorage.getItem("token");
     if (!token) return alert("로그인이 필요합니다.");
+    if (isBidding) return;
 
     const bidNum = Number(bidValue);
     if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
@@ -46,6 +48,7 @@ export const AuctionBox = ({
     }
 
     try {
+      setIsBidding(true);
       const res = await fetch(`${API_BASE_URL}/api/bid/${productId}/bid`, {
         method: "POST",
         headers: {
@@ -66,8 +69,15 @@ export const AuctionBox = ({
     } catch (err) {
       console.error("입찰 중 오류:", err);
       alert("서버 오류");
+    } finally {
+      setIsBidding(false);
     }
   };
+
+  const placeholderText =
+    currentHighestBid > 0
+      ? `${currentHighestBid.toLocaleString()}`
+      : "0";
 
   return (
     <div style={{ width: "260px", flexShrink: 0 }} className="height-450">
@@ -85,7 +95,10 @@ export const AuctionBox = ({
         }}
       >
         {/* 입찰 리스트 */}
-        <div className="mb-20 flex-column gap-8 max-height-350 overflow-y-auto bid-scroll">
+        <div
+          ref={scrollRef}
+          className="mb-20 flex-column gap-8 max-height-350 overflow-y-auto bid-scroll"
+        >
           {mergedBids.length > 0 ? (
             mergedBids.map((b, i) => (
               <div key={b.bidId} className="bid-box">
@@ -105,12 +118,12 @@ export const AuctionBox = ({
         <div className="max-height-3rem flex-box gap-4">
           <input
             type="text"
-            value={Number(bidValue || 0).toLocaleString()}
+            value={bidValue ? Number(bidValue).toLocaleString() : ""}
             onChange={(e) => {
               const clean = e.target.value.replace(/[^0-9]/g, "");
               setBidValue(clean);
             }}
-            placeholder="희망 입찰가"
+            placeholder={placeholderText}
             className="input"
           />
 
@@ -131,8 +144,12 @@ export const AuctionBox = ({
             </button>
           </div>
 
-          <button onClick={handleBid} className="search-btn">
-            입찰
+          <button
+            onClick={handleBid}
+            className="search-btn"
+            disabled={isBidding}
+          >
+            {isBidding ? "입찰 중..." : "입찰"}
           </button>
         </div>
       </div>

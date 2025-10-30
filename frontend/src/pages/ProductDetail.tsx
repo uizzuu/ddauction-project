@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
@@ -53,10 +54,16 @@ export default function ProductDetail({ user }: Props) {
   });
 
   const mergedBids = useMemo(() => {
-    return [...allBids, ...liveBids].sort(
+    const combinedBids = [...allBids, ...liveBids];
+    const uniqueBidsMap = new Map<number, Bid>();
+    combinedBids.forEach(bid => {
+        uniqueBidsMap.set(bid.bidId, bid); 
+    });
+    const uniqueBids = Array.from(uniqueBidsMap.values()).sort(
       (a, b) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
+    return uniqueBids;
   }, [allBids, liveBids]);
 
   const originalEndDate = product?.auctionEndTime
@@ -175,33 +182,6 @@ export default function ProductDetail({ user }: Props) {
 
     fetchProduct();
   }, [id, user?.token]);
-
-  // 초기 입찰 내역 fetch
-  // useEffect(() => {
-  //   const fetchAllBids = async () => {
-  //     try {
-  //       const token = localStorage.getItem("token");
-  //       const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`, {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  //         },
-  //       });
-
-  //       if (res.ok) {
-  //         const data: Bid[] = await res.json();
-  //         setAllBids(data);
-  //       } else {
-  //         const text = await res.text();
-  //         console.error("입찰 내역 불러오기 실패, 서버 응답:", text);
-  //       }
-  //     } catch (err) {
-  //       console.error(err);
-  //     }
-  //   };
-
-  //   fetchAllBids();
-  // }, [id]);
 
   // 입찰 내역을 가져오는 함수를 컴포넌트 내부에 정의
   const fetchAllBids = useCallback(async () => {

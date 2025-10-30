@@ -212,8 +212,12 @@ a {
   border-color: #b17576;
 }
 
+input::placeholder {
+  color: #ddd;
+}
+
 .input::placeholder {
-  color: #666;
+  color: #ddd;
 }
 
 .form-group {
