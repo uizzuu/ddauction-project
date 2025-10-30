@@ -49,7 +49,7 @@ public class Product {
 
     // paymentStatus NN 설정 충돌, nullable true => false 변경
     @Enumerated(EnumType.STRING)
-    @JoinColumn(name = "payment_status", nullable = false)
+    @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
 
     @CreatedDate
