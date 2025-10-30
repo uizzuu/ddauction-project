@@ -18,6 +18,7 @@ export interface User {
   updatedAt?: string;
   role?: Role;
   token?: string;
+  isWinner?: boolean;
 }
 
 export interface Bid {

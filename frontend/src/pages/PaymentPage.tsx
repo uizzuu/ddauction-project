@@ -1,4 +1,3 @@
-// PaymentPage.tsx
 import { useState } from "react";
 
 

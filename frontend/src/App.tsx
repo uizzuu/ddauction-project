@@ -84,12 +84,11 @@ export default function App() {
           path="/oauth2/redirect"
           element={<OAuthCallback setUser={setUser} />}
         />
-        <Route path="/payment" element={<PaymentPage />} />
         <Route
           path="/payment"
           element={
             user?.isWinner ? (
-              <PaymentPage user={user} />
+              <PaymentPage />
             ) : (
               <div style={{ padding: "20px" }}>최고낙찰자만 접근 가능합니다.</div>
             )
