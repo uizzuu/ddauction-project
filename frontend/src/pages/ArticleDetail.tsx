@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate, NavLink } from "react-router-dom";
 import {
   getArticleById,
@@ -42,30 +42,30 @@ export default function ArticleDetail({ user }: Props) {
   }, [id]);
 
   // 댓글 불러오기 함수 (페이징 적용)
-  const loadComments = async (pageNum: number) => {
+  const loadComments =  useCallback(async (pageNum: number) => {
     if (!id) return;
     try {
       const allComments = await getCommentsByArticleId(Number(id));
       const start = (pageNum - 1) * COMMENTS_PER_PAGE;
       const pagedComments = allComments.slice(start, start + COMMENTS_PER_PAGE);
-
+  
       if (pageNum === 1) {
         setComments(pagedComments);
       } else {
         setComments((prev) => [...prev, ...pagedComments]);
       }
-
+  
       setHasMore(start + COMMENTS_PER_PAGE < allComments.length);
     } catch (err) {
       console.error("댓글 조회 실패:", err);
     }
-  };
+  }, [id, setComments, setHasMore]);
 
   // 초기 댓글 로드
   useEffect(() => {
     setPage(1);
     loadComments(1);
-  }, [id]);
+  }, [id, loadComments]);
 
   // 댓글 작성
   const handleCommentSubmit = async () => {
