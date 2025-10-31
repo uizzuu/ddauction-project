@@ -50,7 +50,7 @@ export default function AdminPage() {
     title: "",
     content: "",
     categoryId: undefined,
-    startingPrice: 0,
+    startingPrice: "",
     productStatus: "ACTIVE",
     auctionEndTime: "",
   });
@@ -306,7 +306,7 @@ export default function AdminPage() {
       title: product.title,
       content: product.content ?? "",
       categoryId: product.categoryId,
-      startingPrice: product.startingPrice,
+      startingPrice: product.startingPrice?.toString(),
       productStatus: product.productStatus,
       auctionEndTime: product.auctionEndTime,
     });
@@ -317,7 +317,7 @@ export default function AdminPage() {
       const payload: {
         title: string;
         categoryId?: number;
-        startingPrice?: number;
+        startingPrice?: string;
         productStatus: Product["productStatus"];
       } = {
         title: editProductForm.title,

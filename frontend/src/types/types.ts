@@ -29,6 +29,12 @@ export interface Bid {
   createdAt: string;
 }
 
+export interface Image {
+  imageId: number;
+  productId: number;
+  imagePath: string;
+}
+
 // 상품 조회/표시에 사용할 타입
 export interface Product {
   productId: number;
@@ -37,7 +43,7 @@ export interface Product {
   title: string;
   content?: string;
   startingPrice?: number;
-  imageUrl?: string;
+  images?: Image[];
   oneMinuteAuction?: boolean;
   auctionEndTime: string;
   productStatus: ProductStatus;
@@ -76,11 +82,10 @@ export interface ProductForm {
   title: string;
   content: string;
   startingPrice: string; // 숫자 입력 후 문자열로 변환하여 저장
-  imageUrl: string;
   oneMinuteAuction: boolean;
   auctionEndTime: string;
   categoryId: number | null;
-   images?: File[];
+  images?: File[];
 }
 
 // 상품 수정 데이터 타입
@@ -88,9 +93,10 @@ export type EditProductForm = {
   title: string;
   content: string;
   categoryId?: number;
-  startingPrice?: number;
+  startingPrice?: string;
   productStatus: typeof PRODUCT_STATUS[number];
   auctionEndTime: string;
+  images?: File[];
 };
 
 export interface EditUserForm {

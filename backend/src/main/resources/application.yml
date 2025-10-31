@@ -64,6 +64,10 @@ payment:
 # 로컬 환경
 # ===================================
 ---
+server:
+  ssl:
+    enabled: false
+
 spring:
   config:
     activate:

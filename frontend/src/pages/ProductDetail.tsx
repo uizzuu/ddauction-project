@@ -48,15 +48,16 @@ export default function ProductDetail({ user }: Props) {
     title: "",
     content: "",
     categoryId: undefined,
-    startingPrice: 0,
+    startingPrice: "",
     productStatus: "ACTIVE",
     auctionEndTime: "",
+    images: [],
   });
 
   const mergedBids = useMemo(() => {
     const combinedBids = [...allBids, ...liveBids];
     const uniqueBidsMap = new Map<number, Bid>();
-    combinedBids.forEach(bid => {
+    combinedBids.forEach((bid) => {
       uniqueBidsMap.set(bid.bidId, bid);
     });
     const uniqueBids = Array.from(uniqueBidsMap.values()).sort(
@@ -73,7 +74,7 @@ export default function ProductDetail({ user }: Props) {
   // 경매 진행중일 때 수정 막기
   const isEditingDisabled = product
     ? product.productStatus === "ACTIVE" &&
-    new Date(product.auctionEndTime).getTime() > new Date().getTime()
+      new Date(product.auctionEndTime).getTime() > new Date().getTime()
     : false;
 
   const calculateRemainingTime = (endTime: string) => {
@@ -308,10 +309,14 @@ export default function ProductDetail({ user }: Props) {
     setProductForm({
       title: product.title,
       content: product.content ?? "",
-      startingPrice: product.startingPrice ?? 0,
+      startingPrice:
+        product.startingPrice !== undefined
+          ? String(product.startingPrice) // number → string 변환
+          : "",
       categoryId: product.categoryId,
       productStatus: product.productStatus ?? "ACTIVE",
       auctionEndTime: product.auctionEndTime,
+      images: [],
     });
   };
 
@@ -342,12 +347,7 @@ export default function ProductDetail({ user }: Props) {
         }
       );
 
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        data = await res.text();
-      }
+      const data = await res.json().catch(async () => await res.text());
 
       if (!res.ok) {
         alert(
@@ -400,10 +400,18 @@ export default function ProductDetail({ user }: Props) {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
-    const { name, value } = e.target;
+    const { name, value, type, files } = e.target as HTMLInputElement & {
+      files?: FileList;
+    };
+
+    if (type === "file" && files) {
+      setProductForm((prev) => ({ ...prev, images: Array.from(files) }));
+      return;
+    }
+
     setProductForm((prev) => ({
       ...prev,
-      [name]: name === "startingPrice" ? Number(value) : value,
+      [name]: name === "startingPrice" ? value : value,
     }));
   };
 
@@ -419,8 +427,8 @@ export default function ProductDetail({ user }: Props) {
     <div className="container">
       <div className="flex-box gap-40">
         <div className="product-image product-detail-image">
-          {product.imageUrl ? (
-            <img src={product.imageUrl} alt={product.title} />
+          {product.images && product.images.length > 0 ? (
+            <img src={product.images[0].imagePath} alt={product.title} />
           ) : (
             <div className="no-image-txt">이미지 없음</div>
           )}
@@ -588,14 +596,14 @@ export default function ProductDetail({ user }: Props) {
                   minDate={originalEndDate} // 날짜 제한
                   minTime={
                     productForm.auctionEndTime &&
-                      new Date(productForm.auctionEndTime).toDateString() ===
+                    new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? originalEndDate // 같은 날이면 기존 종료시간 이전 선택 불가
                       : new Date(0, 0, 0, 0, 0) // 다른 날이면 제한 없음 (0시 기준)
                   }
                   maxTime={
                     productForm.auctionEndTime &&
-                      new Date(productForm.auctionEndTime).toDateString() ===
+                    new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? new Date(23, 11, 31, 23, 59) // 같은 날이면 하루 끝까지 허용
                       : new Date(23, 11, 31, 23, 59) // 다른 날도 하루 끝까지
@@ -670,7 +678,6 @@ export default function ProductDetail({ user }: Props) {
           </div>
         </div>
 
-
         {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
         {remainingTime === "경매 종료" && (
           <div style={{ textAlign: "center", marginTop: "30px" }}>
@@ -698,7 +705,10 @@ export default function ProductDetail({ user }: Props) {
           placeBid={handlePlaceBid}
         />
       </div>
-      <ProductBidGraph bids={mergedBids} startingPrice={product?.startingPrice ?? 0}/>
+      <ProductBidGraph
+        bids={mergedBids}
+        startingPrice={product?.startingPrice ?? 0}
+      />
       <ProductQnA
         user={user}
         product={product}

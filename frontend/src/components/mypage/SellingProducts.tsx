@@ -1,5 +1,6 @@
 import React from "react";
 import type { Product, Category, ProductForm } from "../../types/types";
+import { API_BASE_URL } from "../../services/api";
 
 type Props = {
   sellingProducts: Product[];
@@ -50,9 +51,9 @@ export default function SellingProducts({
               <div style={{ display: "flex", gap: "15px" }} >
                 <div 
                     className="bid-box width-200 height-200 overflow-hidden p-0">
-                {product.imageUrl ? (
+                {product.images && product.images.length > 0 ? (
                   <img
-                    src={product.imageUrl}
+                    src={`${API_BASE_URL}/${product.images[0].imagePath}`}
                     alt={product.title}
                     onClick={() => goToProductDetail(product.productId)}
                   />

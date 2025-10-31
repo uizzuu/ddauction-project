@@ -10,6 +10,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.my.backend.entity.QImage.image;
 
@@ -51,6 +52,8 @@ public class ProductDto {
     private Long paymentId;
 
     private Long categoryId;
+
+    private List<ImageDto> images;
 
     public static ProductDto fromEntity(Product product) {
         if (product == null) {

@@ -93,8 +93,11 @@ export default function ProductList() {
                   onClick={() => navigate(`/products/${product.productId}`)}
                 >
                   <div className="product-image height-220">
-                    {product.imageUrl ? (
-                      <img src={product.imageUrl} alt={product.title} />
+                    {product.images && product.images.length > 0 ? (
+                      <img
+                        src={product.images[0].imagePath}
+                        alt={product.title}
+                      />
                     ) : (
                       <div className="no-image-txt">이미지 없음</div>
                     )}
@@ -104,8 +107,12 @@ export default function ProductList() {
                     <h3 className="title-24 mb-10 text-nowrap color-333 text-ellipsis">
                       {product.title}
                     </h3>
-                    <p className="product-price">{formatPrice(product.startingPrice)}</p>
-                    <p className="product-time">종료: {formatDate(product.auctionEndTime)}</p>
+                    <p className="product-price">
+                      {formatPrice(product.startingPrice)}
+                    </p>
+                    <p className="product-time">
+                      종료: {formatDate(product.auctionEndTime)}
+                    </p>
                     <button
                       className="btn-bid"
                       onClick={(e) => {
@@ -122,7 +129,10 @@ export default function ProductList() {
 
             {/* 페이지네이션 */}
             {totalPages > 1 && (
-              <div className="pagination flex-box gap-8" style={{ marginTop: "2rem" }}>
+              <div
+                className="pagination flex-box gap-8"
+                style={{ marginTop: "2rem" }}
+              >
                 <button onClick={goPrevPage} disabled={currentPage === 0}>
                   이전
                 </button>
@@ -137,7 +147,10 @@ export default function ProductList() {
                   </button>
                 ))}
 
-                <button onClick={goNextPage} disabled={currentPage + 1 === totalPages}>
+                <button
+                  onClick={goNextPage}
+                  disabled={currentPage + 1 === totalPages}
+                >
                   다음
                 </button>
               </div>

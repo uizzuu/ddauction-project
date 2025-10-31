@@ -59,9 +59,7 @@ export default function ProductManagement({
         <select
           value={filterCategory ?? ""}
           onChange={(e) =>
-            setFilterCategory(
-              e.target.value ? Number(e.target.value) : null
-            )
+            setFilterCategory(e.target.value ? Number(e.target.value) : null)
           }
         >
           <option value="">전체 카테고리</option>
@@ -73,7 +71,7 @@ export default function ProductManagement({
         </select>
         <button onClick={fetchProducts}>검색</button>
       </div>
-      
+
       <table className="admin-table">
         <thead>
           <tr>
@@ -123,8 +121,7 @@ export default function ProductManagement({
                   </select>
                 ) : (
                   p.categoryName ??
-                  categories.find((c) => c.categoryId === p.categoryId)
-                    ?.name ??
+                  categories.find((c) => c.categoryId === p.categoryId)?.name ??
                   "-"
                 )}
               </td>
@@ -136,7 +133,7 @@ export default function ProductManagement({
                     onChange={(e) =>
                       setEditProductForm({
                         ...editProductForm,
-                        startingPrice: Number(e.target.value),
+                        startingPrice: e.target.value,
                       })
                     }
                   />

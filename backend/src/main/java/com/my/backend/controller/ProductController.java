@@ -143,14 +143,25 @@ public class ProductController {
         return ResponseEntity.ok(result);
     }
 
-    @PostMapping("/image-path")
+    @PostMapping("/with-images")
     public ResponseEntity<ProductDto> createProductWithImages(
             @RequestPart("product") @Valid ProductDto dto,
-            @RequestPart(value = "files", required = false) MultipartFile[] files) {
-
+            @RequestPart(value = "files", required = false) MultipartFile[] files
+    ) {
         ProductDto created = productService.createProductWithImages(dto, files);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
+
+    //    별도 엔드포인트 불필요, /api/products에서 바로 업로드 처리
+//    @PostMapping("/image-path")
+//    public ResponseEntity<ProductDto> createProductWithImages(
+//            @RequestPart("product") @Valid ProductDto dto,
+//            @RequestPart(value = "files", required = false) MultipartFile[] files) {
+//
+//        ProductDto created = productService.createProductWithImages(dto, files);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+//    }
+
 
     // 특정 상품 이미지 목록 조회
 //    @GetMapping("/{id}/images")

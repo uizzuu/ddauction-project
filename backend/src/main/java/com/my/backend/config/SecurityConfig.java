@@ -3,11 +3,9 @@ package com.my.backend.config;
 import com.my.backend.myjwt.JWTFilter;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.myjwt.LoginFilter;
-//import com.my.backend.oauth2.OAuth2SuccessHandler;
 import com.my.backend.oauth2.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -17,6 +15,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+//import com.my.backend.oauth2.OAuth2SuccessHandler;
+import org.springframework.http.HttpMethod;
+import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 @EnableWebSecurity
@@ -25,6 +26,10 @@ public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+
+    @Value("${spring.profiles.active:local}")
+    private String activeProfile;
+
 
     public SecurityConfig(AuthenticationConfiguration authenticationConfiguration,
                           JWTUtil jwtUtil,OAuth2SuccessHandler oAuth2SuccessHandler) {
@@ -52,6 +57,11 @@ public class SecurityConfig {
         LoginFilter loginFilter = new LoginFilter(jwtUtil, authenticationManager());
         loginFilter.setFilterProcessesUrl("/api/auth/login");
 
+        // 운영 환경에서는 HTTPS 강제
+        if ("prod".equals(activeProfile)) {
+            http.requiresChannel(channel -> channel.anyRequest().requiresSecure());
+        }
+
         http
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
@@ -63,13 +73,15 @@ public class SecurityConfig {
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         // 일반 로그인, 회원가입, 공개 API
-                        .requestMatchers("/login", "/signup", "/", "/join",
-                                "/products", "/articles", "/categories",
-                                "/api/auth/login", "/api/auth/signup", "/api/users/me",
-                                "/api/categories", "/api/products", "/api/articles", "/api/qna",
-                                "/api/bookmarks/**", "/api/categories/**", "/api/products/**",
-                                "/api/articles/**", "/api/qna/**"
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/products/**",
+                                "/api/categories/**",
+                                "/api/articles/**",
+                                "/api/qna/**",
+                                "/api/bookmarks/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

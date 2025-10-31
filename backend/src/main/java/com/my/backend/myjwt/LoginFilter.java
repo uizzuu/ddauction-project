@@ -74,7 +74,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     protected void successfulAuthentication(HttpServletRequest request,
                                             HttpServletResponse response,
                                             FilterChain chain,
-                                            Authentication authentication) {
+                                            Authentication authentication) throws IOException {
         System.out.println("==== successfulAuthentication START ====");
         System.out.println("[INFO] 로그인 성공");
 
@@ -93,8 +93,12 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         System.out.println("[DEBUG] token = " + token);
 
         if (token != null) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.setStatus(HttpServletResponse.SC_OK);
             response.addHeader("Authorization", "Bearer " + token);
-            response.setStatus(200); // ✅ 명시적으로 200 설정
+            response.getWriter().write("{\"token\":\"" + token + "\"}");
+            response.getWriter().flush();
+
             System.out.println("[INFO] JWT 토큰 헤더에 추가 완료");
         } else {
             System.out.println("[ERROR] JWT token 생성 실패");

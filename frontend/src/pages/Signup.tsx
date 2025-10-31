@@ -83,13 +83,14 @@ export default function Signup() {
 
     const data = await response.json(); // 항상 메시지 읽기
 
-    if (response.ok) {
-      alert("회원가입 성공!");
+    if (response.ok) {  // 200~299
+      alert(data.message || "회원가입 성공!");
       navigate("/login");
     } else {
       setErrors((prev) => ({ ...prev, submit: data || "회원가입 실패" }));
     }
   } catch (err) {
+    console.log(err);
     setErrors((prev) => ({ ...prev, submit: "회원가입 실패" }));
   }
 };

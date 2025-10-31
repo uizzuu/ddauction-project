@@ -26,43 +26,42 @@ import ReviewManagement from "../components/mypage/ReviewManagement";
 const normalizeProduct = (
   p: Partial<Product>,
   API_BASE_URL: string
-): Product => ({
-  productId: p.productId ?? 0,
-  title: p.title ?? "제목 없음",
-  content: p.content ?? "",
-  startingPrice: p.startingPrice ?? 0,
-  imageUrl: p.imageUrl
-    ? p.imageUrl.startsWith("http")
-      ? p.imageUrl
-      : `${API_BASE_URL}/${p.imageUrl}`
-    : "",
-  oneMinuteAuction: p.oneMinuteAuction ?? false,
-  auctionEndTime: p.auctionEndTime ?? new Date().toISOString(),
-  productStatus: p.productStatus ?? PRODUCT_STATUS[0],
-  paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
-  categoryId: p.categoryId ?? 0,
-  categoryName: p.categoryName ?? "없음",
-  sellerId: p.sellerId ?? 0,
-  sellerNickName: p.sellerNickName ?? "익명",
-  bidId: p.bidId,
-  bidPrice: p.bidPrice,
-  bids: (p.bids ?? []).map((b) => ({
-    bidId: b.bidId ?? 0,
-    bidPrice: b.bidPrice ?? 0,
-    userId: b.userId ?? 0,
-    isWinning: b.isWinning ?? false,
-    createdAt: b.createdAt ?? new Date().toISOString(),
-  })),
-  bid: p.bid
-    ? {
-        bidId: p.bid.bidId ?? 0,
-        bidPrice: p.bid.bidPrice ?? 0,
-        userId: p.bid.userId ?? p.sellerId ?? 0,
-        isWinning: p.bid.isWinning ?? false,
-        createdAt: p.bid.createdAt ?? new Date().toISOString(),
-      }
-    : null,
-});
+): Product & { imageUrl: string } =>
+  ({
+    productId: p.productId ?? 0,
+    title: p.title ?? "제목 없음",
+    content: p.content ?? "",
+    startingPrice: p.startingPrice ?? 0,
+    imageUrl: p.images?.[0]?.imagePath
+      ? `${API_BASE_URL}/${p.images[0].imagePath}`
+      : "",
+    oneMinuteAuction: p.oneMinuteAuction ?? false,
+    auctionEndTime: p.auctionEndTime ?? new Date().toISOString(),
+    productStatus: p.productStatus ?? PRODUCT_STATUS[0],
+    paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
+    categoryId: p.categoryId ?? 0,
+    categoryName: p.categoryName ?? "없음",
+    sellerId: p.sellerId ?? 0,
+    sellerNickName: p.sellerNickName ?? "익명",
+    bidId: p.bidId,
+    bidPrice: p.bidPrice,
+    bids: (p.bids ?? []).map((b) => ({
+      bidId: b.bidId ?? 0,
+      bidPrice: b.bidPrice ?? 0,
+      userId: b.userId ?? 0,
+      isWinning: b.isWinning ?? false,
+      createdAt: b.createdAt ?? new Date().toISOString(),
+    })),
+    bid: p.bid
+      ? {
+          bidId: p.bid.bidId ?? 0,
+          bidPrice: p.bid.bidPrice ?? 0,
+          userId: p.bid.userId ?? p.sellerId ?? 0,
+          isWinning: p.bid.isWinning ?? false,
+          createdAt: p.bid.createdAt ?? new Date().toISOString(),
+        }
+      : null,
+  } as Product & { imageUrl: string });
 
 type MypageSection =
   | "info"
@@ -110,11 +109,11 @@ export default function MyPage({ user, setUser }: Props) {
     title: "",
     content: "",
     startingPrice: "",
-    imageUrl: "",
     oneMinuteAuction: false,
     auctionEndTime: "",
     categoryId: null,
     productStatus: PRODUCT_STATUS[0],
+    images: [],
   });
 
   // Data states
@@ -429,11 +428,11 @@ export default function MyPage({ user, setUser }: Props) {
       title: product.title,
       content: product.content ?? "",
       startingPrice: String(product.startingPrice ?? 0),
-      imageUrl: product.imageUrl ?? "",
       oneMinuteAuction: product.oneMinuteAuction ?? false,
       auctionEndTime: product.auctionEndTime,
       categoryId: product.categoryId ?? null,
       productStatus: product.productStatus ?? PRODUCT_STATUS[0],
+      images: [],
     });
   };
 
@@ -442,6 +441,13 @@ export default function MyPage({ user, setUser }: Props) {
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
+    if (e.target.type === "file") {
+      const files = (e.target as HTMLInputElement).files;
+      if (files) {
+        setProductForm({ ...productForm, images: Array.from(files) });
+      }
+      return;
+    }
     const value =
       e.target instanceof HTMLSelectElement && e.target.name !== "productStatus"
         ? Number(e.target.value)
@@ -457,23 +463,21 @@ export default function MyPage({ user, setUser }: Props) {
     }
 
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/products/${editingProductId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: productForm.title,
-            startingPrice: productForm.startingPrice,
-            content: productForm.content,
-            categoryId: productForm.categoryId,
-            productStatus: productForm.productStatus,
-            imageUrl: productForm.imageUrl,
-            auctionEndTime: productForm.auctionEndTime,
-            oneMinuteAuction: productForm.oneMinuteAuction,
-          }),
-        }
-      );
+      const formData = new FormData();
+      formData.append("title", productForm.title);
+      formData.append("content", productForm.content);
+      formData.append("startingPrice", productForm.startingPrice);
+      formData.append("categoryId", String(productForm.categoryId));
+      formData.append("auctionEndTime", productForm.auctionEndTime);
+      formData.append("oneMinuteAuction", String(productForm.oneMinuteAuction));
+  
+      // 이미지 파일 추가
+      productForm.images?.forEach((file) => formData.append("images", file));
+  
+      const res = await fetch(`${API_BASE_URL}/api/products/${editingProductId}`, {
+        method: "PUT",
+        body: formData,
+      });
 
       if (res.ok) {
         const updatedProduct = normalizeProduct(await res.json(), API_BASE_URL);

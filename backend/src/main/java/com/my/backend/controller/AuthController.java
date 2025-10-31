@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @Slf4j
 @RestController
 @RequestMapping("/api/auth")
@@ -23,7 +25,16 @@ public class AuthController {
      */
     @PostMapping("/signup")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        return authService.register(request);
+        try {
+            var result = authService.register(request);
+            return ResponseEntity.status(201).body(
+                    Map.of("message", "회원가입 성공", "user", result)
+            );
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(
+                    Map.of("message", e.getMessage())
+            );
+        }
     }
 
     /**

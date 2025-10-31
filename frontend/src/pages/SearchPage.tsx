@@ -45,7 +45,7 @@ export default function ProductSearchPage() {
       | "priceAsc"
       | "priceDesc"
       | "timeLeft"
-      | "popularity" = "latest",
+      | "popularity" = "latest"
   ) => {
     setLoading(true);
     try {
@@ -58,9 +58,12 @@ export default function ProductSearchPage() {
       if (kw || cat || active) {
         url = `${API_BASE_URL}/api/products/search?${query.toString()}`;
       }
+      console.log("🔹 상품 fetch URL:", url); // 🔹 URL 확인
       const res = await fetch(url);
+      console.log("🔹 fetch 응답 상태:", res.status); // 🔹 응답 상태
       if (!res.ok) throw new Error("상품 불러오기 실패");
       let data: Product[] = await res.json();
+      console.log("🔹 서버에서 받은 데이터:", data); // 🔹 데이터 확인
 
       // 거래 가능만 보기 필터
       if (active) {
@@ -70,6 +73,7 @@ export default function ProductSearchPage() {
             p.productStatus === "ACTIVE" &&
             new Date(p.auctionEndTime).getTime() > now.getTime()
         );
+        console.log("🔹 거래 가능 필터 적용 후 데이터:", data);
       }
 
       let sorted = [...data];
@@ -124,6 +128,7 @@ export default function ProductSearchPage() {
         }
       }
       setProducts(sorted);
+      console.log("🔹 최종 화면에 표시할 products:", sorted); // 🔹 최종
     } catch (err) {
       console.error("❌ 상품 검색 중 오류 발생:", err);
       setProducts([]);
@@ -171,7 +176,9 @@ export default function ProductSearchPage() {
         {keyword || categoryId
           ? `${keyword ? `${keyword} ` : ""}${
               categoryId
-                ? `${categories.find((c) => c.categoryId === categoryId)?.name} `
+                ? `${
+                    categories.find((c) => c.categoryId === categoryId)?.name
+                  } `
                 : ""
             }검색`
           : "전체 검색"}
@@ -277,8 +284,8 @@ export default function ProductSearchPage() {
                   onClick={() => navigate(`/products/${p.productId}`)}
                 >
                   <div className="product-image height-220">
-                    {p.imageUrl ? (
-                      <img src={p.imageUrl} alt={p.title} />
+                    {p.images && p.images.length > 0 ? (
+                      <img src={p.images[0].imagePath} alt={p.title} />
                     ) : (
                       <div className="no-image-txt">이미지 없음</div>
                     )}

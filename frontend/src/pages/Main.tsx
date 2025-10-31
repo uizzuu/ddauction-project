@@ -14,7 +14,7 @@ export default function Main() {
     { id: number; image?: string; text: string; product?: Product }[]
   >([]);
   const [current, setCurrent] = useState(0);
-  const [imageFailed, setImageFailed] = useState(false);
+  const [imageFailed, setImageFailed] = useState<boolean[]>([]);
 
   // 상품 목록 불러오기 (신상 상품)
   const fetchProducts = async () => {
@@ -48,29 +48,33 @@ export default function Main() {
         fetch(`${API_BASE_URL}/api/products/ending-soon`),
       ]);
 
+      // 각 응답이 성공했는지 확인
+      if (!topRes.ok || !latestRes.ok || !endingRes.ok) {
+        throw new Error(`배너 API 중 하나가 실패했습니다.
+          topRes: ${topRes.status},
+          latestRes: ${latestRes.status},
+          endingRes: ${endingRes.status}`);
+      }
+
       const [topData, latestData, endingData]: [Product[], Product, Product] =
-        await Promise.all([
-          topRes.json(),
-          latestRes.json(),
-          endingRes.json(),
-        ]);
+        await Promise.all([topRes.json(), latestRes.json(), endingRes.json()]);
 
       setBanners([
         {
           id: 1,
-          image: topData[0]?.imageUrl ?? "/banner1.jpg",
+          image: topData[0]?.images?.[0]?.imagePath ?? "/banner1.jpg",
           text: "지금 가장 인기 있는 경매 상품 🔥",
           product: topData[0],
         },
         {
           id: 2,
-          image: latestData?.imageUrl ?? "/banner2.jpg",
+          image: latestData?.images?.[0]?.imagePath ?? "/banner2.jpg",
           text: "오늘의 추천! 신규 등록 상품 🎉",
           product: latestData,
         },
         {
           id: 3,
-          image: endingData?.imageUrl ?? "/banner3.jpg",
+          image: endingData?.images?.[0]?.imagePath ?? "/banner3.jpg",
           text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
           product: endingData,
         },
@@ -84,10 +88,6 @@ export default function Main() {
     fetchProducts();
     fetchBannerProducts();
   }, []);
-
-  useEffect(() => {
-    setImageFailed(false);
-  }, [current]);
 
   const handlePrev = () =>
     setCurrent((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
@@ -107,65 +107,85 @@ export default function Main() {
     <div className="container">
       {/* 메인 배너 */}
       <div className="position-rl width-full height-500 overflow-hidden radius-32">
-        <div
-          className="flex-box width-full height-full trans duration-500"
-          style={{ transform: `translateX(-${current * 100}%)` }}
-        >
-          {banners.map((b, i) => (
+        {banners.length === 0 ? (
+          <>
+            <div className="no-image-txt bg-333">이미지 없음</div>
+            <p className="color-fff title-36 position-ab bottom-2rem left-2rem z-10">
+              배너 텍스트
+            </p>
+          </>
+        ) : (
+          <>
             <div
-              key={i}
-              className="banner-slide position-rl width-full height-500"
-              onClick={() =>
-                b.product && navigate(`/products/${b.product.productId}`)
-              }
-              style={{ cursor: b.product ? "pointer" : "default" }}
+              className="flex-box width-full height-full trans duration-500"
+              // style={{ transform: "translateX(100%)" }}
             >
-              {b.image && !imageFailed ? (
-                <>
-                  <img
-                    src={b.image}
-                    alt={`배너 ${i + 1}`}
-                    className="width-full height-500 object-cover"
-                    onError={() => setImageFailed(true)}
-                    onLoad={() => setImageFailed(false)}
-                  />
-                  <div className="filter-dark"></div>
-                </>
-              ) : (
-                <div className="no-image-txt bg-333">이미지 없음</div>
-              )}
-              <p className="color-fff title-36 position-ab bottom-2rem left-2rem z-10">
-                {b.text}
-              </p>
+              {banners.map((b, i) => (
+                <div
+                  key={i}
+                  className="banner-slide position-rl width-full height-500"
+                  onClick={() =>
+                    b.product && navigate(`/products/${b.product.productId}`)
+                  }
+                  style={{ cursor: b.product ? "pointer" : "default" }}
+                >
+                  {b.image && (i !== current || !imageFailed) ? (
+                    <>
+                      <img
+                        src={b.image}
+                        alt={`배너 ${i + 1}`}
+                        className="width-full height-full object-cover"
+                        onError={() =>
+                          setImageFailed((prev) => {
+                            const copy = [...prev];
+                            copy[i] = true;
+                            return copy;
+                          })
+                        }
+                      />
+                      <div className="filter-dark"></div>
+                    </>
+                  ) : (
+                    <div className="no-image-txt bg-333">이미지 없음</div>
+                  )}
+                  <p className="color-fff title-36 position-ab bottom-2rem left-2rem z-10">
+                    {b.text}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
 
-        <button
-          onClick={handlePrev}
-          className="position-ab left-16 top-half color-fff trans bg-transparent z-20"
-        >
-          <ChevronLeft size={32} />
-        </button>
-        <button
-          onClick={handleNext}
-          className="position-ab right-16 top-half color-fff trans bg-transparent z-20"
-        >
-          <ChevronRight size={32} />
-        </button>
+            <button
+              onClick={handlePrev}
+              className="position-ab left-16 top-half color-fff trans bg-transparent z-20"
+            >
+              <ChevronLeft size={32} />
+            </button>
+            <button
+              onClick={handleNext}
+              className="position-ab right-16 top-half color-fff trans bg-transparent z-20"
+            >
+              <ChevronRight size={32} />
+            </button>
+          </>
+        )}
       </div>
 
       {/* 하단 인디케이터 */}
-      <div className="mt-10 mb-60 width-full flex-box flex-center gap-4 z-20">
-        {banners.map((_, i) => (
-          <div
-            key={i}
-            className={`width-8 height-8 radius-full transition-all ${
-              i === current ? "bg-aaa" : "bg-ddd"
-            }`}
-          />
-        ))}
-      </div>
+      {banners.length > 0 ? (
+        <div className="mt-10 mb-60 width-full flex-box flex-center gap-4 z-20"></div>
+      ) : (
+        <div className="mt-10 mb-60 width-full flex-box flex-center gap-4 z-20">
+          {banners.map((_, i) => (
+            <div
+              key={i}
+              className={`width-8 height-8 radius-full transition-all ${
+                i === current ? "bg-aaa" : "bg-ddd"
+              }`}
+            />
+          ))}
+        </div>
+      )}
 
       {/* 신상 상품 영역 */}
       <div className="product-area">
@@ -193,8 +213,11 @@ export default function Main() {
                 onClick={() => navigate(`/products/${p.productId}`)}
               >
                 <div className="product-image height-220">
-                  {p.imageUrl ? (
-                    <img src={p.imageUrl} alt={p.title} />
+                  {p.images && p.images.length > 0 ? (
+                    <img
+                      src={`${API_BASE_URL}/${p.images[0].imagePath}`}
+                      alt={p.title}
+                    />
                   ) : (
                     <div className="no-image-txt">이미지 없음</div>
                   )}

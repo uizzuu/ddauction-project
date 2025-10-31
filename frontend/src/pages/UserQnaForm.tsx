@@ -42,15 +42,16 @@ export default function UserQnaForm() {
         try {
           const errData = await res.json();
           errMsg = errData.message || errMsg;
-        } catch (_) { }
-        throw new Error(errMsg);
+        } catch {
+          throw new Error(errMsg);
+        }
       }
 
       alert("1:1 문의가 등록되었습니다.");
       navigate("/mypage/qna"); // 마이페이지 문의 목록으로 이동
-    } catch (err: any) {
-      setError(err.message);
-      console.error("QnA 제출 오류:", err);
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message);
+      else setError("알 수 없는 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }

@@ -15,8 +15,8 @@ export default function ProductRegister({ user }: Props) {
   const [form, setForm] = useState<ProductForm>({
     title: "",
     content: "",
-    startingPrice: "0",
-    imageUrl: "",
+    startingPrice: "",
+    images: [],
     oneMinuteAuction: false,
     auctionEndTime: "",
     categoryId: null,
@@ -37,9 +37,12 @@ export default function ProductRegister({ user }: Props) {
   const handleDateChange = (date: Date | null) => {
     setAuctionEndDate(date);
     if (date) {
+      // LocalDateTime 형식 맞춤: "yyyy-MM-ddTHH:mm:ss"
+      const formatted = date.toISOString().split("T")[0] + "T" +
+                        date.toTimeString().split(" ")[0];
       setForm((prev) => ({
         ...prev,
-        auctionEndTime: date.toISOString(), // string으로 변환
+        auctionEndTime: formatted, // string으로 변환
       }));
       setError("");
     }
@@ -80,6 +83,7 @@ export default function ProductRegister({ user }: Props) {
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
+      console.log("🔹 검증 실패:", validationError); // 🔹 검증 실패 로그
       return;
     }
 
@@ -99,6 +103,7 @@ export default function ProductRegister({ user }: Props) {
       const end = new Date(form.auctionEndTime);
       if (isNaN(end.getTime())) {
         setError("경매 종료 시간이 유효하지 않습니다");
+        console.log("🔹 경매 종료 시간 유효하지 않음"); // 🔹
         return;
       }
       auctionEndTime = end.toISOString();
@@ -113,24 +118,38 @@ export default function ProductRegister({ user }: Props) {
       const formData = new FormData();
 
       // product 데이터 JSON으로 Blob 처리
-      const productBlob = new Blob([JSON.stringify({
-        title: form.title,
-        content: form.content,
-        startingPrice: startingPriceNumber.toString(),
-        oneMinuteAuction: form.oneMinuteAuction,
-        auctionEndTime,
-        sellerId: user.userId,
-        categoryId: form.categoryId,
-        productStatus: "ACTIVE",
-        paymentStatus: "PENDING",
-      })], { type: "application/json" });
+      const productBlob = new Blob(
+        [
+          JSON.stringify({
+            title: form.title,
+            content: form.content,
+            startingPrice: startingPriceNumber.toString(),
+            oneMinuteAuction: form.oneMinuteAuction,
+            auctionEndTime,
+            sellerId: user.userId,
+            categoryId: form.categoryId,
+            productStatus: "ACTIVE",
+            paymentStatus: "PENDING",
+          }),
+        ],
+        { type: "application/json" }
+      );
 
       formData.append("product", productBlob); // Spring 쪽 @RequestPart("dto")로 받음
 
       // 이미지 파일 추가
       if (form.images) {
-        Array.from(form.images).forEach((file) => formData.append("files", file));
+        Array.from(form.images).forEach((file) =>
+          formData.append("files", file)
+        );
       }
+
+      // 🔹 디버그: FormData 확인
+      console.log("=== FormData Debug Start ===");
+      for (const pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+      console.log("=== FormData Debug End ===");
 
       const response = await fetch(`${API_BASE_URL}/api/products/with-images`, {
         method: "POST",
@@ -140,6 +159,10 @@ export default function ProductRegister({ user }: Props) {
         body: formData,
       });
 
+      console.log("🔹 서버 응답 상태:", response.status);
+      const responseText = await response.text();
+      console.log("🔹 서버 응답 내용:", responseText);
+
       if (response.ok) {
         alert("물품 등록 성공!");
         navigate("/search");
@@ -147,19 +170,21 @@ export default function ProductRegister({ user }: Props) {
         const text = await response.text();
         console.error("서버 응답:", text);
         setError("물품 등록 실패");
+        console.error("🔹 등록 실패:", responseText);
       }
     } catch (err) {
-      console.error(err);
+      console.error("🔹 등록 중 예외 발생:", err);
       setError("서버 연결 실패");
     }
   };
-
 
   if (!user) {
     return (
       <div className="register-container">
         <div className="register-box">
-          <p className="text-18 text-center mb-1rem color-main">로그인 후 물품을 등록할 수 있습니다</p>
+          <p className="text-18 text-center mb-1rem color-main">
+            로그인 후 물품을 등록할 수 있습니다
+          </p>
           <button onClick={() => navigate("/login")} className="btn-submit">
             로그인하러가기
           </button>
@@ -231,7 +256,7 @@ export default function ProductRegister({ user }: Props) {
             onChange={(e) => {
               const files = e.target.files;
               if (!files) return; // null이면 그냥 종료
-              setForm(prev => ({
+              setForm((prev) => ({
                 ...prev,
                 images: [...(prev.images || []), ...Array.from(files)],
               }));
@@ -243,16 +268,20 @@ export default function ProductRegister({ user }: Props) {
             {(form.images || []).map((file, idx) => (
               <div key={idx} className="file-item">
                 {file.name}
-                <button type="button" onClick={() =>
-                  setForm(prev => ({
-                    ...prev,
-                    images: prev.images?.filter((_, i) => i !== idx)
-                  }))
-                }>삭제</button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((prev) => ({
+                      ...prev,
+                      images: prev.images?.filter((_, i) => i !== idx),
+                    }))
+                  }
+                >
+                  삭제
+                </button>
               </div>
             ))}
           </div>
-
 
           <div className="checkbox-group">
             <label className="checkbox-label">
