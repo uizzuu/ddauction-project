@@ -37,9 +37,11 @@ export default function ProductRegister({ user }: Props) {
   const handleDateChange = (date: Date | null) => {
     setAuctionEndDate(date);
     if (date) {
+      // Z 제거
+      const isoStr = date.toISOString().slice(0, 19); // "2025-10-31T15:00:00"
       setForm((prev) => ({
         ...prev,
-        auctionEndTime: date.toISOString(), // string으로 변환
+        auctionEndTime: isoStr,
       }));
       setError("");
     }
@@ -94,14 +96,14 @@ export default function ProductRegister({ user }: Props) {
     if (form.oneMinuteAuction) {
       const end = new Date();
       end.setMinutes(end.getMinutes() + 1);
-      auctionEndTime = end.toISOString();
+      auctionEndTime = end.toISOString().slice(0, 19); // ✅ Z 제거
     } else {
       const end = new Date(form.auctionEndTime);
       if (isNaN(end.getTime())) {
         setError("경매 종료 시간이 유효하지 않습니다");
         return;
       }
-      auctionEndTime = end.toISOString();
+      auctionEndTime = end.toISOString().slice(0, 19); // ✅ Z 제거
     }
 
     const startingPriceNumber = Math.max(
@@ -132,10 +134,10 @@ export default function ProductRegister({ user }: Props) {
         Array.from(form.images).forEach((file) => formData.append("files", file));
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/products/with-images`, {
+      const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // Content-Type는 자동 처리
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });

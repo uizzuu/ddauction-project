@@ -5,6 +5,7 @@ import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ImageDto;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.entity.User;
+import com.my.backend.repository.UserRepository;
 import com.my.backend.service.BookMarkService;
 import com.my.backend.service.ImageService;
 import com.my.backend.service.ProductService;
@@ -17,8 +18,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -30,6 +33,7 @@ public class ProductController {
     private final ProductService productService;
     private final BookMarkService bookMarkService;
     private final ImageService imageService;
+    private final UserRepository userRepository;
 
     // 전체 상품 조회 (로그인 불필요)
     @GetMapping
@@ -155,4 +159,28 @@ public class ProductController {
 
     // 특정 상품 이미지 목록 조회
 //    @GetMapping("/{id}/images")
+
+    // 새 상품 생성 (다중 이미지 업로드)
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<ProductDto> createProductWithImages(
+            @RequestPart("product") @Valid ProductDto dto,
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
+
+        // JWT 인증 후 principal 가져오기
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!(principal instanceof com.my.backend.dto.auth.CustomUserDetails userDetails)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        // CustomUserDetails에서 User 가져오기
+        dto.setSellerId(userDetails.getUser().getUserId());
+
+        try {
+            ProductDto created = productService.createProductWithImages(dto, files);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
 }

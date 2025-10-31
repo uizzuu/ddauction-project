@@ -18,6 +18,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final PaymentRepository paymentRepository;
     private final ImageRepository imageRepository;
+    private final FileUploadConfig fileUploadConfig; // @RequiredArgsConstructor 덕분에 주입됨
 
     // 전체 상품 조회
     public List<ProductDto> getAllProducts() {
@@ -65,7 +67,10 @@ public class ProductService {
         Payment payment = findPaymentOrNull(dto.getPaymentId());
         Image image = findImageOrNull(dto.getImageId());
 
-        Product product = dto.toEntity(seller, bid, payment, category, image);
+        // ⚠️ 단일 이미지를 List로 감싸기
+        List<Image> imageEntities = image != null ? List.of(image) : null;
+
+        Product product = dto.toEntity(seller, bid, payment, category, imageEntities);
         Product saved = productRepository.save(product);
 
         return ProductDto.fromEntity(saved);
@@ -84,7 +89,8 @@ public class ProductService {
         if (dto.getStartingPrice() != null) {
             product.setStartingPrice(dto.getStartingPrice());
         }
-        product.setImage(image);
+        // 단일 이미지 설정
+        product.setImages(image != null ? List.of(image) : null);
         product.setOneMinuteAuction(dto.isOneMinuteAuction());
         product.setAuctionEndTime(dto.getAuctionEndTime());
         product.setProductStatus(dto.getProductStatus());
@@ -195,13 +201,12 @@ public class ProductService {
         return paymentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제 정보가 존재하지 않습니다."));
     }
+
     private Image findImageOrNull(Long id) {
         if (id == null) return null;
         return imageRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이미지가 존재하지 않습니다."));
     }
-
-
 
     // 최신 등록 상품 1개 조회
     public ProductDto getLatestProduct() {
@@ -209,6 +214,7 @@ public class ProductService {
         return ProductDto.fromEntity(latestProduct);
     }
 
+    // 종료 임박 상품 조회
     public ProductDto getEndingSoonProduct() {
         Product product = productRepository
                 .findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
@@ -249,8 +255,7 @@ public class ProductService {
         return products.map(ProductDto::fromEntity);
     }
 
-    private final FileUploadConfig fileUploadConfig; // @RequiredArgsConstructor 덕분에 주입됨
-
+    // 다중 이미지와 함께 상품 생성
     @Transactional
     public ProductDto createProductWithImages(ProductDto dto, MultipartFile[] files) {
         User seller = findUserOrThrow(dto.getSellerId());
@@ -258,28 +263,12 @@ public class ProductService {
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
 
-        String uploadDir = fileUploadConfig.getUploadDir(); // config에서 가져오기
+        String uploadDir = fileUploadConfig.getUploadDir();
 
-        // 1️⃣ 대표 이미지
-        Image mainImage = null;
+        // 이미지 엔티티 리스트 생성
+        List<Image> imageEntities = new ArrayList<>();
+
         if (files != null && files.length > 0) {
-            try {
-                String filename = System.currentTimeMillis() + "_" + files[0].getOriginalFilename();
-                Path path = Paths.get(uploadDir).resolve(filename).toAbsolutePath();
-                Files.createDirectories(path.getParent());
-                files[0].transferTo(path.toFile());
-                mainImage = Image.builder().imagePath("/uploads/" + filename).build();
-            } catch (Exception e) {
-                throw new RuntimeException("대표 이미지 저장 실패", e);
-            }
-        }
-
-        // Product 저장
-        Product product = dto.toEntity(seller, bid, payment, category, mainImage);
-        productRepository.save(product);
-
-        // 나머지 이미지 저장
-        if (files != null) {
             for (MultipartFile file : files) {
                 try {
                     String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
@@ -289,15 +278,25 @@ public class ProductService {
 
                     Image image = Image.builder()
                             .imagePath("/uploads/" + filename)
-                            .build();
-                    imageRepository.save(image);
+                            .build();  // product는 아직 없음
+                    imageEntities.add(image);
                 } catch (Exception e) {
-                    throw new RuntimeException("추가 이미지 저장 실패", e);
+                    throw new RuntimeException("이미지 저장 실패", e);
                 }
             }
         }
 
+        // Product 생성 (이미지 리스트 포함)
+        Product product = dto.toEntity(seller, bid, payment, category, imageEntities);
+
+        // 이미지와 Product 연결
+        for (Image img : imageEntities) {
+            img.setProduct(product);
+        }
+
+        // Product 저장 (CascadeType.ALL로 이미지도 함께 저장됨)
+        productRepository.save(product);
+
         return ProductDto.fromEntity(product);
     }
-
 }
