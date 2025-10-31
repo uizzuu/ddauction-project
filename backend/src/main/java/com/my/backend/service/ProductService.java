@@ -195,12 +195,12 @@ public class ProductService {
         return paymentRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제 정보가 존재하지 않습니다."));
     }
+
     private Image findImageOrNull(Long id) {
         if (id == null) return null;
         return imageRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이미지가 존재하지 않습니다."));
     }
-
 
 
     // 최신 등록 상품 1개 조회
@@ -258,46 +258,43 @@ public class ProductService {
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
 
-        String uploadDir = fileUploadConfig.getUploadDir(); // config에서 가져오기
+        String uploadDir = fileUploadConfig.getUploadDir();
 
-        // 1️⃣ 대표 이미지
-        Image mainImage = null;
+        // Product 먼저 저장 (이미지 없이)
+        Product product = dto.toEntity(seller, bid, payment, category, null);
+        Product savedProduct = productRepository.save(product); // ID 생성됨
+
+        // 이미지 파일 저장 + DB에 FK 연결하여 저장
         if (files != null && files.length > 0) {
             try {
-                String filename = System.currentTimeMillis() + "_" + files[0].getOriginalFilename();
-                Path path = Paths.get(uploadDir).resolve(filename).toAbsolutePath();
-                Files.createDirectories(path.getParent());
-                files[0].transferTo(path.toFile());
-                mainImage = Image.builder().imagePath("/uploads/" + filename).build();
-            } catch (Exception e) {
-                throw new RuntimeException("대표 이미지 저장 실패", e);
-            }
-        }
-
-        // Product 저장
-        Product product = dto.toEntity(seller, bid, payment, category, mainImage);
-        productRepository.save(product);
-
-        // 나머지 이미지 저장
-        if (files != null) {
-            for (MultipartFile file : files) {
-                try {
-                    String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+                for (int i = 0; i < files.length; i++) {
+                    MultipartFile file = files[i];
+                    String filename = System.currentTimeMillis() + "_" + i + "_" + file.getOriginalFilename();
                     Path path = Paths.get(uploadDir).resolve(filename).toAbsolutePath();
                     Files.createDirectories(path.getParent());
                     file.transferTo(path.toFile());
 
+                    // savedProduct와 함께 저장
                     Image image = Image.builder()
                             .imagePath("/uploads/" + filename)
+                            .product(savedProduct)  // FK 연결
                             .build();
-                    imageRepository.save(image);
-                } catch (Exception e) {
-                    throw new RuntimeException("추가 이미지 저장 실패", e);
+                    Image savedImage = imageRepository.save(image);
+
+                    // 첫 번째 이미지를 대표 이미지로 설정
+                    if (i == 0) {
+                        savedProduct.setImage(savedImage);
+                        productRepository.save(savedProduct);
+                    }
                 }
+            } catch (Exception e) {
+                throw new RuntimeException("이미지 저장 실패", e);
             }
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "최소 1개 이상의 이미지가 필요합니다");
         }
 
-        return ProductDto.fromEntity(product);
+        return ProductDto.fromEntity(savedProduct);
     }
 
 }

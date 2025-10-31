@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -148,8 +149,19 @@ public class ProductController {
             @RequestPart("product") @Valid ProductDto dto,
             @RequestPart(value = "files", required = false) MultipartFile[] files
     ) {
-        ProductDto created = productService.createProductWithImages(dto, files);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        try {
+            if (files == null || files.length == 0) {
+                return ResponseEntity.badRequest()
+                        .body(null); // 또는 에러 DTO 반환
+            }
+            ProductDto created = productService.createProductWithImages(dto, files);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
     }
 
     //    별도 엔드포인트 불필요, /api/products에서 바로 업로드 처리

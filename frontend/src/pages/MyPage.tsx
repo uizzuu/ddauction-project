@@ -36,7 +36,16 @@ const normalizeProduct = (
       ? `${API_BASE_URL}/${p.images[0].imagePath}`
       : "",
     oneMinuteAuction: p.oneMinuteAuction ?? false,
-    auctionEndTime: p.auctionEndTime ?? new Date().toISOString(),
+    auctionEndTime: p.auctionEndTime ?? (() => {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
+      const seconds = String(now.getSeconds()).padStart(2, "0");
+      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+    })(),
     productStatus: p.productStatus ?? PRODUCT_STATUS[0],
     paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
     categoryId: p.categoryId ?? 0,
@@ -50,17 +59,35 @@ const normalizeProduct = (
       bidPrice: b.bidPrice ?? 0,
       userId: b.userId ?? 0,
       isWinning: b.isWinning ?? false,
-      createdAt: b.createdAt ?? new Date().toISOString(),
+      createdAt: b.createdAt ?? (() => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const seconds = String(now.getSeconds()).padStart(2, "0");
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      })(),
     })),
     bid: p.bid
-      ? {
-          bidId: p.bid.bidId ?? 0,
-          bidPrice: p.bid.bidPrice ?? 0,
-          userId: p.bid.userId ?? p.sellerId ?? 0,
-          isWinning: p.bid.isWinning ?? false,
-          createdAt: p.bid.createdAt ?? new Date().toISOString(),
-        }
-      : null,
+  ? {
+      bidId: p.bid.bidId ?? 0,
+      bidPrice: p.bid.bidPrice ?? 0,
+      userId: p.bid.userId ?? p.sellerId ?? 0,
+      isWinning: p.bid.isWinning ?? false,
+      createdAt: p.bid.createdAt ?? (() => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        const hours = String(now.getHours()).padStart(2, "0");
+        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const seconds = String(now.getSeconds()).padStart(2, "0");
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      })(),
+    }
+  : null,
   } as Product & { imageUrl: string });
 
 type MypageSection =
@@ -351,7 +378,16 @@ export default function MyPage({ user, setUser }: Props) {
             inquiryReviewId: a.inquiryReviewId,
             answer: a.answer,
             nickName: a.nickName ?? "익명",
-            createdAt: a.createdAt ?? new Date().toISOString(),
+            createdAt: a.createdAt ?? (() => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, "0");
+              const day = String(now.getDate()).padStart(2, "0");
+              const hours = String(now.getHours()).padStart(2, "0");
+              const minutes = String(now.getMinutes()).padStart(2, "0");
+              const seconds = String(now.getSeconds()).padStart(2, "0");
+              return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+            })(),
           })),
         }));
         setMyInquiries(mappedData);

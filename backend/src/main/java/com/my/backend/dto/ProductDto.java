@@ -8,6 +8,8 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -81,6 +83,12 @@ public class ProductDto {
     }
 
     public Product toEntity(User seller, Bid bid, Payment payment, Category category, Image image) {
+
+        // image는 nullable=false이므로 체크 필수
+        if (image == null && category != null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "최소 1개의 이미지가 필요합니다");
+        }
+
         return Product.builder()
                 .productId(this.productId)
                 .user(seller)

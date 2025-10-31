@@ -1,14 +1,21 @@
 package com.my.backend.config;
 
+import com.my.backend.common.enums.PaymentStatus;
+import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.entity.Category;
+import com.my.backend.entity.Image;
+import com.my.backend.entity.Product;
 import com.my.backend.entity.User;
 import com.my.backend.repository.CategoryRepository;
+import com.my.backend.repository.ImageRepository;
+import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Component
@@ -18,6 +25,8 @@ public class AdminInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
+    private final ImageRepository imageRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -53,5 +62,46 @@ public class AdminInitializer implements CommandLineRunner {
 
             System.out.println("✅ 카테고리 초기값 생성 완료!");
         }
+
+        // --- 샘플 이미지 + 상품 ---
+//        if (productRepository.count() == 0) {
+//            try {
+//                User admin = userRepository.findByEmail("admin@example.com").orElse(null);
+//                Category category = categoryRepository.findByName("디지털기기").orElse(null);
+//
+//                if (admin != null && category != null) {
+//                    // Product를 먼저 저장 (image 없이)
+//                    Product sampleProduct = Product.builder()
+//                            .user(admin)
+//                            .title("샘플 상품 - MacBook Pro")
+//                            .content("이것은 샘플 상품입니다. 실제 상품이 아닙니다.")
+//                            .startingPrice(10000L)
+//                            .image(null)
+//                            .oneMinuteAuction(false)
+//                            .auctionEndTime(LocalDateTime.now().plusDays(7))
+//                            .productStatus(ProductStatus.ACTIVE)
+//                            .paymentStatus(PaymentStatus.PENDING)
+//                            .category(category)
+//                            .build();
+//                    Product savedProduct = productRepository.save(sampleProduct);
+//
+//                    // Product ID가 생성된 후 Image 저장 (FK 제약 만족)
+//                    Image sampleImage = Image.builder()
+//                            .imagePath("/uploads/sample-default.jpg")
+//                            .product(savedProduct)
+//                            .build();
+//                    Image savedImage = imageRepository.save(sampleImage);
+//
+//                    // Product에 Image 연결 후 업데이트
+//                    savedProduct.setImage(savedImage);
+//                    productRepository.save(savedProduct);
+//
+//                    System.out.println("✅ 샘플 상품 생성 완료!");
+//                }
+//            } catch (Exception e) {
+//                System.out.println("⚠️ 샘플 상품 생성 실패: " + e.getMessage());
+//                e.printStackTrace();
+//            }
+//        }
     }
 }

@@ -37,12 +37,17 @@ export default function ProductRegister({ user }: Props) {
   const handleDateChange = (date: Date | null) => {
     setAuctionEndDate(date);
     if (date) {
-      // LocalDateTime 형식 맞춤: "yyyy-MM-ddTHH:mm:ss"
-      const formatted = date.toISOString().split("T")[0] + "T" +
-                        date.toTimeString().split(" ")[0];
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      const seconds = String(date.getSeconds()).padStart(2, "0");
+
+      const formatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
       setForm((prev) => ({
         ...prev,
-        auctionEndTime: formatted, // string으로 변환
+        auctionEndTime: formatted,
       }));
       setError("");
     }
@@ -98,15 +103,22 @@ export default function ProductRegister({ user }: Props) {
     if (form.oneMinuteAuction) {
       const end = new Date();
       end.setMinutes(end.getMinutes() + 1);
-      auctionEndTime = end.toISOString();
+
+      const year = end.getFullYear();
+      const month = String(end.getMonth() + 1).padStart(2, "0");
+      const day = String(end.getDate()).padStart(2, "0");
+      const hours = String(end.getHours()).padStart(2, "0");
+      const minutes = String(end.getMinutes()).padStart(2, "0");
+      const seconds = String(end.getSeconds()).padStart(2, "0");
+
+      auctionEndTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
     } else {
       const end = new Date(form.auctionEndTime);
       if (isNaN(end.getTime())) {
         setError("경매 종료 시간이 유효하지 않습니다");
-        console.log("🔹 경매 종료 시간 유효하지 않음"); // 🔹
         return;
       }
-      auctionEndTime = end.toISOString();
+      auctionEndTime = form.auctionEndTime;
     }
 
     const startingPriceNumber = Math.max(
@@ -159,7 +171,6 @@ export default function ProductRegister({ user }: Props) {
         body: formData,
       });
 
-      console.log("🔹 서버 응답 상태:", response.status);
       const responseText = await response.text();
       console.log("🔹 서버 응답 내용:", responseText);
 
@@ -167,8 +178,7 @@ export default function ProductRegister({ user }: Props) {
         alert("물품 등록 성공!");
         navigate("/search");
       } else {
-        const text = await response.text();
-        console.error("서버 응답:", text);
+        console.error("서버 응답:", responseText);
         setError("물품 등록 실패");
         console.error("🔹 등록 실패:", responseText);
       }

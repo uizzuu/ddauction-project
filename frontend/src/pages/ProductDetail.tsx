@@ -328,10 +328,19 @@ export default function ProductDetail({ user }: Props) {
 
       const payload = {
         ...productForm,
-        categoryId: productForm.categoryId ?? null, // undefined -> null로 변환
+        categoryId: productForm.categoryId ?? null,
         startingPrice: Number(productForm.startingPrice || 0),
         auctionEndTime: productForm.auctionEndTime
-          ? new Date(productForm.auctionEndTime).toISOString()
+          ? (() => {
+              const end = new Date(productForm.auctionEndTime);
+              const year = end.getFullYear();
+              const month = String(end.getMonth() + 1).padStart(2, "0");
+              const day = String(end.getDate()).padStart(2, "0");
+              const hours = String(end.getHours()).padStart(2, "0");
+              const minutes = String(end.getMinutes()).padStart(2, "0");
+              const seconds = String(end.getSeconds()).padStart(2, "0");
+              return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+            })()
           : null,
       };
 
@@ -585,7 +594,15 @@ export default function ProductDetail({ user }: Props) {
                     setProductForm((prev) => ({
                       ...prev,
                       auctionEndTime: date
-                        ? date.toISOString()
+                        ? (() => {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, "0");
+                            const day = String(date.getDate()).padStart(2, "0");
+                            const hours = String(date.getHours()).padStart(2, "0");
+                            const minutes = String(date.getMinutes()).padStart(2, "0");
+                            const seconds = String(date.getSeconds()).padStart(2, "0");
+                            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+                          })()
                         : prev.auctionEndTime,
                     }))
                   }
