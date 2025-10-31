@@ -48,39 +48,42 @@ export default function Main() {
         fetch(`${API_BASE_URL}/api/products/ending-soon`),
       ]);
 
-      // 각 응답이 성공했는지 확인
       if (!topRes.ok || !latestRes.ok || !endingRes.ok) {
-        throw new Error(`배너 API 중 하나가 실패했습니다.
-          topRes: ${topRes.status},
-          latestRes: ${latestRes.status},
-          endingRes: ${endingRes.status}`);
+        throw new Error("배너 API 중 하나 실패");
       }
 
-      const [topData, latestData, endingData]: [Product[], Product, Product] =
-        await Promise.all([topRes.json(), latestRes.json(), endingRes.json()]);
+      const topData: Product[] = await topRes.json();
+      const latestData: Product[] = [await latestRes.json()];  // 배열로 변환
+      const endingData: Product[] = [await endingRes.json()];  // 배열로 변환
 
       setBanners([
         {
           id: 1,
-          image: topData[0]?.images?.[0]?.imagePath ?? "/banner1.jpg",
+          image: topData[0]?.images?.[0]?.imagePath
+            ? `${API_BASE_URL.replace(/\/$/, "")}${topData[0].images[0].imagePath}`
+            : "/banner1.jpg",
           text: "지금 가장 인기 있는 경매 상품 🔥",
           product: topData[0],
         },
         {
           id: 2,
-          image: latestData?.images?.[0]?.imagePath ?? "/banner2.jpg",
+          image: latestData[0]?.images?.[0]?.imagePath
+            ? `${API_BASE_URL.replace(/\/$/, "")}${latestData[0].images[0].imagePath}`
+            : "/banner2.jpg",
           text: "오늘의 추천! 신규 등록 상품 🎉",
-          product: latestData,
+          product: latestData[0],
         },
         {
           id: 3,
-          image: endingData?.images?.[0]?.imagePath ?? "/banner3.jpg",
+          image: endingData[0]?.images?.[0]?.imagePath
+            ? `${API_BASE_URL.replace(/\/$/, "")}${endingData[0].images[0].imagePath}`
+            : "/banner3.jpg",
           text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
-          product: endingData,
+          product: endingData[0],
         },
       ]);
     } catch (err) {
-      console.error("배너 상품 불러오기 실패:", err);
+      console.error("배너 상품 불러오기 실패", err);
     }
   };
 
@@ -118,7 +121,7 @@ export default function Main() {
           <>
             <div
               className="flex-box width-full height-full trans duration-500"
-              // style={{ transform: "translateX(100%)" }}
+            // style={{ transform: "translateX(100%)" }}
             >
               {banners.map((b, i) => (
                 <div
@@ -179,9 +182,8 @@ export default function Main() {
           {banners.map((_, i) => (
             <div
               key={i}
-              className={`width-8 height-8 radius-full transition-all ${
-                i === current ? "bg-aaa" : "bg-ddd"
-              }`}
+              className={`width-8 height-8 radius-full transition-all ${i === current ? "bg-aaa" : "bg-ddd"
+                }`}
             />
           ))}
         </div>
@@ -215,7 +217,7 @@ export default function Main() {
                 <div className="product-image height-220">
                   {p.images && p.images.length > 0 ? (
                     <img
-                      src={`${API_BASE_URL}/${p.images[0].imagePath}`}
+                      src={`${API_BASE_URL.replace(/\/$/, "")}${p.images[0].imagePath}`}
                       alt={p.title}
                     />
                   ) : (

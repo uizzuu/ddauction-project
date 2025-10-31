@@ -78,6 +78,9 @@ public class SecurityConfig {
                                 "/api/bookmarks/**", "/api/categories/**", "/api/products/**",
                                 "/api/articles/**", "/api/qna/**"
                         ).permitAll()
+                        // 정적 업로드 폴더 허용
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         // 관리자 권한
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // 그 외 모든 요청은 인증 필요

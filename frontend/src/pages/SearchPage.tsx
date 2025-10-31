@@ -169,11 +169,10 @@ export default function ProductSearchPage() {
     <div className="container">
       <p className="title-32 mb-1rem">
         {keyword || categoryId
-          ? `${keyword ? `${keyword} ` : ""}${
-              categoryId
-                ? `${categories.find((c) => c.categoryId === categoryId)?.name} `
-                : ""
-            }검색`
+          ? `${keyword ? `${keyword} ` : ""}${categoryId
+            ? `${categories.find((c) => c.categoryId === categoryId)?.name} `
+            : ""
+          }검색`
           : "전체 검색"}
       </p>
 
@@ -205,12 +204,12 @@ export default function ProductSearchPage() {
             onChange={(val) =>
               setSortOption(
                 val as
-                  | "latest"
-                  | "oldest"
-                  | "priceAsc"
-                  | "priceDesc"
-                  | "timeLeft"
-                  | "popularity"
+                | "latest"
+                | "oldest"
+                | "priceAsc"
+                | "priceDesc"
+                | "timeLeft"
+                | "popularity"
               )
             }
             options={[
@@ -278,7 +277,10 @@ export default function ProductSearchPage() {
                 >
                   <div className="product-image height-220">
                     {p.images && p.images.length > 0 ? (
-                      <img src={p.images[0].imagePath} alt={p.title} />
+                      <img
+                        src={`${API_BASE_URL.replace(/\/$/, "")}${p.images[0].imagePath}`}
+                        alt={p.title}
+                      />
                     ) : (
                       <div className="no-image-txt">이미지 없음</div>
                     )}
