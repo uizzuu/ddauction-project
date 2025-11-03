@@ -6,6 +6,7 @@ import com.my.backend.myjwt.LoginFilter;
 import com.my.backend.oauth2.OAuth2SuccessHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 //import com.my.backend.oauth2.OAuth2SuccessHandler;
 import org.springframework.http.HttpMethod;
@@ -67,6 +69,10 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .cors(cors -> {})
+//추가함73-75
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+                )
 
                 .authorizeHttpRequests(auth -> auth
                         // OAuth2 관련 경로
