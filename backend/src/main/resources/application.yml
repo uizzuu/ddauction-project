@@ -107,6 +107,9 @@ file:
   upload:
     directory: ./uploads
 
+app:
+  frontend-url: http://localhost:3000
+
 # ===================================
 # 프로덕션 환경
 # ===================================
@@ -148,3 +151,6 @@ spring:
 file:
   upload:
     directory: ${FILE_UPLOAD_DIRECTORY:/uploads}
+
+app:
+  frontend-url: https://ddauction.shop
