@@ -184,10 +184,10 @@ export default function Login({ setUser }: Props) {
 
         <div className="auth-links">
           <button
-            onClick={() => navigate("/find-id")}
+            onClick={() => navigate("/find-email")}
             className="auth-link-btn"
           >
-            아이디 찾기
+            이메일 찾기
           </button>
           <button
             onClick={() => navigate("/find-password")}

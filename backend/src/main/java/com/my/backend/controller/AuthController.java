@@ -1,6 +1,7 @@
 package com.my.backend.controller;
 
 
+import com.my.backend.dto.PasswordResetRequest;
 import com.my.backend.dto.auth.LoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.service.AuthService;
@@ -53,5 +54,22 @@ public class AuthController {
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestHeader("Refresh-Token") String refreshToken) {
         return authService.refreshToken(refreshToken);
+    }
+
+    // 이메일 찾기
+    @PostMapping("/email-find")
+    public ResponseEntity<?> findEmail(@RequestBody Map<String, String> request) {
+        return authService.findEmail(request.get("phone"), request.get("userName"));
+    }
+
+
+    @PostMapping("/password-reset")
+    public ResponseEntity<?> resetPassword(@RequestBody PasswordResetRequest request) {
+        return authService.resetPassword(
+                request.getEmail().trim().toLowerCase(),
+                request.getPhone().trim(),
+                request.getUserName().trim(),
+                request.getNewPassword()
+        );
     }
 }

@@ -13,6 +13,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.Map;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -154,6 +157,40 @@ public class AuthService {
             return ResponseEntity.ok(tokenResponse);
         } catch (IllegalArgumentException e) {
             log.warn("토큰 갱신 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    public ResponseEntity<?> findEmail(String phone, String userName) {
+        User user = userRepository.findByPhoneAndUserName(phone, userName)
+                .orElseThrow(() -> new IllegalArgumentException("입력 정보와 일치하는 사용자가 없습니다."));
+        return ResponseEntity.ok(Map.of("email", user.getEmail()));
+    }
+
+    // -------------------- 비밀번호 재설정 (이메일 + 전화번호 + 실명) --------------------
+    public ResponseEntity<?> resetPassword(String email, String phone, String userName, String newPassword) {
+        try {
+            // 유효성 검증
+            if (!isValidEmail(email)) throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+            if (!isValidPhone(phone)) throw new IllegalArgumentException("전화번호는 10~11자리 숫자여야 합니다.");
+            if (!isValidName(userName)) throw new IllegalArgumentException("이름은 한글 또는 영문만 입력 가능합니다.");
+            if (!isValidPassword(newPassword)) throw new IllegalArgumentException(
+                    "비밀번호는 8자리 이상, 대소문자+숫자+특수문자 !*@# 1개 이상 포함해야 합니다."
+            );
+
+            // 사용자 조회 (교차검증)
+            User user = userRepository.findByEmailAndPhoneAndUserName(email, phone, userName)
+                    .orElseThrow(() -> new IllegalArgumentException("입력 정보와 일치하는 사용자가 없습니다."));
+
+            // 비밀번호 업데이트
+            user.setPassword(passwordEncoder.encode(newPassword));
+            userRepository.save(user);
+
+            log.info("비밀번호 재설정 성공: {}", email);
+            return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
+
+        } catch (IllegalArgumentException e) {
+            log.warn("비밀번호 재설정 실패: {}", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
