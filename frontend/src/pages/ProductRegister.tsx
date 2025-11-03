@@ -135,7 +135,7 @@ export default function ProductRegister({ user }: Props) {
           JSON.stringify({
             title: form.title,
             content: form.content,
-            startingPrice: startingPriceNumber.toString(),
+            startingPrice: startingPriceNumber,
             oneMinuteAuction: form.oneMinuteAuction,
             auctionEndTime,
             sellerId: user.userId,
