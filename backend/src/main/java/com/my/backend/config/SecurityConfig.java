@@ -69,10 +69,20 @@ public class SecurityConfig {
                 .cors(cors -> {})
 
                 .authorizeHttpRequests(auth -> auth
-                        // OAuth2 관련 경로는 JWT 필터에서 제외
+                        // OAuth2 관련 경로
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
-                        // 일반 로그인, 회원가입, 공개 API
+
+                        // 회원가입, 로그인, 공개 POST API
+                        .requestMatchers(
+                                HttpMethod.POST,
+                                "/api/auth/signup",
+                                "/api/auth/login",
+                                "/api/auth/email-find",
+                                "/api/auth/password-reset"
+                        ).permitAll()
+
+                        // GET 공개 API
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/products/**",
@@ -81,11 +91,13 @@ public class SecurityConfig {
                                 "/api/qna/**",
                                 "/api/bookmarks/**"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/email-find", "/api/auth/password-reset").permitAll()
+
+                        // 인증 필요
                         .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+
 
                 // JWT 필터는 OAuth2 경로 제외
                 .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
