@@ -7,6 +7,7 @@ spring:
       client:
         registration:
           google:
+<<<<<<< HEAD
             client-id: ${GOOGLE_CLIENT_ID}
             client-secret: ${GOOGLE_CLIENT_SECRET}
             scope: profile, email
@@ -14,13 +15,30 @@ spring:
           naver:
             client-id: ${NAVER_CLIENT_ID}
             client-secret: ${NAVER_CLIENT_SECRET}
+=======
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
+            redirect-uri: "https://ddauction.shop/login/oauth2/code/google"
+            scope: profile, email
+
+          naver:
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
+            redirect-uri: "https://ddauction.shop/login/oauth2/code/naver"
+>>>>>>> 54bb7c8137c068a1c45ab2f42f469e6532ae2f95
             authorization-grant-type: authorization_code
             client-name: Naver
             scope: name, email
 
           kakao:
+<<<<<<< HEAD
             client-id: ${KAKAO_CLIENT_ID}
             client-secret: ${KAKAO_CLIENT_SECRET}
+=======
+            client-id: ${CLIENT_ID}
+            client-secret: ${CLIENT_SECRET}
+            redirect-uri: "https://ddauction.shop/login/oauth2/code/kakao"
+>>>>>>> 54bb7c8137c068a1c45ab2f42f469e6532ae2f95
             client-name: Kakao
             authorization-grant-type: authorization_code
             client-authentication-method: client_secret_post
