@@ -147,7 +147,7 @@ export default function ProductRegister({ user }: Props) {
         { type: "application/json" }
       );
 
-      formData.append("product", productBlob); // Spring 쪽 @RequestPart("dto")로 받음
+      formData.append("product", productBlob, ""); // Spring 쪽 @RequestPart("dto")로 받음,Blob으로 전송 (파일명 제거)
 
       // 이미지 파일 추가
       if (form.images) {
