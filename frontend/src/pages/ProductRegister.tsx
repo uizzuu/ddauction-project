@@ -45,6 +45,7 @@ export default function ProductRegister({ user }: Props) {
       const seconds = String(date.getSeconds()).padStart(2, "0");
 
       const formatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      console.log("auctionEndTime 확인:", formatted);
       setForm((prev) => ({
         ...prev,
         auctionEndTime: formatted,
@@ -137,7 +138,7 @@ export default function ProductRegister({ user }: Props) {
             content: form.content,
             startingPrice: startingPriceNumber,
             oneMinuteAuction: form.oneMinuteAuction,
-            auctionEndTime,
+            auctionEndTime: form.auctionEndTime,
             sellerId: user.userId,
             categoryId: form.categoryId,
             productStatus: "ACTIVE",
@@ -147,7 +148,8 @@ export default function ProductRegister({ user }: Props) {
         { type: "application/json" }
       );
 
-      formData.append("product", productBlob, ""); // Spring 쪽 @RequestPart("dto")로 받음,Blob으로 전송 (파일명 제거)
+      formData.append("product", productBlob, "product.json"); // Spring 쪽 @RequestPart("dto")로 받음,Blob으로 전송 (파일명 제거)
+      productBlob.text().then(text => console.log("Blob JSON 확인:", text));
 
       // 이미지 파일 추가
       if (form.images) {
