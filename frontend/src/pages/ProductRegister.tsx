@@ -163,10 +163,10 @@ export default function ProductRegister({ user }: Props) {
       }
       console.log("=== FormData Debug End ===");
 
-      const response = await fetch(`${API_BASE_URL}/api/products/with-images`, {
+      const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // Content-Type는 자동 처리
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
