@@ -49,9 +49,10 @@ jwt:
 
 server:
   port: 8080
+  forward-headers-strategy: NATIVE
 
 app:
-  allowed-origins: https://ddauction.shop,http://15.165.25.115,http://localhost:3000
+  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost,http://localhost:5173}
 
 payment:
   portone:
