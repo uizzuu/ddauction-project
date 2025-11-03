@@ -138,7 +138,7 @@ export default function ProductRegister({ user }: Props) {
             content: form.content,
             startingPrice: startingPriceNumber,
             oneMinuteAuction: form.oneMinuteAuction,
-            auctionEndTime: form.auctionEndTime,
+            auctionEndTime,
             sellerId: user.userId,
             categoryId: form.categoryId,
             productStatus: "ACTIVE",
