@@ -1,5 +1,6 @@
 package com.my.backend.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ImageDto;
@@ -72,11 +73,39 @@ public class ProductController {
     }
 
     // 새 상품 생성 (로그인 체크 필요하면 session 확인 후 수정 가능)
-    @PostMapping
-    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto dto) {
-        ProductDto created = productService.createProduct(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+//    @PostMapping
+//    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto dto) {
+//        ProductDto created = productService.createProduct(dto);
+//        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+//    }
+    @PostMapping(consumes = {"multipart/form-data"})
+    public ResponseEntity<ProductDto> createProductWithImages(
+            @RequestPart("product") String productJson, // ← ProductDto가 아니라 String
+            @RequestPart(value = "files", required = false) MultipartFile[] files) {
+
+        // JWT 인증 후 principal 가져오기
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!(principal instanceof com.my.backend.dto.auth.CustomUserDetails userDetails)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        try {
+            // JSON → ProductDto 변환
+            ObjectMapper mapper = new ObjectMapper();
+            ProductDto dto = mapper.readValue(productJson, ProductDto.class);
+
+            // 로그인 사용자 ID 설정
+            dto.setSellerId(userDetails.getUser().getUserId());
+
+            ProductDto created = productService.createProductWithImages(dto, files);
+            return ResponseEntity.status(HttpStatus.CREATED).body(created);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
     }
+
 
     // 상품 수정
     @PutMapping("/{id}")
