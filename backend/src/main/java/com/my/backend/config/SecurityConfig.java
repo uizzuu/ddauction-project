@@ -92,6 +92,9 @@ public class SecurityConfig {
                                 "/api/bookmarks/**"
                         ).permitAll()
 
+                        // 🔹 정적 리소스 업로드 폴더 허용
+                        .requestMatchers("/uploads/**").permitAll()
+
                         // 인증 필요
                         .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
                         .requestMatchers("/admin").hasRole("ADMIN")
