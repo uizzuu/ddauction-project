@@ -285,7 +285,7 @@ export default function ProductSearchPage() {
                 >
                   <div className="product-image height-220">
                     {p.images && p.images.length > 0 ? (
-                      <img src={p.images[0].imagePath} alt={p.title} />
+                      <img src={`${API_BASE_URL}${p.images[0].imagePath}`} alt={p.title} />
                     ) : (
                       <div className="no-image-txt">이미지 없음</div>
                     )}
