@@ -55,7 +55,9 @@ jobs:
           script: |
             cd ~/ddauction-project
 
-            echo "=== Git Pull ==="
+            echo "=== Git 강제 초기화 및 Pull ==="
+            git fetch origin main
+            git reset --hard origin/main
             git pull origin main
 
             echo "=== Nginx 설정 업데이트 ==="
