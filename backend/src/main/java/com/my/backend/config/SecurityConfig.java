@@ -81,6 +81,7 @@ public class SecurityConfig {
                                 "/api/qna/**",
                                 "/api/bookmarks/**"
                         ).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/email-find", "/api/auth/password-reset").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()

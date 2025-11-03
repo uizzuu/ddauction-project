@@ -6,6 +6,8 @@ import ArticleDetail from "./pages/ArticleDetail";
 import SearchPage from "./pages/SearchPage";
 import UserQnaForm from "./pages/UserQnaForm";
 import PaymentPage from "./pages/PaymentPage";
+import FindEmail from "./pages/FindEmail";
+import FindPassword from "./pages/FindPassword";
 import {
   HeaderMain,
   HeaderSub,
@@ -94,6 +96,8 @@ export default function App() {
             )
           }
         />
+        <Route path="/find-email" element={<FindEmail />} />
+        <Route path="/find-password" element={<FindPassword />} />
       </Routes>
     </div>
   );
