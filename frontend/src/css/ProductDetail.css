@@ -17,3 +17,37 @@
 .after:last-of-type::after {
   content: none;
 }
+
+
+
+.slick-prev, .slick-next {
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+}
+
+.slick-dots {
+  bottom: 10px; /* 위치 조정 */
+  z-index: 2;
+}
+
+/* slider arrows */
+.slick-prev, .slick-next {
+  width: 40px;
+  height: 40px;
+  z-index: 2;
+  background: rgba(0,0,0,0.5);
+  border-radius: 50%;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+}
+
+.slick-prev:before, .slick-next:before {
+  font-size: 24px;   /* 화살표 크기 */
+  color: #fff;       /* 화살표 색상 */
+  opacity: 1;        /* 하얀색 완전 표시 */
+}
+
+.slick-prev { left: 10px; }
+.slick-next { right: 10px; }
