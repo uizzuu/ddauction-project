@@ -52,7 +52,7 @@ server:
   forward-headers-strategy: NATIVE
 
 app:
-  allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost,http://localhost:5173}
+  allowed-origins: https://ddauction.shop,http://15.165.25.115
 
 payment:
   portone:
