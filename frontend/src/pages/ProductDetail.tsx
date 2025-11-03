@@ -1,11 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
-import Slider from "react-slick";
 import type {
   Product,
   User,
@@ -57,8 +54,6 @@ export default function ProductDetail({ user }: Props) {
     images: [],
   });
 
-  const sliderRef = useRef<Slider>(null);
-
   const mergedBids = useMemo(() => {
     const combinedBids = [...allBids, ...liveBids];
     const uniqueBidsMap = new Map<number, Bid>();
@@ -79,7 +74,7 @@ export default function ProductDetail({ user }: Props) {
   // 경매 진행중일 때 수정 막기
   const isEditingDisabled = product
     ? product.productStatus === "ACTIVE" &&
-    new Date(product.auctionEndTime).getTime() > new Date().getTime()
+      new Date(product.auctionEndTime).getTime() > new Date().getTime()
     : false;
 
   const calculateRemainingTime = (endTime: string) => {
@@ -333,10 +328,19 @@ export default function ProductDetail({ user }: Props) {
 
       const payload = {
         ...productForm,
-        categoryId: productForm.categoryId ?? null, // undefined -> null로 변환
+        categoryId: productForm.categoryId ?? null,
         startingPrice: Number(productForm.startingPrice || 0),
         auctionEndTime: productForm.auctionEndTime
-          ? new Date(productForm.auctionEndTime).toISOString()
+          ? (() => {
+              const end = new Date(productForm.auctionEndTime);
+              const year = end.getFullYear();
+              const month = String(end.getMonth() + 1).padStart(2, "0");
+              const day = String(end.getDate()).padStart(2, "0");
+              const hours = String(end.getHours()).padStart(2, "0");
+              const minutes = String(end.getMinutes()).padStart(2, "0");
+              const seconds = String(end.getSeconds()).padStart(2, "0");
+              return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+            })()
           : null,
       };
 
@@ -433,24 +437,7 @@ export default function ProductDetail({ user }: Props) {
       <div className="flex-box gap-40">
         <div className="product-image product-detail-image">
           {product.images && product.images.length > 0 ? (
-            <Slider
-              ref={sliderRef}
-              dots={true}
-              infinite={true}
-              speed={500}
-              slidesToShow={1}
-              slidesToScroll={1}
-              arrows={true}   // 커스텀 화살표 제거
-            >
-              {product.images.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={`${API_BASE_URL.replace(/\/$/, '')}${img.imagePath}`}
-                  alt={`${product.title}-${idx}`}
-                  style={{ width: "100%", height: "400px", objectFit: "cover", borderRadius: "8px" }}
-                />
-              ))}
-            </Slider>
+            <img src={product.images[0].imagePath} alt={product.title} />
           ) : (
             <div className="no-image-txt">이미지 없음</div>
           )}
@@ -607,7 +594,15 @@ export default function ProductDetail({ user }: Props) {
                     setProductForm((prev) => ({
                       ...prev,
                       auctionEndTime: date
-                        ? date.toISOString()
+                        ? (() => {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, "0");
+                            const day = String(date.getDate()).padStart(2, "0");
+                            const hours = String(date.getHours()).padStart(2, "0");
+                            const minutes = String(date.getMinutes()).padStart(2, "0");
+                            const seconds = String(date.getSeconds()).padStart(2, "0");
+                            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+                          })()
                         : prev.auctionEndTime,
                     }))
                   }
@@ -618,14 +613,14 @@ export default function ProductDetail({ user }: Props) {
                   minDate={originalEndDate} // 날짜 제한
                   minTime={
                     productForm.auctionEndTime &&
-                      new Date(productForm.auctionEndTime).toDateString() ===
+                    new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? originalEndDate // 같은 날이면 기존 종료시간 이전 선택 불가
                       : new Date(0, 0, 0, 0, 0) // 다른 날이면 제한 없음 (0시 기준)
                   }
                   maxTime={
                     productForm.auctionEndTime &&
-                      new Date(productForm.auctionEndTime).toDateString() ===
+                    new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? new Date(23, 11, 31, 23, 59) // 같은 날이면 하루 끝까지 허용
                       : new Date(23, 11, 31, 23, 59) // 다른 날도 하루 끝까지
