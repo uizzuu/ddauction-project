@@ -6,6 +6,7 @@ import com.my.backend.dto.ProductDto;
 import com.my.backend.dto.BidDto;
 import com.my.backend.entity.*;
 import com.my.backend.repository.*;
+import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
@@ -36,6 +37,7 @@ public class ProductService {
     private final PaymentRepository paymentRepository;
     private final ImageRepository imageRepository;
     private final FileUploadConfig fileUploadConfig; // @RequiredArgsConstructor 덕분에 주입됨
+    private final EntityManager em;
 
     // 전체 상품 조회
     public List<ProductDto> getAllProducts() {
@@ -70,7 +72,7 @@ public class ProductService {
         // ⚠️ 단일 이미지를 List로 감싸기
         List<Image> imageEntities = image != null ? List.of(image) : null;
 
-        Product product = dto.toEntity(seller, bid, payment, category, imageEntities);
+        Product product = dto.toEntity(seller, bid, payment, category);
         Product saved = productRepository.save(product);
 
         return ProductDto.fromEntity(saved);
@@ -263,39 +265,31 @@ public class ProductService {
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
 
-        String uploadDir = fileUploadConfig.getUploadDir();
+        // Product 생성
+        Product product = dto.toEntity(seller, bid, payment, category);
 
-        // 이미지 엔티티 리스트 생성
-        List<Image> imageEntities = new ArrayList<>();
-
+        // 이미지 처리 및 추가
         if (files != null && files.length > 0) {
             for (MultipartFile file : files) {
                 try {
                     String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                    Path path = Paths.get(uploadDir).resolve(filename).toAbsolutePath();
+                    Path path = Paths.get(fileUploadConfig.getUploadDir()).resolve(filename).toAbsolutePath();
                     Files.createDirectories(path.getParent());
                     file.transferTo(path.toFile());
 
                     Image image = Image.builder()
                             .imagePath("/uploads/" + filename)
-                            .build();  // product는 아직 없음
-                    imageEntities.add(image);
+                            .build();
+
+                    product.addImage(image);  // 양방향 관계 설정
                 } catch (Exception e) {
                     throw new RuntimeException("이미지 저장 실패", e);
                 }
             }
         }
 
-        // Product 생성 (이미지 리스트 포함)
-        Product product = dto.toEntity(seller, bid, payment, category, imageEntities);
-
-        // 이미지와 Product 연결
-        for (Image img : imageEntities) {
-            img.setProduct(product);
-        }
-
-        // Product 저장 (CascadeType.ALL로 이미지도 함께 저장됨)
-        productRepository.save(product);
+        // Product 저장 (CascadeType.ALL로 이미지도 함께 저장)
+        em.persist(product);
 
         return ProductDto.fromEntity(product);
     }

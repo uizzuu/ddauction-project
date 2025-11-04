@@ -89,14 +89,13 @@ public class ProductDto {
                 .build();
     }
 
-    public Product toEntity(User seller, Bid bid, Payment payment, Category category, List<Image> imageEntities) {
+    public Product toEntity(User seller, Bid bid, Payment payment, Category category) {
         Product product = Product.builder()
                 .productId(this.productId)
                 .user(seller)
                 .title(this.title)
                 .content(this.content)
                 .startingPrice(this.startingPrice)
-                .images(imageEntities)
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)
                 .productStatus(this.productStatus)
@@ -106,10 +105,10 @@ public class ProductDto {
                 .category(category)
                 .build();
 
-        // ⚠️ 이미지마다 product 세팅
-        if (imageEntities != null) {
-            imageEntities.forEach(img -> img.setProduct(product));
-        }
+//        // ⚠️ 이미지마다 product 세팅
+//        if (imageEntities != null) {
+//            imageEntities.forEach(img -> img.setProduct(product));
+//        }
 
         return product;
     }
