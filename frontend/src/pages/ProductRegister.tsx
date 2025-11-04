@@ -170,6 +170,7 @@ export default function ProductRegister({ user }: Props) {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        credentials: "include", //이거없어서 401뜸
         body: formData,
       });
 

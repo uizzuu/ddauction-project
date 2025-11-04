@@ -437,7 +437,7 @@ export default function ProductDetail({ user }: Props) {
       <div className="flex-box gap-40">
         <div className="product-image product-detail-image">
           {product.images && product.images.length > 0 ? (
-            <img src={product.images[0].imagePath} alt={product.title} />
+            <img src={`${API_BASE_URL}${product.images[0].imagePath}`} alt={product.title} />
           ) : (
             <div className="no-image-txt">이미지 없음</div>
           )}

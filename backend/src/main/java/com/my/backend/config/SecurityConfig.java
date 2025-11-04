@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -53,7 +54,6 @@ public class SecurityConfig {
     }
 
     // Security Filter Chain
-    // Security Filter Chain
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         LoginFilter loginFilter = new LoginFilter(jwtUtil, authenticationManager());
@@ -75,6 +75,9 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 🔹 preflight 허용
+                        // 🔹 정적 리소스 업로드 폴더 허용
+                        .requestMatchers("/uploads/**").permitAll()
                         // OAuth2 관련 경로
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
@@ -98,9 +101,6 @@ public class SecurityConfig {
                                 "/api/bookmarks/**"
                         ).permitAll()
 
-                        // 🔹 정적 리소스 업로드 폴더 허용
-//                        .requestMatchers("/uploads/**").permitAll()
-
                         // 인증 필요
                         .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
                         .requestMatchers("/admin").hasRole("ADMIN")
@@ -120,5 +120,9 @@ public class SecurityConfig {
 
         return http.build();
     }
-
+        @Bean
+        public WebSecurityCustomizer webSecurityCustomizer() {
+            return (web) -> web.ignoring()
+                    .requestMatchers("/uploads/**"); // 🔸 완전 무시 — SecurityFilter 거치지 않음
+        }
 }
