@@ -77,7 +77,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 🔹 preflight 허용
                         // 🔹 정적 리소스 업로드 폴더 허용
-                        .requestMatchers("/uploads/**").permitAll()
+
                         // OAuth2 관련 경로
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()

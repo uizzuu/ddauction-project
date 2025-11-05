@@ -12,11 +12,15 @@ import java.nio.file.Paths;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    @Value("${file.upload.directory:./uploads}")
-    private String uploadDir;
+    private final FileUploadConfig fileUploadConfig;
+
+    public WebMvcConfig(FileUploadConfig fileUploadConfig) {
+        this.fileUploadConfig = fileUploadConfig;
+    }
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+<<<<<<< HEAD
         try {
             Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
 
@@ -37,3 +41,10 @@ public class WebMvcConfig implements WebMvcConfigurer {
         }
     }
 }
+=======
+        Path uploadPath = fileUploadConfig.getUploadPath();
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:" + uploadPath.toString() + "/");
+    }
+}
+>>>>>>> 8bea233 (배너 찜)

@@ -213,6 +213,15 @@ public class ProductService {
     // 최신 등록 상품 1개 조회
     public ProductDto getLatestProduct() {
         Product latestProduct = productRepository.findTopByProductStatusOrderByCreatedAtDesc(ProductStatus.ACTIVE);
+        if (latestProduct == null) {
+            return null; // 혹은 예외 처리
+        }
+
+        // 이미지가 비어있으면 log로 확인
+        if (latestProduct.getImages() == null || latestProduct.getImages().isEmpty()) {
+            System.out.println("배너용 최신 상품 이미지가 없음! productId=" + latestProduct.getProductId());
+        }
+
         return ProductDto.fromEntity(latestProduct);
     }
 
@@ -222,6 +231,14 @@ public class ProductService {
                 .findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
                         ProductStatus.ACTIVE, LocalDateTime.now()
                 );
+        if (product == null) {
+            return null; // 혹은 예외 처리
+        }
+
+        if (product.getImages() == null || product.getImages().isEmpty()) {
+            System.out.println("배너용 종료 임박 상품 이미지가 없음! productId=" + product.getProductId());
+        }
+
         return ProductDto.fromEntity(product);
     }
 

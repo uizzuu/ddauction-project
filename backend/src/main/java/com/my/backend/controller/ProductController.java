@@ -120,6 +120,14 @@ public class ProductController {
     @GetMapping("/latest")
     public ResponseEntity<ProductDto> getLatestProduct() {
         ProductDto latest = productService.getLatestProduct();
+        if (latest == null || latest.getImages() == null || latest.getImages().isEmpty()) {
+            // 이미지가 없는 경우 빈 리스트라도 넣어주기
+            if (latest != null) {
+                latest.setImages(List.of());
+            }
+            // null이면 NOT_FOUND 처리 가능
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(latest);
+        }
         return ResponseEntity.ok(latest);
     }
 
@@ -127,6 +135,12 @@ public class ProductController {
     @GetMapping("/ending-soon")
     public ResponseEntity<ProductDto> getEndingSoonProduct() {
         ProductDto product = productService.getEndingSoonProduct();
+        if (product == null || product.getImages() == null || product.getImages().isEmpty()) {
+            if (product != null) {
+                product.setImages(List.of());
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(product);
+        }
         return ResponseEntity.ok(product);
     }
 
