@@ -40,4 +40,5 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
             Product product, User user, Long bidPrice, LocalDateTime createdAt);
 
     boolean existsByProductProductIdAndUserUserIdAndIsWinningTrue(Long productId, Long userId);
+
 }

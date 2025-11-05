@@ -4,6 +4,7 @@ import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidChartData;
 import com.my.backend.dto.BidResponse;
 import com.my.backend.entity.Bid;
+import com.my.backend.entity.Image;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.User;
 import com.my.backend.repository.BidRepository;
@@ -379,9 +380,16 @@ public class BidService {
             }
 
             // Product.image (단일 이미지) 사용
+//            String imagePath = "";
+//            if (product.getImage() != null && product.getImage().getImagePath() != null) {
+//                imagePath = product.getImage().getImagePath();
+//            }
             String imagePath = "";
-            if (product.getImage() != null && product.getImage().getImagePath() != null) {
-                imagePath = product.getImage().getImagePath();
+            if (product.getImages() != null && !product.getImages().isEmpty()) {
+                Image firstImage = product.getImages().get(0);
+                if (firstImage != null && firstImage.getImagePath() != null) {
+                    imagePath = firstImage.getImagePath();
+                }
             }
 
             return ResponseEntity.ok(Map.of(

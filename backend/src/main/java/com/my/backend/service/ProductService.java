@@ -4,7 +4,6 @@ import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.config.FileUploadConfig;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.dto.BidDto;
-import com.my.backend.dto.ImageDto;
 import com.my.backend.entity.*;
 import com.my.backend.repository.*;
 import jakarta.persistence.EntityManager;
@@ -20,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,53 +39,25 @@ public class ProductService {
     private final FileUploadConfig fileUploadConfig; // @RequiredArgsConstructor 덕분에 주입됨
     private final EntityManager em;
 
-
-    //  전체 상품 조회 - 이미지 리스트 포함
+    // 전체 상품 조회
     public List<ProductDto> getAllProducts() {
         return productRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"))
                 .stream()
-                .map(product -> {
-                    ProductDto dto = ProductDto.fromEntity(product);
-                    // 이미지 리스트 추가
-                    List<ImageDto> images = imageRepository.findByProduct_ProductId(product.getProductId())
-                            .stream()
-                            .map(ImageDto::fromEntity)
-                            .collect(Collectors.toList());
-                    dto.setImages(images);
-                    return dto;
-                })
+                .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    //  단일 상품 조회 - 이미지 리스트 포함
+    // 단일 상품 조회
     public ProductDto getProduct(Long id) {
         Product product = findProductOrThrow(id);
-        ProductDto dto = ProductDto.fromEntity(product);
-
-        // 이미지 리스트 추가
-        List<ImageDto> images = imageRepository.findByProduct_ProductId(id)
-                .stream()
-                .map(ImageDto::fromEntity)
-                .collect(Collectors.toList());
-        dto.setImages(images);
-
-        return dto;
+        return ProductDto.fromEntity(product);
     }
 
-    //  특정 사용자의 판매 상품 조회 - 이미지 리스트 포함
+    // 특정 사용자의 판매 상품 조회
     public List<ProductDto> getProductsBySeller(Long userId) {
         return productRepository.findByUserUserId(userId)
                 .stream()
-                .map(product -> {
-                    ProductDto dto = ProductDto.fromEntity(product);
-                    // 이미지 리스트 추가
-                    List<ImageDto> images = imageRepository.findByProduct_ProductId(product.getProductId())
-                            .stream()
-                            .map(ImageDto::fromEntity)
-                            .collect(Collectors.toList());
-                    dto.setImages(images);
-                    return dto;
-                })
+                .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
@@ -97,13 +69,12 @@ public class ProductService {
         Payment payment = findPaymentOrNull(dto.getPaymentId());
         Image image = findImageOrNull(dto.getImageId());
 
-        // ⚠️ 단일 이미지를 List로 감싸 실제 엔티티에 반영
-        List<Image> imageEntities = (image != null) ? List.of(image) : null;
+        // ⚠️ 단일 이미지를 List로 감싸기
+        List<Image> imageEntities = image != null ? List.of(image) : null;
 
         Product product = dto.toEntity(seller, bid, payment, category);
-        product.setImages(imageEntities);
-
         Product saved = productRepository.save(product);
+
         return ProductDto.fromEntity(saved);
     }
 
@@ -173,7 +144,7 @@ public class ProductService {
                 .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
     }
 
-    // 상품 검색 - 이미지 리스트 포함
+    // 상품 검색
     public List<ProductDto> searchProducts(String keyword, Long categoryId, ProductStatus status) {
         List<Product> products;
 
@@ -200,36 +171,11 @@ public class ProductService {
         }
 
         return products.stream()
-                .map(product -> {
-                    ProductDto dto = ProductDto.fromEntity(product);
-                    // 이미지 리스트 추가
-                    List<ImageDto> images = imageRepository.findByProduct_ProductId(product.getProductId())
-                            .stream()
-                            .map(ImageDto::fromEntity)
-                            .collect(Collectors.toList());
-                    dto.setImages(images);
-                    return dto;
-                })
+                .map(ProductDto::fromEntity)
                 .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .collect(Collectors.toList());
     }
 
-<<<<<<< HEAD
-    // 최신 등록 상품 1개 조회 - 이미지 리스트 포함
-    public ProductDto getLatestProduct() {
-        Product latestProduct = productRepository.findTopByProductStatusOrderByCreatedAtDesc(ProductStatus.ACTIVE);
-        if (latestProduct == null) {
-            return null; // 필요시 예외 처리로 변경 가능
-        }
-
-        ProductDto dto = ProductDto.fromEntity(latestProduct);
-        // 이미지 리스트 추가 (엔티티의 images가 비어있을 수 있어 리포지토리로 보강)
-        List<ImageDto> images = imageRepository.findByProduct_ProductId(latestProduct.getProductId())
-                .stream()
-                .map(ImageDto::fromEntity)
-                .collect(Collectors.toList());
-        dto.setImages(images);
-=======
     // 내부 헬퍼 메서드
     private Product findProductOrThrow(Long id) {
         return productRepository.findById(id)
@@ -265,56 +211,37 @@ public class ProductService {
     }
 
     // 최신 등록 상품 1개 조회
-
     public ProductDto getLatestProduct() {
         Product latestProduct = productRepository.findTopByProductStatusOrderByCreatedAtDesc(ProductStatus.ACTIVE);
-
-        if (latestProduct == null) return null;
-
-        // 이미지 없는 경우 빈 리스트로 초기화
-        if (latestProduct.getImages() == null) {
-            latestProduct.setImages(List.of());
+        if (latestProduct == null) {
+            return null; // 혹은 예외 처리
         }
->>>>>>> d93fef2 (배너 출력수정)
 
-        return dto;
+        // 이미지가 비어있으면 log로 확인
+        if (latestProduct.getImages() == null || latestProduct.getImages().isEmpty()) {
+            System.out.println("배너용 최신 상품 이미지가 없음! productId=" + latestProduct.getProductId());
+        }
+
+        return ProductDto.fromEntity(latestProduct);
     }
 
-    // 종료(마감) 임박 상품 조회 - 이미지 리스트 포함
+    // 종료 임박 상품 조회
     public ProductDto getEndingSoonProduct() {
-<<<<<<< HEAD
         Product product = productRepository
                 .findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
                         ProductStatus.ACTIVE, LocalDateTime.now()
                 );
-
         if (product == null) {
-            return null; // 필요시 예외 처리로 변경 가능
+            return null; // 혹은 예외 처리
         }
 
-        ProductDto dto = ProductDto.fromEntity(product);
-        List<ImageDto> images = imageRepository.findByProduct_ProductId(product.getProductId())
-                .stream()
-                .map(ImageDto::fromEntity)
-                .collect(Collectors.toList());
-        dto.setImages(images);
-
-        return dto;
-=======
-        Product endingProduct = productRepository.findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
-                ProductStatus.ACTIVE, LocalDateTime.now());
-
-        if (endingProduct == null) return null;
-
-        if (endingProduct.getImages() == null) {
-            endingProduct.setImages(List.of());
+        if (product.getImages() == null || product.getImages().isEmpty()) {
+            System.out.println("배너용 종료 임박 상품 이미지가 없음! productId=" + product.getProductId());
         }
 
-        return ProductDto.fromEntity(endingProduct);
->>>>>>> d93fef2 (배너 출력수정)
+        return ProductDto.fromEntity(product);
     }
 
-    // 페이지네이션 검색 - 이미지 리스트 포함
     public Page<ProductDto> searchProductsPaged(String keyword, Long categoryId, ProductStatus status, Pageable pageable) {
         Page<Product> products;
 
@@ -344,27 +271,12 @@ public class ProductService {
             products = productRepository.findAll(pageable);
         }
 
-        return products.map(product -> {
-            ProductDto dto = ProductDto.fromEntity(product);
-            // 이미지 리스트 추가
-            List<ImageDto> images = imageRepository.findByProduct_ProductId(product.getProductId())
-                    .stream()
-                    .map(ImageDto::fromEntity)
-                    .collect(Collectors.toList());
-            dto.setImages(images);
-            return dto;
-        });
+        return products.map(ProductDto::fromEntity);
     }
 
-    // 다중 이미지와 함께 상품 생성 - 이미지 리스트 포함하여 반환
+    // 다중 이미지와 함께 상품 생성
     @Transactional
     public ProductDto createProductWithImages(ProductDto dto, MultipartFile[] files) {
-
-        //  카테고리 유효성 검증 추가
-        if (dto.getCategoryId() == null || dto.getCategoryId() <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리를 반드시 선택해야 합니다.");
-        }
-
         User seller = findUserOrThrow(dto.getSellerId());
         Category category = findCategoryOrThrow(dto.getCategoryId());
         Bid bid = findBidOrNull(dto.getBidId());
@@ -393,54 +305,9 @@ public class ProductService {
             }
         }
 
-        // Product 저장 (CascadeType.ALL 설정 시 이미지도 함께 저장)
-        Product savedProduct = productRepository.save(product);
+        // Product 저장 (CascadeType.ALL로 이미지도 함께 저장)
+        em.persist(product);
 
-        // 이미지 리스트 포함하여 반환
-        ProductDto resultDto = ProductDto.fromEntity(savedProduct);
-        List<ImageDto> images = imageRepository.findByProduct_ProductId(savedProduct.getProductId())
-                .stream()
-                .map(ImageDto::fromEntity)
-                .collect(Collectors.toList());
-        resultDto.setImages(images);
-
-        return resultDto;
-    }
-
-    // 내부 헬퍼 메서드
-    private Product findProductOrThrow(Long id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));
-    }
-
-    private User findUserOrThrow(Long id) {
-        return userRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자가 존재하지 않습니다."));
-    }
-
-    private Category findCategoryOrThrow(Long id) {
-        if (id == null || id <= 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "카테고리를 반드시 선택해야 합니다.");
-        }
-        return categoryRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "해당 카테고리가 존재하지 않습니다."));
-    }
-
-    private Bid findBidOrNull(Long id) {
-        if (id == null) return null;
-        return bidRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "입찰 정보가 존재하지 않습니다."));
-    }
-
-    private Payment findPaymentOrNull(Long id) {
-        if (id == null) return null;
-        return paymentRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제 정보가 존재하지 않습니다."));
-    }
-
-    private Image findImageOrNull(Long id) {
-        if (id == null) return null;
-        return imageRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이미지가 존재하지 않습니다."));
+        return ProductDto.fromEntity(product);
     }
 }

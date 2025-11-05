@@ -34,8 +34,7 @@ public class ProductDto {
     private boolean oneMinuteAuction;
 
     @NotNull(message = "경매 종료 시간은 필수 입력 항목입니다.")
-    @JsonFormat(shape = JsonFormat.Shape.STRING,
-            pattern = "yyyy-MM-dd'T'HH:mm:ss") // ✨ 추가
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss") // ✨ 추가
     private LocalDateTime auctionEndTime;
 
     private ProductStatus productStatus;
@@ -90,52 +89,6 @@ public class ProductDto {
                 .build();
     }
 
-//    public Product toEntity(User seller, Bid bid, Payment payment, Category category, Image image) {
-//
-//        // image는 nullable=false이므로 체크 필수
-//        if (image == null && category != null) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "최소 1개의 이미지가 필요합니다");
-//        }
-//
-//        return Product.builder()
-//                .productId(this.productId)
-//                .user(seller)
-//                .title(this.title)
-//                .content(this.content)
-//                .startingPrice(this.startingPrice)
-//                .image(image)
-//                .oneMinuteAuction(this.oneMinuteAuction)
-//                .auctionEndTime(this.auctionEndTime)
-//                .productStatus(this.productStatus)
-//                .paymentStatus(this.paymentStatus)
-//                .bid(bid)
-//                .payment(payment)
-//                .category(category)
-//                .build();
-//    }
-
-            // 기존 작업 주석처리 완료 후 추가완료.
-            public Product toEntity(User seller, Bid bid, Payment payment, Category category, Image image) {
-                if (category == null || category.getCategoryId() == null || category.getCategoryId() <= 0) {
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "유효하지 않은 카테고리입니다.");
-                }
-                return Product.builder()
-                        .productId(this.productId)
-                        .user(seller)
-                        .title(this.title)
-                        .content(this.content)
-                        .startingPrice(this.startingPrice)
-                        .image(image) // 초기 null 허용
-                        .oneMinuteAuction(this.oneMinuteAuction)
-                        .auctionEndTime(this.auctionEndTime)
-                        .productStatus(this.productStatus != null ? this.productStatus : ProductStatus.ACTIVE)
-                        .paymentStatus(this.paymentStatus != null ? this.paymentStatus : PaymentStatus.PENDING)
-                        .bid(bid)
-                        .payment(payment)
-                        .category(category)
-                        .build();
-            }
-}
     public Product toEntity(User seller, Bid bid, Payment payment, Category category) {
         Product product = Product.builder()
                 .productId(this.productId)
