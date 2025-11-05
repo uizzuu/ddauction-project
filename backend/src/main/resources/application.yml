@@ -151,6 +151,15 @@ spring:
 file:
   upload:
     directory: ${FILE_UPLOAD_DIRECTORY:/uploads}
-
+# ✅ AWS S3 설정 추가
+cloud:
+  aws:
+    s3:
+      bucket: ${AWS_S3_BUCKET_NAME}
+    region:
+      static: ${AWS_REGION:ap-northeast-2}
+    credentials:
+      access-key: ${AWS_ACCESS_KEY_ID}
+      secret-key: ${AWS_SECRET_ACCESS_KEY}
 app:
   frontend-url: https://ddauction.shop
