@@ -45,6 +45,7 @@ export default function ProductRegister({ user }: Props) {
       const seconds = String(date.getSeconds()).padStart(2, "0");
 
       const formatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      console.log("auctionEndTime 확인:", formatted);
       setForm((prev) => ({
         ...prev,
         auctionEndTime: formatted,
@@ -135,7 +136,7 @@ export default function ProductRegister({ user }: Props) {
           JSON.stringify({
             title: form.title,
             content: form.content,
-            startingPrice: startingPriceNumber.toString(),
+            startingPrice: startingPriceNumber,
             oneMinuteAuction: form.oneMinuteAuction,
             auctionEndTime,
             sellerId: user.userId,
@@ -147,7 +148,8 @@ export default function ProductRegister({ user }: Props) {
         { type: "application/json" }
       );
 
-      formData.append("product", productBlob); // Spring 쪽 @RequestPart("dto")로 받음
+      formData.append("product", productBlob, "product.json"); // Spring 쪽 @RequestPart("dto")로 받음,Blob으로 전송 (파일명 제거)
+      productBlob.text().then(text => console.log("Blob JSON 확인:", text));
 
       // 이미지 파일 추가
       if (form.images) {
@@ -163,11 +165,12 @@ export default function ProductRegister({ user }: Props) {
       }
       console.log("=== FormData Debug End ===");
 
-      const response = await fetch(`${API_BASE_URL}/api/products/with-images`, {
+      const response = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`, // Content-Type는 자동 처리
+          Authorization: `Bearer ${token}`,
         },
+        credentials: "include", //이거없어서 401뜸
         body: formData,
       });
 

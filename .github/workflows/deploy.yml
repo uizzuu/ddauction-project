@@ -55,7 +55,9 @@ jobs:
           script: |
             cd ~/ddauction-project
 
-            echo "=== Git Pull ==="
+            echo "=== Git 강제 초기화 및 Pull ==="
+            git fetch origin main
+            git reset --hard origin/main
             git pull origin main
 
             echo "=== Nginx 설정 업데이트 ==="
@@ -68,21 +70,6 @@ jobs:
             echo "=== Docker 로그인 ==="
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-            echo "=== .env.prod 파일 생성 ==="
-            cat > .env.prod << 'EOF'
-            SPRING_PROFILES_ACTIVE=prod
-            RDS_ENDPOINT=${{ secrets.RDS_ENDPOINT }}
-            SPRING_DATASOURCE_USERNAME=${{ secrets.DB_USERNAME }}
-            SPRING_DATASOURCE_PASSWORD=${{ secrets.DB_PASSWORD }}
-            
-             # 🛑 수정된 부분: CORS 허용 도메인 추가 🛑
-            ALLOWED_ORIGINS=https://ddauction.shop,https://www.ddauction.shop
-
-            DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
-            BACKEND_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/ddauction-backend:latest
-            FRONTEND_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/ddauction-frontend:latest
-            EOF
-
             echo "=== 최신 이미지 pull 및 컨테이너 일괄 교체 (단일 명령어) ==="
             # 1. pull: 최신 이미지를 먼저 다운로드
             docker-compose --env-file .env.prod -f docker-compose.prod.yml pull
@@ -94,7 +81,7 @@ jobs:
             echo "=== 배포 및 컨테이너 상태 확인 ==="
             docker-compose --env-file .env.prod -f docker-compose.prod.yml ps
 
-            echo "=== Backend 로그 (최근 30줄) ==="
+            echo "=== Backen d 로그 (최근 30줄) ==="
             docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 backend
 
             echo "=== Frontend 로그 (최근 30줄) ==="

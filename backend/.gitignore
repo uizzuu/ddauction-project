@@ -26,6 +26,9 @@ backend/caches/
 *.dylib.lock
 *.jnilib
 
+# uploads/ 로컬 업로드 파일
+/uploads
+
 # generated
 generated/
 

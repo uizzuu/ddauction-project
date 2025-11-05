@@ -3,21 +3,21 @@ package com.my.backend.entity;
 import com.my.backend.common.enums.PaymentStatus;
 import com.my.backend.common.enums.ProductStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "product")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
+@Getter
+@Setter
 @EntityListeners(AuditingEntityListener.class)
 public class Product {
     @Id
@@ -35,9 +35,9 @@ public class Product {
 
     private Long startingPrice;
 
-    @ManyToOne
-    @JoinColumn(name = "image_id", nullable = true)
-    private Image image;
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Image> images = new ArrayList<>();
 
     private boolean oneMinuteAuction;
 
@@ -75,4 +75,9 @@ public class Product {
     @ManyToOne
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    public void addImage(Image image) {
+        images.add(image);
+        image.setProduct(this); // ← 핵심! product_id 값이 null로 안 들어가게 함
+    }
 }
