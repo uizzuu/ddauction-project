@@ -181,25 +181,22 @@ export async function getArticleById(id: number): Promise<ArticleDto> {
   return response.json();
 }
 
-export async function createArticle(
-  articleData: ArticleForm
-): Promise<ArticleDto> {
+export async function createArticle(articleData: ArticleForm): Promise<ArticleDto> {
   const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles`, {
     method: "POST",
     body: JSON.stringify(articleData),
   });
+
   if (!response.ok) throw new Error("게시글 생성 실패");
   return response.json();
 }
 
-export async function updateArticle(
-  id: number,
-  articleData: ArticleForm
-): Promise<ArticleDto> {
+export async function updateArticle(id: number, articleData: ArticleForm): Promise<ArticleDto> {
   const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
     method: "PUT",
     body: JSON.stringify(articleData),
   });
+
   if (!response.ok) throw new Error("게시글 수정 실패");
   return response.json();
 }
@@ -208,6 +205,7 @@ export async function deleteArticle(id: number): Promise<void> {
   const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
     method: "DELETE",
   });
+
   if (!response.ok) throw new Error("게시글 삭제 실패");
 }
 

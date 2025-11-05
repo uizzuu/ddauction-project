@@ -1,5 +1,6 @@
 package com.my.backend.dto.board;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.my.backend.entity.board.Article;
 import com.my.backend.entity.board.Board;
 import com.my.backend.entity.User;
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)  // 알 수 없는 필드 무시
 public class ArticleDto {
     private Long articleId;
     private Long userId;

@@ -6,10 +6,12 @@ import com.my.backend.entity.Category;
 import com.my.backend.entity.Image;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.User;
+import com.my.backend.entity.board.Board;
 import com.my.backend.repository.CategoryRepository;
 import com.my.backend.repository.ImageRepository;
 import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.UserRepository;
+import com.my.backend.repository.board.BoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +29,7 @@ public class AdminInitializer implements CommandLineRunner {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final ImageRepository imageRepository;
+    private final BoardRepository boardRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -62,6 +65,18 @@ public class AdminInitializer implements CommandLineRunner {
 
             System.out.println("✅ 카테고리 초기값 생성 완료!");
         }
+
+        // --- 게시판 초기화 ---
+        if (boardRepository.count() == 0) {
+            Board defaultBoard = Board.builder()
+                    .boardName("공지사항")
+                    .build();
+            boardRepository.save(defaultBoard);
+            System.out.println("✅ 게시판 초기값 생성 완료!");
+        } else {
+            System.out.println("⚠️ 게시판이 이미 존재합니다.");
+        }
+
 
         // --- 샘플 이미지 + 상품 ---
 //        if (productRepository.count() == 0) {
