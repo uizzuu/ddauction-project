@@ -150,7 +150,7 @@ spring:
 
 file:
   upload:
-    directory: ${FILE_UPLOAD_DIRECTORY:/uploads}
+    directory: ${FILE_UPLOAD_DIRECTORY:/home/ubuntu/ddauction-project/backend/uploads}
 
 app:
   frontend-url: https://ddauction.shop
