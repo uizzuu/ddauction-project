@@ -57,12 +57,10 @@ public class AuctionSchedulerService {
 
     /**
      * 경매 한 건에 대한 종료 처리 (멱등)
-     * - REQUIRES_NEW: 스케줄러 루프와 분리된 트랜잭션
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void finalizeOneAuctionSafely(Long productId) {
         try {
-            // 최신 상태 재조회 (동시에 다른 스레드가 상태를 바꿨을 수 있으므로)
             Optional<Product> opt = productRepository.findById(productId);
             if (opt.isEmpty()) {
                 log.warn("[Auction] productId={} 를 찾을 수 없어 스킵", productId);
@@ -71,32 +69,30 @@ public class AuctionSchedulerService {
 
             Product product = opt.get();
 
-            // 멱등 가드: 이미 CLOSED 처리돼 있으면 스킵
+            // 이미 종료 처리된 상품은 스킵
             if (product.getProductStatus() != ProductStatus.ACTIVE) {
                 log.debug("[Auction] 이미 처리된 경매 스킵: productId={}, status={}", productId, product.getProductStatus());
                 return;
             }
 
-            // 시간 가드
+            // 아직 종료시간이 안 되었으면 스킵
             if (product.getAuctionEndTime() == null || product.getAuctionEndTime().isAfter(LocalDateTime.now())) {
                 log.debug("[Auction] 아직 종료 시각이 아님 스킵: productId={}, end={}", productId, product.getAuctionEndTime());
                 return;
             }
 
-            // 최고가 입찰자 1명만 조회 (동일가일 때 먼저 입찰한 사람 우선)
-            Bid highest = bidRepository.findTopByProductProductIdOrderByCreatedAtDesc(productId);
+            Bid highest = bidRepository.findTopByProductProductIdOrderByBidPriceDescCreatedAtAsc(productId);
 
 
             if (highest != null) {
-                // 상품 상태 전이
-                product.setProductStatus(ProductStatus.CLOSED);
-                product.setPaymentStatus(PaymentStatus.PENDING); // 결제 대기
-                product.setPaymentUserId(highest.getUser().getUserId());
+                // 낙찰자 표시
+                highest.setWinning(true);
+                bidRepository.saveAndFlush(highest);
 
-                // 최종가 반영 (price가 현재가라면 그대로 업데이트)
-                if (highest.getBidPrice() != null) {
-                    product.setAmount(highest.getBidPrice().longValue());
-                }
+                // 상품 상태 업데이트
+                product.setProductStatus(ProductStatus.CLOSED);
+                product.setPaymentStatus(PaymentStatus.PENDING);
+                product.setPaymentUserId(highest.getUser().getUserId());
 
                 productRepository.saveAndFlush(product);
 
@@ -105,10 +101,8 @@ public class AuctionSchedulerService {
                         highest.getUser().getUserId(),
                         highest.getBidPrice());
 
-                // TODO: 낙찰 알림/브로드캐스트 필요 시 여기서 호출
-
             } else {
-                // 유찰: 입찰자가 없음
+                // 유찰 처리
                 product.setProductStatus(ProductStatus.CLOSED);
                 productRepository.saveAndFlush(product);
 
@@ -117,7 +111,6 @@ public class AuctionSchedulerService {
 
         } catch (Exception e) {
             log.error("[Auction] 경매 종료 처리 실패: productId={}", productId, e);
-            // 트랜잭션은 롤백되고, 다른 경매건 처리에는 영향 없음
         }
     }
 }
