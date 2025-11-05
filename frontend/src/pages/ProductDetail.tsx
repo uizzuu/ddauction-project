@@ -61,7 +61,7 @@ export default function ProductDetail({ user }: Props) {
 
    // 낙찰자 여부 상태 추가
   const [isWinner, setIsWinner] = useState(false);
-  const [winningBidPrice, setWinningBidPrice] = useState<number | null>(null);
+  const [_winningBidPrice, setWinningBidPrice] = useState<number | null>(null);
 
   const mergedBids = useMemo(() => {
     const combinedBids = [...allBids, ...liveBids];
