@@ -10,10 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+<<<<<<< HEAD
     "build": "^0.1.4",
     "date-fns": "^4.1.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.548.0",
+=======
+    "i": "^0.3.7",
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
     "react": "^19.1.1",
     "react-datepicker": "^8.8.0",
     "react-dom": "^19.1.1",

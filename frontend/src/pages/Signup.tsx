@@ -74,12 +74,21 @@ export default function Signup() {
   const handleSubmit = async () => {
   if (!validateAll()) return;
 
+<<<<<<< HEAD
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
+=======
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 
     const data = await response.json(); // 항상 메시지 읽기
 

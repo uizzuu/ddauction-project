@@ -8,7 +8,7 @@ import com.my.backend.entity.Product;
 import com.my.backend.entity.board.Board;
 import com.my.backend.repository.QnaRepository;
 import com.my.backend.repository.QnaReviewRepository;
-import com.my.backend.repository.UserRepository;
+import com.my.backend.repository.user.UserRepository;
 import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.board.BoardRepository;
 import lombok.RequiredArgsConstructor;
@@ -103,8 +103,11 @@ public class QnaService {
             qnaMap.put("question", qna.getQuestion());
             qnaMap.put("createdAt", qna.getCreatedAt());
             qnaMap.put("nickName", qna.getUser().getNickName());
+<<<<<<< HEAD
             qnaMap.put("role", qna.getUser().getRole().name()); // 질문 작성자 role 추가
             qnaMap.put("userId", qna.getUser().getUserId());
+=======
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
             qnaMap.put("answers", answerList);
 
             result.add(qnaMap);

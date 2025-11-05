@@ -47,10 +47,16 @@ public class Product {
     @Column(nullable = false)
     private ProductStatus productStatus;
 
+<<<<<<< HEAD
     // paymentStatus NN 설정 충돌, nullable true => false 변경
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_status", nullable = false)
     private PaymentStatus paymentStatus;
+=======
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = true)
+    private Payment.PaymentStatus paymentStatus;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -79,5 +85,11 @@ public class Product {
     public void addImage(Image image) {
         images.add(image);
         image.setProduct(this); // ← 핵심! product_id 값이 null로 안 들어가게 함
+    }
+
+    public enum PaymentStatus {
+        PENDING,
+        PAID,
+        CANCELLED
     }
 }

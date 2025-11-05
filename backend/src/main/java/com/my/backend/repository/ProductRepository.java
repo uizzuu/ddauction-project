@@ -5,7 +5,10 @@ import com.my.backend.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+<<<<<<< HEAD
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+=======
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,6 +23,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     List<Product> findByCategory_CategoryId(Long categoryId);
     List<Product> findByProductStatus(ProductStatus productStatus);
 
+<<<<<<< HEAD
     // 조합 검색
     List<Product> findByTitleContainingAndCategory_CategoryId(String keyword, Long categoryId);
     List<Product> findByTitleContainingAndProductStatus(String keyword, ProductStatus productStatus);
@@ -48,4 +52,14 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     Page<Product> findByCategory_CategoryIdAndProductStatus(Long categoryId, ProductStatus productStatus, Pageable pageable);
     Page<Product> findByTitleContainingAndCategory_CategoryIdAndProductStatus(
             String keyword, Long categoryId, ProductStatus productStatus, Pageable pageable);
+=======
+    List<Product> findByProductStatus(Product.ProductStatus status);
+
+    // 1분 경매 자동 종료용
+    List<Product> findByOneMinuteAuctionTrueAndProductStatusAndAuctionEndTimeBefore(
+            Product.ProductStatus status,
+            LocalDateTime endTime
+    );
+
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 }

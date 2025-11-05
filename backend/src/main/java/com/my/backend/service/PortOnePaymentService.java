@@ -295,8 +295,11 @@
 
 package com.my.backend.service;
 
+<<<<<<< HEAD
 import com.my.backend.common.enums.PaymentStatus;
 import com.my.backend.common.enums.ProductStatus;
+=======
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import com.my.backend.config.PaymentProperties;
 import com.my.backend.dto.portone.PortOnePaymentResponse;
 import com.my.backend.dto.portone.PortOneTokenResponse;
@@ -304,7 +307,11 @@ import com.my.backend.entity.Payment;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.User;
 import com.my.backend.repository.ProductRepository;
+<<<<<<< HEAD
 import com.my.backend.repository.UserRepository;
+=======
+import com.my.backend.repository.user.UserRepository;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -317,9 +324,15 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+<<<<<<< HEAD
 import static com.my.backend.common.enums.PaymentStatus.CANCELLED;
 import static com.my.backend.common.enums.PaymentStatus.PAID;
 import static com.my.backend.common.enums.ProductStatus.ACTIVE;
+=======
+import static com.my.backend.entity.Payment.PaymentStatus.CANCELLED;
+import static com.my.backend.entity.Payment.PaymentStatus.PAID;
+import static com.my.backend.entity.Product.ProductStatus.ACTIVE;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 
 @Slf4j
 @Service
@@ -556,8 +569,13 @@ public class PortOnePaymentService {
 
         Integer paidAmount = paymentInfo.getResponse().getPaidAmount();
 
+<<<<<<< HEAD
         product.setProductStatus(ProductStatus.SOLD);
         product.setPaymentStatus(PaymentStatus.PAID);
+=======
+        product.setProductStatus(Product.ProductStatus.SOLD);
+        product.setPaymentStatus(Payment.PaymentStatus.PAID);
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
         product.setPaymentUserId(buyer.getUserId());
         product.setAmount(paidAmount == null ? null : paidAmount.longValue());
         productRepository.save(product);

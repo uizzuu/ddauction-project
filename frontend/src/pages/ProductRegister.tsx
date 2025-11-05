@@ -86,6 +86,7 @@ export default function ProductRegister({ user }: Props) {
   };
 
   const handleSubmit = async () => {
+<<<<<<< HEAD
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
@@ -95,11 +96,47 @@ export default function ProductRegister({ user }: Props) {
 
     const token = localStorage.getItem("token");
     if (!token || !user) {
+=======
+  if (!user) {
+    alert("로그인이 필요합니다");
+    navigate("/login");
+    return;
+  }
+
+  if (!form.title || !form.content || !form.categoryId || !form.price) {
+    setError("필수 항목을 모두 입력해주세요");
+    return;
+  }
+
+  if (!form.price || form.price <= 0) {
+    setError("시작 가격은 1원 이상이어야 합니다");
+    return;
+  }
+
+  let auctionEndTime = form.auctionEndTime;
+  if (form.oneMinuteAuction) {
+    const end = new Date();
+    end.setMinutes(end.getMinutes() + 1);
+    auctionEndTime = end.toISOString().slice(0, 19);
+  } else if (!auctionEndTime) {
+    setError("경매 종료 시간을 입력해주세요");
+    return;
+  } else {
+    auctionEndTime = new Date(auctionEndTime).toISOString().slice(0, 19);
+  }
+
+  try {
+    // JWT 토큰 가져오기
+    const token = localStorage.getItem('accessToken');
+    
+    if (!token) {
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
       alert("로그인이 필요합니다");
       navigate("/login");
       return;
     }
 
+<<<<<<< HEAD
     let auctionEndTime: string;
     if (form.oneMinuteAuction) {
       const end = new Date();
@@ -191,6 +228,45 @@ export default function ProductRegister({ user }: Props) {
     }
   };
 
+=======
+    const productData = {
+      title: form.title,
+      content: form.content,
+      startingPrice: form.price,  // 숫자로 전송
+      imageUrl: form.imageUrl,
+      oneMinuteAuction: form.oneMinuteAuction,
+      sellerId: user.userId,
+      auctionEndTime,
+      categoryId: form.categoryId,
+      productStatus: "ACTIVE",
+      paymentStatus: "PENDING",
+      
+    };
+    
+    const response = await fetch(`${API_BASE_URL}/api/products`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`  // JWT 토큰 포함
+      },
+      credentials: "include",
+      body: JSON.stringify(productData),
+    });
+
+    if (response.ok) {
+      alert("물품 등록 성공!");
+      navigate("/search");
+    } else {
+      const text = await response.text();
+      console.error("등록 실패:", text);
+      setError(`물품 등록 실패: ${text}`);
+    }
+  } catch (err) {
+    console.error(err);
+    setError("서버 연결 실패");
+  }
+};
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
   if (!user) {
     return (
       <div className="register-container">
@@ -356,3 +432,4 @@ export default function ProductRegister({ user }: Props) {
     </div>
   );
 }
+

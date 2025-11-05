@@ -6,13 +6,21 @@ import com.my.backend.dto.ProductDto;
 import com.my.backend.dto.BidDto;
 import com.my.backend.entity.*;
 import com.my.backend.repository.*;
+<<<<<<< HEAD
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
+=======
+import com.my.backend.repository.user.UserRepository;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+<<<<<<< HEAD
 import org.springframework.web.multipart.MultipartFile;
+=======
+import org.springframework.transaction.annotation.Transactional;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import org.springframework.web.server.ResponseStatusException;
 
 import java.nio.file.Files;
@@ -21,6 +29,8 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -53,6 +63,7 @@ public class ProductService {
         return ProductDto.fromEntity(product);
     }
 
+<<<<<<< HEAD
     // 특정 사용자의 판매 상품 조회
     public List<ProductDto> getProductsBySeller(Long userId) {
         return productRepository.findByUserUserId(userId)
@@ -60,6 +71,12 @@ public class ProductService {
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
     }
+=======
+    // 새 상품 생성
+    public ProductDto createProduct(Long userId, ProductDto productDto) {
+        User seller = userRepository.findById(productDto.getSellerId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "판매자가 존재하지 않습니다."));
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 
     // 상품 생성
     public ProductDto createProduct(ProductDto dto) {
@@ -75,7 +92,22 @@ public class ProductService {
         Product product = dto.toEntity(seller, bid, payment, category);
         Product saved = productRepository.save(product);
 
+<<<<<<< HEAD
         return ProductDto.fromEntity(saved);
+=======
+        Product product = productDto.toEntity(seller, bid, payment, category);
+
+        if (productDto.getStartingPrice() != null) {
+            try {
+                product.setStartingPrice(Long.parseLong(String.valueOf(productDto.getStartingPrice())));
+            } catch (NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
+            }
+        }
+
+        Product savedProduct = productRepository.save(product);
+        return ProductDto.fromEntity(savedProduct);
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
     }
 
     // 상품 수정
@@ -91,11 +123,39 @@ public class ProductService {
         if (dto.getStartingPrice() != null) {
             product.setStartingPrice(dto.getStartingPrice());
         }
+<<<<<<< HEAD
         // 단일 이미지 설정
         product.setImages(image != null ? List.of(image) : null);
         product.setOneMinuteAuction(dto.isOneMinuteAuction());
         product.setAuctionEndTime(dto.getAuctionEndTime());
         product.setProductStatus(dto.getProductStatus());
+=======
+
+        Payment payment = null;
+        if (updatedProductDto.getPaymentId() != null) {
+            payment = paymentRepository.findById(updatedProductDto.getPaymentId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제가 존재하지 않습니다."));
+        }
+
+        Category category = categoryRepository.findById(updatedProductDto.getCategoryId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "카테고리가 존재하지 않습니다."));
+
+        product.setTitle(updatedProductDto.getTitle());
+        product.setContent(updatedProductDto.getContent());
+
+        if (updatedProductDto.getStartingPrice() != null) {
+            try {
+                product.setStartingPrice(Long.parseLong(String.valueOf(updatedProductDto.getStartingPrice())));
+            } catch (NumberFormatException e) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "가격 형식이 잘못되었습니다.");
+            }
+        }
+
+        product.setImageUrl(updatedProductDto.getImageUrl());
+        product.setOneMinuteAuction(updatedProductDto.isOneMinuteAuction());
+        product.setAuctionEndTime(updatedProductDto.getAuctionEndTime());
+        product.setProductStatus(updatedProductDto.getProductStatus());
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
         product.setBid(bid);
         product.setPayment(payment);
         product.setCategory(category);
@@ -176,6 +236,7 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+<<<<<<< HEAD
     // 내부 헬퍼 메서드
     private Product findProductOrThrow(Long id) {
         return productRepository.findById(id)
@@ -294,3 +355,18 @@ public class ProductService {
         return ProductDto.fromEntity(product);
     }
 }
+=======
+    @Transactional(readOnly = true)
+    public Optional<Map<String, Object>> getWinnerView(Long productId) {
+        Bid b = bidRepository.findTopByProductProductIdOrderByCreatedAtDesc(productId);
+        if (b == null) return Optional.empty();
+
+        return Optional.of(java.util.Map.of(
+                "productId", productId,
+                "winnerUserId", b.getUser().getUserId(),
+                "finalPrice", b.getBidPrice()
+        ));
+    }
+
+}
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a

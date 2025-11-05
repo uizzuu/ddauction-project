@@ -4,16 +4,28 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.my.backend.common.enums.PaymentStatus;
 import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.entity.*;
+<<<<<<< HEAD
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+=======
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Positive;
+import lombok.AllArgsConstructor;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.jackson.Jacksonized;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@AllArgsConstructor
 @Data
 @Builder
+@Jacksonized
 public class ProductDto {
 
     private Long productId;
@@ -26,7 +38,12 @@ public class ProductDto {
 
     private String content;
 
+<<<<<<< HEAD
     @Min(value = 1, message = "시작 가격은 1원 이상이어야 합니다.")
+=======
+    @NotNull
+    @Positive
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
     private Long startingPrice;
 
     private Long imageId;
@@ -74,9 +91,14 @@ public class ProductDto {
                 .sellerNickName(product.getUser() != null ? product.getUser().getNickName() : null)
                 .title(product.getTitle())
                 .content(product.getContent())
+<<<<<<< HEAD
                 .startingPrice(product.getStartingPrice())
                 .imageId(firstImageId)
                 .images(imageDtos)
+=======
+                .startingPrice(product.getStartingPrice() != null ? product.getStartingPrice() : null)
+                .imageUrl(product.getImageUrl())
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
                 .oneMinuteAuction(product.isOneMinuteAuction())
                 .auctionEndTime(product.getAuctionEndTime())
                 .productStatus(product.getProductStatus())
@@ -96,6 +118,10 @@ public class ProductDto {
                 .title(this.title)
                 .content(this.content)
                 .startingPrice(this.startingPrice)
+<<<<<<< HEAD
+=======
+                .imageUrl(this.imageUrl)
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
                 .oneMinuteAuction(this.oneMinuteAuction)
                 .auctionEndTime(this.auctionEndTime)
                 .productStatus(this.productStatus)
@@ -112,4 +138,10 @@ public class ProductDto {
 
         return product;
     }
+<<<<<<< HEAD
 }
+=======
+
+
+}
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a

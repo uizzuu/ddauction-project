@@ -12,9 +12,15 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @EnableWebSocket
 @RequiredArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
+<<<<<<< HEAD
 
     private final AuctionWebSocketHandler auctionWebSocketHandler;
 
+=======
+    
+    private final AuctionWebSocketHandler auctionWebSocketHandler;
+    
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(auctionWebSocketHandler, "/ws/auction")

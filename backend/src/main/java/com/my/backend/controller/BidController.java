@@ -48,7 +48,10 @@ package com.my.backend.controller;
 
 import com.my.backend.dto.BidChartData;
 import com.my.backend.dto.auth.BidRequest;
+<<<<<<< HEAD
 import com.my.backend.dto.auth.CustomUserDetails;
+=======
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import com.my.backend.service.BidService;
 import com.my.backend.util.AuthUtil;
 import jakarta.validation.Valid;
@@ -56,11 +59,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+<<<<<<< HEAD
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+=======
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 
 @Slf4j
 @RestController
@@ -78,6 +87,7 @@ public class BidController {
      */
 
     @PostMapping("/{productId}/bid")
+<<<<<<< HEAD
     public ResponseEntity<?> placeBid(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable Long productId,
@@ -94,6 +104,13 @@ public class BidController {
         Long bidPrice = body.get("bidPrice");
 
         return bidService.placeBid(userId, productId, bidPrice);
+=======
+    public ResponseEntity<?> placeBid(@PathVariable Long productId,
+                                      @Valid @RequestBody BidRequest request,
+                                      Authentication auth) {
+        Long userId = authUtil.extractUserId(auth);
+        return bidService.placeBid(userId, productId, request.getBidPrice());
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
     }
 
     /**

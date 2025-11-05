@@ -41,6 +41,7 @@ public class BookMarkController {
      */
     @GetMapping("/count")
     public ResponseEntity<Long> getBookMarkCount(@RequestParam Long productId) {
+        System.out.println("API 테스트");
         return ResponseEntity.ok(bookMarkService.getBookMarkCount(productId));
     }
 

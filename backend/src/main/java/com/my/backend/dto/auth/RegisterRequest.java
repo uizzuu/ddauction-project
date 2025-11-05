@@ -11,8 +11,13 @@ public class RegisterRequest {
 
     @NotBlank(message = "이름은 필수입니다")
     @Size(min = 2, max = 10, message = "이름은 2~10자여야 합니다")
+<<<<<<< HEAD
     @Pattern(regexp = "^[가-힣a-zA-Z]+$",
             message = "이름은 한글 또는 영어만 입력 가능합니다")
+=======
+    @Pattern(regexp = "^[가-힣]+$",
+            message = "이름은 한글만 입력 가능합니다")
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
     private String userName;
 
     @NotBlank(message = "닉네임은 필수입니다")
@@ -27,7 +32,11 @@ public class RegisterRequest {
 
     @NotBlank(message = "전화번호는 필수입니다")
     @Pattern(regexp = "^\\d{10,11}$",
+<<<<<<< HEAD
             message = "올바른 전화번호 형식이 아닙니다 (예: 01012345678)")
+=======
+            message = "올바른 전화번호 형식이 아닙니다 (예: 010-1234-5678)")
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
     private String phone;
 
     @NotBlank(message = "이메일은 필수입니다")

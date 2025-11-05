@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ===================================
 # 공통 설정
 # ===================================
@@ -43,11 +44,82 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET:vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbbPLAINTEXT}
+=======
+#server:
+#  port: 8080
+#
+#spring:
+#  profiles:
+#    group:
+#      local:
+#        - common
+#      prod:
+#        - common
+#  config:
+#    activate:
+#      on-profile: common
+#
+#  datasource:
+#    url: ${DB_URL}
+#    username: ${DB_USERNAME}
+#    password: ${DB_PASSWORD}
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#  jpa:
+#    database-platform: org.hibernate.dialect.MySQLDialect
+#    hibernate:
+#      ddl-auto: update
+#    properties:
+#      hibernate:
+#        show_sql: true
+#        format_sql: true
+#        jdbc:
+#          time_zone: Asia/Seoul
+#  jackson:
+#    time-zone: Asia/Seoul
+#
+#spring:
+#  config:
+#    import: optional:classpath:secretkey.properties
+#
+#jwt:
+#  secret: ${JWT_SECRET}
+#  access-token-expiration: 2592000000
+#  refresh-token-expiration: 2592000000
+#
+#app:
+#  allowed-origins: http://localhost:3000,http://localhost,http://localhost:5173
+#
+#---
+#spring:
+#  config:
+#    activate:
+#      on-profile: prod
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://${RDS_ENDPOINT}:3306/auction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+#    username: ${SPRING_DATASOURCE_USERNAME}
+#    password: ${SPRING_DATASOURCE_PASSWORD}
+#  jpa:
+#    database-platform: org.hibernate.dialect.MySQLDialect
+#    hibernate:
+#      ddl-auto: update
+#    properties:
+#      hibernate:
+#        show_sql: false
+#        jdbc:
+#          time_zone: Asia/Seoul
+#  jackson:
+#    time-zone: Asia/Seoul
+#
+#app:
+#  allowed-origins: ${ALLOWED_ORIGINS}
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 
 server:
   port: 8080
   forward-headers-strategy: NATIVE
 
+<<<<<<< HEAD
 app:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost,http://localhost:5173}
 
@@ -72,11 +144,32 @@ spring:
       on-profile: local
   ssl:
     enabled: false
+=======
+spring:
+  profiles:
+    group:
+      local:
+        - common
+      prod:
+        - common
+  config:
+    activate:
+      on-profile: common
+    import: optional:classpath:secretkey.properties
+
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
   datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+<<<<<<< HEAD
     url: ${DB_URL:jdbc:mysql://localhost:3306/ddauction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:1111}
+=======
+
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
@@ -87,15 +180,27 @@ spring:
         format_sql: true
         jdbc:
           time_zone: Asia/Seoul
+
   jackson:
     time-zone: Asia/Seoul
 
+<<<<<<< HEAD
   security:
     oauth2:
       client:
         registration:
           google:
             redirect-uri: "http://localhost:8080/login/oauth2/code/google"
+=======
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 2592000000  # 30일
+  refresh-token-expiration: 2592000000
+
+app:
+  allowed-origins: http://localhost:3000,http://localhost,http://localhost:5173
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 
           naver:
             redirect-uri: "http://localhost:8080/login/oauth2/code/naver"
@@ -118,11 +223,13 @@ spring:
   config:
     activate:
       on-profile: prod
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${RDS_ENDPOINT}:3306/ddauction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${RDS_ENDPOINT}:3306/auction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
     hibernate:
@@ -132,6 +239,7 @@ spring:
         show_sql: false
         jdbc:
           time_zone: Asia/Seoul
+
   jackson:
     time-zone: Asia/Seoul
 

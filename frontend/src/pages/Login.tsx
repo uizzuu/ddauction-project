@@ -46,10 +46,17 @@ export default function Login({ setUser }: Props) {
         headers: { "Content-Type": "application/json",  },
         body: JSON.stringify(form),
       });
+      console.log("로그인 response status:", response.status);
 
       if (response.ok) {
+<<<<<<< HEAD
         // 응답 헤더에서 토큰 추출
       const authHeader = response.headers.get("Authorization");
+=======
+        // ✅ 응답 헤더에서 토큰 추출
+      const authHeader = response.headers.get("Authorization");
+      console.log("Authorization 헤더:", authHeader);
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
       
       if (!authHeader) {
         throw new Error("토큰을 받지 못했습니다");
@@ -57,10 +64,19 @@ export default function Login({ setUser }: Props) {
       
       // "Bearer " 제거
       const token = authHeader.replace("Bearer ", "");
+<<<<<<< HEAD
       
       localStorage.setItem("token", token);
       
       // 사용자 정보는 별도로 가져와야 함
+=======
+      console.log("추출된 token:", token);
+      
+      localStorage.setItem("token", token);
+      console.log("저장된 token:", localStorage.getItem("token"));
+      
+      // ✅ 사용자 정보는 별도로 가져와야 함
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
       const userResponse = await fetch("/api/users/me", {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -72,6 +88,26 @@ export default function Login({ setUser }: Props) {
         setUser(userData);
       }
       
+<<<<<<< HEAD
+=======
+      // JWT 테스트
+      const testRes = await fetch("/api/some-protected", {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      });
+      
+      console.log("Bearer:", token);
+      console.log("테스트 응답:", testRes.status);
+      
+      if (testRes.ok) {
+        console.log("✅ JWT 테스트 성공!");
+      } else {
+        console.error("❌ JWT 테스트 실패:", testRes.status);
+      }
+      
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
       navigate("/");
       
     } else {

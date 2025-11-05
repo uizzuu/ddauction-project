@@ -6,7 +6,7 @@ import com.my.backend.entity.board.Article;
 import com.my.backend.entity.board.Comment;
 import com.my.backend.repository.board.CommentRepository;
 import com.my.backend.repository.board.ArticleRepository;
-import com.my.backend.repository.UserRepository;
+import com.my.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;

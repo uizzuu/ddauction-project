@@ -1,8 +1,13 @@
 package com.my.backend.service;
 
+<<<<<<< HEAD
 import com.my.backend.common.enums.PaymentStatus;
 import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.entity.Bid;
+=======
+import com.my.backend.entity.Bid;
+import com.my.backend.entity.Payment;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import com.my.backend.entity.Product;
 import com.my.backend.repository.BidRepository;
 import com.my.backend.repository.ProductRepository;
@@ -38,7 +43,11 @@ public class AuctionSchedulerService {
         // 종료 시간이 지났고 아직 ACTIVE 인 1분 경매만 조회
         List<Product> expiredActives = productRepository
                 .findByOneMinuteAuctionTrueAndProductStatusAndAuctionEndTimeBefore(
+<<<<<<< HEAD
                         ProductStatus.ACTIVE, now
+=======
+                        Product.ProductStatus.ACTIVE, now
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
                 );
 
         if (expiredActives.isEmpty()) {
@@ -72,7 +81,11 @@ public class AuctionSchedulerService {
             Product product = opt.get();
 
             // 멱등 가드: 이미 CLOSED 처리돼 있으면 스킵
+<<<<<<< HEAD
             if (product.getProductStatus() != ProductStatus.ACTIVE) {
+=======
+            if (product.getProductStatus() != Product.ProductStatus.ACTIVE) {
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
                 log.debug("[Auction] 이미 처리된 경매 스킵: productId={}, status={}", productId, product.getProductStatus());
                 return;
             }
@@ -89,8 +102,13 @@ public class AuctionSchedulerService {
 
             if (highest != null) {
                 // 상품 상태 전이
+<<<<<<< HEAD
                 product.setProductStatus(ProductStatus.CLOSED);
                 product.setPaymentStatus(PaymentStatus.PENDING); // 결제 대기
+=======
+                product.setProductStatus(Product.ProductStatus.CLOSED);
+                product.setPaymentStatus(Payment.PaymentStatus.PENDING); // 결제 대기
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
                 product.setPaymentUserId(highest.getUser().getUserId());
 
                 // 최종가 반영 (price가 현재가라면 그대로 업데이트)
@@ -109,7 +127,11 @@ public class AuctionSchedulerService {
 
             } else {
                 // 유찰: 입찰자가 없음
+<<<<<<< HEAD
                 product.setProductStatus(ProductStatus.CLOSED);
+=======
+                product.setProductStatus(Product.ProductStatus.CLOSED);
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
                 productRepository.saveAndFlush(product);
 
                 log.info("[Auction] 경매 종료(유찰): productId={}", product.getProductId());

@@ -67,15 +67,24 @@ package com.my.backend.service;
 //}
 
 
+<<<<<<< HEAD
 import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidChartData;
 import com.my.backend.dto.BidResponse;
+=======
+import com.my.backend.dto.BidChartData;
+import com.my.backend.dto.board.BidResponse;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import com.my.backend.entity.Bid;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.User;
 import com.my.backend.repository.BidRepository;
 import com.my.backend.repository.ProductRepository;
+<<<<<<< HEAD
 import com.my.backend.repository.UserRepository;
+=======
+import com.my.backend.repository.user.UserRepository;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import com.my.backend.websocket.AuctionWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -106,6 +115,7 @@ public class BidService {
 
     private static final long MIN_BID_INCREMENT = 1000; // 최소 입찰 단위
 
+<<<<<<< HEAD
     /**
      * 입찰하기
      */
@@ -115,6 +125,12 @@ public class BidService {
             // 401 Unauthorized 대신, 인증이 필수인데 데이터가 누락된 상황으로 간주하여
             // IllegalArgumentException을 던져서 catch 블록에서 400 Bad Request를 반환하도록 처리
             return ResponseEntity.status(401).body(Map.of("error", "로그인 세션이 만료되었거나 유효하지 않습니다."));
+=======
+    /** 입찰하기 */
+    public ResponseEntity<?> placeBid(Long userId, Long productId, Long bidPrice) {
+        if (userId == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "인증이 필요합니다."));
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
         }
 
         try {
@@ -131,13 +147,18 @@ public class BidService {
                     LocalDateTime.now().isAfter(product.getAuctionEndTime()))
                 throw new IllegalArgumentException("경매가 이미 종료되었습니다.");
 
+<<<<<<< HEAD
             if (product.getProductStatus() != ProductStatus.ACTIVE)
+=======
+            if (product.getProductStatus() != Product.ProductStatus.ACTIVE)
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
                 throw new IllegalArgumentException("입찰이 가능한 상태의 상품이 아닙니다.");
 
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
             // =-=-=-=-=-=-=-=-= 입찰 관련 비즈니스 로직 시작
+<<<<<<< HEAD
             // 현재 최고 입찰 가격 조회 (첫 입찰도 안전하게 처리)
             Bid top = bidRepository.findTopByProductProductIdOrderByCreatedAtDesc(productId);
             Long current = (top != null) ? top.getBidPrice() : 0L;   // 첫 입찰이면 0원
@@ -149,6 +170,18 @@ public class BidService {
                         String.format("입찰가는 현재가보다 최소 %,d원 이상 높아야 합니다.", MIN_BID_INCREMENT)
                 );
             }
+=======
+            // 현재 최고 입찰 가격
+            Bid top = bidRepository.findTopByProductProductIdOrderByCreatedAtDesc(productId);
+
+            // 현재 최고 입찰가
+            Long current = top.getBidPrice();
+            Long minNext = current + MIN_BID_INCREMENT;
+
+            // 현재 최고 입찰가 보다 1,000원 높아야 입찰 가능
+            if (bidPrice.compareTo(minNext) < 0)
+                throw new IllegalArgumentException(String.format("입찰가는 현재가보다 최소 %,d원 이상 높아야 합니다.", MIN_BID_INCREMENT));
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 
             // =-=-=-=-=-=-=-=-= 입찰 관련 비즈니스 로직 끝
 
@@ -193,9 +226,13 @@ public class BidService {
         }
     }
 
+<<<<<<< HEAD
     /**
      * 상품별 입찰 내역 조회
      */
+=======
+    /** 상품별 입찰 내역 조회 */
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
     @Transactional(readOnly = true)
     public ResponseEntity<?> getBidHistory(Long productId) {
         try {
@@ -204,6 +241,7 @@ public class BidService {
             List<Bid> bids = bidRepository.findByProductProductIdOrderByCreatedAtDesc(product.getProductId());
 
             List<BidController.BidHistoryItem> resp = bids.stream()
+<<<<<<< HEAD
                     .map(b -> {
                         User user = b.getUser(); // User 객체 획득
                         Long userId = (user != null) ? user.getUserId() : null; // 널 체크
@@ -219,6 +257,17 @@ public class BidService {
                                         : b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                         );
                     })
+=======
+                    .map(b -> new BidController.BidHistoryItem(
+                            b.getBidId(),
+                            b.getProduct().getProductId(),
+                            b.getUser().getUserId(),
+                            b.getBidPrice(),
+                            b.getCreatedAt() == null
+                                    ? null
+                                    : b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                    ))
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
                     .toList();
 
             return ResponseEntity.ok(resp);
@@ -231,9 +280,13 @@ public class BidService {
         }
     }
 
+<<<<<<< HEAD
     /**
      * 최고 입찰자 조회
      */
+=======
+    /** 최고 입찰자 조회 */
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
     @Transactional(readOnly = true)
     public Bid getHighestBid(Long productId) {
         return bidRepository.findTopByProductProductIdOrderByCreatedAtDesc(productId);

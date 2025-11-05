@@ -3,8 +3,12 @@ package com.my.backend.service;
 import com.my.backend.dto.UserDto;
 import com.my.backend.entity.Address;
 import com.my.backend.entity.User;
+<<<<<<< HEAD
 import com.my.backend.repository.AddressRepository;
 import com.my.backend.repository.UserRepository;
+=======
+import com.my.backend.repository.user.UserRepository;
+>>>>>>> 38e217f1fd6bb40ed328539545fddb13d58d817a
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;

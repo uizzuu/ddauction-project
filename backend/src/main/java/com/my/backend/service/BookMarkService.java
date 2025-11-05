@@ -6,7 +6,7 @@ import com.my.backend.entity.Product;
 import com.my.backend.entity.User;
 import com.my.backend.repository.BookMarkRepository;
 import com.my.backend.repository.ProductRepository;
-import com.my.backend.repository.UserRepository;
+import com.my.backend.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
