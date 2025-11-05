@@ -214,6 +214,7 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
+<<<<<<< HEAD
     // 최신 등록 상품 1개 조회 - 이미지 리스트 포함
     public ProductDto getLatestProduct() {
         Product latestProduct = productRepository.findTopByProductStatusOrderByCreatedAtDesc(ProductStatus.ACTIVE);
@@ -228,12 +229,60 @@ public class ProductService {
                 .map(ImageDto::fromEntity)
                 .collect(Collectors.toList());
         dto.setImages(images);
+=======
+    // 내부 헬퍼 메서드
+    private Product findProductOrThrow(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));
+    }
+
+    private User findUserOrThrow(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자가 존재하지 않습니다."));
+    }
+
+    private Category findCategoryOrThrow(Long id) {
+        return categoryRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "카테고리가 존재하지 않습니다."));
+    }
+
+    private Bid findBidOrNull(Long id) {
+        if (id == null) return null;
+        return bidRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "입찰 정보가 존재하지 않습니다."));
+    }
+
+    private Payment findPaymentOrNull(Long id) {
+        if (id == null) return null;
+        return paymentRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "결제 정보가 존재하지 않습니다."));
+    }
+
+    private Image findImageOrNull(Long id) {
+        if (id == null) return null;
+        return imageRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "이미지가 존재하지 않습니다."));
+    }
+
+    // 최신 등록 상품 1개 조회
+
+    public ProductDto getLatestProduct() {
+        Product latestProduct = productRepository.findTopByProductStatusOrderByCreatedAtDesc(ProductStatus.ACTIVE);
+
+        if (latestProduct == null) return null;
+
+        // 이미지 없는 경우 빈 리스트로 초기화
+        if (latestProduct.getImages() == null) {
+            latestProduct.setImages(List.of());
+        }
+>>>>>>> d93fef2 (배너 출력수정)
 
         return dto;
     }
 
     // 종료(마감) 임박 상품 조회 - 이미지 리스트 포함
     public ProductDto getEndingSoonProduct() {
+<<<<<<< HEAD
         Product product = productRepository
                 .findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
                         ProductStatus.ACTIVE, LocalDateTime.now()
@@ -251,6 +300,18 @@ public class ProductService {
         dto.setImages(images);
 
         return dto;
+=======
+        Product endingProduct = productRepository.findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
+                ProductStatus.ACTIVE, LocalDateTime.now());
+
+        if (endingProduct == null) return null;
+
+        if (endingProduct.getImages() == null) {
+            endingProduct.setImages(List.of());
+        }
+
+        return ProductDto.fromEntity(endingProduct);
+>>>>>>> d93fef2 (배너 출력수정)
     }
 
     // 페이지네이션 검색 - 이미지 리스트 포함
