@@ -257,3 +257,80 @@ export async function deleteComment(commentId: number): Promise<void> {
 
   if (!response.ok) throw new Error("댓글 삭제 실패");
 }
+
+// ------------------- 결제 API ------------------- //
+
+// 낙찰 정보 조회
+export async function getWinningInfo(productId: number): Promise<{
+  productId: number;
+  productTitle: string;
+  productImage: string | null;
+  bidPrice: number;
+  sellerName: string;
+}> {
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/bid/${productId}/winning-info`
+  );
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "낙찰 정보 조회 실패");
+  }
+  return response.json();
+}
+
+// 결제 준비
+export async function preparePayment(productId: number): Promise<{
+  impCode: string;
+  merchantUid: string;
+  name: string;
+  amount: number;
+  buyerEmail: string;
+  buyerName: string;
+  buyerTel: string;
+}> {
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/payments/portone/prepare`,
+    {
+      method: "POST",
+      body: JSON.stringify({ productId }),
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "결제 준비 실패");
+  }
+  return response.json();
+}
+
+// 결제 완료 검증
+export async function completePayment(data: {
+  imp_uid: string;
+  productId: number;
+  merchant_uid: string;
+}): Promise<void> {
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/payments/portone/complete`,
+    {
+      method: "POST",
+      body: JSON.stringify(data),
+    }
+  );
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "결제 검증 실패");
+  }
+}
+
+// 낙찰자 확인
+export async function checkWinner(productId: number): Promise<{
+  isWinner: boolean;
+  bidPrice?: number;
+  message?: string;
+}> {
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/bid/${productId}/winner`
+  );
+  if (!response.ok) throw new Error("낙찰자 확인 실패");
+  return response.json();
+}
+

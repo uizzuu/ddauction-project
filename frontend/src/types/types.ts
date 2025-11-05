@@ -227,3 +227,29 @@ export type Review = {
   comments: string;
   createdAt?: string;
 }
+
+// 최종낙찰 후 결제창 관련 타입 추가
+
+export interface WinnerCheckResponse {
+  isWinner: boolean;
+  bidPrice?: number;
+  message?: string;
+}
+
+export interface WinningInfo {
+  productId: number;
+  productTitle: string;
+  productImage: string | null;
+  bidPrice: number;
+  sellerName: string;
+}
+
+export interface PaymentPrepareResponse {
+  impCode: string;
+  merchantUid: string;
+  name: string;
+  amount: number;
+  buyerEmail: string;
+  buyerName: string;
+  buyerTel: string;
+}

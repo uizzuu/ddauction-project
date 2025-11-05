@@ -13,6 +13,7 @@ import type {
   Qna,
   Bid,
   EditProductForm,
+  WinnerCheckResponse,
 } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/util";
@@ -30,6 +31,7 @@ export default function ProductDetail({ user }: Props) {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const productId = Number(id);
+
   const [product, setProduct] = useState<Product | null>(null);
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
@@ -56,6 +58,10 @@ export default function ProductDetail({ user }: Props) {
     auctionEndTime: "",
     images: [],
   });
+
+   // 낙찰자 여부 상태 추가
+  const [isWinner, setIsWinner] = useState(false);
+  const [winningBidPrice, setWinningBidPrice] = useState<number | null>(null);
 
   const mergedBids = useMemo(() => {
     const combinedBids = [...allBids, ...liveBids];
@@ -224,6 +230,56 @@ export default function ProductDetail({ user }: Props) {
     },
     [livePlaceBid, fetchAllBids]
   );
+
+    // 경매 종료 감지 및 낙찰자 확인
+      useEffect(() => {
+        if (!product?.auctionEndTime) return;
+
+      const interval = setInterval(async () => {
+      const now = new Date();
+      const endTime = new Date(product.auctionEndTime);
+      const isAuctionEnded =
+      now >= endTime || product.productStatus === "CLOSED";
+
+      if (isAuctionEnded) {
+
+       console.log("🏁 경매 종료 감지됨 — 낙찰자 확인 요청");
+       console.log("📡 요청 URL:", `${API_BASE_URL}/api/bid/${id}/winner`);
+       const token = user?.token || localStorage.getItem("token");
+       console.log("📡 토큰:", token ? "있음" : "없음");
+
+      clearInterval(interval); // 중복 실행 방지
+
+      try {
+        const token = user?.token || localStorage.getItem("token");
+        const res = await fetch(`${API_BASE_URL}/api/bid/${id}/winner`, {
+          headers: {
+            "Content-Type": "application/json",
+           Authorization: `Bearer ${token || ""}`,
+          },
+        });
+
+           console.log("📨 응답 상태:", res.status);
+        const text = await res.text();
+        console.log("📨 응답 내용:", text);
+
+        if (res.ok) {
+          const data: WinnerCheckResponse = JSON.parse(text);
+          console.log(" 낙찰자 확인 결과:", data);
+          setIsWinner(data.isWinner);
+          if (data.bidPrice) setWinningBidPrice(data.bidPrice);
+        } else {
+          console.warn(" checkWinner 요청 실패:", res.status);
+        }
+      } catch (err) {
+        console.error(" 낙찰자 확인 중 오류:", err);
+      }
+    }
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [product?.auctionEndTime, product?.productStatus, id, user?.token]);
+
 
   const auctionStartingPrice = product?.startingPrice ?? "알 수 없음";
 
@@ -703,7 +759,44 @@ export default function ProductDetail({ user }: Props) {
             </>
           )}
 
-          <div
+          {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
+          {(() => {
+  
+
+  if (!product) return null;
+
+  const auctionEnded =
+    remainingTime === "경매 종료" || product.productStatus === "CLOSED";
+
+  const shouldShowPayment = auctionEnded && isWinner;
+
+  console.log("👉 결제 버튼 표시 여부:", shouldShowPayment);
+
+  if (!shouldShowPayment) return null;
+
+  return (
+    <div style={{ textAlign: "center", marginTop: "30px" }}>
+      <button
+        onClick={() => navigate(`/payment?productId=${productId}`)}
+        style={{
+          backgroundColor: "#ff6600",
+          color: "#fff",
+          border: "none",
+          borderRadius: "8px",
+          padding: "14px 28px",
+          fontSize: "1rem",
+          cursor: "pointer",
+        }}
+      >
+        결제하기
+      </button>
+    </div>
+  );
+})()}
+
+      
+
+           <div
             style={{
               backgroundColor: "#f9f9f9",
               padding: "8px",
@@ -715,26 +808,6 @@ export default function ProductDetail({ user }: Props) {
             {product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
-
-        {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
-        {remainingTime === "경매 종료" && (
-          <div style={{ textAlign: "center", marginTop: "30px" }}>
-            <button
-              onClick={() => navigate("/payment")} // ✅ 결제 페이지로 이동
-              style={{
-                backgroundColor: "#ff6600",
-                color: "#fff",
-                border: "none",
-                borderRadius: "8px",
-                padding: "14px 28px",
-                fontSize: "1rem",
-                cursor: "pointer",
-              }}
-            >
-              결제하기
-            </button>
-          </div>
-        )}
 
         <AuctionBox
           productId={product.productId}

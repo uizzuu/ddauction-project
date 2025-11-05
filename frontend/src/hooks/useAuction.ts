@@ -13,7 +13,7 @@ export const useAuction = ({ productId }: UseAuctionProps) => {
 
   useEffect(() => {
     const wsUrl =
-      API_BASE_URL.replace("http", "ws") + `/ws/auction?productId=${productId}`;
+      API_BASE_URL.replace("http", "ws").replace("/api", "") + `/ws/auction?productId=${productId}`;
     const ws = new WebSocket(wsUrl);
     // const ws = new WebSocket(
     //   `ws://localhost:8080/ws/auction?productId=${productId}`

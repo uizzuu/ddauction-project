@@ -33,6 +33,17 @@ export default function ProductRegister({ user }: Props) {
     setMinDateTime(now);
   }, []);
 
+  // 수정된 코드 (윤서)
+//   const formatWithoutTZ = (date: Date) => {
+//   const y = date.getFullYear();
+//   const m = String(date.getMonth() + 1).padStart(2, "0");
+//   const d = String(date.getDate()).padStart(2, "0");
+//   const hh = String(date.getHours()).padStart(2, "0");
+//   const mm = String(date.getMinutes()).padStart(2, "0");
+//   const ss = String(date.getSeconds()).padStart(2, "0");
+//   return `${y}-${m}-${d}T${hh}:${mm}:${ss}`;  //  타임존 제거
+// };
+
   // DatePicker 변경 시 form도 업데이트
   const handleDateChange = (date: Date | null) => {
     setAuctionEndDate(date);
@@ -52,6 +63,15 @@ export default function ProductRegister({ user }: Props) {
       }));
       setError("");
     }
+// (윤서)
+//   if (date) {
+//     const formatted = formatWithoutTZ(date); // KST로 전환
+//     setForm((prev) => ({
+//       ...prev,
+//       auctionEndTime: formatted,
+//     }));
+//     setError("");
+//   }
   };
 
   // 카테고리 로드
@@ -92,6 +112,11 @@ export default function ProductRegister({ user }: Props) {
       console.log("🔹 검증 실패:", validationError); // 🔹 검증 실패 로그
       return;
     }
+    // 추가: 카테고리 선택 안 했으면 막기(윤서)
+    if (!form.categoryId || form.categoryId <= 0) {
+    setError("카테고리를 반드시 선택해야 합니다.");
+    return;
+    }
 
     const token = localStorage.getItem("token");
     if (!token || !user) {
@@ -113,6 +138,8 @@ export default function ProductRegister({ user }: Props) {
       const seconds = String(end.getSeconds()).padStart(2, "0");
 
       auctionEndTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+// 윤서
+//      auctionEndTime = formatWithoutTZ(end);
     } else {
       const end = new Date(form.auctionEndTime);
       if (isNaN(end.getTime())) {
@@ -148,7 +175,7 @@ export default function ProductRegister({ user }: Props) {
         { type: "application/json" }
       );
 
-      formData.append("product", productBlob, "product.json"); // Spring 쪽 @RequestPart("dto")로 받음,Blob으로 전송 (파일명 제거)
+      formData.append("product", productBlob); // Spring 쪽 @RequestPart("dto")로 받음,Blob으로 전송 (파일명 제거)
       productBlob.text().then(text => console.log("Blob JSON 확인:", text));
 
       // 이미지 파일 추가
