@@ -213,7 +213,7 @@ export default function ProductRegister({ user }: Props) {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        credentials: "include",
+        // credentials: "include",
         body: JSON.stringify({
           // FormData 대신 JSON
           title: form.title,
