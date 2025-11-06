@@ -16,7 +16,7 @@ export default function Main() {
   const [current, setCurrent] = useState(0);
   const [imageFailed, setImageFailed] = useState<boolean[]>([]);
 
-  // 상품 목록 불러오기 (신상 상품)
+  // 신상 상품 불러오기
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -26,8 +26,7 @@ export default function Main() {
       const sorted = data
         .sort(
           (a, b) =>
-            new Date(b.createdAt || "").getTime() -
-            new Date(a.createdAt || "").getTime()
+            new Date(b.createdAt || "").getTime() - new Date(a.createdAt || "").getTime()
         )
         .slice(0, 10);
       setProducts(sorted);
@@ -39,7 +38,7 @@ export default function Main() {
     }
   };
 
-  // 배너용 상품 불러오기
+  // 배너 상품 불러오기
   const fetchBannerProducts = async () => {
     try {
       const [topRes, latestRes, endingRes] = await Promise.all([
@@ -54,8 +53,9 @@ export default function Main() {
         );
       }
 
-      const [topData, latestData, endingData]: [Product[], Product, Product] =
-        await Promise.all([topRes.json(), latestRes.json(), endingRes.json()]);
+      const topData: Product[] = await topRes.json();
+      const latestData: Product = await latestRes.json();
+      const endingData: Product = await endingRes.json();
 
       setBanners([
         {
@@ -88,13 +88,16 @@ export default function Main() {
     }
   };
 
-  // 컴포넌트 마운트 시 데이터 불러오기
+  // 배너 데이터가 바뀔 때 imageFailed 초기화
+  useEffect(() => {
+    setImageFailed(new Array(banners.length).fill(false));
+  }, [banners]);
+
   useEffect(() => {
     fetchProducts();
     fetchBannerProducts();
   }, []);
 
-  // 배너 이전/다음
   const handlePrev = () =>
     setCurrent((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
   const handleNext = () =>
@@ -121,15 +124,19 @@ export default function Main() {
           </>
         ) : (
           <>
-            <div className="flex-box width-full height-full trans duration-500">
+            <div className="width-full height-full position-rl">
               {banners.map((b, i) => (
                 <div
                   key={i}
-                  className="banner-slide position-rl width-full height-500"
+                  className="banner-slide position-ab width-full height-500"
                   onClick={() =>
                     b.product && navigate(`/products/${b.product.productId}`)
                   }
-                  style={{ cursor: b.product ? "pointer" : "default" }}
+                  style={{
+                    cursor: b.product ? "pointer" : "default",
+                    transform: `translateX(${(i - current) * 100}%)`,
+                    transition: "transform 0.5s ease",
+                  }}
                 >
                   {b.image && !imageFailed[i] ? (
                     <>
@@ -213,14 +220,13 @@ export default function Main() {
                 onClick={() => navigate(`/products/${p.productId}`)}
               >
                 <div className="product-image height-220">
-                  {p.images && p.images.length > 0 ? (
+                  {p.images && p.images.length > 0 && p.images[0]?.imagePath ? (
                     <img
-                      src={
-                        p.images[0]?.imagePath
-                          ? `${API_BASE_URL}${p.images[0].imagePath}`
-                          : ""
-                      }
+                      src={`${API_BASE_URL}${p.images[0].imagePath}`}
                       alt={p.title}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/no-image.png";
+                      }}
                     />
                   ) : (
                     <div className="no-image-txt">이미지 없음</div>

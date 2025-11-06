@@ -4,6 +4,7 @@ import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -11,6 +12,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
+
+    @EntityGraph(attributePaths = "images")
+    Product findTopByProductStatusOrderByCreatedAtDesc(ProductStatus productStatus);
+
+    @EntityGraph(attributePaths = "images")
+    Product findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
+            ProductStatus productStatus, LocalDateTime now);
 
     // 판매자 기준 조회
     List<Product> findByUserUserId(Long userId);
@@ -31,12 +39,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             ProductStatus status,
             LocalDateTime endTime
     );
-    // 활성화 상품 중 최신 등록 상품 하나 조회
-    Product findTopByProductStatusOrderByCreatedAtDesc(ProductStatus productStatus);
-
-    // 곧 종료되는 상품 1개 조회
-    Product findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
-            ProductStatus productStatus, LocalDateTime now);
 
     Page<Product> findByTitleContaining(String keyword, Pageable pageable);
     Page<Product> findByCategory_CategoryId(Long categoryId, Pageable pageable);

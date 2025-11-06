@@ -1,298 +1,3 @@
-//package com.my.auction.service;
-//
-//import com.fasterxml.jackson.databind.ObjectMapper;
-//import com.my.auction.config.PaymentProperties;
-//import com.my.auction.dto.portone.*;
-//import com.my.auction.entity.Product;
-//import com.my.auction.entity.User;
-//import com.my.auction.repository.product.ProductRepository;
-//import com.my.auction.repository.user.UserRepository;
-//import lombok.RequiredArgsConstructor;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.http.*;
-//import org.springframework.stereotype.Service;
-//import org.springframework.transaction.annotation.Transactional;
-//import org.springframework.web.client.HttpStatusCodeException;
-//import org.springframework.web.client.RestTemplate;
-//
-//import java.time.LocalDateTime;
-//import java.util.HashMap;
-//import java.util.Map;
-//
-//@Slf4j
-//@Service
-//@RequiredArgsConstructor
-//@Transactional
-//public class PortOnePaymentService {
-//
-//    private final ProductRepository productRepository;
-//    private final UserRepository userRepository;
-//    private final PaymentProperties props;
-//    private final RestTemplate restTemplate;
-//    private final ObjectMapper objectMapper;
-//
-//    private static final String PORTONE_API_BASE = "https://api.iamport.kr";
-//    private static final String GET_TOKEN_URL = PORTONE_API_BASE + "/users/getToken";
-//    private static final String VERIFY_PAYMENT_URL = PORTONE_API_BASE + "/payments/";
-//    private static final String CANCEL_PAYMENT_URL = PORTONE_API_BASE + "/payments/cancel";
-//
-//    /**
-//     * 결제 준비 (클라이언트에서 필요한 정보 반환)
-//     */
-//    public Map<String, Object> preparePayment(Long productId, Long userId) {
-//        Product product = productRepository.findById(productId)
-//                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-//
-//        User buyer = userRepository.findById(userId)
-//                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-//
-//        // 검증
-//        validatePayment(product, userId);
-//
-//        // 주문번호 생성 (유니크해야 함)
-//        String merchantUid = "ORDER-" + productId + "-" + userId + "-" + System.currentTimeMillis();
-//
-//        // 클라이언트에서 결제 시 사용할 정보 반환
-//        Map<String, Object> paymentInfo = new HashMap<>();
-//        paymentInfo.put("impCode", props.getPortone().getImpCode());
-//        paymentInfo.put("merchantUid", merchantUid);
-//        paymentInfo.put("name", product.getTitle());
-//        paymentInfo.put("amount", product.getPrice());
-//        paymentInfo.put("buyerEmail", buyer.getEmail());
-//        paymentInfo.put("buyerName", buyer.getUserName());
-//        paymentInfo.put("buyerTel", buyer.getPhone());
-//
-//        log.info("결제 준비 완료: merchantUid={}, productId={}, userId={}",
-//                merchantUid, productId, userId);
-//
-//        return paymentInfo;
-//    }
-//
-//    /**
-//     * 결제 검증 및 완료 처리
-//     */
-//    public PortOnePaymentResponse verifyAndComplete(String impUid, Long productId, Long userId) {
-//
-//        // 1. Access Token 발급
-//        String accessToken = getAccessToken();
-//
-//        // 2. 결제 정보 조회
-//        PortOnePaymentResponse paymentInfo = getPaymentInfo(impUid, accessToken);
-//
-//        // 3. 결제 검증
-//        validatePaymentInfo(paymentInfo, productId, userId);
-//
-//        // 4. 상품 상태 업데이트
-//        updateProductAfterPayment(productId, userId, paymentInfo);
-//
-//        log.info("결제 완료: impUid={}, merchantUid={}, amount={}",
-//                impUid,
-//                paymentInfo.getResponse().getMerchantUid(),
-//                paymentInfo.getResponse().getPaidAmount());
-//
-//        return paymentInfo;
-//    }
-//
-//    /**
-//     * Access Token 발급
-//     */
-//    private String getAccessToken() {
-//        try {
-//            Map<String, String> body = new HashMap<>();
-//            body.put("imp_key", props.getPortone().getApiKey());
-//            body.put("imp_secret", props.getPortone().getApiSecret());
-//
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//            HttpEntity<Map<String, String>> entity = new HttpEntity<>(body, headers);
-//
-//            ResponseEntity<PortOneTokenResponse> response = restTemplate.postForEntity(
-//                    GET_TOKEN_URL,
-//                    entity,
-//                    PortOneTokenResponse.class
-//            );
-//
-//            if (response.getBody() == null || response.getBody().getResponse() == null) {
-//                throw new IllegalStateException("토큰 발급 실패: 응답이 비어있습니다.");
-//            }
-//
-//            String token = response.getBody().getResponse().getAccess_token();
-//            log.info("PortOne Access Token 발급 성공");
-//            return token;
-//
-//        } catch (HttpStatusCodeException e) {
-//            log.error("토큰 발급 실패: {} {}", e.getStatusCode(), e.getResponseBodyAsString());
-//            throw new RuntimeException("PortOne 토큰 발급 실패: " + e.getMessage());
-//        } catch (Exception e) {
-//            log.error("토큰 발급 중 오류", e);
-//            throw new RuntimeException("토큰 발급 중 오류: " + e.getMessage());
-//        }
-//    }
-//
-//    /**
-//     * 결제 정보 조회
-//     */
-//    private PortOnePaymentResponse getPaymentInfo(String impUid, String accessToken) {
-//        try {
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.set("Authorization", "Bearer " + accessToken);
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//            HttpEntity<Void> entity = new HttpEntity<>(headers);
-//
-//            ResponseEntity<PortOnePaymentResponse> response = restTemplate.exchange(
-//                    VERIFY_PAYMENT_URL + impUid,
-//                    HttpMethod.GET,
-//                    entity,
-//                    PortOnePaymentResponse.class
-//            );
-//
-//            if (response.getBody() == null) {
-//                throw new IllegalStateException("결제 정보 조회 실패: 응답이 비어있습니다.");
-//            }
-//
-//            PortOnePaymentResponse paymentInfo = response.getBody();
-//
-//            if (paymentInfo.getCode() != 0) {
-//                throw new IllegalStateException("결제 정보 조회 실패: " + paymentInfo.getMessage());
-//            }
-//
-//            return paymentInfo;
-//
-//        } catch (HttpStatusCodeException e) {
-//            log.error("결제 정보 조회 실패: {} {}", e.getStatusCode(), e.getResponseBodyAsString());
-//            throw new RuntimeException("결제 정보 조회 실패: " + e.getMessage());
-//        }
-//    }
-//
-//    /**
-//     * 결제 취소
-//     */
-//    public void cancelPayment(String impUid, Long productId, Long userId, String reason) {
-//        Product product = productRepository.findById(productId)
-//                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-//
-//        // 권한 확인
-//        if (!product.getPaymentUserId().equals(userId)) {
-//            throw new IllegalArgumentException("결제 취소 권한이 없습니다.");
-//        }
-//
-//        try {
-//            String accessToken = getAccessToken();
-//
-//            Map<String, Object> body = new HashMap<>();
-//            body.put("imp_uid", impUid);
-//            body.put("reason", reason);
-//            body.put("checksum", product.getAmount());  // 취소 가능 금액
-//
-//            HttpHeaders headers = new HttpHeaders();
-//            headers.set("Authorization", "Bearer " + accessToken);
-//            headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-//
-//            ResponseEntity<PortOnePaymentResponse> response = restTemplate.postForEntity(
-//                    CANCEL_PAYMENT_URL,
-//                    entity,
-//                    PortOnePaymentResponse.class
-//            );
-//
-//            if (response.getBody() == null || response.getBody().getCode() != 0) {
-//                throw new IllegalStateException("결제 취소 실패");
-//            }
-//
-//            // 상품 상태 변경
-//            product.setPaymentStatus(Product.PaymentStatus.CANCELLED);
-//            product.setProductStatus(Product.ProductStatus.ACTIVE);
-//            productRepository.save(product);
-//
-//            log.info("결제 취소 완료: impUid={}, productId={}, reason={}", impUid, productId, reason);
-//
-//        } catch (Exception e) {
-//            log.error("결제 취소 실패", e);
-//            throw new RuntimeException("결제 취소 중 오류: " + e.getMessage());
-//        }
-//    }
-//
-//    /**
-//     * 결제 검증 (상품 상태, 금액 등)
-//     */
-//    private void validatePayment(Product product, Long userId) {
-//        // 1. 판매자 본인 구매 방지
-//        if (product.getSellerId().equals(userId)) {
-//            throw new IllegalArgumentException("판매자는 자신의 상품을 구매할 수 없습니다.");
-//        }
-//
-//        // 2. 상품 상태 검증
-//        if (product.getProductStatus() != Product.ProductStatus.ACTIVE) {
-//            throw new IllegalArgumentException("구매 가능한 상품이 아닙니다.");
-//        }
-//
-//        // 3. 결제 상태 검증
-//        if (product.getPaymentStatus() == Product.PaymentStatus.PAID) {
-//            throw new IllegalArgumentException("이미 결제가 완료된 상품입니다.");
-//        }
-//
-//        // 4. 1분 경매인 경우 종료 시간 검증
-//        if (product.isOneMinuteAuction() && product.getAuctionEndTime() != null) {
-//            if (LocalDateTime.now().isBefore(product.getAuctionEndTime())) {
-//                throw new IllegalArgumentException("경매가 아직 종료되지 않았습니다.");
-//            }
-//        }
-//
-//        // 5. 가격 검증
-//        if (product.getPrice() == null || product.getPrice() <= 0) {
-//            throw new IllegalStateException("상품 가격이 올바르지 않습니다.");
-//        }
-//    }
-//
-//    /**
-//     * 결제 정보 검증
-//     */
-//    private void validatePaymentInfo(PortOnePaymentResponse paymentInfo, Long productId, Long userId) {
-//        PortOnePaymentResponse.Response response = paymentInfo.getResponse();
-//
-//        // 1. 결제 상태 확인
-//        if (!"paid".equals(response.getStatus())) {
-//            throw new IllegalStateException("결제가 완료되지 않았습니다. 상태: " + response.getStatus());
-//        }
-//
-//        // 2. 결제 금액 확인
-//        Product product = productRepository.findById(productId)
-//                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-//
-//        if (!product.getPrice().equals(response.getPaidAmount().longValue())) {
-//            throw new IllegalStateException(
-//                    String.format("결제 금액 불일치: 상품가격=%d, 결제금액=%d",
-//                            product.getPrice(), response.getPaidAmount())
-//            );
-//        }
-//    }
-//
-//    /**
-//     * 결제 완료 후 상품 상태 업데이트
-//     */
-//    private void updateProductAfterPayment(Long productId, Long userId, PortOnePaymentResponse paymentInfo) {
-//        Product product = productRepository.findById(productId)
-//                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-//
-//        User buyer = userRepository.findById(userId)
-//                .orElseThrow(() -> new IllegalArgumentException("구매자를 찾을 수 없습니다."));
-//
-//        Integer paidAmount = paymentInfo.getResponse().getPaidAmount();
-//
-//        product.setProductStatus(Product.ProductStatus.SOLD);
-//        product.setPaymentStatus(Product.PaymentStatus.PAID);
-//        product.setPaymentUserId(buyer.getUserId());
-//        product.setAmount(paidAmount.longValue());
-//        productRepository.save(product);
-//
-//        log.info("상품 결제 완료 처리: productId={}, userId={}, amount={}",
-//                product.getProductId(), userId, paidAmount);
-//    }
-//}
-
 package com.my.backend.service;
 
 import com.my.backend.common.enums.PaymentStatus;
@@ -300,11 +5,8 @@ import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.config.PaymentProperties;
 import com.my.backend.dto.portone.PortOnePaymentResponse;
 import com.my.backend.dto.portone.PortOneTokenResponse;
-import com.my.backend.entity.Payment;
-import com.my.backend.entity.Product;
-import com.my.backend.entity.User;
-import com.my.backend.repository.ProductRepository;
-import com.my.backend.repository.UserRepository;
+import com.my.backend.entity.*;
+import com.my.backend.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
@@ -312,10 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static com.my.backend.common.enums.PaymentStatus.CANCELLED;
 import static com.my.backend.common.enums.PaymentStatus.PAID;
@@ -327,8 +32,11 @@ import static com.my.backend.common.enums.ProductStatus.ACTIVE;
 @Transactional
 public class PortOnePaymentService {
 
+    private final PaymentMethodRepository paymentMethodRepository;
+    private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final BidRepository bidRepository;
     private final PaymentProperties props;
     private final RestTemplate restTemplate;
 
@@ -337,62 +45,79 @@ public class PortOnePaymentService {
     private static final String VERIFY_PAYMENT_URL = PORTONE_API_BASE + "/payments/";
     private static final String CANCEL_PAYMENT_URL = PORTONE_API_BASE + "/payments/cancel";
 
-    // ========== 1) 결제 준비 ==========
-    /** 결제 준비 (클라이언트에서 필요한 정보 반환) */
-    public ResponseEntity<Map<String, Object>> preparePayment(Long productId, Long userId) {
+
+    // 결제 준비 (최종 수정본)
+    @Transactional(readOnly = true)
+    public ResponseEntity<Map<String, Object>> prepareBidPayment(Long productId, Long userId) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
+        //  최고 입찰자 조회
+        Bid winningBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
+                .orElseThrow(() -> new IllegalStateException("낙찰(최고 입찰자)이 존재하지 않습니다."));
+
+        //  경매 종료 여부 확인
+        if (product.getAuctionEndTime() == null || LocalDateTime.now().isBefore(product.getAuctionEndTime())) {
+            throw new IllegalStateException("아직 경매가 종료되지 않았습니다.");
+        }
+
+        //  낙찰 확정 여부 검증
+        if (!winningBid.isWinning()) {
+            // Lazy Close 보정: 경매가 종료되었는데 아직 낙찰 처리 안 된 경우
+            if (product.getAuctionEndTime() != null && LocalDateTime.now().isAfter(product.getAuctionEndTime())) {
+                log.warn("[prepareBidPayment] Lazy Close 보정 실행: productId={}, userId={}", productId, userId);
+                winningBid.setWinning(true);
+                bidRepository.save(winningBid);
+                product.setProductStatus(ProductStatus.CLOSED);
+                product.setPaymentStatus(PaymentStatus.PENDING);
+                product.setPaymentUserId(userId);
+                productRepository.save(product);
+            } else {
+                throw new IllegalStateException("아직 낙찰이 확정되지 않았습니다. (스케줄러가 처리 중일 수 있습니다.)");
+            }
+        }
+
+        //  현재 사용자 검증
+        if (!winningBid.getUser().getUserId().equals(userId)) {
+            throw new SecurityException("현재 사용자는 낙찰자가 아닙니다.");
+        }
+
+        //  상품 상태 검증
+        if (product.getProductStatus() != ProductStatus.CLOSED) {
+            throw new IllegalStateException("상품이 아직 종료되지 않았습니다. (status=" + product.getProductStatus() + ")");
+        }
+
+        //  결제 상태 설정 (읽기전용이라 실제 저장은 아님)
+        if (product.getPaymentStatus() == null || product.getPaymentStatus() == PaymentStatus.CANCELLED) {
+            log.info("[prepareBidPayment] 결제 상태 임시 설정: PENDING");
+        }
+
+        //  추가 검증 로직
+        validateAuctionPayment(product, winningBid);
+
+        //  결제자 정보
         User buyer = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        validatePayment(product, userId);
-
-        // 주문번호(merchant_uid) - 서버가 생성/관리
+        //  고유 주문번호 생성
         String merchantUid = "ORDER-" + productId + "-" + userId + "-" + System.currentTimeMillis();
 
+        //  결제 정보 구성
         Map<String, Object> paymentInfo = new HashMap<>();
         paymentInfo.put("impCode", props.getPortone().getImpCode());
         paymentInfo.put("merchantUid", merchantUid);
         paymentInfo.put("name", product.getTitle());
-        paymentInfo.put("amount", product.getAmount());
+        paymentInfo.put("amount", winningBid.getBidPrice());
         paymentInfo.put("buyerEmail", buyer.getEmail());
         paymentInfo.put("buyerName", buyer.getUserName());
         paymentInfo.put("buyerTel", buyer.getPhone());
 
-        log.info("결제 준비 완료: merchantUid={}, productId={}, userId={}", merchantUid, productId, userId);
-
+        log.info("[Auction] 결제 준비 완료: productId={}, userId={}, bidPrice={}", productId, userId, winningBid.getBidPrice());
         return ResponseEntity.ok(paymentInfo);
     }
 
-    // ========== 2) 결제 검증/완료 ==========
-    /** 결제 검증 및 완료 처리 (멱등) */
-    public ResponseEntity<PortOnePaymentResponse> verifyAndComplete(String impUid, Long productId, Long userId) {
-        // 멱등: 이미 결제 완료된 상품이면 그대로 성공 응답
-        Product current = productRepository.findById(productId)
-                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
-        if (current.getPaymentStatus() == PAID) {
-            log.info("이미 결제 완료된 상품 요청 무시(멱등): productId={}, paidBy={}", productId, current.getPaymentUserId());
-            // PortOne에서 최신 내역을 한 번 조회해 결과를 그대로 반환(프런트 일관성)
-            String token = getAccessToken();
-            PortOnePaymentResponse last = getPaymentInfo(impUid, token);
-            return ResponseEntity.ok(last);
-        }
 
-        String accessToken = getAccessToken();
-        PortOnePaymentResponse paymentInfo = getPaymentInfo(impUid, accessToken);
-
-        validatePaymentInfo(paymentInfo, productId, userId);
-        updateProductAfterPayment(productId, userId, paymentInfo);
-
-        var resp = paymentInfo.getResponse();
-        log.info("결제 완료: impUid={}, merchantUid={}, amount={}",
-                impUid, resp.getMerchantUid(), resp.getPaidAmount());
-
-        return ResponseEntity.ok(paymentInfo); // 멱등: 이미 PAID여도 동일 결과 반환하도록 서비스에서 처리
-    }
-
-    // ========== 3) 토큰 ==========
+    // ==================== 토큰 발급 ====================
     private String getAccessToken() {
         try {
             Map<String, String> body = new HashMap<>();
@@ -405,24 +130,19 @@ public class PortOnePaymentService {
             ResponseEntity<PortOneTokenResponse> response = restTemplate.postForEntity(
                     GET_TOKEN_URL, new HttpEntity<>(body, headers), PortOneTokenResponse.class);
 
-            if (response.getBody() == null || response.getBody().getResponse() == null) {
+            if (response.getBody() == null || response.getBody().getResponse() == null)
                 throw new IllegalStateException("토큰 발급 실패: 응답이 비어있습니다.");
-            }
-            String token = response.getBody().getResponse().getAccess_token();
-            // 토큰 값 자체는 로깅하지 않음
-            log.info("PortOne Access Token 발급 성공");
-            return token;
 
-        } catch (HttpStatusCodeException e) {
-            log.error("토큰 발급 실패: {} {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new RuntimeException("PortOne 토큰 발급 실패");
+            log.info("PortOne Access Token 발급 성공");
+            return response.getBody().getResponse().getAccess_token();
+
         } catch (Exception e) {
-            log.error("토큰 발급 중 오류", e);
-            throw new RuntimeException("토큰 발급 중 오류");
+            log.error("토큰 발급 실패", e);
+            throw new RuntimeException("PortOne 토큰 발급 실패");
         }
     }
 
-    // ========== 4) 결제 정보 조회 ==========
+    // ==================== 결제 정보 조회 ====================
     private PortOnePaymentResponse getPaymentInfo(String impUid, String accessToken) {
         try {
             HttpHeaders headers = new HttpHeaders();
@@ -432,33 +152,30 @@ public class PortOnePaymentService {
             ResponseEntity<PortOnePaymentResponse> response = restTemplate.exchange(
                     VERIFY_PAYMENT_URL + impUid, HttpMethod.GET, new HttpEntity<>(headers), PortOnePaymentResponse.class);
 
-            if (response.getBody() == null) {
+            if (response.getBody() == null)
                 throw new IllegalStateException("결제 정보 조회 실패: 응답이 비어있습니다.");
-            }
-            PortOnePaymentResponse body = response.getBody();
-            if (body.getCode() != 0 || body.getResponse() == null) {
-                throw new IllegalStateException("결제 정보 조회 실패: " + body.getMessage());
-            }
-            return body;
 
+            PortOnePaymentResponse body = response.getBody();
+            if (body.getCode() != 0)
+                throw new IllegalStateException("결제 정보 조회 실패: " + body.getMessage());
+
+            return body;
         } catch (HttpStatusCodeException e) {
             log.error("결제 정보 조회 실패: {} {}", e.getStatusCode(), e.getResponseBodyAsString());
             throw new RuntimeException("결제 정보 조회 실패");
         }
     }
 
-    // ========== 5) 결제 취소 ==========
+    // ==================== 결제 취소 ====================
     public ResponseEntity<Map<String, String>> cancelPayment(String impUid, Long productId, Long userId, String reason) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        Long paidBy = product.getPaymentUserId();
-        if (paidBy == null || !paidBy.equals(userId)) {
-            throw new IllegalArgumentException("결제 취소 권한이 없습니다.");
-        }
-        if (product.getAmount() == null || product.getAmount() <= 0) {
-            throw new IllegalStateException("취소 가능 금액이 없습니다.");
-        }
+        if (!userId.equals(product.getPaymentUserId()))
+            throw new SecurityException("결제 취소 권한이 없습니다.");
+
+        Bid winningBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
+                .orElseThrow(() -> new IllegalStateException("입찰 정보가 없습니다."));
 
         try {
             String accessToken = getAccessToken();
@@ -466,7 +183,7 @@ public class PortOnePaymentService {
             Map<String, Object> body = new HashMap<>();
             body.put("imp_uid", impUid);
             body.put("reason", reason == null ? "사용자 요청" : reason);
-            body.put("checksum", product.getAmount()); // 전체 취소(또는 잔여 금액)
+            body.put("checksum", winningBid.getBidPrice()); // 최고가 기준 취소 금액
 
             HttpHeaders headers = new HttpHeaders();
             headers.setBearerAuth(accessToken);
@@ -475,16 +192,14 @@ public class PortOnePaymentService {
             ResponseEntity<PortOnePaymentResponse> response = restTemplate.postForEntity(
                     CANCEL_PAYMENT_URL, new HttpEntity<>(body, headers), PortOnePaymentResponse.class);
 
-            if (response.getBody() == null || response.getBody().getCode() != 0) {
+            if (response.getBody() == null || response.getBody().getCode() != 0)
                 throw new IllegalStateException("결제 취소 실패");
-            }
 
             product.setPaymentStatus(CANCELLED);
             product.setProductStatus(ACTIVE);
             productRepository.save(product);
 
-            log.info("결제 취소 완료: impUid={}, productId={}, reason={}", impUid, productId, reason);
-
+            log.info("[Auction] 결제 취소 완료: impUid={}, productId={}, reason={}", impUid, productId, reason);
             return ResponseEntity.ok(Map.of("message", "결제가 취소되었습니다."));
         } catch (Exception e) {
             log.error("결제 취소 실패", e);
@@ -492,62 +207,50 @@ public class PortOnePaymentService {
         }
     }
 
-    // ========== 6) 유효성 검증 ==========
-    /** 결제 전 사전 검증 */
-    private void validatePayment(Product product, Long userId) {
-        if (product.getUser().getUserId().equals(userId)) {
-            throw new IllegalArgumentException("판매자는 자신의 상품을 구매할 수 없습니다.");
+    // ==================== 검증 ====================
+    private void validateAuctionPayment(Product product, Bid bid) {
+        // 1. 경매가 끝났는지 확인 (1분 경매라면 종료시간이 지나야 결제 가능)
+        if (product.isOneMinuteAuction() && product.getAuctionEndTime() != null
+                && LocalDateTime.now().isBefore(product.getAuctionEndTime())) {
+            throw new IllegalArgumentException("경매가 아직 종료되지 않았습니다.");
         }
-        if (product.getProductStatus() != ACTIVE) {
-            throw new IllegalArgumentException("구매 가능한 상품이 아닙니다.");
+
+        // 2. 결제 가능한 상품 상태인지 확인
+        if (product.getProductStatus() != ProductStatus.CLOSED) {
+            throw new IllegalArgumentException("종료된 경매만 결제할 수 있습니다.");
         }
-        if (product.getPaymentStatus() == PAID) {
+        if (product.getPaymentStatus() == PaymentStatus.PAID) {
             throw new IllegalArgumentException("이미 결제가 완료된 상품입니다.");
         }
-        if (product.isOneMinuteAuction() && product.getAuctionEndTime() != null) {
-            if (LocalDateTime.now().isBefore(product.getAuctionEndTime())) {
-                throw new IllegalArgumentException("경매가 아직 종료되지 않았습니다.");
-            }
+        if (product.getPaymentStatus() != PaymentStatus.PENDING) {
+            throw new IllegalArgumentException("결제를 진행할 수 없는 상태입니다.");
         }
-        if (product.getAmount() == null || product.getAmount() <= 0) {
-            throw new IllegalStateException("상품 가격이 올바르지 않습니다.");
+
+        // 3. 입찰가 sanity check
+        if (bid.getBidPrice() == null || bid.getBidPrice() <= 0) {
+            throw new IllegalStateException("입찰가가 올바르지 않습니다.");
         }
     }
 
-    /** PortOne 조회 결과 검증 */
     private void validatePaymentInfo(PortOnePaymentResponse paymentInfo, Long productId, Long userId) {
         var resp = paymentInfo.getResponse();
-
-        if (resp == null) {
-            throw new IllegalStateException("결제 정보가 비어있습니다.");
-        }
-        if (!"paid".equalsIgnoreCase(resp.getStatus())) {
-            throw new IllegalStateException("결제가 완료되지 않았습니다. 상태: " + resp.getStatus());
-        }
+        if (resp == null || !"paid".equalsIgnoreCase(resp.getStatus()))
+            throw new IllegalStateException("결제가 완료되지 않았습니다. 상태: " + (resp == null ? "null" : resp.getStatus()));
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        Integer paidAmount = resp.getPaidAmount();
-        if (paidAmount == null || !product.getAmount().equals(paidAmount.longValue())) {
-            throw new IllegalStateException(
-                    String.format("결제 금액 불일치: 상품가격=%d, 결제금액=%s",
-                            product.getAmount(), String.valueOf(paidAmount)));
-        }
+        Bid bid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
+                .orElseThrow(() -> new IllegalStateException("낙찰자가 존재하지 않습니다."));
 
-        // merchant_uid 서버 생성 규칙과 일치 확인 (ORDER-{productId}-{userId}-{ts})
-        String merchantUid = resp.getMerchantUid();
-        if (merchantUid == null || !merchantUid.startsWith("ORDER-")) {
-            throw new IllegalStateException("유효하지 않은 주문번호입니다.");
-        }
-        ParsedUid parsed = parseMerchantUid(merchantUid);
-        if (!parsed.productId().equals(productId) || !parsed.userId().equals(userId)) {
-            throw new IllegalStateException("주문번호 검증 실패(상품/사용자 불일치).");
-        }
+        if (!bid.getUser().getUserId().equals(userId))
+            throw new SecurityException("현재 사용자는 낙찰자가 아닙니다.");
+
+        if (!resp.getPaidAmount().equals(bid.getBidPrice().intValue()))
+            throw new IllegalStateException("결제 금액 불일치: 최고가=" + bid.getBidPrice() + ", 결제금액=" + resp.getPaidAmount());
     }
 
-    // ========== 7) 후처리 ==========
-    /** 결제 완료 후 상품 상태 업데이트 */
+    // ==================== 후처리 ====================
     private void updateProductAfterPayment(Long productId, Long userId, PortOnePaymentResponse paymentInfo) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
@@ -559,53 +262,45 @@ public class PortOnePaymentService {
         product.setProductStatus(ProductStatus.SOLD);
         product.setPaymentStatus(PaymentStatus.PAID);
         product.setPaymentUserId(buyer.getUserId());
-        product.setAmount(paidAmount == null ? null : paidAmount.longValue());
         productRepository.save(product);
 
-        log.info("상품 결제 완료 처리: productId={}, userId={}, amount={}",
-                product.getProductId(), userId, paidAmount);
+        log.info("[Auction] 상품 결제 완료 처리: productId={}, userId={}, amount={}",
+                productId, userId, paidAmount);
     }
 
-    // ========== 8) 콜백(Webhook/Callback) 처리 ==========
-    /** 컨트롤러의 /callback 이 호출될 때 사용. impUid 만 넘어와도 동작 */
-    // TODO
+    // ==================== 콜백 ====================
     public ResponseEntity<String> handleCallback(Map<String, Object> payload) {
-        log.debug("PortOne Callback 수신(payload) = {}", payload); // 민감정보는 DEBUG로만
-        String impUid = (String) payload.get("imp_uid"); // TODO Nullable인가?
-        String merchantUid = (String) payload.get("merchant_uid"); // 있을 때만 TODO Nullable인가?
+        log.info("[PortOne] Callback 수신: {}", payload);
+        String impUid = (String) payload.get("imp_uid");
+        String merchantUid = (String) payload.get("merchant_uid");
 
         try {
             if (impUid == null && merchantUid == null) {
-                log.warn("콜백 처리 불가: impUid/merchantUid 모두 없음");
-//                return; // TODO 기존 코드에선 콜백 처리 불가이나 OK로 전달됨
+                log.warn("콜백 처리 불가: impUid/merchantUid 없음");
+                return ResponseEntity.ok("OK");
             }
+
             String accessToken = getAccessToken();
-            // merchantUid 가 없으면 impUid 로 조회해서 확보
             if (merchantUid == null && impUid != null) {
                 PortOnePaymentResponse info = getPaymentInfo(impUid, accessToken);
-                if (info.getResponse() != null) {
-                    merchantUid = info.getResponse().getMerchantUid();
-                }
+                if (info.getResponse() != null) merchantUid = info.getResponse().getMerchantUid();
             }
-            if (merchantUid == null) {
-                log.warn("콜백 처리 불가: merchantUid 확보 실패");
-//                return; // TODO 기존 코드에선 콜백 처리 불가이나 OK로 전달됨
+
+            if (merchantUid != null) {
+                ParsedUid parsed = parseMerchantUid(merchantUid);
+                verifyAndComplete(impUid, parsed.productId(), parsed.userId());
             }
-            ParsedUid parsed = parseMerchantUid(merchantUid);
-            // 멱등 처리: verifyAndComplete 내부에서 한 번 더 점검
-            verifyAndComplete(impUid, parsed.productId(), parsed.userId());
+
             return ResponseEntity.ok("OK");
-        }  catch (Exception e) {
+        } catch (Exception e) {
             log.warn("Callback 처리 실패 impUid={}, reason={}", impUid, e.getMessage());
-            // 200을 돌려도 되지만, 모니터링 목적이면 202/400 등 선택 가능
-            return ResponseEntity.ok("OK"); // 재시도 루프 방지용
+            return ResponseEntity.ok("OK");
         }
     }
 
-    // ========== 9) 유틸 ==========
+    // ==================== 유틸 ====================
     private record ParsedUid(Long productId, Long userId) {}
 
-    /** "ORDER-{productId}-{userId}-{timestamp}" 파싱 */
     private ParsedUid parseMerchantUid(String merchantUid) {
         try {
             String[] parts = merchantUid.split("-");
@@ -615,5 +310,42 @@ public class PortOnePaymentService {
         } catch (Exception e) {
             throw new IllegalStateException("유효하지 않은 주문번호 형식입니다.");
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public ResponseEntity<PortOnePaymentResponse> verifyAndComplete(
+            String impUid, Long productId, Long userId) {
+
+        log.info("[PortOne] verifyAndComplete 시작: impUid={}, productId={}, userId={}", impUid, productId, userId);
+
+        // 1) PortOne 토큰 발급
+        String accessToken = getAccessToken();
+
+        // 2) PortOne 결제 정보 조회
+        PortOnePaymentResponse paymentInfo = getPaymentInfo(impUid, accessToken);
+
+        // 3) 결제 데이터 검증 (상태=paid, 금액=낙찰가, 낙찰자 일치)
+        validatePaymentInfo(paymentInfo, productId, userId);
+
+        // 4) 상품 상태 갱신 (SOLD/PAID 등)
+        updateProductAfterPayment(productId, userId, paymentInfo);
+
+        // 5) 결제내역 저장 (Payment 엔티티 스키마 준수: totalPrice, product, bid, paymentStatus 등)
+        Product product = productRepository.findById(productId).orElseThrow();
+        Bid winningBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
+                .orElseThrow(() -> new IllegalStateException("입찰 정보가 없습니다."));
+
+        Payment payment = Payment.builder()
+                .product(product)
+                .bid(winningBid)
+                .totalPrice(paymentInfo.getResponse().getPaidAmount().longValue())
+                .paymentMethod(null)                // 필요 시 매핑
+                .paymentStatus(PaymentStatus.PAID)  // 결제 완료
+                .build();
+
+        paymentRepository.save(payment);
+
+        log.info("[PortOne] verifyAndComplete 완료: productId={}, userId={}", productId, userId);
+        return ResponseEntity.ok(paymentInfo);
     }
 }

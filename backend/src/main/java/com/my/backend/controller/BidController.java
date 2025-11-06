@@ -49,6 +49,8 @@ package com.my.backend.controller;
 import com.my.backend.dto.BidChartData;
 import com.my.backend.dto.auth.BidRequest;
 import com.my.backend.dto.auth.CustomUserDetails;
+import com.my.backend.entity.Bid;
+import com.my.backend.entity.Product;
 import com.my.backend.service.BidService;
 import com.my.backend.util.AuthUtil;
 import jakarta.validation.Valid;
@@ -57,10 +59,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import com.my.backend.repository.BidRepository;
+import com.my.backend.repository.ProductRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -70,6 +77,8 @@ public class BidController {
 
     private final BidService bidService;
     private final AuthUtil authUtil;
+    private final ProductRepository productRepository;
+    private final BidRepository bidRepository;
 
     /**
      * 입찰하기 (인증 필요)
@@ -136,5 +145,38 @@ public class BidController {
             Long productId,
             String productTitle,
             List<BidChartData> bidChartData
-    ) {}
+    ){}
+
+    /**
+     * 낙찰자 확인 API
+     */
+    @GetMapping("/{productId}/winner")
+    public ResponseEntity<?> checkWinner(
+            @PathVariable Long productId,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", "로그인이 필요합니다."));
+        }
+
+        Long userId = principal.getUser().getUserId();
+        return bidService.checkWinner(productId, userId);
+    }
+    /**
+     * 낙찰 정보 조회 (결제 페이지용)
+     */
+    @GetMapping("/{productId}/winning-info")
+    public ResponseEntity<?> getWinningInfo(
+            @PathVariable Long productId,
+            @AuthenticationPrincipal CustomUserDetails principal
+    ) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(403)
+                    .body(Map.of("error", "로그인이 필요합니다."));
+        }
+
+        Long userId = principal.getUser().getUserId();
+        return bidService.getWinningInfo(productId, userId);
+    }
 }

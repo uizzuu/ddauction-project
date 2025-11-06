@@ -3,6 +3,9 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import type {
   Product,
   User,
@@ -10,6 +13,7 @@ import type {
   Qna,
   Bid,
   EditProductForm,
+  WinnerCheckResponse,
 } from "../types/types";
 import { API_BASE_URL } from "../services/api";
 import { formatDateTime } from "../utils/util";
@@ -23,10 +27,44 @@ type Props = {
   setUser: (user: User | null) => void;
 };
 
+function CustomArrow({
+  type,
+  onClick,
+  currentSlide,
+  totalSlides,
+}: {
+  type: "next" | "prev";
+  onClick?: () => void;
+  currentSlide: number;
+  totalSlides: number;
+}) {
+  if (type === "next" && currentSlide === totalSlides - 1) return null;
+  if (type === "prev" && currentSlide === 0) return null;
+
+  return (
+    <div
+      className={`slick-arrow slick-${type}`}
+      onClick={onClick}
+      style={{
+        display: "block",
+        background: "#ccc",
+        borderRadius: "50%",
+        width: "24px",
+        height: "24px",
+        zIndex: 2,
+      }}
+    />
+  );
+}
+
+
 export default function ProductDetail({ user }: Props) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const productId = Number(id);
+
   const [product, setProduct] = useState<Product | null>(null);
   const [remainingTime, setRemainingTime] = useState("");
   const [sellerNickName, setSellerNickName] = useState("로딩중...");
@@ -54,6 +92,10 @@ export default function ProductDetail({ user }: Props) {
     images: [],
   });
 
+  // 낙찰자 여부 상태 추가
+  const [isWinner, setIsWinner] = useState(false);
+  const [_winningBidPrice, setWinningBidPrice] = useState<number | null>(null);
+
   const mergedBids = useMemo(() => {
     const combinedBids = [...allBids, ...liveBids];
     const uniqueBidsMap = new Map<number, Bid>();
@@ -74,7 +116,7 @@ export default function ProductDetail({ user }: Props) {
   // 경매 진행중일 때 수정 막기
   const isEditingDisabled = product
     ? product.productStatus === "ACTIVE" &&
-      new Date(product.auctionEndTime).getTime() > new Date().getTime()
+    new Date(product.auctionEndTime).getTime() > new Date().getTime()
     : false;
 
   const calculateRemainingTime = (endTime: string) => {
@@ -222,6 +264,56 @@ export default function ProductDetail({ user }: Props) {
     [livePlaceBid, fetchAllBids]
   );
 
+  // 경매 종료 감지 및 낙찰자 확인
+  useEffect(() => {
+    if (!product?.auctionEndTime) return;
+
+    const interval = setInterval(async () => {
+      const now = new Date();
+      const endTime = new Date(product.auctionEndTime);
+      const isAuctionEnded =
+        now >= endTime || product.productStatus === "CLOSED";
+
+      if (isAuctionEnded) {
+
+        console.log("🏁 경매 종료 감지됨 — 낙찰자 확인 요청");
+        console.log("📡 요청 URL:", `${API_BASE_URL}/api/bid/${id}/winner`);
+        const token = user?.token || localStorage.getItem("token");
+        console.log("📡 토큰:", token ? "있음" : "없음");
+
+        clearInterval(interval); // 중복 실행 방지
+
+        try {
+          const token = user?.token || localStorage.getItem("token");
+          const res = await fetch(`${API_BASE_URL}/api/bid/${id}/winner`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token || ""}`,
+            },
+          });
+
+          console.log("📨 응답 상태:", res.status);
+          const text = await res.text();
+          console.log("📨 응답 내용:", text);
+
+          if (res.ok) {
+            const data: WinnerCheckResponse = JSON.parse(text);
+            console.log(" 낙찰자 확인 결과:", data);
+            setIsWinner(data.isWinner);
+            if (data.bidPrice) setWinningBidPrice(data.bidPrice);
+          } else {
+            console.warn(" checkWinner 요청 실패:", res.status);
+          }
+        } catch (err) {
+          console.error(" 낙찰자 확인 중 오류:", err);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [product?.auctionEndTime, product?.productStatus, id, user?.token]);
+
+
   const auctionStartingPrice = product?.startingPrice ?? "알 수 없음";
 
   const highestBid = useMemo(() => {
@@ -332,15 +424,15 @@ export default function ProductDetail({ user }: Props) {
         startingPrice: Number(productForm.startingPrice || 0),
         auctionEndTime: productForm.auctionEndTime
           ? (() => {
-              const end = new Date(productForm.auctionEndTime);
-              const year = end.getFullYear();
-              const month = String(end.getMonth() + 1).padStart(2, "0");
-              const day = String(end.getDate()).padStart(2, "0");
-              const hours = String(end.getHours()).padStart(2, "0");
-              const minutes = String(end.getMinutes()).padStart(2, "0");
-              const seconds = String(end.getSeconds()).padStart(2, "0");
-              return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-            })()
+            const end = new Date(productForm.auctionEndTime);
+            const year = end.getFullYear();
+            const month = String(end.getMonth() + 1).padStart(2, "0");
+            const day = String(end.getDate()).padStart(2, "0");
+            const hours = String(end.getHours()).padStart(2, "0");
+            const minutes = String(end.getMinutes()).padStart(2, "0");
+            const seconds = String(end.getSeconds()).padStart(2, "0");
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+          })()
           : null,
       };
 
@@ -436,25 +528,45 @@ export default function ProductDetail({ user }: Props) {
     <div className="container">
       <div className="flex-box gap-40">
         <div className="product-image product-detail-image">
+          {product.images?.length ? (
+            <Slider
+              dots={true}
+              infinite={false}
+              speed={500}
+              slidesToShow={1}
+              slidesToScroll={1}
+              arrows={true}
+              adaptiveHeight={true}
+              afterChange={(index) => setCurrentSlide(index)}
+              nextArrow={
+                <CustomArrow
+                  type="next"
+                  currentSlide={currentSlide}
+                  totalSlides={product.images.length}
+                />
+              }
+              prevArrow={
+                <CustomArrow
+                  type="prev"
+                  currentSlide={currentSlide}
+                  totalSlides={product.images.length}
+                />
+              }
+            >
+              {product.images.map((img, idx) => (
+                <div key={idx}>
+                  <img
+                    src={`${API_BASE_URL}${img.imagePath}`}
+                    alt={`${product.title} - ${idx + 1}`}
+                    style={{ width: "100%", height: "auto", borderRadius: "8px" }}
+                  />
+                </div>
+              ))}
+            </Slider>
 
-  {product.images?.length ? (
-    product.images.map((img, idx) => (
-      <img
-        key={idx}
-        src={`${API_BASE_URL}${img.imagePath}`}
-        alt={`${product.title} - ${idx + 1}`}
-      />
-    ))
-  ) : (
-    <div className="no-image-txt">이미지 없음</div>
-  )}
-
-
-          {/* {product.images && product.images.length > 0 ? (
-            <img src={`${API_BASE_URL}${product.images[0].imagePath}`} alt={product.title} />
           ) : (
             <div className="no-image-txt">이미지 없음</div>
-          )} */}
+          )}
         </div>
 
         <div
@@ -609,14 +721,14 @@ export default function ProductDetail({ user }: Props) {
                       ...prev,
                       auctionEndTime: date
                         ? (() => {
-                            const year = date.getFullYear();
-                            const month = String(date.getMonth() + 1).padStart(2, "0");
-                            const day = String(date.getDate()).padStart(2, "0");
-                            const hours = String(date.getHours()).padStart(2, "0");
-                            const minutes = String(date.getMinutes()).padStart(2, "0");
-                            const seconds = String(date.getSeconds()).padStart(2, "0");
-                            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-                          })()
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, "0");
+                          const day = String(date.getDate()).padStart(2, "0");
+                          const hours = String(date.getHours()).padStart(2, "0");
+                          const minutes = String(date.getMinutes()).padStart(2, "0");
+                          const seconds = String(date.getSeconds()).padStart(2, "0");
+                          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+                        })()
                         : prev.auctionEndTime,
                     }))
                   }
@@ -627,14 +739,14 @@ export default function ProductDetail({ user }: Props) {
                   minDate={originalEndDate} // 날짜 제한
                   minTime={
                     productForm.auctionEndTime &&
-                    new Date(productForm.auctionEndTime).toDateString() ===
+                      new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? originalEndDate // 같은 날이면 기존 종료시간 이전 선택 불가
                       : new Date(0, 0, 0, 0, 0) // 다른 날이면 제한 없음 (0시 기준)
                   }
                   maxTime={
                     productForm.auctionEndTime &&
-                    new Date(productForm.auctionEndTime).toDateString() ===
+                      new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? new Date(23, 11, 31, 23, 59) // 같은 날이면 하루 끝까지 허용
                       : new Date(23, 11, 31, 23, 59) // 다른 날도 하루 끝까지
@@ -696,6 +808,43 @@ export default function ProductDetail({ user }: Props) {
             </>
           )}
 
+          {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
+          {(() => {
+
+
+            if (!product) return null;
+
+            const auctionEnded =
+              remainingTime === "경매 종료" || product.productStatus === "CLOSED";
+
+            const shouldShowPayment = auctionEnded && isWinner;
+
+            console.log("👉 결제 버튼 표시 여부:", shouldShowPayment);
+
+            if (!shouldShowPayment) return null;
+
+            return (
+              <div style={{ textAlign: "center", marginTop: "30px" }}>
+                <button
+                  onClick={() => navigate(`/payment?productId=${productId}`)}
+                  style={{
+                    backgroundColor: "#ff6600",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "14px 28px",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  결제하기
+                </button>
+              </div>
+            );
+          })()}
+
+
+
           <div
             style={{
               backgroundColor: "#f9f9f9",
@@ -708,26 +857,6 @@ export default function ProductDetail({ user }: Props) {
             {product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
-
-        {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
-        {remainingTime === "경매 종료" && (
-          <div style={{ textAlign: "center", marginTop: "30px" }}>
-            <button
-              onClick={() => navigate("/payment")} // ✅ 결제 페이지로 이동
-              style={{
-                backgroundColor: "#ff6600",
-                color: "#fff",
-                border: "none",
-                borderRadius: "8px",
-                padding: "14px 28px",
-                fontSize: "1rem",
-                cursor: "pointer",
-              }}
-            >
-              결제하기
-            </button>
-          </div>
-        )}
 
         <AuctionBox
           productId={product.productId}

@@ -1,22 +1,53 @@
-/* 메인 페이지 스타일 */
-.main-container {
-  min-height: calc(100vh - 120px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  background: #fff;
+.position-rl {
+  position: relative;
 }
 
-.main-content {
-  text-align: center;
-  max-width: 800px;
+.height-500 {
+  height: 500px;
+}
+
+.width-full {
   width: 100%;
 }
 
-.main-actions {
-  display: flex;
-  gap: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
+.overflow-hidden {
+  overflow: hidden;
+}
+
+.banner-slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 500px;
+  transition: transform 0.5s ease;
+  cursor: pointer;
+  z-index: 0; /* 이미지 위 텍스트나 overlay를 위해 */
+}
+
+.banner-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 0;
+  position: relative;
+}
+
+.filter-dark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.3); /* 어둡게 */
+  z-index: 1;
+}
+
+.banner-slide p {
+  position: absolute;
+  bottom: 2rem;
+  left: 2rem;
+  color: #fff;
+  z-index: 2;
 }
