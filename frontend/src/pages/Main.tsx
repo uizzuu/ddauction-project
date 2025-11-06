@@ -176,18 +176,20 @@ export default function Main() {
       </div>
 
       {/* 하단 인디케이터 */}
-      {banners.length > 0 && (
-        <div className="mt-10 mb-60 width-full flex-box flex-center gap-4 z-20">
-          {banners.map((_, i) => (
+      <div className="mt-10 mb-60 width-full flex-box flex-center gap-4 z-20">
+        {banners.length > 0 ? (
+          banners.map((_, i) => (
             <div
               key={i}
               className={`width-8 height-8 radius-full transition-all ${
                 i === current ? "bg-aaa" : "bg-ddd"
               }`}
             />
-          ))}
-        </div>
-      )}
+          ))
+        ) : (
+          <div style={{ height: "8px" }}></div> // 최소 높이 확보
+        )}
+      </div>
 
       {/* 신상 상품 영역 */}
       <div className="product-area">

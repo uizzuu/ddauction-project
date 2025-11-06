@@ -128,6 +128,8 @@ spring:
   config:
     activate:
       on-profile: prod
+  ssl:
+    enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${RDS_ENDPOINT}:3306/ddauction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
