@@ -70,11 +70,14 @@ jobs:
             echo "=== Docker 로그인 ==="
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
+            # 기존 .env.prod 백업
+            cp .env.prod .env.prod.backup
+
             # 기존 .env.prod에서 AWS 항목 제거
             sed -i '/^AWS_/d' .env.prod
 
             # .env.prod에 OAuth 환경변수 추가
-            cat > .env.prod << 'EOF'
+            cat >> .env.prod << 'EOF'
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
