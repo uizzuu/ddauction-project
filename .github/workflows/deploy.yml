@@ -74,7 +74,10 @@ jobs:
             cp .env.prod .env.prod.backup
 
             # 기존 .env.prod에서 AWS 항목 제거
-            sed -i '/^AWS_/d' .env.prod
+            sed -i '/^AWS_\|^GOOGLE_\|^NAVER_\|^KAKAO_/d' .env.prod
+
+            # 줄바꿈 추가 (중요!)
+            echo "" >> .env.prod
 
             # .env.prod에 OAuth 환경변수 추가
             cat >> .env.prod << 'EOF'
