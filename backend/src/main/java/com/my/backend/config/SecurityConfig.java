@@ -4,10 +4,8 @@ import com.my.backend.myjwt.JWTFilter;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.myjwt.LoginFilter;
 import com.my.backend.oauth2.OAuth2SuccessHandler;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -20,11 +18,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.List;
+//import com.my.backend.oauth2.OAuth2SuccessHandler;
+import org.springframework.http.HttpMethod;
+import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 @EnableWebSecurity
@@ -37,8 +33,9 @@ public class SecurityConfig {
     @Value("${spring.profiles.active:local}")
     private String activeProfile;
 
+
     public SecurityConfig(AuthenticationConfiguration authenticationConfiguration,
-                          JWTUtil jwtUtil, OAuth2SuccessHandler oAuth2SuccessHandler) {
+                          JWTUtil jwtUtil,OAuth2SuccessHandler oAuth2SuccessHandler) {
         this.authenticationConfiguration = authenticationConfiguration;
         this.jwtUtil = jwtUtil;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
@@ -56,21 +53,6 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // CORS 설정 (Spring Security용)
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:3000", "https://ddauction.shop"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
     // Security Filter Chain
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -86,14 +68,21 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .formLogin(form -> form.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> {})
+//추가함73-75
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
+
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 🔹 preflight 허용
+                        // 🔹 정적 리소스 업로드 폴더 허용
+
+                        // OAuth2 관련 경로
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+
+                        // 회원가입, 로그인, 공개 POST API
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/auth/signup",
@@ -101,6 +90,8 @@ public class SecurityConfig {
                                 "/api/auth/email-find",
                                 "/api/auth/password-reset"
                         ).permitAll()
+
+                        // GET 공개 API
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/products/**",
@@ -109,27 +100,38 @@ public class SecurityConfig {
                                 "/api/qna/**",
                                 "/api/bookmarks/**"
                         ).permitAll()
+
+                        // S3 업로드는 인증 필요 (JWT 토큰 필수)
                         .requestMatchers(HttpMethod.POST, "/api/files/s3-upload").authenticated()
+
+                        // 이미지 등록도 인증 필요
                         .requestMatchers(HttpMethod.POST, "/api/images").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/images/**").authenticated()
+
+                        // 인증 필요
                         .requestMatchers(HttpMethod.GET, "/api/products/purchases").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
+
+
+                // JWT 필터는 OAuth2 경로 제외
                 .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
+
+                // OAuth2 로그인 성공 핸들러
                 .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2SuccessHandler))
+
+                // 세션 Stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return http.build();
     }
-
-    // Security에서 완전히 무시할 경로
-    @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring()
-                .requestMatchers("/uploads/**"); // SecurityFilter 거치지 않음
-    }
+        @Bean
+        public WebSecurityCustomizer webSecurityCustomizer() {
+            return (web) -> web.ignoring()
+                    .requestMatchers("/uploads/**"); // 🔸 완전 무시 — SecurityFilter 거치지 않음
+        }
 }

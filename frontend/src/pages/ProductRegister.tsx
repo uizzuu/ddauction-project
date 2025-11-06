@@ -100,7 +100,7 @@ export default function ProductRegister({ user }: Props) {
       const response = await fetch(`${API_BASE_URL}/api/files/s3-upload`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -137,13 +137,8 @@ export default function ProductRegister({ user }: Props) {
     }
 
     const token = localStorage.getItem("token");
-    if (!token || !user) {
-      alert("로그인이 필요합니다");
-      navigate("/login");
-      return;
-    }
 
-    // 이제 token과 user는 확실히 있음
+    // ✅ [로그 추가] 토큰 확인
     console.log("🔹 handleSubmit 호출 - user:", user);
     console.log("🔹 로컬 스토리지 토큰:", token);
 
@@ -210,10 +205,10 @@ export default function ProductRegister({ user }: Props) {
       const productResponse = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        // credentials: "include",
+        credentials: "include",
         body: JSON.stringify({
           // FormData 대신 JSON
           title: form.title,
@@ -256,7 +251,7 @@ export default function ProductRegister({ user }: Props) {
         await fetch(`${API_BASE_URL}/api/images`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
@@ -334,7 +329,7 @@ export default function ProductRegister({ user }: Props) {
           <input
             type="text"
             placeholder="예: 10000"
-            value={form.startingPrice}
+            value={Number(form.startingPrice).toLocaleString()}
             onChange={(e) => {
               const clean = e.target.value.replace(/[^0-9]/g, "");
               setForm({ ...form, startingPrice: clean });
