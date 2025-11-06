@@ -1,7 +1,7 @@
 export const PRODUCT_STATUS = ["ACTIVE", "CLOSED", "SOLD"] as const;
 export type ProductStatus = (typeof PRODUCT_STATUS)[number];
 
-export const PAYMENT_STATUS = ["PENDING", "COMPLETED", "FAILED"] as const;
+export const PAYMENT_STATUS = ["PENDING", "PAID", "COMPLETED", "FAILED"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 
 export const ROLE = ["ADMIN", "USER", "BANNED"] as const;
@@ -57,7 +57,6 @@ export interface Product {
   categoryName?: string;
   bid?: Bid | null;
   bids?: Bid[]; // 입찰기록
-  imageUrl?: string;
 }
 
 export interface Category {
@@ -243,6 +242,7 @@ export interface WinningInfo {
   productImage: string | null;
   bidPrice: number;
   sellerName: string;
+  paymentStatus?: "PENDING" | "PAID" | "FAILED" | "CANCELLED" | "COMPLETED" | null;
 }
 
 export interface PaymentPrepareResponse {

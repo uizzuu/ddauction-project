@@ -27,40 +27,7 @@ type Props = {
   setUser: (user: User | null) => void;
 };
 
-function CustomArrow({
-  type,
-  onClick,
-  currentSlide,
-  totalSlides,
-}: {
-  type: "next" | "prev";
-  onClick?: () => void;
-  currentSlide: number;
-  totalSlides: number;
-}) {
-  if (type === "next" && currentSlide === totalSlides - 1) return null;
-  if (type === "prev" && currentSlide === 0) return null;
-
-  return (
-    <div
-      className={`slick-arrow slick-${type}`}
-      onClick={onClick}
-      style={{
-        display: "block",
-        background: "#ccc",
-        borderRadius: "50%",
-        width: "24px",
-        height: "24px",
-        zIndex: 2,
-      }}
-    />
-  );
-}
-
-
 export default function ProductDetail({ user }: Props) {
-  const [currentSlide, setCurrentSlide] = useState(0);
-
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const productId = Number(id);
@@ -531,27 +498,12 @@ export default function ProductDetail({ user }: Props) {
           {product.images?.length ? (
             <Slider
               dots={true}
-              infinite={false}
+              infinite={true}
               speed={500}
               slidesToShow={1}
               slidesToScroll={1}
               arrows={true}
               adaptiveHeight={true}
-              afterChange={(index) => setCurrentSlide(index)}
-              nextArrow={
-                <CustomArrow
-                  type="next"
-                  currentSlide={currentSlide}
-                  totalSlides={product.images.length}
-                />
-              }
-              prevArrow={
-                <CustomArrow
-                  type="prev"
-                  currentSlide={currentSlide}
-                  totalSlides={product.images.length}
-                />
-              }
             >
               {product.images.map((img, idx) => (
                 <div key={idx}>
@@ -563,7 +515,6 @@ export default function ProductDetail({ user }: Props) {
                 </div>
               ))}
             </Slider>
-
           ) : (
             <div className="no-image-txt">이미지 없음</div>
           )}
@@ -809,15 +760,15 @@ export default function ProductDetail({ user }: Props) {
           )}
 
           {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
-          {(() => {
-
+          {/* {(() => {
 
             if (!product) return null;
 
             const auctionEnded =
               remainingTime === "경매 종료" || product.productStatus === "CLOSED";
 
-            const shouldShowPayment = auctionEnded && isWinner;
+            const shouldShowPayment =
+              auctionEnded && isWinner && product.paymentStatus !== "PAID";
 
             console.log("👉 결제 버튼 표시 여부:", shouldShowPayment);
 
@@ -841,9 +792,46 @@ export default function ProductDetail({ user }: Props) {
                 </button>
               </div>
             );
+          })()} */}
+          
+          {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
+          {(() => {
+            if (!product) return null;
+
+            const auctionEnded =
+              remainingTime === "경매 종료" || product.productStatus === "CLOSED";
+
+            if (!auctionEnded || !isWinner) return null;
+
+            // 이미 결제 완료되었거나 판매 완료된 경우
+            if (product.paymentStatus === "PAID" || product.productStatus === "SOLD") {
+              return (
+                <div style={{ textAlign: "center", marginTop: "30px", color: "#777" }}>
+                  이미 판매된 물건입니다.
+                </div>
+              );
+            }
+
+            // 아직 결제 전이라면 결제 버튼 표시
+            return (
+              <div style={{ textAlign: "center", marginTop: "30px" }}>
+                <button
+                  onClick={() => navigate(`/payment?productId=${productId}`)}
+                  style={{
+                    backgroundColor: "#ff6600",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "14px 28px",
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  결제하기
+                </button>
+              </div>
+            );
           })()}
-
-
 
           <div
             style={{
