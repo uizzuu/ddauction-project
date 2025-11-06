@@ -101,6 +101,13 @@ public class SecurityConfig {
                                 "/api/bookmarks/**"
                         ).permitAll()
 
+                        // S3 업로드는 인증 필요 (JWT 토큰 필수)
+                        .requestMatchers(HttpMethod.POST, "/api/files/s3-upload").authenticated()
+
+                        // 이미지 등록도 인증 필요
+                        .requestMatchers(HttpMethod.POST, "/api/images").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/images/**").authenticated()
+
                         // 인증 필요
                         .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
                         .requestMatchers("/admin").hasRole("ADMIN")

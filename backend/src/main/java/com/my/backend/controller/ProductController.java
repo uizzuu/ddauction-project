@@ -74,6 +74,14 @@ public class ProductController {
     // 새 상품 생성 (로그인 체크 필요하면 session 확인 후 수정 가능)
     @PostMapping
     public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto dto) {
+        // JWT 인증 후 sellerId 자동 설정
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (!(principal instanceof com.my.backend.dto.auth.CustomUserDetails userDetails)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        dto.setSellerId(userDetails.getUser().getUserId());
         ProductDto created = productService.createProduct(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -157,30 +165,5 @@ public class ProductController {
         Page<ProductDto> result = productService.searchProductsPaged(keyword, category, productStatus, pageable);
 
         return ResponseEntity.ok(result);
-    }
-
-
-    // 새 상품 생성 (다중 이미지 업로드)
-    @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<ProductDto> createProductWithImages(
-            @RequestPart("product") @Valid ProductDto dto,
-            @RequestPart(value = "files", required = false) MultipartFile[] files) {
-
-        // JWT 인증 후 principal 가져오기
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if (!(principal instanceof com.my.backend.dto.auth.CustomUserDetails userDetails)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-        }
-
-        // CustomUserDetails에서 User 가져오기
-        dto.setSellerId(userDetails.getUser().getUserId());
-
-        try {
-            ProductDto created = productService.createProductWithImages(dto, files);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
     }
 }

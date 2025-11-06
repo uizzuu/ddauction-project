@@ -36,7 +36,6 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private final PaymentRepository paymentRepository;
     private final ImageRepository imageRepository;
-    private final FileUploadConfig fileUploadConfig; // @RequiredArgsConstructor 덕분에 주입됨
     private final EntityManager em;
 
     // 전체 상품 조회
@@ -272,42 +271,5 @@ public class ProductService {
         }
 
         return products.map(ProductDto::fromEntity);
-    }
-
-    // 다중 이미지와 함께 상품 생성
-    @Transactional
-    public ProductDto createProductWithImages(ProductDto dto, MultipartFile[] files) {
-        User seller = findUserOrThrow(dto.getSellerId());
-        Category category = findCategoryOrThrow(dto.getCategoryId());
-        Bid bid = findBidOrNull(dto.getBidId());
-        Payment payment = findPaymentOrNull(dto.getPaymentId());
-
-        // Product 생성
-        Product product = dto.toEntity(seller, bid, payment, category);
-
-        // 이미지 처리 및 추가
-        if (files != null && files.length > 0) {
-            for (MultipartFile file : files) {
-                try {
-                    String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                    Path path = Paths.get(fileUploadConfig.getUploadDir()).resolve(filename).toAbsolutePath();
-                    Files.createDirectories(path.getParent());
-                    file.transferTo(path.toFile());
-
-                    Image image = Image.builder()
-                            .imagePath("/uploads/" + filename)
-                            .build();
-
-                    product.addImage(image);  // 양방향 관계 설정
-                } catch (Exception e) {
-                    throw new RuntimeException("이미지 저장 실패", e);
-                }
-            }
-        }
-
-        // Product 저장 (CascadeType.ALL로 이미지도 함께 저장)
-        em.persist(product);
-
-        return ProductDto.fromEntity(product);
     }
 }

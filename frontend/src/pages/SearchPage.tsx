@@ -22,13 +22,13 @@ export default function ProductSearchPage() {
   >("latest");
 
   // 한국 시간대(+09:00) 기준으로 문자열을 Date로 파싱하는 함수
-const parseWithTZ = (s: string) => {
-  if (!s) return new Date(0);
-  // 이미 타임존(+09:00, Z 등)이 포함돼 있으면 그대로 처리
-  if (/[Zz]|[+\-]\d{2}:\d{2}$/.test(s)) return new Date(s);
-  // 없으면 한국 시간대 기준으로 보정
-  return new Date(`${s}+09:00`);
-};
+  const parseWithTZ = (s: string) => {
+    if (!s) return new Date(0);
+    // 이미 타임존(+09:00, Z 등)이 포함돼 있으면 그대로 처리
+    if (/[Zz]|[+-]\d{2}:\d{2}$/.test(s)) return new Date(s);
+    // 없으면 한국 시간대 기준으로 보정
+    return new Date(`${s}+09:00`);
+  };
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -137,14 +137,14 @@ const parseWithTZ = (s: string) => {
           //   break;
 
           case "timeLeft":
-          sorted.sort(
-          (a, b) =>
-          parseWithTZ(a.auctionEndTime).getTime() -
-          parseWithTZ(b.auctionEndTime).getTime()
-          );
-          break;
-          }
+            sorted.sort(
+              (a, b) =>
+                parseWithTZ(a.auctionEndTime).getTime() -
+                parseWithTZ(b.auctionEndTime).getTime()
+            );
+            break;
         }
+      }
       setProducts(sorted);
       console.log("🔹 최종 화면에 표시할 products:", sorted); // 🔹 최종
     } catch (err) {
@@ -303,7 +303,7 @@ const parseWithTZ = (s: string) => {
                 >
                   <div className="product-image height-220">
                     {p.images && p.images.length > 0 ? (
-                      <img src={`${API_BASE_URL}${p.images[0].imagePath}`} alt={p.title} />
+                      <img src={p.images[0].imagePath} alt={p.title} />
                     ) : (
                       <div className="no-image-txt">이미지 없음</div>
                     )}

@@ -33,7 +33,10 @@ public class JWTFilter extends OncePerRequestFilter {
                 " Authorization: " + request.getHeader("Authorization"));
 
         // JWT 검사 제외 경로
-        if (path.startsWith("/api/auth/") || path.startsWith("/oauth2/") || "OPTIONS".equalsIgnoreCase(request.getMethod()) || path.startsWith("/uploads/")) {
+        if (path.startsWith("/api/auth/") ||
+                path.startsWith("/oauth2/") ||
+                "OPTIONS".equalsIgnoreCase(request.getMethod()) ||
+                path.startsWith("/uploads/")) {
             filterChain.doFilter(request, response);
             return;
         }

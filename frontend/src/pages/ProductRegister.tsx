@@ -26,23 +26,13 @@ export default function ProductRegister({ user }: Props) {
   const [minDateTime, setMinDateTime] = useState<Date | undefined>(undefined);
   const [auctionEndDate, setAuctionEndDate] = useState<Date | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [uploading, setUploading] = useState(false);
 
   // 최소 선택 시간 설정
   useEffect(() => {
     const now = new Date();
     setMinDateTime(now);
   }, []);
-
-  // 수정된 코드 (윤서)
-//   const formatWithoutTZ = (date: Date) => {
-//   const y = date.getFullYear();
-//   const m = String(date.getMonth() + 1).padStart(2, "0");
-//   const d = String(date.getDate()).padStart(2, "0");
-//   const hh = String(date.getHours()).padStart(2, "0");
-//   const mm = String(date.getMinutes()).padStart(2, "0");
-//   const ss = String(date.getSeconds()).padStart(2, "0");
-//   return `${y}-${m}-${d}T${hh}:${mm}:${ss}`;  //  타임존 제거
-// };
 
   // DatePicker 변경 시 form도 업데이트
   const handleDateChange = (date: Date | null) => {
@@ -63,15 +53,6 @@ export default function ProductRegister({ user }: Props) {
       }));
       setError("");
     }
-// (윤서)
-//   if (date) {
-//     const formatted = formatWithoutTZ(date); // KST로 전환
-//     setForm((prev) => ({
-//       ...prev,
-//       auctionEndTime: formatted,
-//     }));
-//     setError("");
-//   }
   };
 
   // 카테고리 로드
@@ -102,20 +83,57 @@ export default function ProductRegister({ user }: Props) {
     if (!form.oneMinuteAuction && !form.auctionEndTime)
       return "경매 종료 시간을 입력해주세요";
     if (!form.categoryId) return "카테고리를 선택해주세요";
+    if (!form.images || form.images.length === 0)
+      return "최소 1개 이상의 이미지를 선택해주세요";
     return "";
+  };
+
+  // ✅ S3 업로드 함수
+  const uploadImageToS3 = async (
+    file: File,
+    token: string
+  ): Promise<string> => {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/files/s3-upload`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`이미지 업로드 실패: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      const s3Url = data.url;
+
+      if (!s3Url) {
+        throw new Error("S3 URL을 받지 못했습니다");
+      }
+
+      return s3Url;
+    } catch (err) {
+      console.error("S3 업로드 오류:", err);
+      throw err;
+    }
   };
 
   const handleSubmit = async () => {
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
-      console.log("🔹 검증 실패:", validationError); // 🔹 검증 실패 로그
+      console.log("🔹 검증 실패:", validationError);
       return;
     }
-    // 추가: 카테고리 선택 안 했으면 막기(윤서)
+
     if (!form.categoryId || form.categoryId <= 0) {
-    setError("카테고리를 반드시 선택해야 합니다.");
-    return;
+      setError("카테고리를 반드시 선택해야 합니다.");
+      return;
     }
 
     const token = localStorage.getItem("token");
@@ -138,8 +156,6 @@ export default function ProductRegister({ user }: Props) {
       const seconds = String(end.getSeconds()).padStart(2, "0");
 
       auctionEndTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-// 윤서
-//      auctionEndTime = formatWithoutTZ(end);
     } else {
       const end = new Date(form.auctionEndTime);
       if (isNaN(end.getTime())) {
@@ -155,66 +171,69 @@ export default function ProductRegister({ user }: Props) {
     );
 
     try {
-      const formData = new FormData();
+      setUploading(true);
 
-      // product 데이터 JSON으로 Blob 처리
-      const productBlob = new Blob(
-        [
-          JSON.stringify({
-            title: form.title,
-            content: form.content,
-            startingPrice: startingPriceNumber,
-            oneMinuteAuction: form.oneMinuteAuction,
-            auctionEndTime,
-            sellerId: user.userId,
-            categoryId: form.categoryId,
-            productStatus: "ACTIVE",
-            paymentStatus: "PENDING",
-          }),
-        ],
-        { type: "application/json" }
-      );
-
-      formData.append("product", productBlob); // Spring 쪽 @RequestPart("dto")로 받음,Blob으로 전송 (파일명 제거)
-      productBlob.text().then(text => console.log("Blob JSON 확인:", text));
-
-      // 이미지 파일 추가
-      if (form.images) {
-        Array.from(form.images).forEach((file) =>
-          formData.append("files", file)
-        );
+      // 이미지 S3 업로드
+      const uploadedImageUrls: string[] = [];
+      if (form.images && form.images.length > 0) {
+        for (const file of Array.from(form.images)) {
+          const s3Url = await uploadImageToS3(file, token);
+          uploadedImageUrls.push(s3Url);
+        }
       }
 
-      // 🔹 디버그: FormData 확인
-      console.log("=== FormData Debug Start ===");
-      for (const pair of formData.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-      console.log("=== FormData Debug End ===");
-
-      const response = await fetch(`${API_BASE_URL}/api/products`, {
+      // 1단계: 상품만 먼저 등록 (JSON)
+      const productResponse = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        credentials: "include", //이거없어서 401뜸
-        body: formData,
+        credentials: "include",
+        body: JSON.stringify({
+          // FormData 대신 JSON
+          title: form.title,
+          content: form.content,
+          startingPrice: startingPriceNumber,
+          oneMinuteAuction: form.oneMinuteAuction,
+          auctionEndTime,
+          sellerId: user.userId,
+          categoryId: form.categoryId,
+          productStatus: "ACTIVE",
+          paymentStatus: "PENDING",
+        }),
       });
 
-      const responseText = await response.text();
-      console.log("🔹 서버 응답 내용:", responseText);
+      const productData = await productResponse.json();
 
-      if (response.ok) {
-        alert("물품 등록 성공!");
-        navigate("/search");
-      } else {
-        console.error("서버 응답:", responseText);
-        setError("물품 등록 실패");
-        console.error("🔹 등록 실패:", responseText);
+      if (!productResponse.ok) {
+        throw new Error("상품 등록 실패");
       }
+
+      const productId = productData.productId;
+
+      // 이미지 등록 (각 S3 URL을 이미지 엔티티로 저장)
+      for (const s3Url of uploadedImageUrls) {
+        await fetch(`${API_BASE_URL}/api/images`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            productId,
+            imagePath: s3Url,
+          }),
+        });
+      }
+
+      alert("물품 등록 성공!");
+      navigate("/search");
     } catch (err) {
       console.error("🔹 등록 중 예외 발생:", err);
-      setError("서버 연결 실패");
+      setError(err instanceof Error ? err.message : "서버 연결 실패");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -253,6 +272,7 @@ export default function ProductRegister({ user }: Props) {
               });
             }}
             className="input"
+            disabled={uploading}
           />
 
           <label className="label">상세 설명 *</label>
@@ -268,6 +288,7 @@ export default function ProductRegister({ user }: Props) {
               });
             }}
             className="textarea"
+            disabled={uploading}
           />
 
           <label className="label">시작 가격 (원) *</label>
@@ -287,21 +308,23 @@ export default function ProductRegister({ user }: Props) {
               });
             }}
             className="input"
+            disabled={uploading}
           />
 
-          <label className="label">상품 이미지 *</label>
+          <label className="label">상품 이미지 * (최소 1개)</label>
           <input
             type="file"
             multiple
             onChange={(e) => {
               const files = e.target.files;
-              if (!files) return; // null이면 그냥 종료
+              if (!files) return;
               setForm((prev) => ({
                 ...prev,
                 images: [...(prev.images || []), ...Array.from(files)],
               }));
             }}
             className="input"
+            disabled={uploading}
           />
 
           <div className="selected-files">
@@ -316,6 +339,7 @@ export default function ProductRegister({ user }: Props) {
                       images: prev.images?.filter((_, i) => i !== idx),
                     }))
                   }
+                  disabled={uploading}
                 >
                   삭제
                 </button>
@@ -331,6 +355,7 @@ export default function ProductRegister({ user }: Props) {
                 onChange={(e) =>
                   setForm({ ...form, oneMinuteAuction: e.target.checked })
                 }
+                disabled={uploading}
               />
               <span>1분 경매 여부</span>
             </label>
@@ -349,6 +374,7 @@ export default function ProductRegister({ user }: Props) {
                 minDate={minDateTime}
                 placeholderText="날짜와 시간을 선택하세요"
                 className="input"
+                disabled={uploading}
               />
             </>
           )}
@@ -370,12 +396,20 @@ export default function ProductRegister({ user }: Props) {
 
         {error && <p className="error-message">{error}</p>}
 
-        <button onClick={handleSubmit} className="btn-submit">
-          등록하기
+        <button
+          onClick={handleSubmit}
+          className="btn-submit"
+          disabled={uploading}
+        >
+          {uploading ? "업로드 중..." : "등록하기"}
         </button>
 
         <div className="register-links">
-          <button onClick={() => navigate("/")} className="link-button">
+          <button
+            onClick={() => navigate("/")}
+            className="link-button"
+            disabled={uploading}
+          >
             취소
           </button>
         </div>

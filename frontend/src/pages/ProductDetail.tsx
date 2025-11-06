@@ -556,7 +556,7 @@ export default function ProductDetail({ user }: Props) {
               {product.images.map((img, idx) => (
                 <div key={idx}>
                   <img
-                    src={`${API_BASE_URL}${img.imagePath}`}
+                    src={img.imagePath}
                     alt={`${product.title} - ${idx + 1}`}
                     style={{ width: "100%", height: "auto", borderRadius: "8px" }}
                   />

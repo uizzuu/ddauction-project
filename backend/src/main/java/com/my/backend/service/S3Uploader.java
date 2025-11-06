@@ -1,7 +1,8 @@
 package com.my.backend.service;
+
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,20 +24,33 @@ public class S3Uploader {
     public String upload(MultipartFile file, String dirName) throws IOException {
         String fileName = dirName + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
 
-        amazonS3.putObject(new PutObjectRequest(
-                bucket,
-                fileName,
-                file.getInputStream(),
-                null
-        ).withCannedAcl(CannedAccessControlList.PublicRead));
+        // ObjectMetadata 설정 (스트림 버퍼 문제 해결)
+        ObjectMetadata metadata = new ObjectMetadata();
+        metadata.setContentLength(file.getSize());
+        metadata.setContentType(file.getContentType());
 
-        return amazonS3.getUrl(bucket, fileName).toString(); // 업로드된 파일 URL 반환
+        try {
+            // metadata 추가
+            amazonS3.putObject(new PutObjectRequest(
+                    bucket,
+                    fileName,
+                    file.getInputStream(),
+                    metadata
+            ));
+
+            String url = amazonS3.getUrl(bucket, fileName).toString();
+            return url;
+        } catch (Exception e) {
+            throw new RuntimeException("S3 업로드 실패: " + e.getMessage(), e);
+        }
     }
 
     public void delete(String fileUrl) {
-        String fileName = fileUrl.substring(fileUrl.indexOf(bucket) + bucket.length() + 1);
-        amazonS3.deleteObject(bucket, fileName);
+        try {
+            String fileName = fileUrl.substring(fileUrl.indexOf(bucket) + bucket.length() + 1);
+            amazonS3.deleteObject(bucket, fileName);
+        } catch (Exception e) {
+            throw new RuntimeException("S3 파일 삭제 실패: " + e.getMessage(), e);
+        }
     }
 }
-
-
