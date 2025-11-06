@@ -54,6 +54,9 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/ddauction-project
+            echo "추가했어요 ==="
+            docker builder prune -a -f || true
+            docker image prune -a -f || true
 
             echo "=== Git 강제 초기화 및 Pull ==="
             git fetch origin main
