@@ -1,4 +1,4 @@
-version: '3.9'
+version: "3.9"
 services:
   backend:
     image: ${BACKEND_IMAGE}
@@ -23,6 +23,11 @@ services:
       PAYMENT_PORTONE_CALLBACK_URL: ${PAYMENT_PORTONE_CALLBACK_URL}
       # 파일 업로드
       FILE_UPLOAD_DIRECTORY: ${FILE_UPLOAD_DIRECTORY}
+      # S3
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME}
+      AWS_REGION: ${AWS_REGION}
     restart: unless-stopped
     ports:
       - "8080:8080"
