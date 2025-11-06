@@ -57,6 +57,7 @@ export interface Product {
   categoryName?: string;
   bid?: Bid | null;
   bids?: Bid[]; // 입찰기록
+  imageUrl?: string;
 }
 
 export interface Category {
