@@ -503,14 +503,13 @@ export default function ProductDetail({ user }: Props) {
               slidesToShow={1}
               slidesToScroll={1}
               arrows={true}
-              adaptiveHeight={true}
+              adaptiveHeight={false}
             >
               {product.images.map((img, idx) => (
                 <div key={idx}>
                   <img
                     src={img.imagePath}
                     alt={`${product.title} - ${idx + 1}`}
-                    style={{ width: "100%", height: "auto", borderRadius: "8px" }}
                   />
                 </div>
               ))}

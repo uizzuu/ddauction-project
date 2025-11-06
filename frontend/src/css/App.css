@@ -843,6 +843,36 @@ button:disabled {
   border-radius: 16px;
 }
 
+.product-detail-image .slick-slider,
+.product-detail-image .slick-list,
+.product-detail-image .slick-track,
+.product-detail-image .slick-slide,
+.product-detail-image .slick-slide > div {
+  height: 100% !important;
+}
+
+.product-detail-image .slick-slide > div > div {
+  display: block !important; /* inline-block -> block */
+  height: 100% !important;
+}
+
+/* 이미지가 부모를 꽉 채우도록 */
+.product-detail-image img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  display: block !important;
+  border-radius: 16px;
+}
+
+/* .product-detail-image .slick-slider,
+.product-detail-image .slick-list,
+.product-detail-image .slick-track,
+.product-detail-image .slick-slide,
+.product-detail-image .slick-slide > div {
+  height: 100%;
+} */
+
 .product-image img {
   width: 100%;
   height: 100%;
