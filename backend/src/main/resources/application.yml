@@ -46,7 +46,7 @@ jwt:
 
 server:
   port: 8080
-  forward-headers-strategy: NATIVE
+  forward-headers-strategy: FRAMEWORK
 
 app:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost,http://localhost:5173}
