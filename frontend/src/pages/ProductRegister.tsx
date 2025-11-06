@@ -137,8 +137,13 @@ export default function ProductRegister({ user }: Props) {
     }
 
     const token = localStorage.getItem("token");
+    if (!token || !user) {
+      alert("로그인이 필요합니다");
+      navigate("/login");
+      return;
+    }
 
-    // ✅ [로그 추가] 토큰 확인
+    // 이제 token과 user는 확실히 있음
     console.log("🔹 handleSubmit 호출 - user:", user);
     console.log("🔹 로컬 스토리지 토큰:", token);
 
