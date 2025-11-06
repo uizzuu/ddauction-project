@@ -100,7 +100,7 @@ export default function ProductRegister({ user }: Props) {
       const response = await fetch(`${API_BASE_URL}/api/files/s3-upload`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -205,7 +205,7 @@ export default function ProductRegister({ user }: Props) {
       const productResponse = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         credentials: "include",
@@ -251,7 +251,7 @@ export default function ProductRegister({ user }: Props) {
         await fetch(`${API_BASE_URL}/api/images`, {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
