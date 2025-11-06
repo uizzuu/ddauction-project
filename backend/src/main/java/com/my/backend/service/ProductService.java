@@ -1,5 +1,6 @@
 package com.my.backend.service;
 
+import com.my.backend.common.enums.PaymentStatus;
 import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.config.FileUploadConfig;
 import com.my.backend.dto.ProductDto;
@@ -271,5 +272,14 @@ public class ProductService {
         }
 
         return products.map(ProductDto::fromEntity);
+    }
+
+    // 로그인한 사용자의 구매 완료 상품 목록 조회
+    public List<ProductDto> getPurchasedProducts(Long userId) {
+        List<Product> products = productRepository.findByPaymentUserIdAndPaymentStatus(userId, PaymentStatus.PAID);
+
+        return products.stream()
+                .map(ProductDto::fromEntity)
+                .collect(Collectors.toList());
     }
 }

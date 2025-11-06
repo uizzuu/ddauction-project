@@ -21,6 +21,7 @@ import MyReports from "../components/mypage/MyReports";
 import MyQnas from "../components/mypage/MyQnas";
 import MyInquiries from "../components/mypage/MyInquiries";
 import ReviewManagement from "../components/mypage/ReviewManagement";
+import PaymentProducts from "../components/mypage/PaymentProducts";
 
 // ★ 이미지 URL 절대 경로 처리 (Helper Function)
 const normalizeProduct = (
@@ -33,8 +34,8 @@ const normalizeProduct = (
   content: p.content ?? "",
   startingPrice: p.startingPrice ?? 0,
   imageUrl: p.images?.[0]?.imagePath
-  ? `${API_BASE_URL.replace(/\/$/, "")}${p.images[0].imagePath}`
-  : "",
+    ? `${API_BASE_URL.replace(/\/$/, "")}${p.images[0].imagePath}`
+    : "",
   oneMinuteAuction: p.oneMinuteAuction ?? false,
   auctionEndTime: p.auctionEndTime ?? (() => {
     const now = new Date();
@@ -640,27 +641,29 @@ export default function MyPage({ user, setUser }: Props) {
           >
             <h4 style={{ color: "#ddd", marginBottom: "10px" }}>기타 메뉴</h4>
             <div className="flex-column gap-8 flex-left-a">
-              <button
-                className="text-16 color-ddd"
-                onClick={() => alert("결제 수단 관리")}
-              >
-                결제 수단 관리
-              </button>
-              <button
-                className="text-16 color-ddd"
-                onClick={() => alert("구매 상품 목록")}
-              >
-                구매 상품
-              </button>
-              <button
-                className="text-16 color-ddd"
-                onClick={() => alert("입찰 목록")}
-              >
-                입찰 목록
-              </button>
-              <button className="text-16 color-ddd" onClick={handleDelete}>
-                회원탈퇴
-              </button>
+              <div className="flex-column gap-8 flex-left-a">
+                <button
+                  className="text-16 color-ddd"
+                  onClick={() => handleSectionChange("payments")}
+                >
+                  결제 수단 관리
+                </button>
+                <button
+                  className="text-16 color-ddd"
+                  onClick={() => handleSectionChange("purchases")}
+                >
+                  결제 완료 상품
+                </button>
+                <button
+                  className="text-16 color-ddd"
+                  onClick={() => handleSectionChange("bids")}
+                >
+                  입찰 목록
+                </button>
+                <button className="text-16 color-ddd" onClick={handleDelete}>
+                  회원탈퇴
+                </button>
+              </div>
             </div>
           </div>
         </nav>
@@ -746,7 +749,10 @@ export default function MyPage({ user, setUser }: Props) {
 
           {/* 기타 메뉴에 대한 간단한 Placeholder */}
           {section === "payments" && <div>결제 수단 관리 페이지입니다.</div>}
-          {section === "purchases" && <div>구매 상품 목록 페이지입니다.</div>}
+          {section === "purchases" && user && (
+            <PaymentProducts token={localStorage.getItem("token") || ""} />
+          )}
+
           {section === "bids" && <div>입찰 목록 페이지입니다.</div>}
           {section === "withdrawal" && (
             <button

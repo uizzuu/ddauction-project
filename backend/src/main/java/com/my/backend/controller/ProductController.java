@@ -4,6 +4,7 @@ import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ImageDto;
 import com.my.backend.dto.ProductDto;
+import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.entity.User;
 import com.my.backend.repository.UserRepository;
 import com.my.backend.service.BookMarkService;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -165,5 +167,17 @@ public class ProductController {
         Page<ProductDto> result = productService.searchProductsPaged(keyword, category, productStatus, pageable);
 
         return ResponseEntity.ok(result);
+    }
+
+    // 로그인한 사용자의 구매 완료 상품 목록 조회
+    @GetMapping("/purchases")
+    public ResponseEntity<List<ProductDto>> getPurchasedProducts(@AuthenticationPrincipal CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        Long userId = userDetails.getUser().getUserId();
+        List<ProductDto> purchasedProducts = productService.getPurchasedProducts(userId);
+        return ResponseEntity.ok(purchasedProducts);
     }
 }

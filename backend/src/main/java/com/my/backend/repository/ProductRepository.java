@@ -1,5 +1,6 @@
 package com.my.backend.repository;
 
+import com.my.backend.common.enums.PaymentStatus;
 import com.my.backend.common.enums.ProductStatus;
 import com.my.backend.entity.Product;
 import org.springframework.data.domain.Page;
@@ -50,4 +51,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     Page<Product> findByCategory_CategoryIdAndProductStatus(Long categoryId, ProductStatus productStatus, Pageable pageable);
     Page<Product> findByTitleContainingAndCategory_CategoryIdAndProductStatus(
             String keyword, Long categoryId, ProductStatus productStatus, Pageable pageable);
+
+    List<Product> findByPaymentUserIdAndPaymentStatus(Long paymentUserId, PaymentStatus paymentStatus);
 }
