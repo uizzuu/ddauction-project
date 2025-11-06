@@ -334,7 +334,7 @@ export default function ProductRegister({ user }: Props) {
           <input
             type="text"
             placeholder="예: 10000"
-            value={Number(form.startingPrice).toLocaleString()}
+            value={form.startingPrice}
             onChange={(e) => {
               const clean = e.target.value.replace(/[^0-9]/g, "");
               setForm({ ...form, startingPrice: clean });
