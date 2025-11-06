@@ -88,7 +88,7 @@ export default function ProductRegister({ user }: Props) {
     return "";
   };
 
-  // ✅ S3 업로드 함수
+  // S3 업로드 함수
   const uploadImageToS3 = async (
     file: File,
     token: string
@@ -96,69 +96,39 @@ export default function ProductRegister({ user }: Props) {
     const formData = new FormData();
     formData.append("file", file);
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/files/s3-upload`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+    const response = await fetch(`${API_BASE_URL}/api/files/s3-upload`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
 
-      if (!response.ok) {
-        throw new Error(`이미지 업로드 실패: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const s3Url = data.url;
-
-      if (!s3Url) {
-        throw new Error("S3 URL을 받지 못했습니다");
-      }
-
-      return s3Url;
-    } catch (err) {
-      console.error("S3 업로드 오류:", err);
-      throw err;
-    }
+    const data = await response.json();
+    return data.url;
   };
 
   const handleSubmit = async () => {
     const validationError = validateForm();
     if (validationError) {
       setError(validationError);
-      console.log("🔹 검증 실패:", validationError);
-      return;
-    }
-
-    if (!form.categoryId || form.categoryId <= 0) {
-      setError("카테고리를 반드시 선택해야 합니다.");
       return;
     }
 
     const token = localStorage.getItem("token");
-
-    console.log("🔹 handleSubmit 호출 - user:", user);
-    console.log("🔹 로컬 스토리지 토큰:", token);
-
     if (!token || !user) {
       alert("로그인이 필요합니다");
       navigate("/login");
       return;
     }
 
-    let auctionEndTime: string;
-    if (form.oneMinuteAuction) {
-      const end = new Date();
-      end.setMinutes(end.getMinutes() + 1);
-      auctionEndTime = end.toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
-    } else {
-      const end = new Date(form.auctionEndTime);
-      if (isNaN(end.getTime())) {
-        setError("경매 종료 시간이 유효하지 않습니다");
-        return;
-      }
-      auctionEndTime = form.auctionEndTime;
+    const endDate = form.oneMinuteAuction
+      ? new Date(new Date().getTime() + 60000)
+      : new Date(form.auctionEndTime);
+
+    if (!form.oneMinuteAuction && isNaN(endDate.getTime())) {
+      setError("경매 종료 시간이 유효하지 않습니다");
+      return;
     }
 
     const startingPriceNumber = Math.max(
@@ -169,9 +139,7 @@ export default function ProductRegister({ user }: Props) {
     try {
       setUploading(true);
 
-      // ✅ 1단계: 먼저 상품을 DB에 등록 (이미지 없이)
-      console.log("🔹 1단계: 상품 등록 요청 시작");
-
+      // 1️⃣ 상품 등록
       const productResponse = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: {
@@ -183,7 +151,7 @@ export default function ProductRegister({ user }: Props) {
           content: form.content,
           startingPrice: startingPriceNumber,
           oneMinuteAuction: form.oneMinuteAuction,
-          auctionEndTime,
+          auctionEndTime: endDate.toISOString().split(".")[0],
           sellerId: user.userId,
           categoryId: form.categoryId,
           productStatus: "ACTIVE",
@@ -191,62 +159,35 @@ export default function ProductRegister({ user }: Props) {
         }),
       });
 
-      console.log(
-        "🔹 fetch 응답 상태:",
-        productResponse.status,
-        productResponse.statusText
-      );
-
       if (!productResponse.ok) {
-        console.error(
-          "❌ 상품 등록 실패:",
-          productResponse.status,
-          productResponse.statusText
-        );
         const errorText = await productResponse.text();
         setError(`상품 등록 실패: ${productResponse.status} - ${errorText}`);
-        return; // ❌ 여기서 반환 - S3 업로드 안 함!
+        return;
       }
 
-      // 2️⃣ JSON 파싱 (try-catch로 안전하게)
-      let productData: { productId?: number } = {};
-      try {
-        productData = await productResponse.json();
-        console.log("🔹 fetch 응답 JSON:", productData);
-      } catch (err) {
-        console.error("🔹 JSON 파싱 실패:", err);
-        setError("상품 등록 후 서버 응답이 이상합니다.");
-        return; // ❌ 여기서 반환 - S3 업로드 안 함!
-      }
-
-      // 3️⃣ productId 확인
+      const productData = await productResponse.json();
       const productId = productData.productId;
       if (!productId) {
         setError("서버에서 productId를 받지 못했습니다.");
-        return; // ❌ 여기서 반환 - S3 업로드 안 함!
+        return;
       }
 
-      // ✅ 2단계: DB 저장 성공 후 S3 업로드 진행
-      console.log("🔹 2단계: S3 업로드 시작 (productId=" + productId + ")");
-
+      // 2️⃣ S3 이미지 업로드
       const uploadedImageUrls: string[] = [];
       if (form.images && form.images.length > 0) {
         for (const file of Array.from(form.images)) {
           try {
             const s3Url = await uploadImageToS3(file, token);
-            console.log("🔹 업로드된 이미지 URL:", s3Url);
             uploadedImageUrls.push(s3Url);
-          } catch (s3Error) {
-            console.error("❌ S3 업로드 중 오류:", s3Error);
-            setError("이미지 업로드에 실패했습니다. 관리자에게 문의하세요.");
-            // S3 실패해도 계속 진행 (이미지 없이 상품만 등록됨)
+          } catch (err) {
+            console.error("S3 업로드 실패:", err);
+            // 실패해도 계속 진행 (이미지 없는 상품 가능)
           }
         }
       }
 
-      // ✅ 3단계: 이미지 DB 등록
-      console.log("🔹 3단계: 이미지 DB 등록");
-      for (const s3Url of uploadedImageUrls) {
+      // 3️⃣ 이미지 DB 등록
+      for (const url of uploadedImageUrls) {
         try {
           await fetch(`${API_BASE_URL}/api/images`, {
             method: "POST",
@@ -256,19 +197,17 @@ export default function ProductRegister({ user }: Props) {
             },
             body: JSON.stringify({
               productId,
-              imagePath: s3Url,
+              imagePath: url,
             }),
           });
-        } catch (imgError) {
-          console.error("❌ 이미지 등록 실패:", imgError);
-          // 이미지 등록 실패해도 계속 진행
+        } catch (err) {
+          console.error("이미지 DB 등록 실패:", err);
         }
       }
 
       alert("물품 등록 성공!");
       navigate("/search");
     } catch (err) {
-      console.error("🔹 등록 중 예외 발생:", err);
       setError(err instanceof Error ? err.message : "서버 연결 실패");
     } finally {
       setUploading(false);
