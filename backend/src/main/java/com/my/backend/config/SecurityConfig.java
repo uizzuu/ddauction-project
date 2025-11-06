@@ -111,6 +111,7 @@ public class SecurityConfig {
                         // 인증 필요
                         .requestMatchers(HttpMethod.GET, "/api/products/purchases").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
                         .requestMatchers("/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
