@@ -9,11 +9,13 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -29,19 +31,32 @@ public class PortOnePaymentController {
     // =====================================================
     // 1) 결제 준비 (경매 낙찰자만 결제 가능)
     // =====================================================
+//    @PostMapping("/prepare")
+//    public ResponseEntity<Map<String, Object>> preparePayment(
+//            @Valid @RequestBody PrepareReq req,
+//            @AuthenticationPrincipal UserDetails userDetails
+//    ) {
+//        Long userId = authUtil.extractUserId(userDetails);
+//        log.info("[PortOne] 결제 준비 요청 - productId: {}, userId: {}", req.productId(), userId);
+//
+//        // PortOnePaymentService 내부에서
+//        // - productId로 상품 조회
+//        // - 최고입찰자(isWinning=1) 검증
+//        // - bidPrice(최고가) 조회
+//        // - PortOne 결제 사전등록 처리
+//        return portonePaymentService.prepareBidPayment(req.productId(), userId);
+//    }
+
     @PostMapping("/prepare")
     public ResponseEntity<Map<String, Object>> preparePayment(
             @Valid @RequestBody PrepareReq req,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        Long userId = authUtil.extractUserId(userDetails);
+            Authentication authentication) {
+        Long userId = null;
+        //  principal이 CustomUserDetails인 경우, 거기서 직접 userId 추출
+        if (authentication != null && authentication.getPrincipal() instanceof com.my.backend.dto.auth.CustomUserDetails customUser) {
+            userId = customUser.getUser().getUserId();
+        }
         log.info("[PortOne] 결제 준비 요청 - productId: {}, userId: {}", req.productId(), userId);
-
-        // PortOnePaymentService 내부에서
-        // - productId로 상품 조회
-        // - 최고입찰자(isWinning=1) 검증
-        // - bidPrice(최고가) 조회
-        // - PortOne 결제 사전등록 처리
         return portonePaymentService.prepareBidPayment(req.productId(), userId);
     }
 
@@ -53,20 +68,49 @@ public class PortOnePaymentController {
     // 2) 결제 완료 후 PortOne 검증 및 확정
     // =====================================================
     @PostMapping("/complete")
-    public ResponseEntity<PortOnePaymentResponse> completePayment(
+    public ResponseEntity<Map<String, Object>> completePayment(
             @Valid @RequestBody CompleteReq payload,
-            @AuthenticationPrincipal UserDetails userDetails
+            Authentication authentication
     ) {
-        Long userId = authUtil.extractUserId(userDetails);
+        Long userId = null;
+        if (authentication != null &&
+                authentication.getPrincipal() instanceof com.my.backend.dto.auth.CustomUserDetails customUser) {
+            userId = customUser.getUser().getUserId();
+        }
+
+        if (userId == null) {
+            log.warn("[PortOne] 인증 실패 - userId is null");
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "인증된 사용자가 아닙니다.");
+            return ResponseEntity.status(401).body(error);
+        }
+
         log.info("[PortOne] 결제 완료 검증 - imp_uid: {}, productId: {}, userId: {}",
                 payload.impUid(), payload.productId(), userId);
 
-        // verifyAndComplete 내부에서:
-        // - PortOne API로 실제 결제 금액 검증
-        // - DB의 최고가(bidPrice)와 일치 확인
-        // - Payment 엔티티 저장 및 상태 업데이트
-        return portonePaymentService.verifyAndComplete(payload.impUid(), payload.productId(), userId);
+        try {
+            //  ResponseEntity<PortOnePaymentResponse> → PortOnePaymentResponse로 변환
+            PortOnePaymentResponse result = portonePaymentService
+                    .verifyAndComplete(payload.impUid(), payload.productId(), userId)
+                    .getBody();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "결제가 완료되었습니다.");
+            response.put("paymentInfo", result);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            log.error("[PortOne] 결제 검증 실패: {}", e.getMessage(), e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
     }
+
 
     public record CompleteReq(
             @NotNull @JsonProperty("imp_uid") String impUid,

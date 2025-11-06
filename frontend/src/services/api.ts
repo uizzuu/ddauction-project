@@ -181,22 +181,25 @@ export async function getArticleById(id: number): Promise<ArticleDto> {
   return response.json();
 }
 
-export async function createArticle(articleData: ArticleForm): Promise<ArticleDto> {
+export async function createArticle(
+  articleData: ArticleForm
+): Promise<ArticleDto> {
   const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles`, {
     method: "POST",
     body: JSON.stringify(articleData),
   });
-
   if (!response.ok) throw new Error("게시글 생성 실패");
   return response.json();
 }
 
-export async function updateArticle(id: number, articleData: ArticleForm): Promise<ArticleDto> {
+export async function updateArticle(
+  id: number,
+  articleData: ArticleForm
+): Promise<ArticleDto> {
   const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
     method: "PUT",
     body: JSON.stringify(articleData),
   });
-
   if (!response.ok) throw new Error("게시글 수정 실패");
   return response.json();
 }
@@ -205,7 +208,6 @@ export async function deleteArticle(id: number): Promise<void> {
   const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
     method: "DELETE",
   });
-
   if (!response.ok) throw new Error("게시글 삭제 실패");
 }
 
@@ -276,7 +278,7 @@ export async function getWinningInfo(productId: number): Promise<{
   return response.json();
 }
 
-// 결제 준비
+// 결제 준비 25.11.05 수정
 export async function preparePayment(productId: number): Promise<{
   impCode: string;
   merchantUid: string;
@@ -286,36 +288,80 @@ export async function preparePayment(productId: number): Promise<{
   buyerName: string;
   buyerTel: string;
 }> {
-  const response = await authFetch(
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(
     `${API_BASE_URL}${API_BASE}/payments/portone/prepare`,
     {
       method: "POST",
+      headers: { "Content-Type": "application/json", 
+      Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ productId }),
     }
   );
+
+  // 응답 본문은 한 번만 읽기
+  const text = await response.text();
+
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "결제 준비 실패");
+    throw new Error(
+      `결제 준비 실패 (${response.status}): ${
+        text || "서버 응답이 비어 있습니다."
+      }`
+    );
   }
-  return response.json();
+
+  if (!text) {
+    throw new Error("서버에서 빈 응답을 받았습니다. (preparePayment)");
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error("서버 응답이 올바른 JSON 형식이 아닙니다.");
+  }
 }
 
 // 결제 완료 검증
+
 export async function completePayment(data: {
   imp_uid: string;
   productId: number;
   merchant_uid: string;
 }): Promise<void> {
-  const response = await authFetch(
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+
+  const response = await fetch(
     `${API_BASE_URL}${API_BASE}/payments/portone/complete`,
     {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // 명시적으로 추가
+      },
       body: JSON.stringify(data),
     }
   );
+
+  const text = await response.text(); // 방어코드
+
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "결제 검증 실패");
+    let message = "결제 검증 실패";
+    try {
+      const err = JSON.parse(text);
+      message = err.message || message;
+    } catch {}
+    throw new Error(`${message} (HTTP ${response.status})`);
+  }
+  if (text) {
+    try {
+      const result = JSON.parse(text);
+      if (!result.success) throw new Error("결제 검증 실패");
+    } catch {
+      // 응답이 JSON이 아닐 경우 무시 (서버가 void 리턴하는 경우)
+    }
   }
 }
 

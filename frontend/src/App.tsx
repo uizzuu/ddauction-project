@@ -44,7 +44,6 @@ export default function App() {
         userName: string;
         nickName: string;
         role?: "ADMIN" | "USER" | "BANNED";
-        isWinner?: boolean;
       }>(token);
 
       // 🔹 setUser에 nickName 포함
@@ -53,7 +52,6 @@ export default function App() {
         userName: decoded.userName,
         nickName: decoded.nickName,
         role: decoded.role,
-        isWinner: decoded.isWinner ?? false,
       });
     } catch (e) {
       console.error("JWT decode 실패", e);
@@ -88,6 +86,16 @@ export default function App() {
           path="/oauth2/redirect"
           element={<OAuthCallback setUser={setUser} />}
         />
+        {/* <Route
+          path="/payment"
+          element={
+            user?.isWinner ? (
+              <PaymentPage />
+            ) : (
+              <div style={{ padding: "20px" }}>최고낙찰자만 접근 가능합니다.</div>
+            )
+          }
+        /> */}
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/find-email" element={<FindEmail />} />
         <Route path="/find-password" element={<FindPassword />} />
