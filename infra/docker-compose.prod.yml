@@ -7,6 +7,7 @@ services:
     env_file:
       - .env.prod
     environment:
+      TZ: "Asia/Seoul"
       SPRING_PROFILES_ACTIVE: prod
       # AWS RDS
       RDS_ENDPOINT: ${RDS_ENDPOINT}
@@ -40,11 +41,15 @@ services:
       - "8080:8080"
     volumes:
       - upload-data:/uploads
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
 
   frontend:
     image: ${FRONTEND_IMAGE}
     container_name: frontend
     pull_policy: always
+    environment:
+      TZ: "Asia/Seoul"
     depends_on:
       - backend
     restart: unless-stopped

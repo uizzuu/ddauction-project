@@ -137,7 +137,6 @@ export default function ProductRegister({ user }: Props) {
     }
 
     const token = localStorage.getItem("token");
-    console.log("🔹 로컬 스토리지 토큰:", localStorage.getItem("token"));
 
     console.log("🔹 handleSubmit 호출 - user:", user);
     console.log("🔹 로컬 스토리지 토큰:", token);
@@ -170,24 +169,8 @@ export default function ProductRegister({ user }: Props) {
     try {
       setUploading(true);
 
-      // 1️⃣ 이미지 S3 업로드
-      const uploadedImageUrls: string[] = [];
-      if (form.images && form.images.length > 0) {
-        for (const file of Array.from(form.images)) {
-          const s3Url = await uploadImageToS3(file, token);
-          console.log("🔹 업로드된 이미지 URL:", s3Url);
-          uploadedImageUrls.push(s3Url);
-        }
-      }
-
-      // 2️⃣ 상품 등록 (JSON)
-      console.log("🔹 상품 등록 요청 시작:", {
-        title: form.title,
-        startingPrice: startingPriceNumber,
-        auctionEndTime,
-        sellerId: user.userId,
-        categoryId: form.categoryId,
-      });
+      // ✅ 1단계: 먼저 상품을 DB에 등록 (이미지 없이)
+      console.log("🔹 1단계: 상품 등록 요청 시작");
 
       const productResponse = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
@@ -216,15 +199,16 @@ export default function ProductRegister({ user }: Props) {
 
       if (!productResponse.ok) {
         console.error(
-          "상품 등록 실패:",
+          "❌ 상품 등록 실패:",
           productResponse.status,
           productResponse.statusText
         );
-        setError(`상품 등록 실패: ${productResponse.status}`);
-        return;
+        const errorText = await productResponse.text();
+        setError(`상품 등록 실패: ${productResponse.status} - ${errorText}`);
+        return; // ❌ 여기서 반환 - S3 업로드 안 함!
       }
 
-      // 3️⃣ JSON 파싱 (try-catch로 안전하게)
+      // 2️⃣ JSON 파싱 (try-catch로 안전하게)
       let productData: { productId?: number } = {};
       try {
         productData = await productResponse.json();
@@ -232,29 +216,53 @@ export default function ProductRegister({ user }: Props) {
       } catch (err) {
         console.error("🔹 JSON 파싱 실패:", err);
         setError("상품 등록 후 서버 응답이 이상합니다.");
-        return;
+        return; // ❌ 여기서 반환 - S3 업로드 안 함!
       }
 
-      // 4️⃣ productId 확인
+      // 3️⃣ productId 확인
       const productId = productData.productId;
       if (!productId) {
         setError("서버에서 productId를 받지 못했습니다.");
-        return;
+        return; // ❌ 여기서 반환 - S3 업로드 안 함!
       }
 
-      // 5️⃣ 이미지 등록
+      // ✅ 2단계: DB 저장 성공 후 S3 업로드 진행
+      console.log("🔹 2단계: S3 업로드 시작 (productId=" + productId + ")");
+
+      const uploadedImageUrls: string[] = [];
+      if (form.images && form.images.length > 0) {
+        for (const file of Array.from(form.images)) {
+          try {
+            const s3Url = await uploadImageToS3(file, token);
+            console.log("🔹 업로드된 이미지 URL:", s3Url);
+            uploadedImageUrls.push(s3Url);
+          } catch (s3Error) {
+            console.error("❌ S3 업로드 중 오류:", s3Error);
+            setError("이미지 업로드에 실패했습니다. 관리자에게 문의하세요.");
+            // S3 실패해도 계속 진행 (이미지 없이 상품만 등록됨)
+          }
+        }
+      }
+
+      // ✅ 3단계: 이미지 DB 등록
+      console.log("🔹 3단계: 이미지 DB 등록");
       for (const s3Url of uploadedImageUrls) {
-        await fetch(`${API_BASE_URL}/api/images`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            productId,
-            imagePath: s3Url,
-          }),
-        });
+        try {
+          await fetch(`${API_BASE_URL}/api/images`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              productId,
+              imagePath: s3Url,
+            }),
+          });
+        } catch (imgError) {
+          console.error("❌ 이미지 등록 실패:", imgError);
+          // 이미지 등록 실패해도 계속 진행
+        }
       }
 
       alert("물품 등록 성공!");
