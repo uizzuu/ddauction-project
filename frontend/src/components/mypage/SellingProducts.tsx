@@ -1,6 +1,5 @@
 import React from "react";
 import type { Product, Category, ProductForm } from "../../types/types";
-import { API_BASE_URL } from "../../services/api";
 
 type Props = {
   sellingProducts: Product[];
@@ -48,19 +47,40 @@ export default function SellingProducts({
                 borderRadius: "8px",
               }}
             >
-              <div style={{ display: "flex", gap: "15px" }} >
-                <div 
-                    className="bid-box width-200 height-200 overflow-hidden p-0">
-                {product.images && product.images.length > 0 ? (
-                  <img
-                    src={`${API_BASE_URL}/${product.images[0].imagePath}`}
-                    alt={product.title}
-                    onClick={() => goToProductDetail(product.productId)}
-                  />
-                ) : (
-                  <div className="no-image-txt width-fit">이미지 없음</div>
-                )}
+              <div style={{ display: "flex", gap: "15px" }}>
+                {/* 이미지 박스 */}
+                <div className="bid-box width-200 height-200 overflow-hidden p-0">
+                  {product.imageUrl ? (
+                    <img
+                      src={product.imageUrl}
+                      alt={product.title}
+                      style={{
+                        width: "200px",
+                        height: "200px",
+                        objectFit: "cover",
+                        cursor: "pointer",
+                      }}
+                      onClick={() => goToProductDetail(product.productId)}
+                    />
+                  ) : (
+                    <div
+                      className="no-image-txt width-fit"
+                      style={{
+                        width: "200px",
+                        height: "200px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: "#eee",
+                        color: "#999",
+                      }}
+                    >
+                      이미지 없음
+                    </div>
+                  )}
                 </div>
+
+                {/* 상품 정보 */}
                 <div className="width-full">
                   <div style={{ fontWeight: "bold", fontSize: "18px" }}>
                     {product.title}
@@ -74,22 +94,22 @@ export default function SellingProducts({
                     경매 종료:{" "}
                     {new Date(product.auctionEndTime).toLocaleString()}
                   </div>
-                  <div>
-                    1분 경매: {product.oneMinuteAuction ? "예" : "아니오"}
-                  </div>
+                  <div>1분 경매: {product.oneMinuteAuction ? "예" : "아니오"}</div>
                   <div>
                     판매자: {product.sellerNickName} (ID: {product.sellerId})
                   </div>
                 </div>
-              <button
-                className="search-btn bg-transparent height-fit"
-                onClick={() => handleEditProduct(product)}
-              >
-                상품 수정
-              </button>
+
+                {/* 상품 수정 버튼 */}
+                <button
+                  className="search-btn bg-transparent height-fit"
+                  onClick={() => handleEditProduct(product)}
+                >
+                  상품 수정
+                </button>
               </div>
 
-
+              {/* 상품 수정 폼 */}
               {editingProductId === product.productId && (
                 <div
                   style={{

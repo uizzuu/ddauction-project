@@ -27,16 +27,39 @@ const normalizeProduct = (
   p: Partial<Product>,
   API_BASE_URL: string
 ): Product & { imageUrl: string } =>
-  ({
-    productId: p.productId ?? 0,
-    title: p.title ?? "제목 없음",
-    content: p.content ?? "",
-    startingPrice: p.startingPrice ?? 0,
-    imageUrl: p.images?.[0]?.imagePath
-      ? `${API_BASE_URL}/${p.images[0].imagePath}`
-      : "",
-    oneMinuteAuction: p.oneMinuteAuction ?? false,
-    auctionEndTime: p.auctionEndTime ?? (() => {
+({
+  productId: p.productId ?? 0,
+  title: p.title ?? "제목 없음",
+  content: p.content ?? "",
+  startingPrice: p.startingPrice ?? 0,
+  imageUrl: p.images?.[0]?.imagePath
+  ? `${API_BASE_URL.replace(/\/$/, "")}${p.images[0].imagePath}`
+  : "",
+  oneMinuteAuction: p.oneMinuteAuction ?? false,
+  auctionEndTime: p.auctionEndTime ?? (() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const seconds = String(now.getSeconds()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+  })(),
+  productStatus: p.productStatus ?? PRODUCT_STATUS[0],
+  paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
+  categoryId: p.categoryId ?? 0,
+  categoryName: p.categoryName ?? "없음",
+  sellerId: p.sellerId ?? 0,
+  sellerNickName: p.sellerNickName ?? "익명",
+  bidId: p.bidId,
+  bidPrice: p.bidPrice,
+  bids: (p.bids ?? []).map((b) => ({
+    bidId: b.bidId ?? 0,
+    bidPrice: b.bidPrice ?? 0,
+    userId: b.userId ?? 0,
+    isWinning: b.isWinning ?? false,
+    createdAt: b.createdAt ?? (() => {
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -46,32 +69,9 @@ const normalizeProduct = (
       const seconds = String(now.getSeconds()).padStart(2, "0");
       return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
     })(),
-    productStatus: p.productStatus ?? PRODUCT_STATUS[0],
-    paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
-    categoryId: p.categoryId ?? 0,
-    categoryName: p.categoryName ?? "없음",
-    sellerId: p.sellerId ?? 0,
-    sellerNickName: p.sellerNickName ?? "익명",
-    bidId: p.bidId,
-    bidPrice: p.bidPrice,
-    bids: (p.bids ?? []).map((b) => ({
-      bidId: b.bidId ?? 0,
-      bidPrice: b.bidPrice ?? 0,
-      userId: b.userId ?? 0,
-      isWinning: b.isWinning ?? false,
-      createdAt: b.createdAt ?? (() => {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, "0");
-        const day = String(now.getDate()).padStart(2, "0");
-        const hours = String(now.getHours()).padStart(2, "0");
-        const minutes = String(now.getMinutes()).padStart(2, "0");
-        const seconds = String(now.getSeconds()).padStart(2, "0");
-        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-      })(),
-    })),
-    bid: p.bid
-  ? {
+  })),
+  bid: p.bid
+    ? {
       bidId: p.bid.bidId ?? 0,
       bidPrice: p.bid.bidPrice ?? 0,
       userId: p.bid.userId ?? p.sellerId ?? 0,
@@ -87,8 +87,8 @@ const normalizeProduct = (
         return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
       })(),
     }
-  : null,
-  } as Product & { imageUrl: string });
+    : null,
+} as Product & { imageUrl: string });
 
 type MypageSection =
   | "info"
@@ -506,10 +506,10 @@ export default function MyPage({ user, setUser }: Props) {
       formData.append("categoryId", String(productForm.categoryId));
       formData.append("auctionEndTime", productForm.auctionEndTime);
       formData.append("oneMinuteAuction", String(productForm.oneMinuteAuction));
-  
+
       // 이미지 파일 추가
       productForm.images?.forEach((file) => formData.append("images", file));
-  
+
       const res = await fetch(`${API_BASE_URL}/api/products/${editingProductId}`, {
         method: "PUT",
         body: formData,
