@@ -36,7 +36,8 @@ public class JWTFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/auth/") ||
                 path.startsWith("/oauth2/") ||
                 "OPTIONS".equalsIgnoreCase(request.getMethod()) ||
-                path.startsWith("/uploads/")) {
+                path.startsWith("/uploads/") ||
+                path.startsWith("/api/categories")) {
             filterChain.doFilter(request, response);
             return;
         }
