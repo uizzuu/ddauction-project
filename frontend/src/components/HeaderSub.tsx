@@ -71,6 +71,9 @@ export default function HeaderSub({ category, setCategory }: Props) {
           <NavLink to="/" className="nav-link">
             홈
           </NavLink>
+          <p className="test">
+            1분경매
+          </p>
           <NavLink to="/search" className="nav-link">
             통합검색
           </NavLink>

@@ -138,7 +138,6 @@ export default function ProductRegister({ user }: Props) {
 
     const token = localStorage.getItem("token");
 
-    // ✅ [로그 추가] 토큰 확인
     console.log("🔹 handleSubmit 호출 - user:", user);
     console.log("🔹 로컬 스토리지 토큰:", token);
 
@@ -152,15 +151,7 @@ export default function ProductRegister({ user }: Props) {
     if (form.oneMinuteAuction) {
       const end = new Date();
       end.setMinutes(end.getMinutes() + 1);
-
-      const year = end.getFullYear();
-      const month = String(end.getMonth() + 1).padStart(2, "0");
-      const day = String(end.getDate()).padStart(2, "0");
-      const hours = String(end.getHours()).padStart(2, "0");
-      const minutes = String(end.getMinutes()).padStart(2, "0");
-      const seconds = String(end.getSeconds()).padStart(2, "0");
-
-      auctionEndTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      auctionEndTime = end.toISOString().split(".")[0]; // YYYY-MM-DDTHH:mm:ss
     } else {
       const end = new Date(form.auctionEndTime);
       if (isNaN(end.getTime())) {
@@ -178,22 +169,17 @@ export default function ProductRegister({ user }: Props) {
     try {
       setUploading(true);
 
-      // 이미지 S3 업로드
+      // 1️⃣ 이미지 S3 업로드
       const uploadedImageUrls: string[] = [];
       if (form.images && form.images.length > 0) {
         for (const file of Array.from(form.images)) {
           const s3Url = await uploadImageToS3(file, token);
-
-          // ✅ [로그 추가] 업로드된 이미지 URL 확인
           console.log("🔹 업로드된 이미지 URL:", s3Url);
-
           uploadedImageUrls.push(s3Url);
         }
       }
 
-      // 1단계: 상품만 먼저 등록 (JSON)
-
-      // ✅ [로그 추가] 요청 전 데이터 확인
+      // 2️⃣ 상품 등록 (JSON)
       console.log("🔹 상품 등록 요청 시작:", {
         title: form.title,
         startingPrice: startingPriceNumber,
@@ -208,9 +194,7 @@ export default function ProductRegister({ user }: Props) {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        credentials: "include",
         body: JSON.stringify({
-          // FormData 대신 JSON
           title: form.title,
           content: form.content,
           startingPrice: startingPriceNumber,
@@ -223,30 +207,41 @@ export default function ProductRegister({ user }: Props) {
         }),
       });
 
-      // ✅ [로그 추가] 응답 상태 확인
       console.log(
         "🔹 fetch 응답 상태:",
         productResponse.status,
         productResponse.statusText
       );
 
-      let productData;
+      if (!productResponse.ok) {
+        console.error(
+          "상품 등록 실패:",
+          productResponse.status,
+          productResponse.statusText
+        );
+        setError(`상품 등록 실패: ${productResponse.status}`);
+        return;
+      }
+
+      // 3️⃣ JSON 파싱 (try-catch로 안전하게)
+      let productData: { productId?: number } = {};
       try {
         productData = await productResponse.json();
         console.log("🔹 fetch 응답 JSON:", productData);
       } catch (err) {
         console.error("🔹 JSON 파싱 실패:", err);
+        setError("상품 등록 후 서버 응답이 이상합니다.");
+        return;
       }
 
-
-
-      if (!productResponse.ok) {
-        throw new Error("상품 등록 실패");
-      }
-
+      // 4️⃣ productId 확인
       const productId = productData.productId;
+      if (!productId) {
+        setError("서버에서 productId를 받지 못했습니다.");
+        return;
+      }
 
-      // 이미지 등록 (각 S3 URL을 이미지 엔티티로 저장)
+      // 5️⃣ 이미지 등록
       for (const s3Url of uploadedImageUrls) {
         await fetch(`${API_BASE_URL}/api/images`, {
           method: "POST",
