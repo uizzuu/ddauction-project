@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User, LoginForm } from "../types/types";
+import { API_BASE_URL } from "../services/api";
 
 type Props = {
   setUser: (user: User) => void;
@@ -85,9 +86,9 @@ export default function Login({ setUser }: Props) {
       setErrors((prev) => ({ ...prev, submit: "로그인 실패" }));
     }
   };
-  // ✅ 소셜 로그인
+  // 소셜 로그인
   const handleSocialLogin = (provider: "google" | "naver" | "kakao") => {
-    window.location.href = `http://localhost:8080/oauth2/authorization/${provider}`;
+    window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}`;
   };
 
   return (
