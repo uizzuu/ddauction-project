@@ -10,12 +10,21 @@ public class CorsConfig implements WebMvcConfigurer {
     @Value("${app.allowed-origins}")
     private String allowedOrigins;
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins(allowedOrigins.split(","))
-                .allowedMethods("GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(true);
-    }
+//    @Override
+//    public void addCorsMappings(CorsRegistry registry) {
+//        registry.addMapping("/**")
+//                .allowedOrigins(allowedOrigins.split(","))
+//                .allowedMethods("GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS")
+//                .allowedHeaders("*")
+//                .allowCredentials(true);
+//    }
+@Override
+public void addCorsMappings(CorsRegistry registry) {
+    registry.addMapping("/**")
+            .allowedOrigins("http://localhost:3000", "https://ddauction.shop")
+            .allowedMethods("GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS")
+            .allowedHeaders("Authorization", "Content-Type", "Accept")
+            .allowCredentials(true)
+            .maxAge(3600); // preflight 캐싱
+}
 }
