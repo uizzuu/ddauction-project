@@ -35,12 +35,12 @@ jobs:
         with:
           context: ./${{ matrix.service }}
           push: true
-          no-cache: true
+          no-cache: false
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/ddauction-${{ matrix.service }}:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/ddauction-${{ matrix.service }}:${{ github.sha }}
-#          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/ddauction-${{ matrix.service }}:latest
-#          cache-to: type=inline
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
     needs: build-and-push
