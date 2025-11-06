@@ -510,6 +510,12 @@ export default function ProductDetail({ user }: Props) {
                   <img
                     src={img.imagePath}
                     alt={`${product.title} - ${idx + 1}`}
+                    onError={(e) => {
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        parent.innerHTML = '<div class="no-image-txt">이미지 없음</div>';
+                      }
+                    }}
                   />
                 </div>
               ))}

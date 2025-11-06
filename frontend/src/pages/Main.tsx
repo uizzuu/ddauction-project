@@ -61,19 +61,19 @@ export default function Main() {
       setBanners([
         {
           id: 1,
-          image: topData[0]?.images?.[0]?.imagePath || "/banner1.jpg",
+          image: topData[0]?.images?.[0]?.imagePath,
           text: "지금 가장 인기 있는 경매 상품 🔥",
           product: topData[0],
         },
         {
           id: 2,
-          image: latestData?.images?.[0]?.imagePath || "/banner2.jpg",
+          image: latestData?.images?.[0]?.imagePath,
           text: "오늘의 추천! 신규 등록 상품 🎉",
           product: latestData,
         },
         {
           id: 3,
-          image: endingData?.images?.[0]?.imagePath || "/banner3.jpg",
+          image: endingData?.images?.[0]?.imagePath,
           text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
           product: endingData,
         },
@@ -222,7 +222,11 @@ export default function Main() {
                       src={p.images[0].imagePath}
                       alt={p.title}
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/no-image.png";
+                        // 이미지 깨지면 no-image div로 대체
+                        const parent = e.currentTarget.parentElement;
+                        if (parent) {
+                          parent.innerHTML = '<div class="no-image-txt">이미지 없음</div>';
+                        }
                       }}
                     />
                   ) : (

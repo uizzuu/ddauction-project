@@ -130,28 +130,21 @@ public class ProductController {
     @GetMapping("/latest")
     public ResponseEntity<ProductDto> getLatestProduct() {
         ProductDto latest = productService.getLatestProduct();
-        if (latest == null || latest.getImages() == null || latest.getImages().isEmpty()) {
-            // 이미지가 없는 경우 빈 리스트라도 넣어주기
-            if (latest != null) {
-                latest.setImages(List.of());
-            }
-            // null이면 NOT_FOUND 처리 가능
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(latest);
+        // 이미지 없으면 그냥 그대로 두거나 빈 리스트로
+        if (latest != null && latest.getImages() == null) {
+            latest.setImages(List.of()); // 선택 사항, 프론트가 null 처리 가능하면 안 넣어도 됨
         }
-        return ResponseEntity.ok(latest);
+        return ResponseEntity.ok(latest); // 항상 200
     }
 
     // 마감 임박 상품 조회 (배너용)
     @GetMapping("/ending-soon")
     public ResponseEntity<ProductDto> getEndingSoonProduct() {
         ProductDto product = productService.getEndingSoonProduct();
-        if (product == null || product.getImages() == null || product.getImages().isEmpty()) {
-            if (product != null) {
-                product.setImages(List.of());
-            }
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(product);
+        if (product != null && product.getImages() == null) {
+            product.setImages(List.of()); // 선택 사항
         }
-        return ResponseEntity.ok(product);
+        return ResponseEntity.ok(product); // 항상 200
     }
 
     @GetMapping("/search-paged")

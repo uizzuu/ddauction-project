@@ -303,7 +303,17 @@ export default function ProductSearchPage() {
                 >
                   <div className="product-image height-220">
                     {p.images && p.images.length > 0 ? (
-                      <img src={p.images[0].imagePath} alt={p.title} />
+                      <img
+                        src={p.images[0].imagePath}
+                        alt={p.title}
+                        onError={(e) => {
+                          const parent = e.currentTarget.parentElement;
+                          if (parent) {
+                            parent.innerHTML =
+                              '<div class="no-image-txt">이미지 없음</div>';
+                          }
+                        }}
+                      />
                     ) : (
                       <div className="no-image-txt">이미지 없음</div>
                     )}
