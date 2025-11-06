@@ -69,7 +69,7 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())
                 .httpBasic(httpBasic -> httpBasic.disable())
                 .cors(cors -> {})
-//추가함73-75
+                //추가함73-75
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
@@ -109,6 +109,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/images/**").authenticated()
 
                         // 인증 필요
+                        .requestMatchers(HttpMethod.POST, "/api/products").authenticated()  // ✅ 추가
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()  // ✅ 추가
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").authenticated()  // ✅ 추가
                         .requestMatchers(HttpMethod.GET, "/api/products/purchases").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
@@ -118,7 +121,9 @@ public class SecurityConfig {
 
 
                 // JWT 필터는 OAuth2 경로 제외
+                // JWT 필터를 UsernamePasswordAuthenticationFilter 앞에 배치
                 .addFilterBefore(new JWTFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
+                // LoginFilter를 UsernamePasswordAuthenticationFilter 위치에 배치
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // OAuth2 로그인 성공 핸들러

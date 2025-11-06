@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"; // 🔹 useEffect 추가
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // 🔹 JWT decode 라이브러리 추가
 import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
@@ -65,6 +65,7 @@ export default function App() {
       {showHeader && <HeaderMain user={user} setUser={setUser} />}
       {showHeader && <HeaderSub category={category} setCategory={setCategory} />}
       <Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login setUser={setUser} />} />
         <Route path="/signup" element={<Signup />} />

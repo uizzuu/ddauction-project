@@ -137,6 +137,7 @@ export default function ProductRegister({ user }: Props) {
     }
 
     const token = localStorage.getItem("token");
+    console.log("🔹 로컬 스토리지 토큰:", localStorage.getItem("token"));
 
     console.log("🔹 handleSubmit 호출 - user:", user);
     console.log("🔹 로컬 스토리지 토큰:", token);
