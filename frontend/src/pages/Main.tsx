@@ -26,7 +26,8 @@ export default function Main() {
       const sorted = data
         .sort(
           (a, b) =>
-            new Date(b.createdAt || "").getTime() - new Date(a.createdAt || "").getTime()
+            new Date(b.createdAt || "").getTime() -
+            new Date(a.createdAt || "").getTime()
         )
         .slice(0, 10);
       setProducts(sorted);
@@ -60,25 +61,19 @@ export default function Main() {
       setBanners([
         {
           id: 1,
-          image: topData[0]?.images?.[0]?.imagePath
-            ? `${API_BASE_URL}${topData[0].images[0].imagePath}`
-            : "/banner1.jpg",
+          image: topData[0]?.images?.[0]?.imagePath || "/banner1.jpg",
           text: "지금 가장 인기 있는 경매 상품 🔥",
           product: topData[0],
         },
         {
           id: 2,
-          image: latestData?.images?.[0]?.imagePath
-            ? `${API_BASE_URL}${latestData.images[0].imagePath}`
-            : "/banner2.jpg",
+          image: latestData?.images?.[0]?.imagePath || "/banner2.jpg",
           text: "오늘의 추천! 신규 등록 상품 🎉",
           product: latestData,
         },
         {
           id: 3,
-          image: endingData?.images?.[0]?.imagePath
-            ? `${API_BASE_URL}${endingData.images[0].imagePath}`
-            : "/banner3.jpg",
+          image: endingData?.images?.[0]?.imagePath || "/banner3.jpg",
           text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
           product: endingData,
         },
@@ -222,7 +217,7 @@ export default function Main() {
                 <div className="product-image height-220">
                   {p.images && p.images.length > 0 && p.images[0]?.imagePath ? (
                     <img
-                      src={`${API_BASE_URL}${p.images[0].imagePath}`}
+                      src={p.images[0].imagePath}
                       alt={p.title}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = "/no-image.png";
@@ -238,7 +233,9 @@ export default function Main() {
                   </h3>
                   <div>
                     <div className="flex-box gap-8">
-                      <p className="text-16 color-777 text-nowrap">경매 등록가</p>
+                      <p className="text-16 color-777 text-nowrap">
+                        경매 등록가
+                      </p>
                       <p className="title-18 color-333 text-nowrap">
                         {formatPrice(p.startingPrice)}
                       </p>
@@ -246,7 +243,9 @@ export default function Main() {
                     {p.auctionEndTime && (
                       <>
                         <div className="flex-box gap-8">
-                          <p className="text-16 color-777 text-nowrap">남은시간</p>
+                          <p className="text-16 color-777 text-nowrap">
+                            남은시간
+                          </p>
                           <p className="text-16 color-777 text-nowrap">
                             <span className="title-18 color-333 text-nowrap">
                               {formatDate(p.auctionEndTime)}
