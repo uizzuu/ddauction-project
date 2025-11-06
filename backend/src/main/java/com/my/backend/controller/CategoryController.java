@@ -18,10 +18,17 @@ public class CategoryController {
 
     @GetMapping
     public List<CategoryDto> getAllCategories() {
-        return categoryRepository.findAll()
-                .stream()
+        System.out.println("🟢 getAllCategories 호출됨");
+
+        List<Category> categories = categoryRepository.findAll();
+        System.out.println("🟢 categories.size=" + categories.size());
+
+        List<CategoryDto> dtos = categories.stream()
                 .map(CategoryDto::fromEntity)
                 .collect(Collectors.toList());
+
+        System.out.println("🟢 dtos.size=" + dtos.size());
+        return dtos;
     }
     @GetMapping("/{id}")
     public CategoryDto getCategoryById(@PathVariable Long id) {
