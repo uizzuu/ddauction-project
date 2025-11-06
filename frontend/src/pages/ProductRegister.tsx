@@ -137,6 +137,11 @@ export default function ProductRegister({ user }: Props) {
     }
 
     const token = localStorage.getItem("token");
+
+    // ✅ [로그 추가] 토큰 확인
+    console.log("🔹 handleSubmit 호출 - user:", user);
+    console.log("🔹 로컬 스토리지 토큰:", token);
+
     if (!token || !user) {
       alert("로그인이 필요합니다");
       navigate("/login");
@@ -178,11 +183,25 @@ export default function ProductRegister({ user }: Props) {
       if (form.images && form.images.length > 0) {
         for (const file of Array.from(form.images)) {
           const s3Url = await uploadImageToS3(file, token);
+
+          // ✅ [로그 추가] 업로드된 이미지 URL 확인
+          console.log("🔹 업로드된 이미지 URL:", s3Url);
+
           uploadedImageUrls.push(s3Url);
         }
       }
 
       // 1단계: 상품만 먼저 등록 (JSON)
+
+      // ✅ [로그 추가] 요청 전 데이터 확인
+      console.log("🔹 상품 등록 요청 시작:", {
+        title: form.title,
+        startingPrice: startingPriceNumber,
+        auctionEndTime,
+        sellerId: user.userId,
+        categoryId: form.categoryId,
+      });
+
       const productResponse = await fetch(`${API_BASE_URL}/api/products`, {
         method: "POST",
         headers: {
@@ -204,7 +223,22 @@ export default function ProductRegister({ user }: Props) {
         }),
       });
 
-      const productData = await productResponse.json();
+      // ✅ [로그 추가] 응답 상태 확인
+      console.log(
+        "🔹 fetch 응답 상태:",
+        productResponse.status,
+        productResponse.statusText
+      );
+
+      let productData;
+      try {
+        productData = await productResponse.json();
+        console.log("🔹 fetch 응답 JSON:", productData);
+      } catch (err) {
+        console.error("🔹 JSON 파싱 실패:", err);
+      }
+
+
 
       if (!productResponse.ok) {
         throw new Error("상품 등록 실패");
