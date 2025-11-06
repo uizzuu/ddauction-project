@@ -36,27 +36,20 @@ public class JWTFilter extends OncePerRequestFilter {
         if (path.startsWith("/api/auth/") ||
                 path.startsWith("/oauth2/") ||
                 "OPTIONS".equalsIgnoreCase(request.getMethod()) ||
-                path.startsWith("/uploads/") ||
-                path.startsWith("/api/categories")) {
+                path.startsWith("/uploads/")) {
             filterChain.doFilter(request, response);
             return;
         }
 
         String authorization = request.getHeader("Authorization");
-
-// 🔹 JWT 없으면 401 반환
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\":\"Missing or invalid Authorization header\"}");
+            filterChain.doFilter(request, response);
             return;
         }
 
         String token = authorization.substring(7);
-
-// 🔹 토큰 만료 시 401 반환
         if (jwtUtil.isExpired(token)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("{\"error\":\"Token expired\"}");
+            filterChain.doFilter(request, response);
             return;
         }
 
