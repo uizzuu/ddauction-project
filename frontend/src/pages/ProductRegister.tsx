@@ -53,11 +53,11 @@ export default function ProductRegister({ user }: Props) {
     if (date) {
       const now = new Date();
       if (date < now) {
-        // 사용자가 과거 시간을 선택하면 경고 메세지 출력
         setError("경매 종료 시간은 현재 시간 이후로만 선택 가능합니다.");
         return;
       }
 
+      // ✅ 로컬 시간을 그대로 문자열로 변환 (UTC 변환 ❌)
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
@@ -67,13 +67,16 @@ export default function ProductRegister({ user }: Props) {
 
       const formatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
       console.log("auctionEndTime 확인:", formatted);
+
       setForm((prev) => ({
         ...prev,
-        auctionEndTime: formatted,
+        auctionEndTime: formatted, // ✅ Z(UTC 표시) 제거
       }));
-      setError("");  // 오류 메시지 초기화
+      setError("");
     }
   };
+
+
 
   // 카테고리 로드
   useEffect(() => {
@@ -171,7 +174,7 @@ export default function ProductRegister({ user }: Props) {
           content: form.content,
           startingPrice: startingPriceNumber,
           oneMinuteAuction: form.oneMinuteAuction,
-          auctionEndTime: endDate.toISOString().split(".")[0],
+          auctionEndTime: form.auctionEndTime,
           sellerId: user.userId,
           categoryId: form.categoryId,
           productStatus: "ACTIVE",
