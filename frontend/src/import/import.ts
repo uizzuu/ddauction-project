@@ -13,6 +13,7 @@ import ProductDetail from "../pages/ProductDetail";
 import ArticleList from "../pages/ArticleList";
 import AdminPage from '../pages/AdminPage';
 import UserQnaForm from "../pages/UserQnaForm";
+import ErrorPage from "../pages/ErrorPage";
 
 
 export {
@@ -28,4 +29,5 @@ export {
   ArticleList,
   AdminPage,
   UserQnaForm,
+  ErrorPage
 };
