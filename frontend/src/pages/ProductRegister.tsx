@@ -23,7 +23,7 @@ export default function ProductRegister({ user }: Props) {
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
-  const [_minDateTime, setMinDateTime] = useState<Date | undefined>(undefined);
+  const [minDateTime, setMinDateTime] = useState<Date | undefined>(undefined);
   const [maxDateTime, setMaxDateTime] = useState<Date | undefined>(undefined);
   const [auctionEndDate, setAuctionEndDate] = useState<Date | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -368,7 +368,7 @@ export default function ProductRegister({ user }: Props) {
                 timeFormat="HH:mm"
                 timeIntervals={5}
                 dateFormat="yyyy-MM-dd HH:mm"
-                minDate={new Date()}  // 현재 시간 이후로만 선택 가능
+                minDate={minDateTime}
                 maxDate={maxDateTime}
                 placeholderText="날짜와 시간을 선택하세요"
                 className="input"
