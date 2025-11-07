@@ -31,7 +31,7 @@ export default function ProductBidGraph({ bids, startingPrice }: Props) {
             <XAxis dataKey="name" />
             <YAxis domain={[startingPrice, "auto"]} />
             <Tooltip />
-            <Line type="monotone" dataKey="bidPrice" stroke="#000" strokeWidth={2} />
+            <Line type="monotone" dataKey="bidPrice" stroke="#000" strokeWidth={2} name="입찰가" />
           </LineChart>
         </ResponsiveContainer>
       </div>
