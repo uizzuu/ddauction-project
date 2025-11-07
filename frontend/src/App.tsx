@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"; // 🔹 useEffect 추가
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // 🔹 JWT decode 라이브러리 추가
 import ArticleForm from "./pages/ArticleForm";
 import ArticleDetail from "./pages/ArticleDetail";
@@ -74,7 +74,7 @@ export default function App() {
   const location = useLocation();
   const [isInvalidPath, setIsInvalidPath] = useState(false);
 
-  const noHeaderPaths = ["/login", "/signup", "/error"];
+  const noHeaderPaths = ["/login", "/signup"];
   const showHeader = !noHeaderPaths.includes(location.pathname);
 
   // 경로 유효성 확인
@@ -112,7 +112,11 @@ export default function App() {
 
   // 유효하지 않은 경로면 에러 페이지 표시
   if (isInvalidPath) {
-    return <ErrorPage />;
+    <div style={{ minHeight: "100vh" }}>
+      <HeaderMain user={user} setUser={setUser} /> 
+      <HeaderSub category={category} setCategory={setCategory} /> 
+      <ErrorPage />
+    </div>
   }
 
   return (

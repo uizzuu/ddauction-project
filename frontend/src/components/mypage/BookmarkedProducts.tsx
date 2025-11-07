@@ -1,5 +1,4 @@
 import type { Product } from "../../types/types";
-import { API_BASE_URL } from "../../services/api";
 
 type Props = {
   bookmarkedProducts: Product[];
