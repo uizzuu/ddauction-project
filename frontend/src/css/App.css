@@ -856,6 +856,10 @@ button:disabled {
   left: 2rem;
 }
 
+.right-0 {
+  right: 0px;
+}
+
 .right-4 {
   right: 4px;
 }

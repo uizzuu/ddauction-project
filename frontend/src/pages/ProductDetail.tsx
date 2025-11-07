@@ -83,7 +83,7 @@ export default function ProductDetail({ user }: Props) {
   // 경매 진행중일 때 수정 막기
   const isEditingDisabled = product
     ? product.productStatus === "ACTIVE" &&
-    new Date(product.auctionEndTime).getTime() > new Date().getTime()
+      new Date(product.auctionEndTime).getTime() > new Date().getTime()
     : false;
 
   const calculateRemainingTime = (endTime: string) => {
@@ -242,7 +242,6 @@ export default function ProductDetail({ user }: Props) {
         now >= endTime || product.productStatus === "CLOSED";
 
       if (isAuctionEnded) {
-
         console.log("🏁 경매 종료 감지됨 — 낙찰자 확인 요청");
         console.log("📡 요청 URL:", `${API_BASE_URL}/api/bid/${id}/winner`);
         const token = user?.token || localStorage.getItem("token");
@@ -279,7 +278,6 @@ export default function ProductDetail({ user }: Props) {
 
     return () => clearInterval(interval);
   }, [product?.auctionEndTime, product?.productStatus, id, user?.token]);
-
 
   const auctionStartingPrice = product?.startingPrice ?? "알 수 없음";
 
@@ -391,15 +389,15 @@ export default function ProductDetail({ user }: Props) {
         startingPrice: Number(productForm.startingPrice || 0),
         auctionEndTime: productForm.auctionEndTime
           ? (() => {
-            const end = new Date(productForm.auctionEndTime);
-            const year = end.getFullYear();
-            const month = String(end.getMonth() + 1).padStart(2, "0");
-            const day = String(end.getDate()).padStart(2, "0");
-            const hours = String(end.getHours()).padStart(2, "0");
-            const minutes = String(end.getMinutes()).padStart(2, "0");
-            const seconds = String(end.getSeconds()).padStart(2, "0");
-            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-          })()
+              const end = new Date(productForm.auctionEndTime);
+              const year = end.getFullYear();
+              const month = String(end.getMonth() + 1).padStart(2, "0");
+              const day = String(end.getDate()).padStart(2, "0");
+              const hours = String(end.getHours()).padStart(2, "0");
+              const minutes = String(end.getMinutes()).padStart(2, "0");
+              const seconds = String(end.getSeconds()).padStart(2, "0");
+              return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+            })()
           : null,
       };
 
@@ -513,7 +511,8 @@ export default function ProductDetail({ user }: Props) {
                     onError={(e) => {
                       const parent = e.currentTarget.parentElement;
                       if (parent) {
-                        parent.innerHTML = '<div class="no-image-txt">이미지 없음</div>';
+                        parent.innerHTML =
+                          '<div class="no-image-txt">이미지 없음</div>';
                       }
                     }}
                   />
@@ -611,6 +610,55 @@ export default function ProductDetail({ user }: Props) {
                 )}
               </div>
             )}
+
+            {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
+            {(() => {
+              if (!product) return null;
+
+              const auctionEnded =
+                remainingTime === "경매 종료" ||
+                product.productStatus === "CLOSED";
+
+              if (!auctionEnded || !isWinner) return null;
+
+              // 이미 결제 완료되었거나 판매 완료된 경우
+              if (
+                product.paymentStatus === "PAID" ||
+                product.productStatus === "SOLD"
+              ) {
+                return (
+                  <div
+                    style={{
+                      textAlign: "center",
+                      marginTop: "30px",
+                      color: "#777",
+                    }}
+                  >
+                    이미 판매된 물건입니다.
+                  </div>
+                );
+              }
+
+              // 아직 결제 전이라면 결제 버튼 표시
+              return (
+                <div className="position-ab z-20 right-0">
+                  <button
+                    onClick={() => navigate(`/payment?productId=${productId}`)}
+                    style={{
+                      backgroundColor: "#ff6600",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "14px 28px",
+                      fontSize: "1rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    결제하기
+                  </button>
+                </div>
+              );
+            })()}
           </div>
 
           {editingProductId && (
@@ -677,14 +725,26 @@ export default function ProductDetail({ user }: Props) {
                       ...prev,
                       auctionEndTime: date
                         ? (() => {
-                          const year = date.getFullYear();
-                          const month = String(date.getMonth() + 1).padStart(2, "0");
-                          const day = String(date.getDate()).padStart(2, "0");
-                          const hours = String(date.getHours()).padStart(2, "0");
-                          const minutes = String(date.getMinutes()).padStart(2, "0");
-                          const seconds = String(date.getSeconds()).padStart(2, "0");
-                          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-                        })()
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(
+                              2,
+                              "0"
+                            );
+                            const day = String(date.getDate()).padStart(2, "0");
+                            const hours = String(date.getHours()).padStart(
+                              2,
+                              "0"
+                            );
+                            const minutes = String(date.getMinutes()).padStart(
+                              2,
+                              "0"
+                            );
+                            const seconds = String(date.getSeconds()).padStart(
+                              2,
+                              "0"
+                            );
+                            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+                          })()
                         : prev.auctionEndTime,
                     }))
                   }
@@ -695,14 +755,14 @@ export default function ProductDetail({ user }: Props) {
                   minDate={originalEndDate} // 날짜 제한
                   minTime={
                     productForm.auctionEndTime &&
-                      new Date(productForm.auctionEndTime).toDateString() ===
+                    new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? originalEndDate // 같은 날이면 기존 종료시간 이전 선택 불가
                       : new Date(0, 0, 0, 0, 0) // 다른 날이면 제한 없음 (0시 기준)
                   }
                   maxTime={
                     productForm.auctionEndTime &&
-                      new Date(productForm.auctionEndTime).toDateString() ===
+                    new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
                       ? new Date(23, 11, 31, 23, 59) // 같은 날이면 하루 끝까지 허용
                       : new Date(23, 11, 31, 23, 59) // 다른 날도 하루 끝까지
@@ -763,80 +823,6 @@ export default function ProductDetail({ user }: Props) {
               <p>현재 최고 입찰가: {highestBid.toLocaleString()}원</p>
             </>
           )}
-
-          {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
-          {/* {(() => {
-
-            if (!product) return null;
-
-            const auctionEnded =
-              remainingTime === "경매 종료" || product.productStatus === "CLOSED";
-
-            const shouldShowPayment =
-              auctionEnded && isWinner && product.paymentStatus !== "PAID";
-
-            console.log("👉 결제 버튼 표시 여부:", shouldShowPayment);
-
-            if (!shouldShowPayment) return null;
-
-            return (
-              <div style={{ textAlign: "center", marginTop: "30px" }}>
-                <button
-                  onClick={() => navigate(`/payment?productId=${productId}`)}
-                  style={{
-                    backgroundColor: "#ff6600",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "14px 28px",
-                    fontSize: "1rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  결제하기
-                </button>
-              </div>
-            );
-          })()} */}
-          
-          {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
-          {(() => {
-            if (!product) return null;
-
-            const auctionEnded =
-              remainingTime === "경매 종료" || product.productStatus === "CLOSED";
-
-            if (!auctionEnded || !isWinner) return null;
-
-            // 이미 결제 완료되었거나 판매 완료된 경우
-            if (product.paymentStatus === "PAID" || product.productStatus === "SOLD") {
-              return (
-                <div style={{ textAlign: "center", marginTop: "30px", color: "#777" }}>
-                  이미 판매된 물건입니다.
-                </div>
-              );
-            }
-
-            // 아직 결제 전이라면 결제 버튼 표시
-            return (
-              <div style={{ textAlign: "center", marginTop: "30px" }}>
-                <button
-                  onClick={() => navigate(`/payment?productId=${productId}`)}
-                  style={{
-                    backgroundColor: "#ff6600",
-                    color: "#fff",
-                    border: "none",
-                    borderRadius: "8px",
-                    padding: "14px 28px",
-                    fontSize: "1rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  결제하기
-                </button>
-              </div>
-            );
-          })()}
 
           <div
             style={{
