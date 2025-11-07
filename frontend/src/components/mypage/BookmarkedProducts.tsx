@@ -49,19 +49,9 @@ export default function BookmarkedProducts({
                 }}
                 onClick={() => goToProductDetail(product.productId)}
               >
-                {product.imageUrl ? (
+                {product.images && product.images.length > 0 ? (
                   <img
-                    src={product.imageUrl}
-                    alt={product.title}
-                    style={{
-                      width: "150px",
-                      height: "150px",
-                      objectFit: "cover",
-                    }}
-                  />
-                ) : product.images && product.images.length > 0 ? (
-                  <img
-                    src={`${API_BASE_URL}/${product.images[0].imagePath}`}
+                    src={product.images[0].imagePath}
                     alt={product.title}
                     style={{
                       width: "150px",
@@ -70,7 +60,7 @@ export default function BookmarkedProducts({
                     }}
                   />
                 ) : (
-                  <span style={{ color: "#888" }}>이미지 없음</span>
+                  <div className="no-image-txt">이미지 없음</div>
                 )}
               </div>
 

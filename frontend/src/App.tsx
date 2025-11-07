@@ -26,13 +26,62 @@ import "./import/import.css";
 import type { User, Category } from "./types/types";
 import OAuthCallback from "./pages/OAuthCallback";
 
+// 유효한 경로 패턴 정의
+const VALID_PATHS = [
+  "/",
+  "/login",
+  "/signup",
+  "/auction",
+  "/register",
+  "/mypage",
+  "/mypage/qna/new",
+  "/community",
+  "/articles/new",
+  "/search",
+  "/admin",
+  "/payment",
+  "/find-email",
+  "/find-password",
+  "/oauth2/redirect",
+  "/error",
+];
+
+// 동적 경로 패턴 (예: /products/123, /articles/456 등)
+const DYNAMIC_PATH_PATTERNS = [
+  /^\/products\/\d+$/,
+  /^\/articles\/\d+$/,
+  /^\/articles\/\d+\/edit$/,
+];
+
+// 현재 경로가 유효한지 확인
+const isValidPath = (pathname: string): boolean => {
+  // 정확한 경로 확인
+  if (VALID_PATHS.includes(pathname)) {
+    return true;
+  }
+
+  // 동적 경로 패턴 확인
+  if (DYNAMIC_PATH_PATTERNS.some((pattern) => pattern.test(pathname))) {
+    return true;
+  }
+
+  return false;
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [category, setCategory] = useState<Category[]>([]);
   const location = useLocation();
+  const [isInvalidPath, setIsInvalidPath] = useState(false);
 
-  const noHeaderPaths = ["/login", "/signup"];
+  const noHeaderPaths = ["/login", "/signup", "/error"];
   const showHeader = !noHeaderPaths.includes(location.pathname);
+
+  // 경로 유효성 확인
+  useEffect(() => {
+    const valid = isValidPath(location.pathname);
+    setIsInvalidPath(!valid);
+  }, [location.pathname]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -61,6 +110,11 @@ export default function App() {
     }
   }, []);
 
+  // 유효하지 않은 경로면 에러 페이지 표시
+  if (isInvalidPath) {
+    return <ErrorPage />;
+  }
+
   return (
     <div style={{ minHeight: "100vh" }}>
       {showHeader && <HeaderMain user={user} setUser={setUser} />}
@@ -68,8 +122,6 @@ export default function App() {
         <HeaderSub category={category} setCategory={setCategory} />
       )}
       <Routes>
-        <Route path="/error" element={<ErrorPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login setUser={setUser} />} />
         <Route path="/signup" element={<Signup />} />
@@ -133,6 +185,10 @@ export default function App() {
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/find-email" element={<FindEmail />} />
         <Route path="/find-password" element={<FindPassword />} />
+
+        {/* 에러 페이지 - 마지막에 정의 (와일드카드는 마지막!) */}
+        <Route path="/error" element={<ErrorPage />} />
+        <Route path="*" element={<ErrorPage />} />
       </Routes>
     </div>
   );
