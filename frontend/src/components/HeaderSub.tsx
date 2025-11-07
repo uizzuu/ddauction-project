@@ -35,7 +35,10 @@ export default function HeaderSub({ category, setCategory }: Props) {
   const handleProtectedNavigation = (path: string) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      alert("로그인 후 이용할 수 있습니다!");
+      const goLogin = window.confirm("로그인 후 이용할 수 있습니다. 로그인하시겠습니까?");
+      if (goLogin) {
+        navigate("/login");
+      }
       return;
     }
     navigate(path);
