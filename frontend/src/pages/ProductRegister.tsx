@@ -368,7 +368,7 @@ export default function ProductRegister({ user }: Props) {
                 timeFormat="HH:mm"
                 timeIntervals={5}
                 dateFormat="yyyy-MM-dd HH:mm"
-                minDate={new Date()}  // 현재 시간 이후로만 선택 가능
+                minDate={minDateTime}
                 maxDate={maxDateTime}
                 placeholderText="날짜와 시간을 선택하세요"
                 className="input"
