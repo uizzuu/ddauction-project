@@ -217,6 +217,16 @@ export const AuctionBox = ({
       return;
     }
 
+    // 재확인 메시지 추가
+    const confirmation = window.confirm(
+      `${bidNum.toLocaleString()}원으로 입찰하시겠습니까?`
+    );
+
+    if (!confirmation) {
+      setIsBidding(false);
+      return; // 사용자가 "아니오"를 클릭하면 입찰을 취소
+    }
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/bid/${productId}/bid`, {
         method: "POST",
