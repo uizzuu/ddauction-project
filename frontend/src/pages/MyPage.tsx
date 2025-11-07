@@ -26,16 +26,13 @@ import PaymentProducts from "../components/mypage/PaymentProducts";
 // ★ 이미지 URL 절대 경로 처리 (Helper Function)
 const normalizeProduct = (
   p: Partial<Product>,
-  API_BASE_URL: string
 ): Product & { imageUrl: string } =>
 ({
   productId: p.productId ?? 0,
   title: p.title ?? "제목 없음",
   content: p.content ?? "",
   startingPrice: p.startingPrice ?? 0,
-  imageUrl: p.images?.[0]?.imagePath
-    ? `${API_BASE_URL.replace(/\/$/, "")}${p.images[0].imagePath}`
-    : "",
+  imageUrl: p.images?.[0]?.imagePath ?? "",
   oneMinuteAuction: p.oneMinuteAuction ?? false,
   auctionEndTime: p.auctionEndTime ?? (() => {
     const now = new Date();
@@ -272,7 +269,7 @@ export default function MyPage({ user, setUser }: Props) {
       );
       if (res.ok) {
         const data: Partial<Product>[] = await res.json();
-        setSellingProducts(data.map((p) => normalizeProduct(p, API_BASE_URL)));
+        setSellingProducts(data.map((p) => normalizeProduct(p)));
       } else {
         alert("판매 상품 조회 실패");
       }
@@ -294,7 +291,7 @@ export default function MyPage({ user, setUser }: Props) {
       if (res.ok) {
         const data: Partial<Product>[] = await res.json();
         setBookmarkedProducts(
-          data.map((p) => normalizeProduct(p, API_BASE_URL))
+          data.map((p) => normalizeProduct(p))
         );
       } else {
         alert("찜 상품 조회 실패");
@@ -517,7 +514,7 @@ export default function MyPage({ user, setUser }: Props) {
       });
 
       if (res.ok) {
-        const updatedProduct = normalizeProduct(await res.json(), API_BASE_URL);
+        const updatedProduct = normalizeProduct(await res.json());
         setSellingProducts((prev) =>
           prev.map((p) =>
             p.productId === editingProductId ? updatedProduct : p

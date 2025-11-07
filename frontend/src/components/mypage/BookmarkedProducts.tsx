@@ -31,6 +31,7 @@ export default function BookmarkedProducts({
                 gap: "15px",
                 alignItems: "flex-start",
               }}
+              onClick={() => goToProductDetail(product.productId)}
             >
               {/* 이미지 박스 */}
               <div
@@ -46,16 +47,22 @@ export default function BookmarkedProducts({
                   overflow: "hidden",
                   cursor: "pointer",
                 }}
-                onClick={() => goToProductDetail(product.productId)}
               >
-                {product.images && product.images.length > 0 ? (
+                {product.imageUrl ? (
                   <img
-                    src={product.images[0].imagePath}
+                    src={product.imageUrl}
                     alt={product.title}
                     style={{
                       width: "150px",
                       height: "150px",
                       objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      const parent = e.currentTarget.parentElement;
+                      if (parent) {
+                        parent.innerHTML =
+                          '<div class="no-image-txt">이미지 없음</div>';
+                      }
                     }}
                   />
                 ) : (
