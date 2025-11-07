@@ -24,20 +24,40 @@ export default function ProductRegister({ user }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
   const [minDateTime, setMinDateTime] = useState<Date | undefined>(undefined);
+  const [maxDateTime, setMaxDateTime] = useState<Date | undefined>(undefined);
   const [auctionEndDate, setAuctionEndDate] = useState<Date | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploading, setUploading] = useState(false);
 
-  // 최소 선택 시간 설정
   useEffect(() => {
     const now = new Date();
+    now.setSeconds(0); // 초를 0으로 설정
+    now.setMilliseconds(0); // 밀리초를 0으로 설정
+
+    // 최소 날짜와 최대 날짜 설정
     setMinDateTime(now);
+
+    const maxDate = new Date(now);
+    maxDate.setMonth(now.getMonth() + 3);  // 3개월 후 날짜로 설정
+    setMaxDateTime(maxDate);
+
+    console.log("최소 날짜 (minDateTime):", now);
+    console.log("최대 날짜 (maxDateTime):", maxDate);
   }, []);
+
+
 
   // DatePicker 변경 시 form도 업데이트
   const handleDateChange = (date: Date | null) => {
     setAuctionEndDate(date);
     if (date) {
+      const now = new Date();
+      if (date < now) {
+        // 사용자가 과거 시간을 선택하면 경고 메세지 출력
+        setError("경매 종료 시간은 현재 시간 이후로만 선택 가능합니다.");
+        return;
+      }
+
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
@@ -51,7 +71,7 @@ export default function ProductRegister({ user }: Props) {
         ...prev,
         auctionEndTime: formatted,
       }));
-      setError("");
+      setError("");  // 오류 메시지 초기화
     }
   };
 
@@ -348,7 +368,8 @@ export default function ProductRegister({ user }: Props) {
                 timeFormat="HH:mm"
                 timeIntervals={5}
                 dateFormat="yyyy-MM-dd HH:mm"
-                minDate={minDateTime}
+                minDate={new Date()}  // 현재 시간 이후로만 선택 가능
+                maxDate={maxDateTime}
                 placeholderText="날짜와 시간을 선택하세요"
                 className="input"
                 disabled={uploading}
