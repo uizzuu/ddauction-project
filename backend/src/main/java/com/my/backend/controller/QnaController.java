@@ -1,6 +1,7 @@
 package com.my.backend.controller;
 
 import com.my.backend.dto.auth.CustomUserDetails;
+import com.my.backend.entity.Qna;
 import com.my.backend.entity.QnaReview;
 import com.my.backend.repository.QnaRepository;
 import com.my.backend.service.QnaService;
@@ -95,5 +96,53 @@ public class QnaController {
     // 상품별 QnA 조회 (답변 + 닉네임 포함)
     public List<Map<String, Object>> getQnaWithReviewsByProduct(Long productId) {
         return qnaRepository.findQnaWithUserByProductId(productId);
+    }
+
+    // ============================
+// 질문 수정
+// ============================
+    @PutMapping("/{qnaId}")
+    public ResponseEntity<?> updateQuestion(
+            @PathVariable Long qnaId,
+            @RequestBody Map<String, String> body) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUser().getUserId();
+
+        String title = body.get("title");
+        String question = body.get("question");
+
+        try {
+            Qna updatedQna = qnaService.updateQuestion(qnaId, userId, title, question);
+            return ResponseEntity.ok(updatedQna);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
+    }
+
+    // ============================
+// 질문 삭제
+// ============================
+    @DeleteMapping("/{qnaId}")
+    public ResponseEntity<?> deleteQuestion(@PathVariable Long qnaId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+        Long userId = userDetails.getUser().getUserId();
+
+        try {
+            qnaService.deleteQuestion(qnaId, userId);
+            return ResponseEntity.ok(Map.of("message", "질문 삭제 완료"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(403).body(e.getMessage());
+        }
     }
 }

@@ -116,6 +116,11 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/products/with-images").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/products").authenticated()
                         .requestMatchers("/admin").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/qna/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/qna/**").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/qna/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/qna/**").authenticated()
+
                         .anyRequest().authenticated()
                 )
 

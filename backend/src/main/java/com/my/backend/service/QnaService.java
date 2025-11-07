@@ -153,4 +153,38 @@ public class QnaService {
 
         return result;
     }
+
+    public Qna updateQuestion(Long qnaId, Long userId, String title, String question) {
+        Qna qna = qnaRepository.findById(qnaId)
+                .orElseThrow(() -> new IllegalArgumentException("질문이 존재하지 않습니다."));
+
+        // 작성자 본인만 수정 가능
+        if (!Objects.equals(qna.getUser().getUserId(), userId)) {
+            throw new IllegalArgumentException("수정 권한이 없습니다.");
+        }
+
+        qna.setTitle(title);
+        qna.setQuestion(question);
+
+        return qnaRepository.save(qna);
+    }
+
+    @Transactional
+    public void deleteQuestion(Long qnaId, Long userId) {
+        Qna qna = qnaRepository.findById(qnaId)
+                .orElseThrow(() -> new IllegalArgumentException("질문이 존재하지 않습니다."));
+
+        // 작성자 본인만 삭제 가능
+        if (!Objects.equals(qna.getUser().getUserId(), userId)) {
+            throw new IllegalArgumentException("삭제 권한이 없습니다.");
+        }
+
+        // 먼저 해당 질문의 답변들을 삭제
+        List<QnaReview> reviews = qnaReviewRepository.findByQna(qna);
+        qnaReviewRepository.deleteAll(reviews);
+
+        // 질문 삭제
+        qnaRepository.delete(qna);
+    }
+
 }
