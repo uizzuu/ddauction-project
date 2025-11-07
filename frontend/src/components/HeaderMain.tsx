@@ -92,7 +92,7 @@ export default function HeaderMain({ user, setUser }: Props) {
         </form>
 
         {/* 네비게이션 */}
-        <nav className="nav">
+        <nav className="flex-box gap-24 flex-center">
           {user ? (
             <>
               <span className="nav-link user-info">{user.nickName} 님</span>
@@ -105,9 +105,9 @@ export default function HeaderMain({ user, setUser }: Props) {
                   관리자 페이지
                 </NavLink>
               )}
-              <NavLink to="/mypage" className="nav-link">
+              {/* <NavLink to="/mypage" className="nav-link">
                 마이페이지
-              </NavLink>
+              </NavLink> */}
               {/* 1:1 문의 */}
               <NavLink to="/mypage/qna/new" className="nav-link">
                 1:1 문의

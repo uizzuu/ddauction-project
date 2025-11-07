@@ -18,6 +18,9 @@
   content: none;
 }
 
+.nav-link.after::after {
+  margin-left: 16px;
+}
 
 .slick-prev, .slick-next {
   z-index: 2;

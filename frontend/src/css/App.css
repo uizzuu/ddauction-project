@@ -640,6 +640,10 @@ button:disabled {
   gap: 4px;
 }
 
+.flex-box.gap-6 {
+  gap: 6px;
+}
+
 .flex-box.gap-8 {
   gap: 8px;
 }
