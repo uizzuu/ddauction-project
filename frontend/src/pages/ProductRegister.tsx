@@ -23,7 +23,7 @@ export default function ProductRegister({ user }: Props) {
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
-  const [minDateTime, setMinDateTime] = useState<Date | undefined>(undefined);
+  const [_minDateTime, setMinDateTime] = useState<Date | undefined>(undefined);
   const [maxDateTime, setMaxDateTime] = useState<Date | undefined>(undefined);
   const [auctionEndDate, setAuctionEndDate] = useState<Date | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
