@@ -234,8 +234,13 @@ export default function MyPage({ user, setUser }: Props) {
     if (!confirm("정말 회원 탈퇴하시겠습니까?")) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}`, {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}/withdraw`, {
         method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (res.ok) {
         setUser(null);

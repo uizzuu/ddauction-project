@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -168,5 +169,29 @@ public class UserController {
         return ResponseEntity.ok(updated);
     }
 
+    // ============================
+// 본인 회원 탈퇴
+// ============================
+    @DeleteMapping("/{id}/withdraw")
+    public ResponseEntity<?> deleteMyAccount(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String authHeader) {
 
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body("로그인이 필요합니다.");
+        }
+
+        String token = authHeader.replace("Bearer ", "");
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body("토큰이 유효하지 않습니다.");
+        }
+
+        Long jwtUserId = jwtUtil.getUserId(token);
+        if (!id.equals(jwtUserId)) {
+            return ResponseEntity.status(403).body("본인 계정만 탈퇴 가능합니다.");
+        }
+
+        userService.deleteUser(id); // 기존 삭제 로직 재사용
+        return ResponseEntity.ok(Map.of("message", "회원 탈퇴 완료"));
+    }
 }

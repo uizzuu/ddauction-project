@@ -120,7 +120,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/qna/**").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/api/qna/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/api/qna/**").authenticated()
-
+                        .requestMatchers(HttpMethod.DELETE, "/api/users/*/withdraw").authenticated()
                         .anyRequest().authenticated()
                 )
 
