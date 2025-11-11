@@ -28,7 +28,7 @@ public class PaymentDto {
                 .productId(payment.getProduct() != null ? payment.getProduct().getProductId() : null)
                 .bidId(payment.getBid() != null ? payment.getBid().getBidId() : null)
                 .totalPrice(payment.getTotalPrice())
-                .paymentMethodId(payment.getPaymentMethod() != null ? payment.getPaymentMethod().getPaymentId(): null)
+                .paymentMethodId(payment.getPaymentMethod() != null ? payment.getPaymentMethod().getPaymentMethodId(): null)
                 .paymentStatus(payment.getPaymentStatus())
                 .createdAt(payment.getCreatedAt())
                 .updatedAt(payment.getUpdatedAt())
