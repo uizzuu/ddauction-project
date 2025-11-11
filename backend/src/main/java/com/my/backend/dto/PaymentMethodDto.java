@@ -8,7 +8,7 @@ import lombok.Data;
 @Builder
 public class PaymentMethodDto {
 
-    private Long paymentId;
+    private Long paymentMethodId;
     private String name;
 
     // Entity → DTO
@@ -16,7 +16,7 @@ public class PaymentMethodDto {
         if (method == null) return null;
 
         return PaymentMethodDto.builder()
-                .paymentId(method.getPaymentId())
+                .paymentMethodId(method.getPaymentMethodId())
                 .name(method.getName())
                 .build();
     }
@@ -24,7 +24,7 @@ public class PaymentMethodDto {
     // DTO → Entity
     public PaymentMethod toEntity() {
         return PaymentMethod.builder()
-                .paymentId(this.paymentId)
+                .paymentMethodId(this.paymentMethodId)
                 .name(this.name)
                 .build();
     }
