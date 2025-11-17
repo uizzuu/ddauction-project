@@ -12,7 +12,6 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/qrcode")
-@CrossOrigin(origins = "*") // CORS 허용
 public class QRCodeController {
 
 
