@@ -6,6 +6,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
+import AROverlayWithButton from "./AROverlayWithButton";
+
 import type {
   Product,
   User,
@@ -62,6 +64,8 @@ export default function ProductDetail({ user }: Props) {
   // 낙찰자 여부 상태 추가
   const [isWinner, setIsWinner] = useState(false);
   const [_winningBidPrice, setWinningBidPrice] = useState<number | null>(null);
+  // AR 모달 상태 추가
+  const [showARModal, setShowARModal] = useState(false);
 
   const mergedBids = useMemo(() => {
     const combinedBids = [...allBids, ...liveBids];
@@ -522,8 +526,29 @@ export default function ProductDetail({ user }: Props) {
           ) : (
             <div className="no-image-txt">이미지 없음</div>
           )}
+          {/* AR 트라이온 버튼 */}
+          <button
+            onClick={() => setShowARModal(true)}
+            style={{
+              position: "absolute",
+              bottom: "20px",
+              right: "20px",
+              backgroundColor: "#ff6600",
+              color: "#fff",
+              border: "none",
+              borderRadius: "8px",
+              padding: "10px 20px",
+              cursor: "pointer",
+              fontSize: "0.9rem",
+              fontWeight: "bold",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+              zIndex: 5,
+            }}
+          >
+            📷 AR 트라이온
+          </button>
         </div>
-
+      
         <div
           style={{
             flex: 1,
@@ -843,6 +868,60 @@ export default function ProductDetail({ user }: Props) {
           currentHighestBid={currentHighestBid}
           placeBid={handlePlaceBid}
         />
+        {/* AR 모달 */}
+{showARModal && (
+  <div
+    style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(0, 0, 0, 0.8)",
+      zIndex: 1000,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+    }}
+    onClick={() => setShowARModal(false)}
+  >
+    <div
+      style={{
+        position: "relative",
+        width: "90%",
+        maxWidth: "800px",
+        height: "80vh",
+        backgroundColor: "#000",
+        borderRadius: "12px",
+        overflow: "hidden",
+      }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        onClick={() => setShowARModal(false)}
+        style={{
+          position: "absolute",
+          top: "10px",
+          right: "10px",
+          backgroundColor: "rgba(255, 255, 255, 0.9)",
+          border: "none",
+          borderRadius: "50%",
+          width: "40px",
+          height: "40px",
+          fontSize: "1.5rem",
+          cursor: "pointer",
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        ×
+      </button>
+      <AROverlayWithButton productId={product.productId} />
+    </div>
+  </div>
+)}
       </div>
       <ProductBidGraph
         bids={mergedBids}

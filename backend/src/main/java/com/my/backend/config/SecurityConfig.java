@@ -81,6 +81,8 @@ public class SecurityConfig {
                         // OAuth2 관련 경로
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
+
 
                         // 회원가입, 로그인, 공개 POST API
                         .requestMatchers(
