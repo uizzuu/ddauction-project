@@ -25,6 +25,7 @@ backend/caches/
 *.TAG
 *.dylib.lock
 *.jnilib
+bin/
 
 # uploads/ 로컬 업로드 파일
 /uploads
