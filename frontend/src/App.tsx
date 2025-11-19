@@ -177,10 +177,6 @@ export default function App() {
             )
           }
         />
-        <Route
-          path="/oauth2/redirect"
-          element={<OAuthCallback setUser={setUser} />}
-        />
         {/* <Route
           path="/payment"
           element={
