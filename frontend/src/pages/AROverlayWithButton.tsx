@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
+import { API_BASE_URL } from "../services/api";
 
 interface AROverlayProps {
   productId: number;
 }
 
-const API_BASE_URL = "http://localhost:8080";
 
 const AROverlayWithButton: React.FC<AROverlayProps> = ({ productId }) => {
   const [mode, setMode] = useState<"initial" | "showQR" | "scanning">("initial");
