@@ -21,6 +21,7 @@ import {
   ArticleList,
   AdminPage,
   ErrorPage,
+  OAuth2Redirect,
 } from "./import/import";
 import "./import/import.css";
 import type { User, Category } from "./types/types";
@@ -113,10 +114,10 @@ export default function App() {
   // 유효하지 않은 경로면 에러 페이지 표시
   if (isInvalidPath) {
     <div style={{ minHeight: "100vh" }}>
-      <HeaderMain user={user} setUser={setUser} /> 
-      <HeaderSub category={category} setCategory={setCategory} /> 
+      <HeaderMain user={user} setUser={setUser} />
+      <HeaderSub category={category} setCategory={setCategory} />
       <ErrorPage />
-    </div>
+    </div>;
   }
 
   return (
@@ -128,6 +129,10 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route
+          path="/oauth2/redirect"
+          element={<OAuth2Redirect setUser={setUser} />}
+        />
         <Route path="/signup" element={<Signup />} />
         <Route path="/auction" element={<ProductList />} />
         <Route path="/register" element={<ProductRegister user={user} />} />

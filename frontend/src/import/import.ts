@@ -14,7 +14,7 @@ import ArticleList from "../pages/ArticleList";
 import AdminPage from '../pages/AdminPage';
 import UserQnaForm from "../pages/UserQnaForm";
 import ErrorPage from "../pages/ErrorPage";
-
+import OAuth2Redirect from "../pages/OAuth2Redirect";
 
 export {
   HeaderMain,
@@ -29,5 +29,6 @@ export {
   ArticleList,
   AdminPage,
   UserQnaForm,
-  ErrorPage
+  ErrorPage,
+  OAuth2Redirect
 };
