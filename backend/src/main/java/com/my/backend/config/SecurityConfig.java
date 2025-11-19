@@ -4,6 +4,7 @@ import com.my.backend.myjwt.JWTFilter;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.myjwt.LoginFilter;
 import com.my.backend.oauth2.OAuth2SuccessHandler;
+import com.my.backend.service.CustomOAuth2UserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -29,16 +31,18 @@ public class SecurityConfig {
     private final AuthenticationConfiguration authenticationConfiguration;
     private final JWTUtil jwtUtil;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final CustomOAuth2UserService customOAuth2UserService;  // ✅ 추가
 
     @Value("${spring.profiles.active:local}")
     private String activeProfile;
 
 
     public SecurityConfig(AuthenticationConfiguration authenticationConfiguration,
-                          JWTUtil jwtUtil,OAuth2SuccessHandler oAuth2SuccessHandler) {
+                          JWTUtil jwtUtil,OAuth2SuccessHandler oAuth2SuccessHandler, CustomOAuth2UserService customOAuth2UserService) {
         this.authenticationConfiguration = authenticationConfiguration;
         this.jwtUtil = jwtUtil;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+        this.customOAuth2UserService = customOAuth2UserService;  // ✅ 추가
     }
 
     // AuthenticationManager Bean
@@ -134,7 +138,15 @@ public class SecurityConfig {
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // OAuth2 로그인 성공 핸들러
-                .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2SuccessHandler))
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .oidcUserService(new OidcUserService())
+                        )
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)  // ✅ 추가
+                        )
+                        .successHandler(oAuth2SuccessHandler)
+                )
 
                 // 세션 Stateless
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

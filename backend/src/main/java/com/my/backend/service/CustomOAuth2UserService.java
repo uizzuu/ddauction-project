@@ -54,10 +54,12 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
+        System.out.println("🟢 CustomOAuth2UserService.loadUser() 호출됨!");  // ✅ 추가
         OAuth2User oAuth2User = super.loadUser(userRequest);
 
         String registrationId = userRequest.getClientRegistration().getRegistrationId();
         System.out.println("OAuth2 registrationId: " + registrationId);
+        System.out.println("OAuth2 attributes: " + oAuth2User.getAttributes());  // ✅ 추가
 
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(
                 registrationId, oAuth2User.getAttributes());
@@ -84,6 +86,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .updatedAt(now)
                         .build()
                 ));
+
+        System.out.println("✅ CustomOAuth2User 생성 완료: userId=" + user.getUserId());  // ✅ 추가
 
         return new CustomOAuth2User(
                 user.getUserId(),
