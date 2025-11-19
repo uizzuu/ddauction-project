@@ -128,6 +128,8 @@ spring:
   config:
     activate:
       on-profile: prod
+  server:
+    forward-headers-strategy: framework
   ssl:
     enabled: false
   datasource:
