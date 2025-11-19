@@ -25,7 +25,6 @@ import {
 } from "./import/import";
 import "./import/import.css";
 import type { User, Category } from "./types/types";
-import OAuthCallback from "./pages/OAuthCallback";
 
 // 유효한 경로 패턴 정의
 const VALID_PATHS = [
