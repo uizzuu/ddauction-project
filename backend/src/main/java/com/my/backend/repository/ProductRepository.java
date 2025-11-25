@@ -1,7 +1,7 @@
 package com.my.backend.repository;
 
-import com.my.backend.common.enums.PaymentStatus;
-import com.my.backend.common.enums.ProductStatus;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductStatus;
 import com.my.backend.entity.Product;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

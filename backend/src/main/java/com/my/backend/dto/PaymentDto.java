@@ -1,6 +1,6 @@
 package com.my.backend.dto;
 
-import com.my.backend.common.enums.PaymentStatus;
+import com.my.backend.enums.PaymentStatus;
 import com.my.backend.entity.Payment;
 import lombok.Builder;
 import lombok.Data;

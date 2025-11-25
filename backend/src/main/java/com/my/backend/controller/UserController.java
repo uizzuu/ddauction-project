@@ -1,11 +1,9 @@
 package com.my.backend.controller;
 
 import com.my.backend.dto.UserDto;
-import com.my.backend.entity.User;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.repository.UserRepository;
 import com.my.backend.service.UserService;
-import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

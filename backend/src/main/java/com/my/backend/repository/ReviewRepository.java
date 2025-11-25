@@ -1,7 +1,6 @@
 package com.my.backend.repository;
 
 import com.my.backend.entity.Review;
-import com.my.backend.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

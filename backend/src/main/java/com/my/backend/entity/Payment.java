@@ -1,6 +1,6 @@
 package com.my.backend.entity;
 
-import com.my.backend.common.enums.PaymentStatus;
+import com.my.backend.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

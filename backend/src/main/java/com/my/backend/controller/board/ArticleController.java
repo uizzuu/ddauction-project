@@ -1,7 +1,7 @@
 package com.my.backend.controller.board;
 
 import com.my.backend.dto.board.ArticleDto;
-import com.my.backend.service.board.ArticleService;
+import com.my.backend.service.ArticleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

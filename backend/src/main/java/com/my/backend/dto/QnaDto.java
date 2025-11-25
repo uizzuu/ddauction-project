@@ -1,7 +1,5 @@
 package com.my.backend.dto;
 
-import com.my.backend.entity.Qna;
-import com.my.backend.entity.User;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.board.Board;
 import lombok.Builder;

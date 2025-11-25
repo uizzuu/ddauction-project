@@ -1,8 +1,8 @@
 package com.my.backend.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.my.backend.common.enums.PaymentStatus;
-import com.my.backend.common.enums.ProductStatus;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductStatus;
 import com.my.backend.entity.*;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

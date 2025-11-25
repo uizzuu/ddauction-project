@@ -1,8 +1,6 @@
 package com.my.backend.service;
 
-import com.my.backend.dto.board.ArticleDto;
 import com.my.backend.dto.board.CommentDto;
-import com.my.backend.entity.User;
 import com.my.backend.entity.board.Article;
 import com.my.backend.entity.board.Board;
 import com.my.backend.entity.board.Comment;

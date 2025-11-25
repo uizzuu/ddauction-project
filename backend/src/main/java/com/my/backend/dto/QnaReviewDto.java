@@ -1,9 +1,7 @@
 package com.my.backend.dto;
 
 
-import com.my.backend.entity.Qna;
 import com.my.backend.entity.QnaReview;
-import com.my.backend.entity.User;
 import lombok.Builder;
 import lombok.Data;
 

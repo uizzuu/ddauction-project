@@ -3,7 +3,6 @@ package com.my.backend.service;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.entity.BookMark;
 import com.my.backend.entity.Product;
-import com.my.backend.entity.User;
 import com.my.backend.repository.BookMarkRepository;
 import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.UserRepository;

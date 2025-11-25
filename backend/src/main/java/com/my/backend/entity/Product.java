@@ -1,7 +1,7 @@
 package com.my.backend.entity;
 
-import com.my.backend.common.enums.PaymentStatus;
-import com.my.backend.common.enums.ProductStatus;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;

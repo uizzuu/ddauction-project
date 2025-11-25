@@ -1,6 +1,5 @@
 package com.my.backend.repository.board;
 
-import com.my.backend.entity.User;
 import com.my.backend.entity.board.Article;
 import com.my.backend.entity.board.Comment;
 import org.springframework.data.jpa.repository.JpaRepository;

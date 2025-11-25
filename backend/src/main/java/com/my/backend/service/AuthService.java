@@ -3,7 +3,6 @@ package com.my.backend.service;
 import com.my.backend.dto.auth.LoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.dto.auth.TokenResponse;
-import com.my.backend.entity.User;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.Map;
 
 @Service

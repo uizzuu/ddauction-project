@@ -1,12 +1,12 @@
 package com.my.backend.service;
 
-import com.my.backend.common.enums.ProductStatus;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductStatus;
 import com.my.backend.dto.BidChartData;
 import com.my.backend.dto.BidResponse;
 import com.my.backend.entity.Bid;
 import com.my.backend.entity.Image;
 import com.my.backend.entity.Product;
-import com.my.backend.entity.User;
 import com.my.backend.repository.BidRepository;
 import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.UserRepository;
@@ -278,7 +278,7 @@ public class BidService {
                 // 3-3. 상품 상태도 업데이트
                 if (product.getProductStatus() == ProductStatus.ACTIVE) {
                     product.setProductStatus(ProductStatus.CLOSED);
-                    product.setPaymentStatus(com.my.backend.common.enums.PaymentStatus.PENDING);
+                    product.setPaymentStatus(PaymentStatus.PENDING);
                     product.setPaymentUserId(winningBid.getUser().getUserId());
                     productRepository.save(product);
 
@@ -356,7 +356,7 @@ public class BidService {
                     // 상품 상태도 업데이트
                     if (product.getProductStatus() == ProductStatus.ACTIVE) {
                         product.setProductStatus(ProductStatus.CLOSED);
-                        product.setPaymentStatus(com.my.backend.common.enums.PaymentStatus.PENDING);
+                        product.setPaymentStatus(PaymentStatus.PENDING);
                         product.setPaymentUserId(winningBid.getUser().getUserId());
                         productRepository.save(product);
 

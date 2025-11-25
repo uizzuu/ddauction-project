@@ -1,6 +1,5 @@
 package com.my.backend.repository;
 
-import com.my.backend.entity.Qna;
 import com.my.backend.entity.QnaReview;
 import org.springframework.data.jpa.repository.JpaRepository;
 

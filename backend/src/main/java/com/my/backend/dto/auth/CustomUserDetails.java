@@ -1,6 +1,5 @@
 package com.my.backend.dto.auth;
 
-import com.my.backend.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 

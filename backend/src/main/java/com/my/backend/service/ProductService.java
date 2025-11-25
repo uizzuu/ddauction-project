@@ -1,26 +1,19 @@
 package com.my.backend.service;
 
-import com.my.backend.common.enums.PaymentStatus;
-import com.my.backend.common.enums.ProductStatus;
-import com.my.backend.config.FileUploadConfig;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductStatus;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.dto.BidDto;
 import com.my.backend.entity.*;
 import com.my.backend.repository.*;
 import jakarta.persistence.EntityManager;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 

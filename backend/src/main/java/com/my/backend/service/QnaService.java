@@ -1,9 +1,6 @@
 package com.my.backend.service;
 
-import com.my.backend.entity.Qna;
 import com.my.backend.entity.QnaReview;
-import com.my.backend.entity.User;
-import com.my.backend.entity.User.Role;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.board.Board;
 import com.my.backend.repository.QnaRepository;

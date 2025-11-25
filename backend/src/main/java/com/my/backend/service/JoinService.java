@@ -1,7 +1,6 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.auth.LoginRequest;
-import com.my.backend.entity.User;
 import com.my.backend.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;

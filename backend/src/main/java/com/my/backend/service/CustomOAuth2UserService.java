@@ -1,8 +1,6 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.auth.CustomOAuth2User;
-import com.my.backend.entity.User;
-import com.my.backend.entity.User.Role;
 import com.my.backend.oauth2.OAuth2UserInfo;
 import com.my.backend.oauth2.OAuth2UserInfoFactory;
 import com.my.backend.repository.UserRepository;

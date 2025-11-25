@@ -2,7 +2,6 @@ package com.my.backend.dto.board;
 
 import com.my.backend.entity.board.Article;
 import com.my.backend.entity.board.Comment;
-import com.my.backend.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

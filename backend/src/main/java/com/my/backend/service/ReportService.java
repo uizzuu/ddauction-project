@@ -2,7 +2,6 @@ package com.my.backend.service;
 
 import com.my.backend.dto.ReportDto;
 import com.my.backend.entity.Report;
-import com.my.backend.entity.User;
 import com.my.backend.repository.ReportRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

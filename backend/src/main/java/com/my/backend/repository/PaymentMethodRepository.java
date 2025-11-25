@@ -1,6 +1,5 @@
 package com.my.backend.repository;
 
-import com.my.backend.entity.PaymentMethod;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

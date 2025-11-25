@@ -2,7 +2,6 @@ package com.my.backend.service;
 
 import com.my.backend.dto.ReviewDto;
 import com.my.backend.entity.Review;
-import com.my.backend.entity.User;
 import com.my.backend.repository.ReviewRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

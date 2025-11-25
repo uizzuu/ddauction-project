@@ -1,8 +1,6 @@
 package com.my.backend.myjwt;
 
 import com.my.backend.dto.auth.CustomUserDetails;
-import com.my.backend.entity.User;
-import io.jsonwebtoken.io.IOException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

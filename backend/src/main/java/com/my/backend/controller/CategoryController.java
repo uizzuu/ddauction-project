@@ -1,7 +1,6 @@
 package com.my.backend.controller;
 
 import com.my.backend.dto.CategoryDto;
-import com.my.backend.entity.Category;
 import com.my.backend.repository.CategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

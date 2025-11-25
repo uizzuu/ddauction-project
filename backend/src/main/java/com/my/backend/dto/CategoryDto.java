@@ -1,7 +1,5 @@
 package com.my.backend.dto;
 
-import com.my.backend.entity.Category;
-import com.my.backend.entity.Product;
 import lombok.Builder;
 import lombok.Data;
 

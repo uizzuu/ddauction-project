@@ -1,11 +1,5 @@
 package com.my.backend.config;
 
-import com.my.backend.common.enums.PaymentStatus;
-import com.my.backend.common.enums.ProductStatus;
-import com.my.backend.entity.Category;
-import com.my.backend.entity.Image;
-import com.my.backend.entity.Product;
-import com.my.backend.entity.User;
 import com.my.backend.entity.board.Board;
 import com.my.backend.repository.CategoryRepository;
 import com.my.backend.repository.ImageRepository;
@@ -17,7 +11,6 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Component

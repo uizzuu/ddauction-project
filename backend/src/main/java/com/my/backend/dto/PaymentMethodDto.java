@@ -1,6 +1,5 @@
 package com.my.backend.dto;
 
-import com.my.backend.entity.PaymentMethod;
 import lombok.Builder;
 import lombok.Data;
 

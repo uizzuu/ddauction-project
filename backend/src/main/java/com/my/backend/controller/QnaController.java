@@ -1,11 +1,9 @@
 package com.my.backend.controller;
 
 import com.my.backend.dto.auth.CustomUserDetails;
-import com.my.backend.entity.Qna;
 import com.my.backend.entity.QnaReview;
 import com.my.backend.repository.QnaRepository;
 import com.my.backend.service.QnaService;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;

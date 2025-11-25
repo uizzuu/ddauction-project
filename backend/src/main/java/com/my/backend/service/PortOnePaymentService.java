@@ -1,7 +1,7 @@
 package com.my.backend.service;
 
-import com.my.backend.common.enums.PaymentStatus;
-import com.my.backend.common.enums.ProductStatus;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductStatus;
 import com.my.backend.config.PaymentProperties;
 import com.my.backend.dto.portone.PortOnePaymentResponse;
 import com.my.backend.dto.portone.PortOneTokenResponse;
@@ -14,17 +14,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
-import static com.my.backend.common.enums.PaymentStatus.CANCELLED;
-import static com.my.backend.common.enums.PaymentStatus.PAID;
-import static com.my.backend.common.enums.ProductStatus.ACTIVE;
+import static com.my.backend.enums.PaymentStatus.CANCELLED;
+import static com.my.backend.enums.ProductStatus.ACTIVE;
 
 @Slf4j
 @Service

@@ -1,7 +1,7 @@
 package com.my.backend.controller.board;
 
 import com.my.backend.dto.board.CommentDto;
-import com.my.backend.service.board.CommentService;
+import com.my.backend.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

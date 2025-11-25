@@ -1,14 +1,10 @@
 package com.my.backend.controller;
 
-import com.my.backend.common.enums.ProductStatus;
+import com.my.backend.enums.ProductStatus;
 import com.my.backend.dto.BidDto;
-import com.my.backend.dto.ImageDto;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.dto.auth.CustomUserDetails;
-import com.my.backend.entity.User;
-import com.my.backend.repository.UserRepository;
 import com.my.backend.service.BookMarkService;
-import com.my.backend.service.ImageService;
 import com.my.backend.service.ProductService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -22,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 

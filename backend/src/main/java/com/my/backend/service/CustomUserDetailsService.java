@@ -1,7 +1,6 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.auth.CustomUserDetails;
-import com.my.backend.entity.User;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;

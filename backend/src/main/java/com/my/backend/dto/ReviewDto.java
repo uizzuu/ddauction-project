@@ -1,7 +1,6 @@
 package com.my.backend.dto;
 
 import com.my.backend.entity.Review;
-import com.my.backend.entity.User;
 import lombok.Builder;
 import lombok.Data;
 

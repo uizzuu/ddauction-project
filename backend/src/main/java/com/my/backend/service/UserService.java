@@ -2,7 +2,6 @@ package com.my.backend.service;
 
 import com.my.backend.dto.UserDto;
 import com.my.backend.entity.Address;
-import com.my.backend.entity.User;
 import com.my.backend.repository.AddressRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
