@@ -13,10 +13,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ImageDto {
+
     private Long imageId;
-    private ProductType productType;
-    private ImageType imageType;
-    private String imagePath;
+    private ProductType productType;  // PRODUCT 이미지일 경우만 값 존재
+    private ImageType imageType;      // USER, PRODUCT, REVIEW
+    private String imagePath;         // S3 URL
+    private Long refId;               // 실제 참조 대상 ID (상품ID, 유저ID, 리뷰ID)
     private LocalDateTime createdAt;
 
     // Entity → DTO
@@ -28,6 +30,7 @@ public class ImageDto {
                 .productType(image.getProductType())
                 .imageType(image.getImageType())
                 .imagePath(image.getImagePath())
+                .refId(image.getRefId())      // refId 포함
                 .createdAt(image.getCreatedAt())
                 .build();
     }
@@ -39,6 +42,7 @@ public class ImageDto {
                 .productType(this.productType)
                 .imageType(this.imageType)
                 .imagePath(this.imagePath)
+                .refId(this.refId)           // refId 포함
                 .build();
     }
 }

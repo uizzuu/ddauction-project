@@ -12,20 +12,21 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "image")
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
 public class Image {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long imageId;
 
     @NotBlank
     @Column(nullable = false)
-    private String imagePath;
+    private String imagePath; // S3 URL
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -33,9 +34,16 @@ public class Image {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProductType productType;
+    private ImageType imageType;  // PRODUCT, USER, REVIEW
 
     @Enumerated(EnumType.STRING)
+    private ProductType productType; // AUCTION, USED, SALE (PRODUCT 이미지일 경우만)
+
     @Column(nullable = false)
-    private ImageType imageType;
+    private Long refId; // 실제 참조 대상 ID (상품ID, 유저ID, 리뷰ID)
+
+    // Product 양방향 매핑은 선택적
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", insertable = false, updatable = false)
+    private Product product;
 }

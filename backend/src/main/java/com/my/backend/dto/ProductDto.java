@@ -8,11 +8,11 @@ import com.my.backend.enums.ProductType;
 import com.my.backend.enums.DeliveryType;
 import com.my.backend.enums.TagType;
 import com.my.backend.entity.*;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -22,50 +22,28 @@ import java.time.LocalDateTime;
 public class ProductDto {
 
     private Long productId;
-
-    // Seller 정보
     private Long sellerId;
     private String sellerNickName;
-
-    // 기본 정보
-    @NotNull(message = "제목은 필수 입력 항목입니다.")
     private String title;
-
-    @NotNull(message = "내용은 필수 입력 항목입니다.")
     private String content;
-
-    // 가격 정보
-    @Min(value = 1, message = "시작 가격은 1원 이상이어야 합니다.")
     private Long startingPrice;
-
     private Long price;
-
     // 경매 정보
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime auctionEndTime;
-
     // 조회수
     private Long viewCount;
-
     // 배송 정보
-    private Boolean deliveryIncluded;
+    private boolean deliveryIncluded;
     private Long deliveryPrice;
     private Long deliveryAddPrice;
-
     // Enum 타입들
-    @NotNull(message = "상품 타입은 필수 입력 항목입니다.")
     private ProductType productType;
-
-    @NotNull(message = "상품 상태는 필수 입력 항목입니다.")
     private ProductStatus productStatus;
 
     private PaymentStatus paymentStatus;
     private DeliveryType deliveryType;
-
-    @NotNull(message = "태그 타입은 필수 입력 항목입니다.")
     private TagType tagType;
-
-    @NotNull(message = "카테고리 타입은 필수 입력 항목입니다.")
     private ProductCategoryType productCategoryType;
 
     // 타임스탬프
@@ -75,7 +53,9 @@ public class ProductDto {
     // 관계 엔티티 ID들
     private Long bidId;
     private Long paymentId;
-    private Long imageId;
+
+    @Builder.Default
+    private List<ImageDto> images = new ArrayList<>();
 
     /**
      * Entity -> DTO 변환
@@ -108,14 +88,21 @@ public class ProductDto {
                 .updatedAt(product.getUpdatedAt())
                 .bidId(product.getBid() != null ? product.getBid().getBidId() : null)
                 .paymentId(product.getPayment() != null ? product.getPayment().getPaymentId() : null)
-                .imageId(product.getImage() != null ? product.getImage().getImageId() : null)
+                .images(
+                        product.getImages() != null
+                                ? product.getImages().stream()
+                                .map(ImageDto::fromEntity)
+                                .toList()
+                                : new ArrayList<>()
+                )
+
                 .build();
     }
 
     /**
      * DTO -> Entity 변환
      */
-    public Product toEntity(Users seller, Bid bid, Payment payment, Image image) {
+    public Product toEntity(Users seller, Bid bid, Payment payment) {
         return Product.builder()
                 .productId(this.productId)
                 .seller(seller)
@@ -136,7 +123,8 @@ public class ProductDto {
                 .productCategoryType(this.productCategoryType)
                 .bid(bid)
                 .payment(payment)
-                .image(image)
                 .build();
+
     }
+
 }
