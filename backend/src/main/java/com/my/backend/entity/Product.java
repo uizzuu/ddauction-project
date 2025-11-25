@@ -84,7 +84,7 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "seller_id")
-    private User seller;
+    private Users seller;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bid_id")
