@@ -1,38 +1,32 @@
 package com.my.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.security.core.userdetails.User;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "report")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
 @EntityListeners(AuditingEntityListener.class)
 public class Report {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reportId;
 
-    @ManyToOne
-    @JoinColumn(name = "reporter_id", nullable = false)
-    private User reporterId;
-
-    @ManyToOne
-    @JoinColumn(name = "target_id", nullable = false)
-    private User targetId;
-
+    @Column(nullable = false)
     private String reason;
 
+    @Column(nullable = false)
     private boolean status;
 
     @CreatedDate
@@ -40,6 +34,14 @@ public class Report {
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reporter_id")
+    private User reporter;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "target_id")
+    private User target;
+
 }

@@ -1,40 +1,47 @@
 package com.my.backend.dto;
 
 import com.my.backend.entity.Report;
-import lombok.Builder;
-import lombok.Data;
+import com.my.backend.entity.Users;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ReportDto {
+
     private Long reportId;
     private Long reporterId;
     private Long targetId;
     private String reason;
-    private boolean status;
+    private Boolean status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // Entity → DTO
     public static ReportDto fromEntity(Report report) {
+        if (report == null) return null;
 
         return ReportDto.builder()
                 .reportId(report.getReportId())
-                .reporterId(report.getReporterId().getUserId())
-                .targetId(report.getTargetId().getUserId())
+                .reporterId(report.getReporter() != null ? report.getReporter().getUserId() : null)
+                .targetId(report.getTarget() != null ? report.getTarget().getUserId() : null)
                 .reason(report.getReason())
-                .status(report.isStatus())
+                .status(report.getStatus())
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .build();
     }
 
-    public Report toEntity(User reporter, User target) {
+    // DTO → Entity
+    public Report toEntity(Users reporter, Users target) {
         return Report.builder()
                 .reportId(this.reportId)
-                .reporterId(reporter)
-                .targetId(target)
+                .reporter(reporter)
+                .target(target)
                 .reason(this.reason)
                 .status(this.status)
                 .build();

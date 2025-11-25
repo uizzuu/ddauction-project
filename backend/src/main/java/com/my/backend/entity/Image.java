@@ -1,5 +1,7 @@
 package com.my.backend.entity;
 
+import com.my.backend.enums.ImageType;
+import com.my.backend.enums.ProductType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -21,9 +23,13 @@ public class Image {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long imageId;
 
-    @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProductType productType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ImageType imageType;
 
     @Column(nullable = false)
     private String imagePath;

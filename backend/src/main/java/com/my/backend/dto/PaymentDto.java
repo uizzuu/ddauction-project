@@ -1,46 +1,62 @@
 package com.my.backend.dto;
 
-import com.my.backend.enums.PaymentStatus;
 import com.my.backend.entity.Payment;
-import lombok.Builder;
-import lombok.Data;
+import com.my.backend.entity.Product;
+import com.my.backend.enums.CourierType;
+import com.my.backend.enums.PaymentMethodType;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductType;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class PaymentDto {
 
     private Long paymentId;
     private Long productId;
-    private Long bidId;
     private Long totalPrice;
-    private Long paymentMethodId;
+    private PaymentMethodType paymentMethodType;
     private PaymentStatus paymentStatus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private ProductType productType;
+    private String trackingNumber;
+    private CourierType courierName;
 
+    // Entity → DTO
     public static PaymentDto fromEntity(Payment payment) {
         if (payment == null) return null;
 
         return PaymentDto.builder()
                 .paymentId(payment.getPaymentId())
                 .productId(payment.getProduct() != null ? payment.getProduct().getProductId() : null)
-                .bidId(payment.getBid() != null ? payment.getBid().getBidId() : null)
                 .totalPrice(payment.getTotalPrice())
-                .paymentMethodId(payment.getPaymentMethod() != null ? payment.getPaymentMethod().getPaymentMethodId(): null)
+                .paymentMethodType(payment.getPaymentMethodType())
                 .paymentStatus(payment.getPaymentStatus())
                 .createdAt(payment.getCreatedAt())
                 .updatedAt(payment.getUpdatedAt())
+                .productType(payment.getProductType())
+                .trackingNumber(payment.getTrackingNumber())
+                .courierName(payment.getCourierName())
                 .build();
     }
 
-    public Payment toEntity() {
-        // DTO → Entity 변환
+    // DTO → Entity
+    public Payment toEntity(Product product) {
         return Payment.builder()
                 .paymentId(this.paymentId)
+                .product(product)
                 .totalPrice(this.totalPrice)
+                .paymentMethodType(this.paymentMethodType)
                 .paymentStatus(this.paymentStatus != null ? this.paymentStatus : PaymentStatus.PENDING)
+                .productType(this.productType)
+                .trackingNumber(this.trackingNumber)
+                .courierName(this.courierName)
                 .build();
     }
 }

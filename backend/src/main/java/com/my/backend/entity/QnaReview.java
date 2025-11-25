@@ -1,10 +1,7 @@
 package com.my.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -16,22 +13,24 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
+@Getter
+@Setter
 @EntityListeners(AuditingEntityListener.class)
 public class QnaReview {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long qnaReviewId;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    private User qnaUser;
+    private Users qnaUser;
 
     @ManyToOne
-    @JoinColumn(name = "qna_id", nullable = false)
-    private Qna qna;
+    @JoinColumn(name = "product_qna_id", nullable = false)
+    private ProductQna qna;
 
-    private String answer;
+    @Column(nullable = false)
+    private String content;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

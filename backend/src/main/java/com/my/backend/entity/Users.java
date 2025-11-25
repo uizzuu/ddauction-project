@@ -9,8 +9,8 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -52,12 +52,14 @@ public class Users {
     @Column(unique = true)
     private String email;
 
+    @Column(nullable = false)
+    private LocalDateTime birthday;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
@@ -72,16 +74,11 @@ public class Users {
     @JoinColumn(name = "email_verification_id")
     private EmailVerification emailVerification;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "phone_verification_id")
     private PhoneVerification phoneVerification;
 
-
-    @Column(nullable = false)
-    private LocalDateTime birthday;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "image_id")
-    private Image image;
+    private List<Image> image;
 }

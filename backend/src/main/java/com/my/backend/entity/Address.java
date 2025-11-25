@@ -1,23 +1,27 @@
 package com.my.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "address")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
 public class Address {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long addressId;
 
+    @Column(nullable = false)
     private String address;
 
+    @Column(nullable = false)
+    private String zipCode;
+
+    @Column(nullable = false)
     private String detailAddress;
 }

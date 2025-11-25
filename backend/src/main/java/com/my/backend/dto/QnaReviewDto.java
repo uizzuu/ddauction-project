@@ -1,44 +1,47 @@
 package com.my.backend.dto;
 
-
+import com.my.backend.entity.ProductQna;
 import com.my.backend.entity.QnaReview;
-import lombok.Builder;
-import lombok.Data;
+import com.my.backend.entity.Users;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Data
+@Getter
+@Setter
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class QnaReviewDto {
+
     private Long qnaReviewId;
-    private Long qnaUserId;
-    private Long qnaId;
-    private String answer;
+    private Long qnaUserId;   // 작성자 ID (엔티티: qnaUser)
+    private Long productQnaId; // 리뷰 대상 Qna ID (엔티티: qna)
+    private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private User.Role role;
-    private String nickName;
 
+    // Entity → DTO
     public static QnaReviewDto fromEntity(QnaReview qr) {
+        if (qr == null) return null;
+
         return QnaReviewDto.builder()
                 .qnaReviewId(qr.getQnaReviewId())
-                .qnaUserId(qr.getQnaUser().getUserId())
-                .qnaId(qr.getQna().getQnaId())
-                .answer(qr.getAnswer())
+                .qnaUserId(qr.getQnaUser() != null ? qr.getQnaUser().getUserId() : null)
+                .productQnaId(qr.getQna() != null ? qr.getQna().getProductQnaId() : null)
+                .content(qr.getContent())
                 .createdAt(qr.getCreatedAt())
                 .updatedAt(qr.getUpdatedAt())
-                .role(qr.getQnaUser().getRole())
-                .nickName(qr.getQnaUser().getNickName())
                 .build();
     }
 
-    public QnaReview toEntity(User user, Qna qna) {
+    // DTO → Entity
+    public QnaReview toEntity(Users qnaUser, ProductQna qna) {
         return QnaReview.builder()
                 .qnaReviewId(this.qnaReviewId)
-                .qnaUser(user)
+                .qnaUser(qnaUser)
                 .qna(qna)
-                .answer(this.answer)
+                .content(this.content)
                 .build();
     }
 }
-

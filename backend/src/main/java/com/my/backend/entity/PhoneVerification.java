@@ -19,13 +19,12 @@ public class PhoneVerification {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "phone_verification_id")
     private Long phoneVerificationId;
 
-    @Column(name = "user_phone", nullable = false)
+    @Column(nullable = false)
     private String userPhone;
 
-    @Column(name = "phone_verification_token", nullable = false)
+    @Column(nullable = false)
     private String phoneVerificationToken;
 
     @CreatedDate

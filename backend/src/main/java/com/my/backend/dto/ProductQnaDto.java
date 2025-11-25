@@ -2,7 +2,7 @@ package com.my.backend.dto;
 
 import com.my.backend.entity.ProductQna;
 import com.my.backend.entity.Users;
-import com.my.backend.enums.ProductType;
+import com.my.backend.enums.ProductType; // 엔티티 기준 ProductType import
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProductQnaDto {
+
     private Long productQnaId;
     private Long userId;
     private String title;

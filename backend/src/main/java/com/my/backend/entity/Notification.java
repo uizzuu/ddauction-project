@@ -21,10 +21,6 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long notificationId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private Users user;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private NotificationStatus notificationStatus;
@@ -33,9 +29,13 @@ public class Notification {
     private String content;
 
     @Column(nullable = false)
-    private Boolean isRead;
+    private boolean isRead;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users user;
 }

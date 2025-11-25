@@ -22,10 +22,6 @@ public class ProductQna {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long productQnaId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true)
-    private Users user;
-
     @Column(nullable = false)
     private String title;
 
@@ -37,10 +33,13 @@ public class ProductQna {
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProductType productType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private Users user;
 }
