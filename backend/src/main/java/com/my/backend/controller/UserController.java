@@ -1,6 +1,8 @@
 package com.my.backend.controller;
 
-import com.my.backend.dto.UserDto;
+import com.my.backend.dto.UsersDto;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.repository.UserRepository;
 import com.my.backend.service.UserService;
@@ -25,35 +27,35 @@ public class UserController {
 
     // 모든 유저 조회 (관리자용)
     @GetMapping
-    public List<UserDto> getAllUsers() {
+    public List<UsersDto> getAllUsers() {
         return userService.getAllUsers();
     }
 
     // 단일 유저 조회 (관리자용)
     @GetMapping("/{id}")
-    public UserDto getUser(@PathVariable Long id) {
+    public UsersDto getUser(@PathVariable Long id) {
         return userService.getUser(id);
     }
 
     // 회원가입
     @PostMapping("/signup")
-    public ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto dto) {
+    public ResponseEntity<UsersDto> createUser(@Valid @RequestBody UsersDto dto) {
         System.out.println("received password: '" + dto.getPassword() + "'");
         if (dto.getRole() == null) {
-            dto.setRole(User.Role.USER);  // 기본 Role 설정
+            dto.setRole(Role.USER);  // 기본 Role 설정
         }
-        UserDto created = userService.createUser(dto);
+        UsersDto created = userService.createUser(dto);
         return ResponseEntity.status(201).body(created);
     }
 
     // 로그인 (JWT 발급)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody UserDto dto) {
+    public ResponseEntity<?> login(@RequestBody UsersDto dto) {
         if (dto.getEmail() == null || dto.getPassword() == null) {
             return ResponseEntity.badRequest().body("이메일과 비밀번호를 모두 입력해야 합니다.");
         }
 
-        UserDto userDto = userService.login(dto.getEmail(), dto.getPassword());
+        UsersDto userDto = userService.login(dto.getEmail(), dto.getPassword());
         String token = jwtUtil.createJwt(userDto.getUserId(), userDto.getEmail(), userDto.getRole().name(), userDto.getNickName(), JWT_EXPIRATION_MS);
 
         return ResponseEntity.ok()
@@ -63,7 +65,7 @@ public class UserController {
 
     // 로그인 상태 확인 (새로고침 후 유지용) (JWT 기반)
     @GetMapping("/me")
-    public ResponseEntity<UserDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<UsersDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.status(401).build();
         }
@@ -73,15 +75,15 @@ public class UserController {
             return ResponseEntity.status(401).build();
         }
         String email = jwtUtil.getEmail(token); // 토큰에서 이메일 추출
-        User user = userRepository.findByEmail(email)
+        Users user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
 
-        return ResponseEntity.ok(UserDto.fromEntity(user));
+        return ResponseEntity.ok(UsersDto.fromEntity(user));
     }
 
     // 마이페이지 조회 (JWT 기반)
     @GetMapping("/{id}/mypage")
-    public ResponseEntity<UserDto> getMyPage(
+    public ResponseEntity<UsersDto> getMyPage(
             @PathVariable Long id,
             @RequestHeader("Authorization") String authHeader) {
 
@@ -99,15 +101,15 @@ public class UserController {
             return ResponseEntity.status(403).build(); // 권한 없음
         }
 
-        UserDto userDto = userService.getUser(id);
+        UsersDto userDto = userService.getUser(id);
         return ResponseEntity.ok(userDto);
     }
 
     // 마이페이지 업데이트
     @PutMapping("/{id}/mypage")
-    public ResponseEntity<UserDto> updateMyPage(
+    public ResponseEntity<UsersDto> updateMyPage(
             @PathVariable Long id,
-            @RequestBody UserDto dto,
+            @RequestBody UsersDto dto,
             @RequestHeader("Authorization") String authHeader) {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -125,7 +127,7 @@ public class UserController {
         }
 
         dto.setUserId(id);
-        UserDto updated = userService.updateUser(dto);
+        UsersDto updated = userService.updateUser(dto);
         return ResponseEntity.ok(updated);
     }
 
@@ -143,9 +145,9 @@ public class UserController {
 
     // 관리자용 회원 정보 수정
     @PutMapping("/{id}/admin")
-    public ResponseEntity<UserDto> updateUserByAdmin(
+    public ResponseEntity<UsersDto> updateUserByAdmin(
             @PathVariable Long id,
-            @RequestBody UserDto dto,
+            @RequestBody UsersDto dto,
             @RequestHeader("Authorization") String authHeader) {
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -163,7 +165,7 @@ public class UserController {
         }
 
         dto.setUserId(id);
-        UserDto updated = userService.updateUser(dto);
+        UsersDto updated = userService.updateUser(dto);
         return ResponseEntity.ok(updated);
     }
 

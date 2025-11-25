@@ -9,6 +9,7 @@ import com.my.backend.enums.Role;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -30,11 +31,21 @@ public class UsersDto {
     private Long emailVerificationId;
     private Long phoneVerificationId;
     private LocalDateTime birthday;
-    private Long imageId;
+    private Long imageId; // 대표 이미지(첫번째 이미지)의 id를 담음
 
     // Entity → DTO
     public static UsersDto fromEntity(Users user) {
         if (user == null) return null;
+
+        // 안전하게 images 리스트에서 첫 번째 이미지 ID를 가져옴
+        Long firstImageId = null;
+        if (user.getImages() != null && !user.getImages().isEmpty()) {
+            // images가 List<Image>이므로 null/비어있음 체크 후 첫 요소에서 id 추출
+            Image first = user.getImages().get(0);
+            if (first != null) {
+                firstImageId = first.getImageId();
+            }
+        }
 
         return UsersDto.builder()
                 .userId(user.getUserId())
@@ -50,7 +61,7 @@ public class UsersDto {
                 .emailVerificationId(user.getEmailVerification() != null ? user.getEmailVerification().getEmailVerificationId() : null)
                 .phoneVerificationId(user.getPhoneVerification() != null ? user.getPhoneVerification().getPhoneVerificationId() : null)
                 .birthday(user.getBirthday())
-                .imageId(user.getImage() != null ? user.getImage().getImageId() : null)
+                .imageId(firstImageId)
                 .build();
     }
 
@@ -70,8 +81,8 @@ public class UsersDto {
                 .address(address)
                 .emailVerification(emailVerification)
                 .phoneVerification(phoneVerification)
+                // images는 Image 단일 입력을 받는 기존 메서드 사용시 수동으로 세팅 필요
                 .birthday(this.birthday)
-                .image(image)
                 .build();
     }
 }

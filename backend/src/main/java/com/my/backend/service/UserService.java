@@ -1,7 +1,8 @@
 package com.my.backend.service;
 
-import com.my.backend.dto.UserDto;
+import com.my.backend.dto.UsersDto;
 import com.my.backend.entity.Address;
+import com.my.backend.entity.Users;
 import com.my.backend.repository.AddressRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,34 +24,24 @@ public class UserService {
     private final AddressRepository addressRepository;
 
     // 모든 유저 조회
-    public List<UserDto> getAllUsers() {
+    public List<UsersDto> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(UserDto::fromEntity)
+                .map(UsersDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
     // 단일 유저 조회
-    public UserDto getUser(Long id) {
-        User user = userRepository.findById(id)
+    public UsersDto getUser(Long id) {
+        Users user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
-        return UserDto.fromEntity(user);
+        return UsersDto.fromEntity(user);
     }
 
-    // 회원가입
-    public UserDto createUser(UserDto dto) {
-        if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            validatePassword(dto.getPassword()); // 비밀번호 유효성 검사
-            dto.setPassword(passwordEncoder.encode(dto.getPassword()));
-        }
-        Address address = findAddressOrNull(dto.getAddressId());
-        User saved = userRepository.save(dto.toEntity(address));
-        return UserDto.fromEntity(saved);
-    }
 
     // 로그인
-    public UserDto login(String email, String password) {
-        Optional<User> user = userRepository.findByEmail(email);
+    public UsersDto login(String email, String password) {
+        Optional<Users> user = userRepository.findByEmail(email);
         if(user.isEmpty()) {
             throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
         }
@@ -59,13 +50,13 @@ public class UserService {
             throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
         }
 
-        return UserDto.fromEntity(user.orElse(null));
+        return UsersDto.fromEntity(user.orElse(null));
     }
 
     // 유저 정보 수정
-    public UserDto updateUser(UserDto dto) {
+    public UsersDto updateUser(UsersDto dto) {
         if (dto.getUserId() == null) throw new RuntimeException("수정할 사용자 ID가 필요합니다.");
-        User user = userRepository.findById(dto.getUserId())
+        Users user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
 
         if (dto.getUserName() != null && !dto.getUserName().isBlank()) {
@@ -98,7 +89,7 @@ public class UserService {
         }
 
 
-        return UserDto.fromEntity(userRepository.save(user));
+        return UsersDto.fromEntity(userRepository.save(user));
     }
 
     // 유저 삭제
