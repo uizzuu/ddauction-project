@@ -1,0 +1,76 @@
+package com.my.backend.dto;
+
+import com.my.backend.entity.Address;
+import com.my.backend.entity.EmailVerification;
+import com.my.backend.entity.Image;
+import com.my.backend.entity.PhoneVerification;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
+import lombok.*;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class UsersDto {
+    private Long userId;
+    private String userName;
+    private String nickName;
+    private String password;
+    private String phone;
+    private String email;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private Role role;
+    private Long addressId;
+    private Long emailVerificationId;
+    private Long phoneVerificationId;
+    private LocalDateTime birthday;
+    private Long imageId;
+
+    // Entity → DTO
+    public static UsersDto fromEntity(Users user) {
+        if (user == null) return null;
+
+        return UsersDto.builder()
+                .userId(user.getUserId())
+                .userName(user.getUserName())
+                .nickName(user.getNickName())
+                .password(user.getPassword())
+                .phone(user.getPhone())
+                .email(user.getEmail())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .role(user.getRole())
+                .addressId(user.getAddress() != null ? user.getAddress().getAddressId() : null)
+                .emailVerificationId(user.getEmailVerification() != null ? user.getEmailVerification().getEmailVerificationId() : null)
+                .phoneVerificationId(user.getPhoneVerification() != null ? user.getPhoneVerification().getPhoneVerificationId() : null)
+                .birthday(user.getBirthday())
+                .imageId(user.getImage() != null ? user.getImage().getImageId() : null)
+                .build();
+    }
+
+    // DTO → Entity
+    public Users toEntity(Address address,
+                          EmailVerification emailVerification,
+                          PhoneVerification phoneVerification,
+                          Image image) {
+        return Users.builder()
+                .userId(this.userId)
+                .userName(this.userName)
+                .nickName(this.nickName)
+                .password(this.password)
+                .phone(this.phone)
+                .email(this.email)
+                .role(this.role)
+                .address(address)
+                .emailVerification(emailVerification)
+                .phoneVerification(phoneVerification)
+                .birthday(this.birthday)
+                .image(image)
+                .build();
+    }
+}
