@@ -1,4 +1,4 @@
-package com.my.backend.common.enums;
+package com.my.backend.enums;
 
 public enum PaymentStatus {
     PENDING,    // 결제 대기

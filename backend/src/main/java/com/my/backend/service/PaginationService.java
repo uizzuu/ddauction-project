@@ -1,4 +1,4 @@
-package com.my.backend.service.board;
+package com.my.backend.service;
 
 import org.springframework.stereotype.Service;
 
