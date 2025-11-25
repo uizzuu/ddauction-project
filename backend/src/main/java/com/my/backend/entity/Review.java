@@ -8,6 +8,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -44,8 +45,7 @@ public class Review {
     @JoinColumn(name = "product_id")
     private Product product;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "image_id")
-    private List<Image> image;
-
+    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Image> images = new ArrayList<>();
 }

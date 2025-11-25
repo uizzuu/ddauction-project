@@ -7,12 +7,14 @@ import com.my.backend.enums.TagType;
 import com.my.backend.enums.ProductType;
 import com.my.backend.enums.DeliveryType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import org.springframework.security.core.userdetails.User;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -24,19 +26,16 @@ import java.util.List;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class Product {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "product_id")
     private Long productId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seller_id")
-    private User seller;
-
+    @NotBlank
     @Column(nullable = false)
     private String title;
 
+    @NotBlank
     @Column(nullable = false)
     private String content;
 
@@ -48,11 +47,18 @@ public class Product {
 
     private Long viewCount = 0L;
 
-    private boolean deliveryIncluded;
-
     private Long deliveryPrice;
 
     private Long deliveryAddPrice;
+
+    private boolean deliveryIncluded;
+
+    @CreatedDate
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -76,12 +82,9 @@ public class Product {
     @Column(nullable = false)
     private ProductCategoryType productCategoryType;
 
-    @CreatedDate
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "seller_id")
+    private User seller;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bid_id")
@@ -91,8 +94,7 @@ public class Product {
     @JoinColumn(name = "payment_id")
     private Payment payment;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "image_id")
-    private List<Image> image;
-
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Image> images = new ArrayList<>();
 }

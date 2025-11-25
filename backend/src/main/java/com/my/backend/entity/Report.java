@@ -1,6 +1,7 @@
 package com.my.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -18,11 +19,11 @@ import java.time.LocalDateTime;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class Report {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reportId;
 
+    @NotBlank
     @Column(nullable = false)
     private String reason;
 
@@ -38,10 +39,9 @@ public class Report {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporter_id")
-    private User reporter;
+    private Users reporter;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "target_id")
-    private User target;
-
+    private Users target;
 }

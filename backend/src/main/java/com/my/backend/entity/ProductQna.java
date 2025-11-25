@@ -2,6 +2,7 @@ package com.my.backend.entity;
 
 import com.my.backend.enums.ProductType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -22,9 +23,11 @@ public class ProductQna {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long productQnaId;
 
+    @NotBlank
     @Column(nullable = false)
     private String title;
 
+    @NotBlank
     @Column(nullable = false)
     private String content;
 

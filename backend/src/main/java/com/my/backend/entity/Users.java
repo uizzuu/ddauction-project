@@ -10,6 +10,7 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -27,29 +28,28 @@ public class Users {
 
     @NotBlank
     @Pattern(regexp = "^[가-힣a-zA-Z]+$")
+    @Column(nullable = false)
     private String userName;
 
     @NotBlank
     @Pattern(regexp = "^[가-힣a-zA-Z0-9]{3,12}+$", message = "닉네임은 3~12자여야 합니다.")
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String nickName;
 
     @NotBlank
+    @Column(nullable = false)
     private String password;
 
-    @Column(unique = true)
     @NotBlank
     @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 숫자만 10~11자리여야 합니다.")
+    @Column(nullable = false, unique = true)
     private String phone;
 
-    //example@ (도메인 없음)
-    //example.com (골뱅이 없음)
-    //@domain.com (아이디 없음) 이런거 허용안함
     @NotBlank
     @Email(
             regexp = "^[a-zA-Z0-9]+@[a-zA-Z0-9]+\\.[a-zA-Z]{2,}$",
             message = "올바른 이메일 형식이 아닙니다.")
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
@@ -66,7 +66,7 @@ public class Users {
     @Column(nullable = false)
     private Role role;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "address_id")
     private Address address;
 
@@ -78,7 +78,7 @@ public class Users {
     @JoinColumn(name = "phone_verification_id")
     private PhoneVerification phoneVerification;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "image_id")
-    private List<Image> image;
+    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Image> images = new ArrayList<>();
 }

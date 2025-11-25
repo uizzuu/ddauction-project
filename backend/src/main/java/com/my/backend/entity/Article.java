@@ -2,6 +2,7 @@ package com.my.backend.entity;
 import com.my.backend.enums.ArticleType;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -22,9 +23,11 @@ public class Article {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long articleId;
 
+    @NotBlank
     @Column(nullable = false)
     private String title;
 
+    @NotBlank
     @Lob
     @Column(nullable = false)
     private String content;
@@ -40,7 +43,7 @@ public class Article {
     @Column(nullable = false)
     private ArticleType articleType;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private Users user;
 }

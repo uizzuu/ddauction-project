@@ -19,28 +19,15 @@ import java.time.LocalDateTime;
 @Builder
 @EntityListeners(AuditingEntityListener.class)
 public class Point {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long pointId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private Users user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "payment_id")
-    private Payment payment;
 
     @Column(nullable = false)
     private Long amount;
 
     @Column(nullable = false)
     private Long totalAmount;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PointStatus pointStatus;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -49,4 +36,15 @@ public class Point {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PointStatus pointStatus;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private Users user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "payment_id")
+    private Payment payment;
 }

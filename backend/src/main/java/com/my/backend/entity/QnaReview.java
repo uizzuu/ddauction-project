@@ -1,6 +1,7 @@
 package com.my.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -21,14 +22,7 @@ public class QnaReview {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long qnaReviewId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private Users qnaUser;
-
-    @ManyToOne
-    @JoinColumn(name = "product_qna_id", nullable = false)
-    private ProductQna qna;
-
+    @NotBlank
     @Column(nullable = false)
     private String content;
 
@@ -39,4 +33,12 @@ public class QnaReview {
     @LastModifiedDate
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private Users qnaUser;
+
+    @ManyToOne
+    @JoinColumn(name = "product_qna_id", nullable = false)
+    private ProductQna qna;
 }

@@ -28,13 +28,7 @@ public class Payment {
     @Column(nullable = false)
     private Long totalPrice;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentMethodType paymentMethodType;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentStatus paymentStatus;
+    private String trackingNumber;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -45,15 +39,20 @@ public class Payment {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProductType productType;
+    private PaymentMethodType paymentMethodType;
 
-    private String trackingNumber;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus paymentStatus;
 
     @Enumerated(EnumType.STRING)
     private CourierType courierName;
 
-    @ManyToOne
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProductType productType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
-
 }

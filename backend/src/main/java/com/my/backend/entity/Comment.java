@@ -1,6 +1,7 @@
 package com.my.backend.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -15,11 +16,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class Comment {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentId;
 
+    @NotBlank
     @Column(nullable = false)
     private String content;
 
@@ -30,7 +31,6 @@ public class Comment {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "article_id")
     private Article article;
@@ -38,5 +38,4 @@ public class Comment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private Users user;
-
 }
