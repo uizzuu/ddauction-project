@@ -1,5 +1,6 @@
 package com.my.backend.dto.auth;
 
+import com.my.backend.entity.Users;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -7,9 +8,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class CustomUserDetails implements UserDetails {
-    private final User user;
+    private final Users user;
 
-    public CustomUserDetails(User user) {
+    public CustomUserDetails(Users user) {
         this.user = user;
     }
 
@@ -17,7 +18,7 @@ public class CustomUserDetails implements UserDetails {
         return user.getEmail();
     }
 
-    public User getUser() {
+    public Users getUser() {
         return this.user;
     }
 

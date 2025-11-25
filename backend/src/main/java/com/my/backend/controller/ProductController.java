@@ -1,5 +1,7 @@
 package com.my.backend.controller;
 
+import com.my.backend.entity.Users;
+import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
 import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ProductDto;
@@ -55,7 +57,7 @@ public class ProductController {
     public ResponseEntity<?> placeBid(@PathVariable Long id,
                                       @RequestBody @Valid BidDto dto,
                                       HttpSession session) {
-        User loginUser = (User) session.getAttribute("loginUser");
+        Users loginUser = (Users) session.getAttribute("loginUser");
         if (loginUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
         }
@@ -107,10 +109,19 @@ public class ProductController {
     @GetMapping("/search")
     public ResponseEntity<List<ProductDto>> searchProducts(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long category,
+            @RequestParam(required = false) String category,  // Long -> String
             @RequestParam(required = false) ProductStatus productStatus) {
 
-        List<ProductDto> result = productService.searchProducts(keyword, category, productStatus);
+        ProductCategoryType categoryType = null;
+        if (category != null && !category.isEmpty()) {
+            try {
+                categoryType = ProductCategoryType.valueOf(category.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(null); // 잘못된 카테고리 처리
+            }
+        }
+
+        List<ProductDto> result = productService.searchProducts(keyword, categoryType, productStatus);
         return ResponseEntity.ok(result);
     }
 
@@ -144,15 +155,23 @@ public class ProductController {
     @GetMapping("/search-paged")
     public ResponseEntity<Page<ProductDto>> searchProductsPaged(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long category,
+            @RequestParam(required = false) String category,
             @RequestParam(required = false) ProductStatus productStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        Page<ProductDto> result = productService.searchProductsPaged(keyword, category, productStatus, pageable);
+        ProductCategoryType categoryType = null;
+        if (category != null && !category.isEmpty()) {
+            try {
+                categoryType = ProductCategoryType.valueOf(category.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(Page.empty()); // 잘못된 카테고리 처리
+            }
+        }
 
+        Page<ProductDto> result = productService.searchProductsPaged(keyword, categoryType, productStatus, pageable);
         return ResponseEntity.ok(result);
     }
 
