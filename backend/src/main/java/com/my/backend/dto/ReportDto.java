@@ -2,6 +2,7 @@ package com.my.backend.dto;
 
 import com.my.backend.entity.Report;
 import com.my.backend.entity.Users;
+import com.my.backend.enums.ReportType;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -14,10 +15,11 @@ import java.time.LocalDateTime;
 public class ReportDto {
 
     private Long reportId;
-    private Long reporterId;
-    private Long targetId;
+    private Long reporterId; // 신고한 사람
+    private Long refId;      // 신고 대상 ID (상품, 리뷰, 사용자 등)
+    private ReportType reportType;
     private String reason;
-    private Boolean status;
+    private boolean status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -27,8 +29,9 @@ public class ReportDto {
 
         return ReportDto.builder()
                 .reportId(report.getReportId())
-                .reporterId(report.getReporter() != null ? report.getReporter().getUserId() : null)
-                .targetId(report.getTarget() != null ? report.getTarget().getUserId() : null)
+                .reporterId(report.getUser() != null ? report.getUser().getUserId() : null)
+                .refId(report.getRefId())
+                .reportType(report.getReportType())
                 .reason(report.getReason())
                 .status(report.getStatus())
                 .createdAt(report.getCreatedAt())
@@ -37,13 +40,14 @@ public class ReportDto {
     }
 
     // DTO → Entity
-    public Report toEntity(Users reporter, Users target) {
+    public Report toEntity(Users reporter) {
         return Report.builder()
                 .reportId(this.reportId)
-                .reporter(reporter)
-                .target(target)
+                .user(reporter)
+                .refId(this.refId)
+                .reportType(this.reportType)
                 .reason(this.reason)
-                .status(this.status)
+                .status(this.status != null ? this.status : false)
                 .build();
     }
 }

@@ -1,8 +1,6 @@
 package com.my.backend.entity;
 
-import com.my.backend.enums.ProductType;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -11,23 +9,19 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "product_qna")
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Table(name = "private_chat")
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
-public class ProductQna {
+public class PrivateChat {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productQnaId;
+    private Long privateChatId;
 
-    @NotBlank
-    @Column(nullable = false)
-    private String title;
-
-    @NotBlank
     @Column(nullable = false)
     private String content;
 
@@ -37,13 +31,6 @@ public class ProductQna {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
-
-    @Column(nullable = false)
-    private Long refId;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ProductType productType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

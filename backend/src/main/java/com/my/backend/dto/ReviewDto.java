@@ -17,12 +17,13 @@ import java.util.List;
 public class ReviewDto {
 
     private Long reviewId;
-    private Long productId;
+    private Long refId;          // 실제 참조 대상 ID (상품ID 등)
     private String content;
     private Integer rating;
     private ProductType productType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
     @Builder.Default
     private List<ImageDto> images = new ArrayList<>();
 
@@ -32,26 +33,27 @@ public class ReviewDto {
 
         return ReviewDto.builder()
                 .reviewId(review.getReviewId())
-                .productId(review.getProduct() != null ? review.getProduct().getProductId() : null)
+                .refId(review.getRefId())   // refId 포함
+                .content(review.getContent())
+                .rating(review.getRating())
+                .productType(review.getProductType())
+                .createdAt(review.getCreatedAt())
+                .updatedAt(review.getUpdatedAt())
                 .images(
                         review.getImages() != null
                                 ? review.getImages().stream()
                                 .map(ImageDto::fromEntity)
                                 .toList()
                                 : new ArrayList<>()
-                ).content(review.getContent())
-                .rating(review.getRating())
-                .productType(review.getProductType())
-                .createdAt(review.getCreatedAt())
-                .updatedAt(review.getUpdatedAt())
+                )
                 .build();
     }
 
     // DTO → Entity
-    public Review toEntity(Product product) {
+    public Review toEntity() {
         return Review.builder()
                 .reviewId(this.reviewId)
-                .product(product)
+                .refId(this.refId)           // refId 세팅
                 .content(this.content)
                 .rating(this.rating)
                 .productType(this.productType)

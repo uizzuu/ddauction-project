@@ -1,5 +1,7 @@
 package com.my.backend.entity;
 
+import com.my.backend.enums.ProductType;
+import com.my.backend.enums.ReportType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -23,6 +25,9 @@ public class Report {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reportId;
 
+    @Column(nullable = false)
+    private Long refId;
+
     @NotBlank
     @Column(nullable = false)
     private String reason;
@@ -37,11 +42,13 @@ public class Report {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reporter_id")
-    private Users reporter;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ReportType reportType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_id")
-    private Users target;
+    @JoinColumn(name = "user_id")
+    private Users user;
+
+
 }

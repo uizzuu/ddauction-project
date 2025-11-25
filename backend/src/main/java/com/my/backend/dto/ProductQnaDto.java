@@ -20,6 +20,7 @@ public class ProductQnaDto {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private Long refId;
     private ProductType productType;
 
     // Entity → DTO
@@ -33,6 +34,7 @@ public class ProductQnaDto {
                 .content(productQna.getContent())
                 .createdAt(productQna.getCreatedAt())
                 .updatedAt(productQna.getUpdatedAt())
+                .refId(productQna.getRefId())
                 .productType(productQna.getProductType())
                 .build();
     }
@@ -44,6 +46,7 @@ public class ProductQnaDto {
                 .user(user)
                 .title(this.title)
                 .content(this.content)
+                .refId(this.refId)
                 .productType(this.productType)
                 .build();
     }

@@ -25,9 +25,8 @@ public class Review {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long reviewId;
 
-    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private ProductType productType;
+    private Long refId;
 
     private String content;
 
@@ -40,6 +39,10 @@ public class Review {
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ProductType productType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
