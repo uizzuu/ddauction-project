@@ -1,7 +1,6 @@
 package com.my.backend.controller;
 
 
-import com.my.backend.dto.PasswordResetRequest;
 import com.my.backend.dto.auth.LoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.service.AuthService;

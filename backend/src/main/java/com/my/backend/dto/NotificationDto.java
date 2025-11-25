@@ -30,7 +30,7 @@ public class NotificationDto {
                 .userId(notification.getUser() != null ? notification.getUser().getUserId() : null)
                 .notificationStatus(notification.getNotificationStatus())
                 .content(notification.getContent())
-                .isRead(notification.getIsRead())
+                .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .build();
     }

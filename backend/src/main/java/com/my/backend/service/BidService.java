@@ -2,8 +2,6 @@ package com.my.backend.service;
 
 import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductStatus;
-import com.my.backend.dto.BidChartData;
-import com.my.backend.dto.BidResponse;
 import com.my.backend.entity.Bid;
 import com.my.backend.entity.Image;
 import com.my.backend.entity.Product;

@@ -46,28 +46,19 @@ package com.my.backend.controller;
 //}
 
 
-import com.my.backend.dto.BidChartData;
-import com.my.backend.dto.auth.BidRequest;
 import com.my.backend.dto.auth.CustomUserDetails;
-import com.my.backend.entity.Bid;
-import com.my.backend.entity.Product;
 import com.my.backend.service.BidService;
 import com.my.backend.util.AuthUtil;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import com.my.backend.repository.BidRepository;
 import com.my.backend.repository.ProductRepository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Slf4j
 @RestController

@@ -25,7 +25,7 @@ public class BidDto {
                 .bidId(bid.getBidId())
                 .userId(bid.getUser() != null ? bid.getUser().getUserId() : null)
                 .bidPrice(bid.getBidPrice())
-                .isWinning(bid.getIsWinning())
+                .isWinning(bid.isWinning())
                 .createdAt(bid.getCreatedAt())
                 .build();
     }

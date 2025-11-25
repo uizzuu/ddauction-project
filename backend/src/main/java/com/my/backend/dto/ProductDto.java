@@ -75,7 +75,7 @@ public class ProductDto {
                 .price(product.getPrice())
                 .auctionEndTime(product.getAuctionEndTime())
                 .viewCount(product.getViewCount())
-                .deliveryIncluded(product.getDeliveryIncluded())
+                .deliveryIncluded(product.isDeliveryIncluded())
                 .deliveryPrice(product.getDeliveryPrice())
                 .deliveryAddPrice(product.getDeliveryAddPrice())
                 .productType(product.getProductType())

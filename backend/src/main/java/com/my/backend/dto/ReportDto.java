@@ -33,7 +33,7 @@ public class ReportDto {
                 .refId(report.getRefId())
                 .reportType(report.getReportType())
                 .reason(report.getReason())
-                .status(report.getStatus())
+                .status(report.isStatus())
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
                 .build();
@@ -47,7 +47,7 @@ public class ReportDto {
                 .refId(this.refId)
                 .reportType(this.reportType)
                 .reason(this.reason)
-                .status(this.status != null ? this.status : false)
+                .status(this.status)
                 .build();
     }
 }
