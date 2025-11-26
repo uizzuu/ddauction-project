@@ -4,12 +4,14 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Builder
 public class RegisterRequest {
     @NotBlank(message = "이름은 필수입니다")
     @Size(min = 2, max = 10, message = "이름은 2~10자여야 합니다")

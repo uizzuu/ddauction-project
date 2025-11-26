@@ -1,12 +1,16 @@
 package com.my.backend.dto.auth;
 
 import com.my.backend.entity.Users;
+import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
+@Getter
+@Setter
+@Builder
 public class CustomUserDetails implements UserDetails {
     private final Users user;
 

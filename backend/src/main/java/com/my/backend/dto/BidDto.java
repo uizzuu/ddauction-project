@@ -18,6 +18,7 @@ public class BidDto {
     private boolean isWinning;
     private LocalDateTime createdAt;
 
+    // Entity → DTO
     public static BidDto fromEntity(Bid bid) {
         if (bid == null) return null;
 
@@ -30,6 +31,7 @@ public class BidDto {
                 .build();
     }
 
+    // DTO → Entity
     public Bid toEntity(Users user) {
         return Bid.builder()
                 .bidId(this.bidId)

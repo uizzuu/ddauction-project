@@ -13,13 +13,13 @@ import java.util.TimeZone;
 @Configuration
 public class TimeZoneConfig {
 
-    // 🔥 애플리케이션 전역 타임존 설정
+    // 애플리케이션 전역 타임존 설정
     @PostConstruct
     public void init() {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
     }
 
-    // 🔥 Jackson LocalDateTime 직렬화/역직렬화 설정
+    // Jackson LocalDateTime 직렬화/역직렬화 설정
     @Bean
     public Jackson2ObjectMapperBuilderCustomizer jsonCustomizer() {
         return builder -> {

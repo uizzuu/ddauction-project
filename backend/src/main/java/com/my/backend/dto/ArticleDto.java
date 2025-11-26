@@ -22,6 +22,7 @@ public class ArticleDto {
     private LocalDateTime updatedAt;
     private ArticleType articleType;
 
+    // Entity → DTO
     public static ArticleDto fromEntity(Article article) {
         if (article == null) return null;
 
@@ -37,6 +38,7 @@ public class ArticleDto {
                 .build();
     }
 
+    // DTO → Entity
     public Article toEntity(Users user) {
         return Article.builder()
                 .articleId(this.articleId)

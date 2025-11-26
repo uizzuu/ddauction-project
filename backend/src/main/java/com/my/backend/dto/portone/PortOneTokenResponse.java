@@ -1,11 +1,12 @@
 package com.my.backend.dto.portone;
 
-import lombok.Data;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
+@Builder
 public class PortOneTokenResponse {
     private Integer code;
     private String message;
@@ -13,6 +14,7 @@ public class PortOneTokenResponse {
 
     @Getter
     @Setter
+    @Builder
     public static class Response {
         private String access_token;
         private Long expired_at;

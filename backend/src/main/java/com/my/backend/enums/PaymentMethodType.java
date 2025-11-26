@@ -1,7 +1,6 @@
 package com.my.backend.enums;
 
 public enum PaymentMethodType {
-
     CARD,        // 카드결제
     TRANSFER,    // 실시간계좌이체
     VBANK,       // 가상계좌

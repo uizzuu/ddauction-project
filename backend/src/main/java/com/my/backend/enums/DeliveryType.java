@@ -1,7 +1,6 @@
 package com.my.backend.enums;
 
 public enum DeliveryType {
-
     PARCEL,           // 택배
     GS,               // 지에스 반택
     CU,               // 씨유 편택

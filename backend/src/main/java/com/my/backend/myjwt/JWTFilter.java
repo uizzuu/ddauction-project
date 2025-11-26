@@ -1,6 +1,8 @@
 package com.my.backend.myjwt;
 
 import com.my.backend.dto.auth.CustomUserDetails;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -71,10 +73,10 @@ public class JWTFilter extends OncePerRequestFilter {
 
             System.out.println("✅ JWT 토큰 검증 성공: userId=" + userId + ", role=" + role);
 
-            User user = new User();
+            Users user = new Users();
             user.setUserId(userId);
             user.setEmail(userEmail);
-            user.setRole(User.Role.valueOf(role));
+            user.setRole(Role.valueOf(role));
 
             CustomUserDetails customUserDetails = new CustomUserDetails(user);
 

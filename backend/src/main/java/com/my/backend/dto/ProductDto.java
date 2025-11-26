@@ -57,9 +57,7 @@ public class ProductDto {
     @Builder.Default
     private List<ImageDto> images = new ArrayList<>();
 
-    /**
-     * Entity -> DTO 변환
-     */
+    // Entity → DTO
     public static ProductDto fromEntity(Product product) {
         if (product == null) {
             return null;
@@ -99,9 +97,8 @@ public class ProductDto {
                 .build();
     }
 
-    /**
-     * DTO -> Entity 변환
-     */
+
+    // DTO → Entity
     public Product toEntity(Users seller, Bid bid, Payment payment) {
         return Product.builder()
                 .productId(this.productId)

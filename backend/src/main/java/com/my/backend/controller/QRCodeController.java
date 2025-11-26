@@ -21,13 +21,7 @@ public class QRCodeController {
         this.qrCodeService = qrCodeService;
     }
 
-    /**
-     * QR 코드 이미지 생성 및 반환
-     * GET /api/qrcode/{productId}
-     *
-     * @param productId 상품 ID
-     * @return PNG 이미지 (300x300)
-     */
+    // QR 코드 이미지 생성 및 반환
     @GetMapping(value = "/{productId}", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<byte[]> getQRCode(@PathVariable Long productId) {
         try {
@@ -47,10 +41,8 @@ public class QRCodeController {
     }
 }
 
-// ============================================
-// 4. 사용 예시 및 테스트
-// ============================================
 /*
+사용 예시 및 테스트
 브라우저에서 테스트:
 http://localhost:8080/api/qrcode/1
 http://localhost:8080/api/qrcode/123

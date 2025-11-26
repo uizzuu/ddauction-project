@@ -20,7 +20,7 @@ public class ReportController {
     private final ReportService reportService;
     private final JWTUtil jwtUtil;
 
-    // 🔥 신고 생성 (JWT 기반)
+    // 신고 생성 (JWT 기반)
     @PostMapping
     public ResponseEntity<?> reportUser(
             @RequestHeader("Authorization") String authorizationHeader,
@@ -51,28 +51,28 @@ public class ReportController {
         }
     }
 
-    // 🔥 특정 대상에 대한 신고 조회 (관리자용)
+    // 특정 대상에 대한 신고 조회 (관리자용)
     @GetMapping("/target/{refId}")
     public ResponseEntity<List<ReportDto>> getReportsByTarget(@PathVariable Long refId) {
         List<ReportDto> reports = reportService.getReportsByTarget(refId);
         return ResponseEntity.ok(reports);
     }
 
-    // 🔥 신고 타입별 조회 (관리자용)
+    // 신고 타입별 조회 (관리자용)
     @GetMapping("/type/{reportType}")
     public ResponseEntity<List<ReportDto>> getReportsByType(@PathVariable ReportType reportType) {
         List<ReportDto> reports = reportService.getReportsByType(reportType);
         return ResponseEntity.ok(reports);
     }
 
-    // 🔥 처리 상태별 조회 (관리자용)
+    // 처리 상태별 조회 (관리자용)
     @GetMapping("/status/{status}")
     public ResponseEntity<List<ReportDto>> getReportsByStatus(@PathVariable boolean status) {
         List<ReportDto> reports = reportService.getReportsByStatus(status);
         return ResponseEntity.ok(reports);
     }
 
-    // 🔥 신고 상태 변경 (관리자용)
+    // 신고 상태 변경 (관리자용)
     @PatchMapping("/{reportId}/status")
     public ResponseEntity<?> updateStatus(
             @PathVariable Long reportId,
@@ -82,7 +82,7 @@ public class ReportController {
         return ResponseEntity.ok(Map.of("message", "신고 상태가 변경되었습니다."));
     }
 
-    // 🔥 마이페이지: 내가 신고한 내역 조회
+    // 마이페이지: 내가 신고한 내역 조회
     @GetMapping("/mypage")
     public ResponseEntity<?> getMyReports(
             @RequestHeader("Authorization") String authorizationHeader
@@ -102,7 +102,7 @@ public class ReportController {
         }
     }
 
-    // 🔥 관리자용 전체 신고 조회
+    // 관리자용 전체 신고 조회
     @GetMapping("/admin")
     public ResponseEntity<List<ReportDto>> getAllReports() {
         List<ReportDto> reports = reportService.getAllReports();
