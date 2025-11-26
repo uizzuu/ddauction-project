@@ -13,11 +13,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ReportDto {
-
     private Long reportId;
-    private Long reporterId; // 신고한 사람
-    private Long refId;      // 신고 대상 ID (상품, 리뷰, 사용자 등)
-    private ReportType reportType;
+    private Long userId;           // 신고자 ID
+    private String userName;       // 신고자 이름
+    private Long refId;            // 신고 대상 ID (상품/게시글/댓글 등)
+    private ReportType reportType; // 신고 타입
     private String reason;
     private boolean status;
     private LocalDateTime createdAt;
@@ -29,7 +29,8 @@ public class ReportDto {
 
         return ReportDto.builder()
                 .reportId(report.getReportId())
-                .reporterId(report.getUser() != null ? report.getUser().getUserId() : null)
+                .userId(report.getUser() != null ? report.getUser().getUserId() : null)
+                .userName(report.getUser() != null ? report.getUser().getUserName() : null)
                 .refId(report.getRefId())
                 .reportType(report.getReportType())
                 .reason(report.getReason())
@@ -40,10 +41,10 @@ public class ReportDto {
     }
 
     // DTO → Entity
-    public Report toEntity(Users reporter) {
+    public Report toEntity(Users user) {
         return Report.builder()
                 .reportId(this.reportId)
-                .user(reporter)
+                .user(user)
                 .refId(this.refId)
                 .reportType(this.reportType)
                 .reason(this.reason)
