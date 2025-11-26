@@ -1,6 +1,7 @@
 package com.my.backend.repository;
 
 import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
 import com.my.backend.entity.Product;
 import org.springframework.data.domain.Page;
@@ -26,31 +27,26 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     // 기본 검색
     List<Product> findByTitleContaining(String keyword);
-    List<Product> findByCategory_CategoryId(Long categoryId);
     List<Product> findByProductStatus(ProductStatus productStatus);
+    List<Product> findByProductCategoryType(ProductCategoryType categoryType);
 
     // 조합 검색
-    List<Product> findByTitleContainingAndCategory_CategoryId(String keyword, Long categoryId);
     List<Product> findByTitleContainingAndProductStatus(String keyword, ProductStatus productStatus);
-    List<Product> findByCategory_CategoryIdAndProductStatus(Long categoryId, ProductStatus productStatus);
-    List<Product> findByTitleContainingAndCategory_CategoryIdAndProductStatus(String keyword, Long categoryId, ProductStatus productStatus);
+    List<Product> findByTitleContainingAndProductCategoryType(String keyword, ProductCategoryType categoryType);
+    List<Product> findByProductCategoryTypeAndProductStatus(ProductCategoryType categoryType, ProductStatus productStatus);
+    List<Product> findByTitleContainingAndProductCategoryTypeAndProductStatus(String keyword, ProductCategoryType categoryType, ProductStatus productStatus);
 
-    // 1분 경매 자동 종료용
-    List<Product> findByOneMinuteAuctionTrueAndProductStatusAndAuctionEndTimeBefore(
-            ProductStatus status,
-            LocalDateTime endTime
-    );
-
+    // Pageable 버전
     Page<Product> findByTitleContaining(String keyword, Pageable pageable);
-    Page<Product> findByCategory_CategoryId(Long categoryId, Pageable pageable);
     Page<Product> findByProductStatus(ProductStatus productStatus, Pageable pageable);
+    Page<Product> findByProductCategoryType(ProductCategoryType categoryType, Pageable pageable);
 
-    // 조합 검색 - Pageable 버전
-    Page<Product> findByTitleContainingAndCategory_CategoryId(String keyword, Long categoryId, Pageable pageable);
+    // 조합 검색 - Pageable
     Page<Product> findByTitleContainingAndProductStatus(String keyword, ProductStatus productStatus, Pageable pageable);
-    Page<Product> findByCategory_CategoryIdAndProductStatus(Long categoryId, ProductStatus productStatus, Pageable pageable);
-    Page<Product> findByTitleContainingAndCategory_CategoryIdAndProductStatus(
-            String keyword, Long categoryId, ProductStatus productStatus, Pageable pageable);
+    Page<Product> findByTitleContainingAndProductCategoryType(String keyword, ProductCategoryType categoryType, Pageable pageable);
+    Page<Product> findByProductCategoryTypeAndProductStatus(ProductCategoryType categoryType, ProductStatus productStatus, Pageable pageable);
+    Page<Product> findByTitleContainingAndProductCategoryTypeAndProductStatus(String keyword, ProductCategoryType categoryType, ProductStatus productStatus, Pageable pageable);
 
+    // 구매 완료 상품 조회
     List<Product> findByPaymentUserIdAndPaymentStatus(Long paymentUserId, PaymentStatus paymentStatus);
 }

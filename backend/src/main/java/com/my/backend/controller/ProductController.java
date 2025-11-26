@@ -1,5 +1,7 @@
 package com.my.backend.controller;
 
+import com.my.backend.entity.Users;
+import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
 import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ProductDto;
@@ -55,7 +57,7 @@ public class ProductController {
     public ResponseEntity<?> placeBid(@PathVariable Long id,
                                       @RequestBody @Valid BidDto dto,
                                       HttpSession session) {
-        User loginUser = (User) session.getAttribute("loginUser");
+        Users loginUser = (Users) session.getAttribute("loginUser");
         if (loginUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
         }
@@ -107,10 +109,24 @@ public class ProductController {
     @GetMapping("/search")
     public ResponseEntity<List<ProductDto>> searchProducts(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long category,
-            @RequestParam(required = false) ProductStatus productStatus) {
+            @RequestParam(required = false) String productCategoryType,
+            @RequestParam(required = false) String productStatus) {
 
-        List<ProductDto> result = productService.searchProducts(keyword, category, productStatus);
+        ProductStatus status = null;
+        if (productStatus != null) {
+            status = ProductStatus.valueOf(productStatus.toUpperCase());
+        }
+
+        ProductCategoryType categoryType = null;
+        if (productCategoryType != null) {
+            try {
+                categoryType = ProductCategoryType.valueOf(productCategoryType.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(null);
+            }
+        }
+
+        List<ProductDto> result = productService.searchProducts(keyword, categoryType, status);
         return ResponseEntity.ok(result);
     }
 
@@ -144,14 +160,23 @@ public class ProductController {
     @GetMapping("/search-paged")
     public ResponseEntity<Page<ProductDto>> searchProductsPaged(
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Long category,
+            @RequestParam(required = false) String categoryType,
             @RequestParam(required = false) ProductStatus productStatus,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
-        Page<ProductDto> result = productService.searchProductsPaged(keyword, category, productStatus, pageable);
+        ProductCategoryType categoryEnum = null;
+        if (categoryType != null) {
+            try {
+                categoryEnum = ProductCategoryType.valueOf(categoryType.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(Page.empty()); // 잘못된 카테고리 처리
+            }
+        }
+
+        Page<ProductDto> result = productService.searchProductsPaged(keyword, categoryEnum, productStatus, pageable);
 
         return ResponseEntity.ok(result);
     }
