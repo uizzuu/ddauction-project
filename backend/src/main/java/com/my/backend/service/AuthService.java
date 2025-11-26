@@ -3,6 +3,8 @@ package com.my.backend.service;
 import com.my.backend.dto.auth.LoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.dto.auth.TokenResponse;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +26,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JWTUtil jwtUtil;
 
-    // -------------------- 검증 메서드 --------------------
+    // 검증 메서드
     private boolean isValidName(String name) {
         return name != null && name.matches("^[가-힣a-zA-Z]+$");
     }
@@ -47,8 +49,7 @@ public class AuthService {
         return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!*@#]).{8,}$");
     }
 
-
-    // -------------------- 회원가입 --------------------
+    // 회원가입
     public ResponseEntity<?> register(RegisterRequest request) {
         try {
             String username = request.getUserName().trim();
@@ -75,13 +76,13 @@ public class AuthService {
             if (userRepository.existsByEmail(email))
                 throw new IllegalArgumentException("이미 사용중인 이메일입니다.");
 
-            User user = User.builder()
+            Users user = Users.builder()
                     .userName(username)
                     .nickName(nickname)
                     .password(passwordEncoder.encode(password))
                     .phone(phone)
                     .email(email)
-                    .role(User.Role.USER)
+                    .role(Role.USER)
                     .build();
 
             userRepository.save(user);
@@ -93,13 +94,13 @@ public class AuthService {
         }
     }
 
-    // -------------------- 로그인 --------------------
+    // 로그인
     @Transactional(readOnly = true)
     public ResponseEntity<?> login(LoginRequest request) {
         try {
             String email = request.getEmail().trim().toLowerCase();
 
-            User user = userRepository.findByEmail(email)
+            Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -122,7 +123,7 @@ public class AuthService {
         }
     }
 
-    // -------------------- 토큰 갱신 --------------------
+    // 토큰 갱신
     public ResponseEntity<?> refreshToken(String token) {
         try {
             if (!jwtUtil.validateToken(token) || jwtUtil.isExpired(token)) {
@@ -132,7 +133,7 @@ public class AuthService {
             String email = jwtUtil.getEmail(token);
             log.info("토큰 검증 성공: {}", email);
 
-            User user = userRepository.findByEmail(email)
+            Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
             String newAccessToken = jwtUtil.createJwt(
@@ -160,12 +161,12 @@ public class AuthService {
     }
 
     public ResponseEntity<?> findEmail(String phone, String userName) {
-        User user = userRepository.findByPhoneAndUserName(phone, userName)
+        Users user = userRepository.findByPhoneAndUserName(phone, userName)
                 .orElseThrow(() -> new IllegalArgumentException("입력 정보와 일치하는 사용자가 없습니다."));
         return ResponseEntity.ok(Map.of("email", user.getEmail()));
     }
 
-    // -------------------- 비밀번호 재설정 (이메일 + 전화번호 + 실명) --------------------
+    // 비밀번호 재설정 (이메일 + 전화번호 + 실명)
     public ResponseEntity<?> resetPassword(String email, String phone, String userName, String newPassword) {
         try {
             // 유효성 검증
@@ -177,7 +178,7 @@ public class AuthService {
             );
 
             // 사용자 조회 (교차검증)
-            User user = userRepository.findByEmailAndPhoneAndUserName(email, phone, userName)
+            Users user = userRepository.findByEmailAndPhoneAndUserName(email, phone, userName)
                     .orElseThrow(() -> new IllegalArgumentException("입력 정보와 일치하는 사용자가 없습니다."));
 
             // 비밀번호 업데이트

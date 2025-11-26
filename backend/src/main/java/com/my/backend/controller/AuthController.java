@@ -1,8 +1,12 @@
 package com.my.backend.controller;
 
 
+import com.my.backend.dto.UsersDto;
 import com.my.backend.dto.auth.LoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
+import com.my.backend.entity.Users;
+import com.my.backend.myjwt.JWTUtil;
+import com.my.backend.repository.UserRepository;
 import com.my.backend.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,10 +23,10 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final UserRepository userRepository;
+    private final JWTUtil jwtUtil;
 
-    /**
-     * 회원가입
-     */
+    // 회원가입
     @PostMapping("/signup")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
         try {
@@ -37,9 +41,7 @@ public class AuthController {
         }
     }
 
-    /**
-     * 로그인
-     */
+    // 로그인
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         System.out.println("Received email: " + request.getEmail()); // 디버깅 로그
@@ -47,12 +49,23 @@ public class AuthController {
         return authService.login(request);
     }
 
-    /**
-     * 토큰 갱신
-     */
+    // 로그아웃
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.ok().build();
+    }
+
+    // 토큰 갱신
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestHeader("Refresh-Token") String refreshToken) {
         return authService.refreshToken(refreshToken);
+    }
+
+    // 로그인 상태 확인 (새로고침 후 유지용) (JWT 기반)
+    @GetMapping("/me")
+    public ResponseEntity<UsersDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+        Users user = getUserFromToken(authHeader);
+        return ResponseEntity.ok(UsersDto.fromEntity(user));
     }
 
     // 이메일 찾기
@@ -61,14 +74,31 @@ public class AuthController {
         return authService.findEmail(request.get("phone"), request.get("userName"));
     }
 
-
+    // 비밀번호 초기화
     @PostMapping("/password-reset")
-    public ResponseEntity<?> resetPassword(@RequestBody PasswordResetRequest request) {
-        return authService.resetPassword(
-                request.getEmail().trim().toLowerCase(),
-                request.getPhone().trim(),
-                request.getUserName().trim(),
-                request.getNewPassword()
-        );
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        String phone = body.get("phone");
+        String userName = body.get("userName");
+        String newPassword = body.get("newPassword");
+
+        // 서비스 호출
+        authService.resetPassword(email, phone, userName, newPassword);
+        return ResponseEntity.ok(Map.of("message", "비밀번호가 변경되었습니다."));
     }
+
+    // 공통 메서드
+    // JWT 검증 및 사용자 조회
+    private Users getUserFromToken(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new RuntimeException("로그인이 필요합니다.");
+        }
+        String token = authHeader.replace("Bearer ", "");
+        if (!jwtUtil.validateToken(token)) {
+            throw new RuntimeException("토큰이 유효하지 않습니다.");
+        }
+        return userRepository.findByEmail(jwtUtil.getEmail(token))
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+    }
+
 }
