@@ -1,12 +1,14 @@
-// dto/auth/BidRequest.java
 package com.my.backend.dto.auth;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class BidRequest {
 
     @NotNull(message = "상품 ID는 필수입니다.")

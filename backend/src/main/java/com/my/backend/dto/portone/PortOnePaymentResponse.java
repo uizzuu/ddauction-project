@@ -2,8 +2,11 @@ package com.my.backend.dto.portone;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class PortOnePaymentResponse {
     private Integer code;
     private String message;

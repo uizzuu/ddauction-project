@@ -2,8 +2,11 @@ package com.my.backend.dto.portone;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 @Builder
 public class PortOnePaymentRequest {
     private String merchantUid;      // 주문번호
