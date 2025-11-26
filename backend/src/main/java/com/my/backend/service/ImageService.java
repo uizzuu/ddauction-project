@@ -2,9 +2,8 @@ package com.my.backend.service;
 
 import com.my.backend.dto.ImageDto;
 import com.my.backend.entity.Image;
-import com.my.backend.entity.Product;
+import com.my.backend.enums.ImageType;
 import com.my.backend.repository.ImageRepository;
-import com.my.backend.repository.ProductRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,29 +16,42 @@ import java.util.stream.Collectors;
 public class ImageService {
 
     private final ImageRepository imageRepository;
-    private final ProductRepository productRepository;
 
-    // 특정 상품의 이미지 조회
-    public List<ImageDto> getImagesByProductId(Long productId) {
-        List<Image> images = imageRepository.findByProduct_ProductId(productId);
-        return images.stream()
+    // refId로 이미지 조회
+    public List<ImageDto> getImagesByRefId(Long refId) {
+        return imageRepository.findByRefId(refId)
+                .stream()
                 .map(ImageDto::fromEntity)
                 .collect(Collectors.toList());
     }
 
-    // 이미지 저장 (S3 URL 받아서 DB에 저장)
+    // refId + imageType 조회 (상품, 유저, 리뷰 등 필터링)
+    public List<ImageDto> getImagesByRefIdAndType(Long refId, ImageType imageType) {
+        return imageRepository.findByRefIdAndImageType(refId, imageType)
+                .stream()
+                .map(ImageDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    // 이미지 여러 개 저장
     @Transactional
-    public ImageDto saveImage(ImageDto dto) {
-        Product product = productRepository.findById(dto.getProductId())
-                .orElseThrow(() -> new RuntimeException("상품을 찾을 수 없습니다. productId=" + dto.getProductId()));
+    public List<ImageDto> saveImages(List<ImageDto> dtoList) {
 
-        Image image = Image.builder()
-                .imagePath(dto.getImagePath())  // S3 URL
-                .product(product)
-                .build();
+        List<Image> images = dtoList.stream()
+                .map(dto -> Image.builder()
+                        .imagePath(dto.getImagePath())   // S3 URL
+                        .imageType(dto.getImageType())   // PRODUCT / USER / REVIEW
+                        .productType(dto.getProductType()) // PRODUCT일 때만
+                        .refId(dto.getRefId())           // 대상 ID
+                        .build()
+                )
+                .toList();
 
-        Image saved = imageRepository.save(image);
-        return ImageDto.fromEntity(saved);
+        List<Image> saved = imageRepository.saveAll(images);
+
+        return saved.stream()
+                .map(ImageDto::fromEntity)
+                .collect(Collectors.toList());
     }
 
     // 이미지 삭제
@@ -51,4 +63,3 @@ public class ImageService {
         imageRepository.delete(image);
     }
 }
-

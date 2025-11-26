@@ -1,13 +1,16 @@
 package com.my.backend.repository;
 
 import com.my.backend.entity.Image;
+import com.my.backend.enums.ImageType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-@Repository
 public interface ImageRepository extends JpaRepository<Image, Long> {
 
-    List<Image> findByProduct_ProductId(Long productId);
+    // refId로 전체 이미지 조회
+    List<Image> findByRefId(Long refId);
+
+    // refId + imageType으로 조회 (선택)
+    List<Image> findByRefIdAndImageType(Long refId, ImageType imageType);
 }

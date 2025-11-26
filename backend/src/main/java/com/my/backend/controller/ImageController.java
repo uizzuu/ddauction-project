@@ -1,12 +1,15 @@
 package com.my.backend.controller;
 
 import com.my.backend.dto.ImageDto;
+import com.my.backend.enums.ImageType;
 import com.my.backend.service.ImageService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/images")
@@ -15,11 +18,12 @@ public class ImageController {
 
     private final ImageService imageService;
 
-    // 이미지 등록 (S3 URL을 받아서 DB에 저장)
-    @PostMapping
-    public ResponseEntity<ImageDto> createImage(@Valid @RequestBody ImageDto dto) {
-        ImageDto created = imageService.saveImage(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+    // 여러 이미지 등록
+    @PostMapping("/batch")
+    public ResponseEntity<?> createImages(@Valid @RequestBody List<ImageDto> dtoList) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(imageService.saveImages(dtoList));
     }
 
     // 이미지 삭제
@@ -29,9 +33,18 @@ public class ImageController {
         return ResponseEntity.noContent().build();
     }
 
-    // 특정 상품의 이미지 조회
-    @GetMapping("/product/{productId}")
-    public ResponseEntity<?> getImagesByProduct(@PathVariable Long productId) {
-        return ResponseEntity.ok(imageService.getImagesByProductId(productId));
+    // refId 기반 조회 (상품/유저/리뷰 모두 가능)
+    @GetMapping("/ref/{refId}")
+    public ResponseEntity<?> getImagesByRefId(@PathVariable Long refId) {
+        return ResponseEntity.ok(imageService.getImagesByRefId(refId));
+    }
+
+    // refId + imageType 조회
+    @GetMapping("/ref/{refId}/{imageType}")
+    public ResponseEntity<?> getImagesByRefIdAndType(
+            @PathVariable Long refId,
+            @PathVariable ImageType imageType
+    ) {
+        return ResponseEntity.ok(imageService.getImagesByRefIdAndType(refId, imageType));
     }
 }
