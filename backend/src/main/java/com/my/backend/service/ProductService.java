@@ -92,6 +92,7 @@ public class ProductService {
         product.setSeller(seller);
         product.setTitle(dto.getTitle());
         product.setContent(dto.getContent());
+        product.setTag(dto.getTag());
         product.setProductCategoryType(dto.getProductCategoryType());
         product.setStartingPrice(dto.getStartingPrice());
         product.setPrice(dto.getPrice());
@@ -103,7 +104,6 @@ public class ProductService {
         product.setDeliveryAddPrice(dto.getDeliveryAddPrice());
         product.setProductType(dto.getProductType());
         product.setDeliveryType(dto.getDeliveryType());
-        product.setTagType(dto.getTagType());
         product.setBid(bid);
         product.setPayment(payment);
 

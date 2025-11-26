@@ -6,7 +6,6 @@ import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
 import com.my.backend.enums.ProductType;
 import com.my.backend.enums.DeliveryType;
-import com.my.backend.enums.TagType;
 import com.my.backend.entity.*;
 import lombok.*;
 
@@ -33,6 +32,8 @@ public class ProductDto {
     private LocalDateTime auctionEndTime;
     // 조회수
     private Long viewCount;
+    // 태그
+    private String tag;
     // 배송 정보
     private boolean deliveryIncluded;
     private Long deliveryPrice;
@@ -43,7 +44,6 @@ public class ProductDto {
 
     private PaymentStatus paymentStatus;
     private DeliveryType deliveryType;
-    private TagType tagType;
     private ProductCategoryType productCategoryType;
 
     // 타임스탬프
@@ -69,6 +69,7 @@ public class ProductDto {
                 .sellerNickName(product.getSeller() != null ? product.getSeller().getNickName() : null)
                 .title(product.getTitle())
                 .content(product.getContent())
+                .tag(product.getTag())
                 .startingPrice(product.getStartingPrice())
                 .price(product.getPrice())
                 .auctionEndTime(product.getAuctionEndTime())
@@ -80,7 +81,6 @@ public class ProductDto {
                 .productStatus(product.getProductStatus())
                 .paymentStatus(product.getPaymentStatus())
                 .deliveryType(product.getDeliveryType())
-                .tagType(product.getTagType())
                 .productCategoryType(product.getProductCategoryType())
                 .createdAt(product.getCreatedAt())
                 .updatedAt(product.getUpdatedAt())
@@ -105,6 +105,7 @@ public class ProductDto {
                 .seller(seller)
                 .title(this.title)
                 .content(this.content)
+                .tag(this.tag)
                 .startingPrice(this.startingPrice)
                 .price(this.price)
                 .auctionEndTime(this.auctionEndTime)
@@ -116,7 +117,6 @@ public class ProductDto {
                 .productStatus(this.productStatus)
                 .paymentStatus(this.paymentStatus)
                 .deliveryType(this.deliveryType)
-                .tagType(this.tagType)
                 .productCategoryType(this.productCategoryType)
                 .bid(bid)
                 .payment(payment)

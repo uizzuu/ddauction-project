@@ -3,7 +3,6 @@ package com.my.backend.entity;
 import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
-import com.my.backend.enums.TagType;
 import com.my.backend.enums.ProductType;
 import com.my.backend.enums.DeliveryType;
 import jakarta.persistence.*;
@@ -12,7 +11,7 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.security.core.userdetails.User;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -38,6 +37,9 @@ public class Product {
     @NotBlank
     @Column(nullable = false)
     private String content;
+
+    @Column(unique = true)
+    private String tag;
 
     private Long startingPrice;
 
@@ -73,10 +75,6 @@ public class Product {
 
     @Enumerated(EnumType.STRING)
     private DeliveryType deliveryType;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TagType tagType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
