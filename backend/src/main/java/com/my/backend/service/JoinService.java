@@ -1,6 +1,8 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.auth.LoginRequest;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
 import com.my.backend.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -28,11 +30,11 @@ public class JoinService {
             return;
         }
 
-        User data = new User();
+        Users data = new Users();
 
         data.setEmail(userEmail);
         data.setPassword(bCryptPasswordEncoder.encode(password));
-        data.setRole(User.Role.valueOf("USER"));
+        data.setRole(Role.USER);
 
         userRepository.save(data);
     }
