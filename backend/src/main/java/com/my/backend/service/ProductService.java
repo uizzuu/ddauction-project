@@ -145,7 +145,7 @@ public class ProductService {
         Bid bid = Bid.builder()
                 .user(user)
                 .bidPrice(price)
-                .isWinning(false)
+                .isWinning(true)
                 .createdAt(LocalDateTime.now())
                 .build();
 

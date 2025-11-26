@@ -2,6 +2,7 @@ package com.my.backend.repository;
 
 import com.my.backend.entity.Bid;
 import com.my.backend.entity.Product;
+import com.my.backend.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -22,21 +23,12 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 
     List<Bid> findByProductProductIdOrderByCreatedAtAsc(@Param("productId") Long productId);
 
-    //  추가: 낙찰자 조회용 (isWinning = 1)
-    Optional<Bid> findTopByProductProductIdAndIsWinningTrue(Long productId);
-
-    // 추가 : 특정 상품의 모든 낙찰자 조회
+    // 특정 상품의 모든 낙찰자 조회
     List<Bid> findByProductAndIsWinning(Product product, boolean isWinning);
-
-    // 추가 : 특정 시간 이후 특정 사용자의 입찰 조회 (중복 방지용)
-    List<Bid> findByProductAndUserAndCreatedAtAfter(
-            Product product,
-            User user,
-            LocalDateTime createdAt);
 
     // 입찰 중복 방지
     List<Bid> findByProductAndUserAndBidPriceAndCreatedAtAfter(
-            Product product, User user, Long bidPrice, LocalDateTime createdAt);
+            Product product, Users user, Long bidPrice, LocalDateTime createdAt);
 
     boolean existsByProductProductIdAndUserUserIdAndIsWinningTrue(Long productId, Long userId);
 
