@@ -1,7 +1,8 @@
-package com.my.backend.repository.board;
+package com.my.backend.repository;
 
-import com.my.backend.entity.board.Article;
-import com.my.backend.entity.board.Comment;
+import com.my.backend.entity.Article;
+import com.my.backend.entity.Comment;
+import com.my.backend.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,6 +15,6 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByArticleArticleId(Long articleId);
 
     // User별 댓글 조회
-    List<Comment> findByUser(User user);
+    List<Comment> findByUser(Users user);
 
 }

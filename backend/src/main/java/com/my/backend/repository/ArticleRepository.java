@@ -1,8 +1,8 @@
-package com.my.backend.repository.board;
+package com.my.backend.repository;
 
-import com.my.backend.dto.board.ArticleDto;
-import com.my.backend.entity.board.Article;
-import com.my.backend.entity.board.Board;
+import com.my.backend.dto.ArticleDto;
+import com.my.backend.entity.Article;
+import com.my.backend.enums.ArticleType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,10 +25,7 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
     // 유저 ID로 글 조회
     List<Article> findByUserUserId(Long userId);
 
-    // 게시판 기준으로 글 조회
-    List<Article> findByBoard(Board board);
+    List<Article> findByArticleType(ArticleType articleType);
 
-    // 유저 ID + 게시판 기준으로 글 조회 (1:1 문의 조회에 사용)
-    List<Article> findByUserUserIdAndBoard(Long userId, Board board);
 
 }

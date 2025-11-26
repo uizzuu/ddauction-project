@@ -1,104 +1,74 @@
 package com.my.backend.service;
 
-import com.my.backend.dto.board.CommentDto;
-import com.my.backend.entity.board.Article;
-import com.my.backend.entity.board.Comment;
-import com.my.backend.repository.board.CommentRepository;
-import com.my.backend.repository.board.ArticleRepository;
+import com.my.backend.dto.CommentDto;
+import com.my.backend.entity.Article;
+import com.my.backend.entity.Comment;
+import com.my.backend.entity.Users;
+import com.my.backend.repository.CommentRepository;
+import com.my.backend.repository.ArticleRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ObjectUtils;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CommentService {
 
     private final CommentRepository commentRepository;
     private final ArticleRepository articleRepository;
-    private final UserRepository userRepository; // User 조회용
+    private final UserRepository userRepository;
 
-    // 1 댓글 조회 (한 개)
-    public Map<String, Object> findComment(Long commentId) {
+    // 댓글 단건 조회
+    public CommentDto findComment(Long commentId) {
         Comment comment = commentRepository.findById(commentId).orElse(null);
-
         if (comment == null) {
-            return Map.of("dto", null, "articleId", null);
+            return null;
         }
-
-        CommentDto dto = CommentDto.fromEntity(comment); // Entity → DTO
-        return Map.of(
-                "dto", dto,
-                "articleId", comment.getArticle().getArticleId()
-        );
+        return CommentDto.fromEntity(comment);
     }
 
-    // 2 특정 게시글 댓글 전체 조회
-    public List<CommentDto> findCommentsByArticle(Long articleId) {
-        Article article = articleRepository.findById(articleId).orElse(null);
-        if (article == null) return List.of();
-
-        return commentRepository.findByArticle(article)
-                .stream()
-                .map(CommentDto::fromEntity)
-                .collect(Collectors.toList());
-    }
+    // 특정 게시글의 댓글 전체 조회
     public List<CommentDto> findCommentsByArticleId(Long articleId) {
-        List<Comment> comments = commentRepository.findByArticleArticleId(articleId);
-
-        return comments.stream()
-                .map(comment -> {
-                    CommentDto dto = new CommentDto();
-                    dto.setCommentId(comment.getCommentId());
-                    dto.setArticleId(comment.getArticle().getArticleId());
-                    dto.setUserId(comment.getUser().getUserId());
-                    dto.setNickName(comment.getUser().getNickName());
-                    dto.setContent(comment.getContent());
-                    dto.setCreatedAt(comment.getCreatedAt());
-                    dto.setUpdatedAt(comment.getUpdatedAt());
-                    return dto;
-                })
-                .collect(Collectors.toList());
+        return commentRepository.findByArticleArticleId(articleId).stream()
+                .map(CommentDto::fromEntity)
+                .toList();
     }
 
-
-    // 3️ 댓글 생성
+    // 댓글 생성
+    @Transactional
     public void insertComment(Long articleId, CommentDto dto) {
         Article article = articleRepository.findById(articleId)
-                .orElseThrow(() -> new IllegalArgumentException("게시글 없음"));
+                .orElseThrow(() -> new IllegalArgumentException("게시글을 찾을 수 없습니다."));
 
-        User user = userRepository.findById(dto.getUserId())
-                .orElseThrow(() -> new IllegalArgumentException("사용자 없음"));
+        Users user = userRepository.findById(dto.getUserId())
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        Comment comment = new Comment();
-        comment.setArticle(article);
-        comment.setUser(user);
-        comment.setContent(dto.getContent());
+        Comment comment = dto.toEntity(article, user);
+        commentRepository.save(comment);
+    }
+
+    // 댓글 수정
+    @Transactional
+    public void updateComment(CommentDto dto) {
+        Comment comment = commentRepository.findById(dto.getCommentId())
+                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
+
+        if (dto.getContent() != null && !dto.getContent().isBlank()) {
+            comment.setContent(dto.getContent());
+        }
 
         commentRepository.save(comment);
     }
 
-
-    // 4️ 댓글 수정
-    public void updateComment(CommentDto dto) {
-        Comment comment = commentRepository.findById(dto.getCommentId())
-                .orElseThrow(() -> new IllegalArgumentException("댓글 없음"));
-
-        if (!ObjectUtils.isEmpty(dto.getContent())) {
-            comment.setContent(dto.getContent());
-        }
-
-        commentRepository.save(comment); // JPA 변경 감지로도 가능
-    }
-
-    // 5️ 댓글 삭제
+    // 댓글 삭제
+    @Transactional
     public void deleteComment(Long commentId) {
         Comment comment = commentRepository.findById(commentId)
-                .orElseThrow(() -> new IllegalArgumentException("댓글 없음"));
+                .orElseThrow(() -> new IllegalArgumentException("댓글을 찾을 수 없습니다."));
 
         commentRepository.delete(comment);
     }
