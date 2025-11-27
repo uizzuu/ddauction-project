@@ -86,6 +86,8 @@ public class SecurityConfig {
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
+                        //챗봇인증허용
+                        .requestMatchers("/api/chat/**").permitAll()
 
 
                         // 회원가입, 로그인, 공개 POST API
