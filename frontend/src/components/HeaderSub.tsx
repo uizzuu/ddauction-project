@@ -3,6 +3,8 @@ import { NavLink, useNavigate } from "react-router-dom";
 import ModalCategory from "../components/ModalCategory";
 import type { Category } from "../types/types";
 import { API_BASE_URL } from "../services/api";
+import RAGChat from "../pages/RAGChat";
+
 type Props = {
   category: Category[];
   setCategory: React.Dispatch<React.SetStateAction<Category[]>>;
@@ -10,6 +12,7 @@ type Props = {
 
 export default function HeaderSub({ category, setCategory }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const menuBtnRef = useRef<HTMLButtonElement>(null);
   const navigate = useNavigate();
 
@@ -79,6 +82,8 @@ export default function HeaderSub({ category, setCategory }: Props) {
             onSelectCategory={(cat) => console.log("선택한 카테고리:", cat)}
             targetRef={menuBtnRef}
           />
+          
+          
 
           <NavLink to="/" className="nav-link">
             홈
@@ -90,6 +95,13 @@ export default function HeaderSub({ category, setCategory }: Props) {
           <NavLink to="/community" className="nav-link">
             커뮤니티
           </NavLink>
+          <NavLink to="/chatbot">
+             챗봇 문의
+          </NavLink>
+<RAGChat 
+  isOpen={isChatOpen}
+  onClose={() => setIsChatOpen(false)}
+/>
         </nav>
         <nav className="flex-box gap-16 flex-center">
           <button
