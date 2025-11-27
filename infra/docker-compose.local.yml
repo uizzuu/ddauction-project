@@ -17,7 +17,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
-
+  rag-api:                       # ★ 추가
+    build: ../rag-api 
+    container_name: rag-api      # ★ 추가
+    env_file:
+      - .env.local               # ★ 추가
+    environment:                 # ★ 추가
+      TZ: "Asia/Seoul"           
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      PINECONE_API_KEY: ${PINECONE_API_KEY}
+      PINECONE_ENVIRONMENT: ${PINECONE_ENVIRONMENT}
+      INDEX_NAME: ${INDEX_NAME}
+    ports:
+      - "8000:8000"
+  
   backend:
     build: ../backend
     container_name: backend
@@ -40,6 +53,10 @@ services:
       PAYMENT_PORTONE_CALLBACK_URL: ${PAYMENT_PORTONE_CALLBACK_URL}
       # 파일 업로드
       FILE_UPLOAD_DIRECTORY: ${FILE_UPLOAD_DIRECTORY}
+
+      RAG_API_URL: http://rag-api:8000   # ★ 추가
+
+
     ports:
       - "8080:8080"
     volumes:
@@ -47,6 +64,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      rag-api:                 # ★ 추가
+        condition: service_started
 
   frontend:
     build: ../frontend

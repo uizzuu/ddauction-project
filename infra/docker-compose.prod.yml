@@ -1,5 +1,33 @@
 version: "3.9"
+
 services:
+  # FastAPI RAG 서버 (맨 위로 이동)
+  rag-api:
+    image: ${RAG_API_IMAGE}
+    container_name: rag-api
+    pull_policy: always
+    env_file:
+      - .env.prod
+    environment:
+      TZ: "Asia/Seoul"
+      # RAG API 환경 변수
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      PINECONE_API_KEY: ${PINECONE_API_KEY}
+      PINECONE_ENVIRONMENT: ${PINECONE_ENVIRONMENT}
+      INDEX_NAME: ${INDEX_NAME}
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
   backend:
     image: ${BACKEND_IMAGE}
     container_name: backend
@@ -9,6 +37,8 @@ services:
     environment:
       TZ: "Asia/Seoul"
       SPRING_PROFILES_ACTIVE: prod
+      # RAG API URL (추가)
+      RAG_API_URL: http://rag-api:8000
       # AWS RDS
       RDS_ENDPOINT: ${RDS_ENDPOINT}
       SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
@@ -36,6 +66,9 @@ services:
       NAVER_CLIENT_SECRET: ${NAVER_CLIENT_SECRET}
       KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+    depends_on:
+      rag-api:
+        condition: service_healthy
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -55,6 +88,9 @@ services:
     restart: unless-stopped
     ports:
       - "3000:80"
+    volumes:
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
 
 volumes:
   upload-data:

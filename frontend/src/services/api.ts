@@ -10,6 +10,8 @@ import type {
   ArticleForm,
   CommentDto,
   CommentForm,
+  RAGRequest,
+  RAGResponse,
 } from "../types/types";
 import { jwtDecode } from "jwt-decode";
 const API_BASE = "/api";
@@ -375,6 +377,24 @@ export async function checkWinner(productId: number): Promise<{
     `${API_BASE_URL}${API_BASE}/bid/${productId}/winner`
   );
   if (!response.ok) throw new Error("낙찰자 확인 실패");
+  return response.json();
+}
+
+// ------------------- RAG 챗봇 API ------------------- //
+
+export async function queryRAG(query: string): Promise<RAGResponse> {
+  const request: RAGRequest = { query };
+  
+  const response = await authFetch(`${API_BASE_URL}${API_BASE}/chat/query`, {
+    method: "POST",
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`RAG 질의 실패: ${errorText || response.statusText}`);
+  }
+
   return response.json();
 }
 

@@ -255,3 +255,25 @@ export interface PaymentPrepareResponse {
   buyerName: string;
   buyerTel: string;
 }
+
+// RAG 챗봇 관련 타입
+export interface RAGDocument {
+  source: string;
+  content: string;
+}
+
+export interface RAGRequest {
+  query: string;
+}
+
+export interface RAGResponse {
+  response: string;
+  documents: RAGDocument[];
+}
+
+export interface ChatMessage {
+  id: string;
+  query: string;
+  response: RAGResponse;
+  timestamp: string;
+}
