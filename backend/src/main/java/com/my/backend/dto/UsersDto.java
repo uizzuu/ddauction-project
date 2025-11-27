@@ -7,6 +7,7 @@ import com.my.backend.entity.Users;
 import com.my.backend.enums.Role;
 import lombok.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +31,7 @@ public class UsersDto {
     private Long addressId;
     private Long emailVerificationId;
     private Long phoneVerificationId;
-    private LocalDateTime birthday;
+    private LocalDate birthday;
     @Builder.Default
     private List<ImageDto> images = new ArrayList<>();
 
@@ -53,13 +54,6 @@ public class UsersDto {
                 .emailVerificationId(user.getEmailVerification() != null ? user.getEmailVerification().getEmailVerificationId() : null)
                 .phoneVerificationId(user.getPhoneVerification() != null ? user.getPhoneVerification().getPhoneVerificationId() : null)
                 .birthday(user.getBirthday())
-                .images(
-                        user.getImages() != null
-                                ? user.getImages().stream()
-                                .map(ImageDto::fromEntity)
-                                .toList()
-                                : new ArrayList<>()
-                )
                 .build();
     }
 

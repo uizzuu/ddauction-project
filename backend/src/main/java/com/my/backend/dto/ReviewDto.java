@@ -39,13 +39,6 @@ public class ReviewDto {
                 .productType(review.getProductType())
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
-                .images(
-                        review.getImages() != null
-                                ? review.getImages().stream()
-                                .map(ImageDto::fromEntity)
-                                .toList()
-                                : new ArrayList<>()
-                )
                 .build();
     }
 

@@ -14,7 +14,7 @@ public class AuthUtil {
      * - 현재 구현은 auth.getName()이 userId 문자열이라는 가정.
      * - 만약 username이 들어오는 환경이라면, 별도 유틸/클레임 추출 로직으로 교체 필요.
      */
-    public Long extractUserId(Authentication auth) {
+    public Long extractUser(Authentication auth) {
         if (auth == null || auth.getName() == null) return null;
         try {
             return Long.parseLong(auth.getName());
@@ -24,7 +24,7 @@ public class AuthUtil {
         }
     }
 
-    public Long extractUserId(UserDetails userDetails) {
+    public Long extractUser(UserDetails userDetails) {
         if (userDetails == null || userDetails.getUsername() == null) {
             throw new IllegalArgumentException("인증 정보가 없습니다.");
         }

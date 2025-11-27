@@ -100,8 +100,8 @@ public class ProductController {
 
     // 특정 사용자 판매 상품 조회 (로그인 불필요)
     @GetMapping("/seller/{userId}")
-    public ResponseEntity<List<ProductDto>> getProductsBySeller(@PathVariable Long userId) {
-        List<ProductDto> products = productService.getProductsBySeller(userId);
+    public ResponseEntity<List<ProductDto>> getProductsBySeller(@PathVariable Users seller) {
+        List<ProductDto> products = productService.getProductsBySeller(seller);
         return ResponseEntity.ok(products);
     }
 

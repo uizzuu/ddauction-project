@@ -1,6 +1,5 @@
 package com.my.backend.controller;
 
-import com.my.backend.dto.BidChartData;
 import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.service.BidService;
 import com.my.backend.util.AuthUtil;
@@ -12,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 import com.my.backend.repository.BidRepository;
 import com.my.backend.repository.ProductRepository;
 
-import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -23,8 +21,6 @@ public class BidController {
 
     private final BidService bidService;
     private final AuthUtil authUtil;
-    private final ProductRepository productRepository;
-    private final BidRepository bidRepository;
 
     // 입찰하기
     @PostMapping("/{productId}/bid")
@@ -43,7 +39,7 @@ public class BidController {
         Long userId = principal.getUser().getUserId();
         Long bidPrice = body.get("bidPrice");
 
-        return bidService.placeBid(userId, productId, bidPrice);
+        return bidService.placeBid(productId, userId, bidPrice);
     }
 
     // 상품별 입찰 내역 조회 (공개/권한 정책은 SecurityConfig에 따름)

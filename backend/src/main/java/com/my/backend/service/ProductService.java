@@ -1,9 +1,7 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.ImageDto;
-import com.my.backend.enums.PaymentStatus;
-import com.my.backend.enums.ProductCategoryType;
-import com.my.backend.enums.ProductStatus;
+import com.my.backend.enums.*;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.dto.BidDto;
 import com.my.backend.entity.*;
@@ -42,14 +40,19 @@ public class ProductService {
     }
 
     // 단일 상품 조회
-    public ProductDto getProduct(Long id) {
-        Product product = findProductOrThrow(id);
+    public ProductDto getProduct(Long productId) {
+        Product product = findProductOrThrow(productId);
         return ProductDto.fromEntity(product);
     }
 
+    // 이미지 조회
+    private List<Image> getProductImages(Long productId) {
+        return imageRepository.findByRefIdAndImageType(productId, ImageType.PRODUCT);
+    }
+
     // 특정 사용자의 판매 상품 조회
-    public List<ProductDto> getProductsBySeller(Long userId) {
-        return productRepository.findByUserUserId(userId)
+    public List<ProductDto> getProductsBySeller(Users seller) {
+        return productRepository.findBySeller(seller)
                 .stream()
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
@@ -63,16 +66,22 @@ public class ProductService {
 
         Product product = dto.toEntity(seller, bid, payment);
 
-        // 이미지가 있으면 DTO → Entity 변환 후 Product에 추가
-        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
-            product.getImages().addAll(
-                    dto.getImages().stream()
-                            .map(ImageDto::toEntity)
-                            .toList()
-            );
-        }
-
+        // 상품 저장
         Product saved = productRepository.save(product);
+
+        // 이미지가 있으면 DTO → Entity 변환 후 저장 (refId + ImageType 기반)
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+            List<Image> images = dto.getImages().stream()
+                    .map(imageDto -> {
+                        Image image = imageDto.toEntity();
+                        image.setRefId(saved.getProductId());
+                        image.setImageType(ImageType.PRODUCT);
+                        return image;
+                    })
+                    .toList();
+
+            imageRepository.saveAll(images);
+        }
 
         return ProductDto.fromEntity(saved);
     }
@@ -89,32 +98,32 @@ public class ProductService {
         if (dto.getStartingPrice() != null) {
             product.setStartingPrice(dto.getStartingPrice());
         }
-        product.setSeller(seller);
-        product.setTitle(dto.getTitle());
-        product.setContent(dto.getContent());
-        product.setTag(dto.getTag());
-        product.setProductCategoryType(dto.getProductCategoryType());
-        product.setStartingPrice(dto.getStartingPrice());
-        product.setPrice(dto.getPrice());
-        product.setAuctionEndTime(dto.getAuctionEndTime());
-        product.setProductStatus(dto.getProductStatus());
-        product.setPaymentStatus(dto.getPaymentStatus());
-        product.setDeliveryIncluded(dto.isDeliveryIncluded());
-        product.setDeliveryPrice(dto.getDeliveryPrice());
-        product.setDeliveryAddPrice(dto.getDeliveryAddPrice());
-        product.setProductType(dto.getProductType());
-        product.setDeliveryType(dto.getDeliveryType());
-        product.setBid(bid);
-        product.setPayment(payment);
+
+        // DTO → Entity 매핑
+        mapDtoToProduct(product, dto, seller, bid, payment);
 
         // 이미지 업데이트
-        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
-            product.getImages().clear();
-            product.getImages().addAll(
-                    dto.getImages().stream()
-                            .map(ImageDto::toEntity)
-                            .toList()
+        if (dto.getImages() != null) {
+            // 기존 이미지 삭제
+            List<Image> existingImages = imageRepository.findByRefIdAndImageType(
+                    product.getProductId(),
+                    ImageType.PRODUCT
             );
+            if (!existingImages.isEmpty()) {
+                imageRepository.deleteAll(existingImages);
+            }
+
+            // 새로운 이미지 저장
+            List<Image> newImages = dto.getImages().stream()
+                    .map(imageDto -> {
+                        Image image = imageDto.toEntity();
+                        image.setRefId(product.getProductId());
+                        image.setImageType(ImageType.PRODUCT);
+                        return image;
+                    })
+                    .toList();
+
+            imageRepository.saveAll(newImages);
         }
 
         Product saved = productRepository.save(product);
@@ -131,8 +140,10 @@ public class ProductService {
 
     // 입찰 등록
     public BidDto placeBid(Long productId, Long userId, Long price) {
-        Product product = findProductOrThrow(productId);
-        Users user = findUserOrThrow(userId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "상품을 찾을 수 없습니다."));
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "사용자를 찾을 수 없습니다."));
 
         Long highestBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
                 .map(Bid::getBidPrice)
@@ -146,6 +157,7 @@ public class ProductService {
                 .user(user)
                 .bidPrice(price)
                 .isWinning(true)
+                .product(product)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -225,33 +237,29 @@ public class ProductService {
     // 최신 등록 상품 1개 조회
     public ProductDto getLatestProduct() {
         Product latestProduct = productRepository.findTopByProductStatusOrderByCreatedAtDesc(ProductStatus.ACTIVE);
-        if (latestProduct == null) {
-            return null; // 혹은 예외 처리
-        }
+        if (latestProduct == null) return null;
 
-        // 이미지가 비어있으면 log로 확인
-        if (latestProduct.getImages() == null || latestProduct.getImages().isEmpty()) {
+        // productId + imageType으로 이미지 조회
+        List<Image> images = getProductImages(latestProduct.getProductId());
+        if (images.isEmpty()) {
             System.out.println("배너용 최신 상품 이미지가 없음! productId=" + latestProduct.getProductId());
         }
-
         return ProductDto.fromEntity(latestProduct);
     }
 
     // 종료 임박 상품 조회
     public ProductDto getEndingSoonProduct() {
-        Product product = productRepository
+        Product endingProduct = productRepository
                 .findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
                         ProductStatus.ACTIVE, LocalDateTime.now()
                 );
-        if (product == null) {
-            return null; // 혹은 예외 처리
-        }
+        if (endingProduct == null) return null;
 
-        if (product.getImages() == null || product.getImages().isEmpty()) {
-            System.out.println("배너용 종료 임박 상품 이미지가 없음! productId=" + product.getProductId());
+        List<Image> images = getProductImages(endingProduct.getProductId());
+        if (images.isEmpty()) {
+            System.out.println("배너용 최신 상품 이미지가 없음! productId=" + endingProduct.getProductId());
         }
-
-        return ProductDto.fromEntity(product);
+        return ProductDto.fromEntity(endingProduct);
     }
 
     public Page<ProductDto> searchProductsPaged(String keyword, ProductCategoryType categoryType, ProductStatus status, Pageable pageable) {
@@ -288,10 +296,30 @@ public class ProductService {
 
     // 로그인한 사용자의 구매 완료 상품 목록 조회
     public List<ProductDto> getPurchasedProducts(Long userId) {
-        List<Product> products = productRepository.findByPaymentUserIdAndPaymentStatus(userId, PaymentStatus.PAID);
+        List<Product> products = productRepository.findByPaymentUserUserIdAndPaymentStatus(userId, PaymentStatus.PAID);
 
         return products.stream()
                 .map(ProductDto::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    private void mapDtoToProduct(Product product, ProductDto dto, Users seller, Bid bid, Payment payment) {
+        product.setTitle(dto.getTitle());
+        product.setContent(dto.getContent());
+        product.setTag(dto.getTag());
+        product.setStartingPrice(dto.getStartingPrice());
+        product.setPrice(dto.getPrice());
+        product.setAuctionEndTime(dto.getAuctionEndTime());
+        product.setDeliveryIncluded(dto.isDeliveryIncluded());
+        product.setDeliveryPrice(dto.getDeliveryPrice());
+        product.setDeliveryAddPrice(dto.getDeliveryAddPrice());
+        product.setProductType(dto.getProductType());
+        product.setProductStatus(dto.getProductStatus());
+        product.setPaymentStatus(dto.getPaymentStatus());
+        product.setDeliveryType(dto.getDeliveryType());
+        product.setProductCategoryType(dto.getProductCategoryType());
+        product.setSeller(seller);
+        product.setBid(bid);
+        product.setPayment(payment);
     }
 }

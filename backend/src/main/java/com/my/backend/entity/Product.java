@@ -47,6 +47,7 @@ public class Product {
 
     private LocalDateTime auctionEndTime;
 
+    @Builder.Default
     private Long viewCount = 0L;
 
     private Long deliveryPrice;
@@ -91,8 +92,4 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id")
     private Payment payment;
-
-    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Image> images = new ArrayList<>();
 }

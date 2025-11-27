@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Component
 @RequiredArgsConstructor
@@ -27,6 +29,8 @@ public class AdminInitializer implements CommandLineRunner {
                     .password(passwordEncoder.encode("Admin1234!"))
                     .phone("01000000000")
                     .role(Role.ADMIN)
+                    .birthday(LocalDate.of(1990, 1, 1))
+                    .createdAt(LocalDateTime.now())
                     .build();
 
             userRepository.save(admin);
