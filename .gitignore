@@ -84,8 +84,8 @@ nbdist/
 infra/docker-compose.local.yml
 infra/*.env.local
 infra/*.env.*.local
-# infra/*.env.prod
-# infra/*.env.*.prod
+infra/*.env.prod
+infra/*.env.*.prod
 
 ##############################
 # OS / Misc
