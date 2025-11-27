@@ -52,8 +52,6 @@ target/
 ##############################
 # Frontend (React / Vite / Node)
 ##############################
-frontend/*.env
-frontend/.env.*
 frontend/.vite/
 frontend/*.tsbuildinfo
 frontend/npm-debug.log*
@@ -86,6 +84,8 @@ nbdist/
 infra/docker-compose.local.yml
 infra/*.env.local
 infra/*.env.*.local
+infra/*.env.prod
+infra/*.env.*.prod
 
 ##############################
 # OS / Misc
