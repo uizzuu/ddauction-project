@@ -1,5 +1,6 @@
 package com.my.backend.myjwt;
 
+import com.my.backend.enums.Role;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +15,6 @@ import java.util.Map;
 @Component
 public class JWTUtil {
     private final SecretKey secretKey;
-
 
     public JWTUtil(@Value("${jwt.secret}")String secret) {
         this.secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8),
@@ -41,7 +41,7 @@ public class JWTUtil {
                 parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
 
-    public String createJwt(Long userId,String email, String role, String nickName, Long expiredMs) {
+    public String createJwt(Long userId, String email, Role role, String nickName, Long expiredMs) {
         Map<String, Object> claims = Map.of(
                 "userId",userId,
                 "email", email,
@@ -58,8 +58,6 @@ public class JWTUtil {
                 .signWith(secretKey)
                 .compact();
     }
-
-
 
 
     public boolean validateToken(String token) {
