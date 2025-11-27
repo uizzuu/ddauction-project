@@ -19,9 +19,8 @@ public class ReviewController {
 
     // 리뷰 작성
     @PostMapping("/{targetUserId}")
-    public ResponseEntity<?> createReview(@PathVariable Long targetUserId,
-                                          @Valid @RequestBody ReviewDto dto) {
-        ReviewDto saved = reviewService.createReview(targetUserId, dto);
+    public ResponseEntity<?> createReview(@Valid @RequestBody ReviewDto dto) {
+        ReviewDto saved = reviewService.createReview(dto);
         return ResponseEntity.ok(Map.of("message", "리뷰 작성 성공", "review", saved));
     }
 
