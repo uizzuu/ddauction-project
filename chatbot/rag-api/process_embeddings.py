@@ -1,7 +1,6 @@
 import os
-from dotenv import load_dotenv
 from pathlib import Path
-import json
+from dotenv import load_dotenv
 from pinecone import Pinecone
 from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import MarkdownTextSplitter
@@ -14,8 +13,11 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 PINECONE_ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT")
 INDEX_NAME = os.getenv("INDEX_NAME", "ddauction-db")
 
-# Markdown 파일이 저장된 디렉토리
-MD_DIR = Path("./rag-api/docs")
+# 현재 스크립트 파일(__file__)이 'rag-api' 폴더 안에 있다고 가정하고,
+# 'docs' 폴더를 바로 찾도록 경로를 수정합니다.
+# Path(__file__).parent는 C:\mirae\2차프로젝트\ddauction-project\chatbot\rag-api\을 가리킵니다.
+# 따라서 docs 폴더는 Path(__file__).parent / "docs"로 지정하는 것이 맞습니다.
+MD_DIR = Path(__file__).parent / "docs"
 
 if not all([OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_ENVIRONMENT]):
     raise ValueError("⚠️ 환경 변수(OPENAI_API_KEY, PINECONE_API_KEY, PINECONE_ENVIRONMENT)를 모두 설정하세요.")
@@ -81,7 +83,9 @@ def process_documents(doc_path: Path):
 def ingest_to_pinecone(documents):
     """분할된 문서 청크를 Pinecone 인덱스에 업로드합니다."""
 
-    if INDEX_NAME not in pc.list_indexes().names:
+    # Pinecone 클라이언트의 list_indexes() 메서드 사용 시
+    # .names 속성 대신 .names() 메서드를 호출하도록 수정합니다. (TypeError 해결)
+    if INDEX_NAME not in pc.list_indexes().names():
         print(f"🚨 인덱스 '{INDEX_NAME}'가 존재하지 않습니다. 새로 생성합니다.")
         # Pinecone Serverless 인덱스 생성 (최신 권장)
         pc.create_index(
@@ -108,8 +112,11 @@ def ingest_to_pinecone(documents):
 # 메인 실행
 # =========================
 if __name__ == "__main__":
+    print(f"🔍 문서 폴더 절대 경로 확인: {MD_DIR.resolve()}")
+
     if not MD_DIR.exists():
-        print(f"❌ 문서 폴더를 찾을 수 없습니다: {MD_DIR}. 'pdf_converter.py'를 먼저 실행하고 문서를 넣어주세요.")
+        # 오류 메시지를 Path.resolve()를 사용하여 절대 경로로 표시하도록 수정
+        print(f"❌ 문서 폴더를 찾을 수 없습니다: {MD_DIR.resolve()}. 'convert_pdfs_batch.py'를 먼저 실행하고 문서를 넣어주세요.")
     else:
         # 1. 문서 처리
         processed_documents = process_documents(MD_DIR)

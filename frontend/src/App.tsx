@@ -8,7 +8,6 @@ import UserQnaForm from "./pages/UserQnaForm";
 import PaymentPage from "./pages/PaymentPage";
 import FindEmail from "./pages/FindEmail";
 import FindPassword from "./pages/FindPassword";
-import RAGChat from './pages/RAGChat';
 import {
   HeaderMain,
   HeaderSub,
@@ -194,8 +193,8 @@ export default function App() {
         {/* 에러 페이지 - 마지막에 정의 (와일드카드는 마지막!) */}
         <Route path="/error" element={<ErrorPage />} />
         <Route path="*" element={<ErrorPage />} />
-        <Route path="/chat" element={<RAGChat user={user} />} />
       </Routes>
     </div>
   );
 }
+// 
