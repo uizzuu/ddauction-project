@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class ChatService {
+public class ChattingService {
 
     private final PrivateChatRepository privateChatRepository;
     private final PublicChatRepository publicChatRepository;

@@ -3,7 +3,7 @@ package com.my.backend.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.my.backend.dto.PrivateChatDto;
 import com.my.backend.dto.PublicChatDto;
-import com.my.backend.service.ChatService;
+import com.my.backend.service.ChattingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
@@ -18,7 +18,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @RequiredArgsConstructor
 public class WebSocketHandler extends TextWebSocketHandler {
 
-    private final ChatService chatService;
+    private final ChattingService chatService;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final List<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
 
