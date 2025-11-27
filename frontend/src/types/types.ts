@@ -277,4 +277,39 @@ export interface ChatMessage {
   response: RAGResponse;
   timestamp: string;
 }
-// 
+
+// 채팅 타입
+export type ChatType = "private" | "public";
+
+// 최소 유저 정보 타입 (백엔드 Users 엔티티 일부)
+export interface ChatUser {
+userId: number;
+nickName: string;
+}
+
+// 백엔드 PrivateChat 엔티티 기반
+export interface PrivateChat {
+privateChatId: number;
+content: string;
+createdAt?: string;
+updatedAt?: string;
+user: ChatUser;
+}
+
+// 백엔드 PublicChat 엔티티 기반
+export interface PublicChat {
+publicChatId: number;
+content: string;
+createdAt?: string;
+user: ChatUser;
+}
+
+// WebSocket 메시지 송수신용 타입
+export interface ChatMessagePayload {
+type: ChatType;
+userId: number;
+targetUserId?: number; // private 채팅 시 상대
+content: string;
+nickName?: string; // 읽기용
+createdAt?: string;
+}
