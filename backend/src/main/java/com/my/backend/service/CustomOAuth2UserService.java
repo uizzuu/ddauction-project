@@ -1,6 +1,8 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.auth.CustomOAuth2User;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
 import com.my.backend.oauth2.OAuth2UserInfo;
 import com.my.backend.oauth2.OAuth2UserInfoFactory;
 import com.my.backend.repository.UserRepository;
@@ -72,8 +74,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String nickName = generateValidNickName(baseNickName);
         String userName = nickName; // username에도 동일 적용
 
-        User user = userRepository.findByEmail(email)
-                .orElseGet(() -> userRepository.save(User.builder()
+        Users user = userRepository.findByEmail(email)
+                .orElseGet(() -> userRepository.save(Users.builder()
                         .email(email)
                         .password(password)
                         .nickName(nickName)

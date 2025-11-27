@@ -15,7 +15,6 @@ import org.springframework.web.socket.*;
 
 import java.io.IOException;
 import java.net.URI;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +33,6 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
     private final BidRepository bidRepository;
     private final ProductRepository productRepository;
 
-//    @PostConstruct
     public void initAuctionWebSocketHandler() throws JsonProcessingException {
         List<Product> activeProductList = productRepository.findByProductStatus(ProductStatus.ACTIVE);
         for (Product product : activeProductList) {
@@ -42,7 +40,6 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
             bidHistoryMap.put(product.getProductId(), bidHistory);
         }
     }
-
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -75,19 +72,10 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
         List<Bid> bidHistory = bidHistoryMap.computeIfAbsent(productId,
                 id -> bidRepository.findByProductProductIdOrderByCreatedAtDesc(id));
 
-        // DTO 변환
-        List<BidResponse> responseList = bidHistory.stream()
-                .map(b -> BidResponse.builder()
-                        .bidId(b.getBidId())
-                        .userId(b.getUser().getUserId())
-                        .bidPrice(b.getBidPrice())
-                        .createdAt(b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                        .build())
-                .toList();
-
+        // Bid 엔티티 정보를 JSON 직렬화
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        String json = objectMapper.writeValueAsString(responseList);
+        String json = objectMapper.writeValueAsString(bidHistory);
 
         if (session.isOpen()) {
             session.sendMessage(new TextMessage(json));
@@ -97,7 +85,6 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
     }
 
     @Override
-//    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {}
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws IOException {
         String payload = message.getPayload().toString();
         log.info("입찰 메시지 수신: {}", payload);
@@ -130,7 +117,6 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
             if (product == null) return;
 
             Bid bid = new Bid();
-            bid.setProduct(product);
             bid.setBidPrice(bidPrice);
             bidRepository.save(bid);
 
@@ -146,7 +132,7 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
     // 특정 상품에 대해서만 전송
     public void broadcastBidList(Long productId, Bid bid) {
         try {
-            // 1️⃣ 현재 상품의 기존 입찰 내역 가져오기
+            // 현재 상품의 기존 입찰 내역 가져오기
             List<Bid> bidHistory = bidHistoryMap.get(productId);
             if (bidHistory == null) {
                 bidHistory = bidRepository.findByProductProductIdOrderByCreatedAtDesc(productId);
@@ -158,26 +144,12 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
 
             bidHistoryMap.put(productId, bidHistory);
 
-            List<BidResponse> responseList = bidHistory.stream()
-                    .map(b -> BidResponse.builder()
-                            .bidId(b.getBidId())
-                            .productId(
-                                    b.getProduct() != null ? b.getProduct().getProductId() : productId
-                            )
-                            .userId(
-                                    b.getUser() != null ? b.getUser().getUserId() : null
-                            )
-                            .bidPrice(b.getBidPrice())
-                            .createdAt(b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-                            .build())
-                    .toList();
+            // Bid 엔티티 정보를 JSON 직렬화
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new JavaTimeModule());
+            String json = objectMapper.writeValueAsString(bidHistory);
 
-            // 6️⃣ JSON 직렬화 (JavaTimeModule 등록)
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            String json = mapper.writeValueAsString(responseList);
-
-            // 7️⃣ 해당 상품을 보고 있는 모든 WebSocket 세션에게 전송
+            // 해당 상품을 보고 있는 모든 WebSocket 세션에게 전송
             Set<WebSocketSession> sessions = productSessions.getOrDefault(productId, Set.of());
             for (WebSocketSession session : sessions) {
                 if (session.isOpen()) {

@@ -2,6 +2,7 @@ package com.my.backend.repository;
 
 import com.my.backend.entity.BookMark;
 import com.my.backend.entity.Product;
+import com.my.backend.entity.Users;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,8 +11,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BookMarkRepository extends JpaRepository<BookMark, Long> {
-    Optional<BookMark> findByUserAndProduct(User user, Product product);
-    List<BookMark> findAllByUser(User user);
+    Optional<BookMark> findByUserAndProduct(Users user, Product product);
+    List<BookMark> findAllByUser(Users user);
     Long countByProduct(Product product);
 
     // 북마크 수 기준으로 인기 상품 조회 (상위 N개), 판매중 상품만

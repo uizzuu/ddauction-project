@@ -20,13 +20,13 @@ public class WebMvcConfig implements WebMvcConfigurer {
         try {
             Path uploadPath = Paths.get(uploadDir).toAbsolutePath().normalize();
 
-            // ✅ uploads 폴더가 없으면 자동 생성
+            // uploads 폴더가 없으면 자동 생성
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
                 System.out.println("✅ Created upload directory: " + uploadPath);
             }
 
-            // ✅ /uploads/** 요청을 실제 파일 경로와 연결
+            // /uploads/** 요청을 실제 파일 경로와 연결
             registry.addResourceHandler("/uploads/**")
                     .addResourceLocations("file:" + uploadPath.toString() + "/");
 
