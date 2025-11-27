@@ -63,6 +63,16 @@ file:
     directory: ./uploads
 
 # ===================================
+# RAG API 설정
+# ===================================
+rag:
+  api:
+    url: ${RAG_API_URL:http://localhost:8000}
+    timeout:
+      connect: 15000  # 연결 타임아웃 (ms) - 15초
+      read: 60000     # 읽기 타임아웃 (ms) - 60초
+
+# ===================================
 # 로컬 환경
 # ===================================
 ---
@@ -177,3 +187,9 @@ cloud:
       secret-key: ${AWS_SECRET_ACCESS_KEY}
 app:
   frontend-url: https://ddauction.shop
+rag:
+  api:
+    url: ${RAG_API_URL:http://rag-api:8000}
+    timeout:
+      connect: 20000  # 프로덕션에서는 더 여유있게
+      read: 90000

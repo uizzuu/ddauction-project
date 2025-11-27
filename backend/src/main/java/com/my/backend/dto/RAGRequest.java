@@ -1,0 +1,12 @@
+package com.my.backend.dto;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class RAGRequest {
+    private String query;
+}

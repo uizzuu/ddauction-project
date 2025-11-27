@@ -1,0 +1,32 @@
+#RAG 시스템 및 API 구동에 필요한 라이브러리 목록
+
+#--- Web/API layer ---
+
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0 # extra dependencies (standard) 사용 시 백슬래시 제거
+
+#--- LLM / Reasoning / Graph ---
+
+openai>=1.40.0
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-openai>=0.2.0
+langgraph # LangGraph는 버전 제약 없이 최신 버전 사용
+
+#--- Environment / Utils ---
+
+python-dotenv>=1.0.1
+pydantic # FastAPI BaseModel 사용을 위해 필수
+
+#--- Vector DB (기존 Pinecone RAG 시스템에 필수) ---
+
+pinecone-client
+langchain-pinecone # LangChain 통합을 위해 필수
+
+#--- PDF Processing (PDF to MD 변환 스크립트에 필수) ---
+
+PyMuPDF==1.23.25
+
+#--- Text Splitting (process_embeddings.py에 필수) ---
+
+langchain-text-splitters
