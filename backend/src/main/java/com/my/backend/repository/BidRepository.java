@@ -13,23 +13,20 @@ import java.util.Optional;
 
 @Repository
 public interface BidRepository extends JpaRepository<Bid, Long> {
-    // 특정 상품의 최고 입찰자 금액 가져오기
+    // refId로 입찰 찾기
+    List<Bid> findByProduct(Product product);
+
+    List<Bid> findByProductOrderByCreatedAtDesc(Product product);
+
+    List<Bid> findByProductOrderByCreatedAtAsc(Product product);
+
     Optional<Bid> findTopByProductOrderByBidPriceDesc(Product product);
-
-    List<Bid> findByProductProductIdOrderByCreatedAtDesc(Long productId);
-
-    Bid findTopByProductProductIdOrderByBidPriceDescCreatedAtAsc(Long productId);
-
-
-    List<Bid> findByProductProductIdOrderByCreatedAtAsc(@Param("productId") Long productId);
 
     // 특정 상품의 모든 낙찰자 조회
     List<Bid> findByProductAndIsWinning(Product product, boolean isWinning);
 
     // 입찰 중복 방지
     List<Bid> findByProductAndUserAndBidPriceAndCreatedAtAfter(
-            Product product, Users user, Long bidPrice, LocalDateTime createdAt);
-
-    boolean existsByProductProductIdAndUserUserIdAndIsWinningTrue(Long productId, Long userId);
-
+            Product product, Users user, Long bidPrice, LocalDateTime createdAt
+    );
 }

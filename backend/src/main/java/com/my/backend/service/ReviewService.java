@@ -42,9 +42,6 @@ public class ReviewService {
         review.setProductType(productType);
         // optional: product FK를 남기고 싶으면 productRepository로 product를 찾아서 set
         Product product = productRepository.findById(refId).orElse(null);
-        if (product != null) {
-            review.setProduct(product);
-        }
 
         Review saved = reviewRepository.save(review);
         return ReviewDto.fromEntity(saved);

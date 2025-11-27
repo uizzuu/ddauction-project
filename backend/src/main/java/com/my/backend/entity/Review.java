@@ -43,12 +43,4 @@ public class Review {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private ProductType productType;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
-    private Product product;
-
-    @OneToMany(mappedBy = "review", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Image> images = new ArrayList<>();
 }

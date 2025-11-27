@@ -41,9 +41,4 @@ public class Image {
 
     @Column(nullable = false)
     private Long refId; // 실제 참조 대상 ID (상품ID, 유저ID, 리뷰ID)
-
-    // Product 양방향 매핑은 선택적
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id", insertable = false, updatable = false)
-    private Product product;
 }

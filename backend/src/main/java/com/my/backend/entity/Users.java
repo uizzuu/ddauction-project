@@ -9,6 +9,8 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -53,7 +55,7 @@ public class Users {
     private String email;
 
     @Column(nullable = false)
-    private LocalDateTime birthday;
+    private LocalDate birthday;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -77,8 +79,4 @@ public class Users {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "phone_verification_id")
     private PhoneVerification phoneVerification;
-
-    @OneToMany(mappedBy = "users", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Image> images = new ArrayList<>();
 }

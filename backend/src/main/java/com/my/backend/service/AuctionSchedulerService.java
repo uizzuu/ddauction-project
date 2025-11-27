@@ -1,9 +1,9 @@
 package com.my.backend.service;
 
-import com.my.backend.enums.PaymentStatus;
-import com.my.backend.enums.ProductStatus;
 import com.my.backend.entity.Bid;
 import com.my.backend.entity.Product;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductStatus;
 import com.my.backend.repository.BidRepository;
 import com.my.backend.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +15,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-// 경매 종료 스케줄러
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,7 +25,9 @@ public class AuctionSchedulerService {
 
     // 경매 한 건에 대한 종료 처리 (멱등)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void finalizeOneAuctionSafely(Long productId) {
+    public void finalizeOneAuctionSafely(Product product) {
+        final Long productId = product.getProductId(); // // productId 헷갈림 방지
+
         try {
             Optional<Product> opt = productRepository.findById(productId);
             if (opt.isEmpty()) {
@@ -34,46 +35,44 @@ public class AuctionSchedulerService {
                 return;
             }
 
-            Product product = opt.get();
+            Product p = opt.get();
 
-            // 이미 종료 처리된 상품은 스킵
-            if (product.getProductStatus() != ProductStatus.ACTIVE) {
-                log.debug("[Auction] 이미 처리된 경매 스킵: productId={}, status={}", productId, product.getProductStatus());
+            // // 이미 종료 처리된 상품은 스킵
+            if (p.getProductStatus() != ProductStatus.ACTIVE) {
+                log.debug("[Auction] 이미 처리된 경매 스킵: productId={}, status={}", productId, p.getProductStatus());
                 return;
             }
 
-            // 아직 종료시간이 안 되었으면 스킵
-            if (product.getAuctionEndTime() == null || product.getAuctionEndTime().isAfter(LocalDateTime.now())) {
-                log.debug("[Auction] 아직 종료 시각이 아님 스킵: productId={}, end={}", productId, product.getAuctionEndTime());
+            // // 아직 종료시간이 안 되었으면 스킵
+            if (p.getAuctionEndTime() == null || p.getAuctionEndTime().isAfter(LocalDateTime.now())) {
+                log.debug("[Auction] 아직 종료 시각이 아님 스킵: productId={}, end={}", productId, p.getAuctionEndTime());
                 return;
             }
 
-            Bid highest = bidRepository.findTopByProductProductIdOrderByBidPriceDescCreatedAtAsc(productId);
-
+            // // 최고 입찰 조회
+            Bid highest = bidRepository.findTopByProductOrderByBidPriceDesc(p).orElse(null);
 
             if (highest != null) {
-                // 낙찰자 표시
+                // // 낙찰자 표시
                 highest.setWinning(true);
                 bidRepository.saveAndFlush(highest);
 
-                // 상품 상태 업데이트
-                product.setProductStatus(ProductStatus.CLOSED);
-                product.setPaymentStatus(PaymentStatus.PENDING);
-                product.setSeller(highest.getUser());
-
-                productRepository.saveAndFlush(product);
+                // // 상품 상태 업데이트
+                p.setProductStatus(ProductStatus.CLOSED);
+                p.setPaymentStatus(PaymentStatus.PENDING);
+                p.setSeller(highest.getUser());
+                productRepository.saveAndFlush(p);
 
                 log.info("[Auction] 경매 종료(낙찰): productId={}, winnerId={}, finalPrice={}",
-                        product.getProductId(),
+                        productId,
                         highest.getUser().getUserId(),
                         highest.getBidPrice());
-
             } else {
-                // 유찰 처리
-                product.setProductStatus(ProductStatus.CLOSED);
-                productRepository.saveAndFlush(product);
+                // // 유찰 처리
+                p.setProductStatus(ProductStatus.CLOSED);
+                productRepository.saveAndFlush(p);
 
-                log.info("[Auction] 경매 종료(유찰): productId={}", product.getProductId());
+                log.info("[Auction] 경매 종료(유찰): productId={}", productId);
             }
 
         } catch (Exception e) {

@@ -2,6 +2,10 @@ package com.my.backend.controller;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.my.backend.dto.portone.PortOnePaymentResponse;
+import com.my.backend.entity.Product;
+import com.my.backend.entity.Users;
+import com.my.backend.repository.ProductRepository;
+import com.my.backend.repository.UserRepository;
 import com.my.backend.service.PortOnePaymentService;
 import com.my.backend.util.AuthUtil;
 import jakarta.validation.Valid;
@@ -26,68 +30,52 @@ import java.util.Map;
 public class PortOnePaymentController {
 
     private final PortOnePaymentService portonePaymentService;
+    private final ProductRepository productRepository;
+    private final UserRepository userRepository;
     private final AuthUtil authUtil;
 
     @PostMapping("/prepare")
     public ResponseEntity<Map<String, Object>> preparePayment(
             @Valid @RequestBody PrepareReq req,
             Authentication authentication) {
-        Long userId = null;
-        //  principal이 CustomUserDetails인 경우, 거기서 직접 userId 추출
-        if (authentication != null && authentication.getPrincipal() instanceof com.my.backend.dto.auth.CustomUserDetails customUser) {
-            userId = customUser.getUser().getUserId();
-        }
-        log.info("[PortOne] 결제 준비 요청 - productId: {}, userId: {}", req.productId(), userId);
-        return portonePaymentService.prepareBidPayment(req.productId(), userId);
+
+        Long userId = authUtil.extractUser(authentication); // Long 반환
+        Users user = userRepository.findById(userId)       // DB 조회
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        Product product = productRepository.findById(req.productId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        log.info("[PortOne] 결제 준비 요청 - productId: {}, userId: {}", product.getProductId(), user.getUserId());
+        Map<String, Object> paymentInfo = portonePaymentService.prepareBidPayment(product, user);
+        return ResponseEntity.ok(paymentInfo);
     }
 
-    public record PrepareReq(
-            @NotNull Long productId
-    ) {}
+    public record PrepareReq(@NotNull Long productId) {}
 
-    // 결제 완료 후 PortOne 검증 및 확정
     @PostMapping("/complete")
     public ResponseEntity<Map<String, Object>> completePayment(
             @Valid @RequestBody CompleteReq payload,
             Authentication authentication
     ) {
-        Long userId = null;
-        if (authentication != null &&
-                authentication.getPrincipal() instanceof com.my.backend.dto.auth.CustomUserDetails customUser) {
-            userId = customUser.getUser().getUserId();
-        }
+        Long userId = authUtil.extractUser(authentication);
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        if (userId == null) {
-            log.warn("[PortOne] 인증 실패 - userId is null");
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", "인증된 사용자가 아닙니다.");
-            return ResponseEntity.status(401).body(error);
-        }
+        Product product = productRepository.findById(payload.productId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
         log.info("[PortOne] 결제 완료 검증 - imp_uid: {}, productId: {}, userId: {}",
-                payload.impUid(), payload.productId(), userId);
+                payload.impUid(), product.getProductId(), user.getUserId());
 
-        try {
-            //  ResponseEntity<PortOnePaymentResponse> → PortOnePaymentResponse로 변환
-            PortOnePaymentResponse result = portonePaymentService
-                    .verifyAndComplete(payload.impUid(), payload.productId(), userId)
-                    .getBody();
+        PortOnePaymentResponse result = portonePaymentService.verifyAndComplete(payload.impUid(), product, user);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("message", "결제가 완료되었습니다.");
-            response.put("paymentInfo", result);
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "결제가 완료되었습니다.");
+        response.put("paymentInfo", result);
 
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            log.error("[PortOne] 결제 검증 실패: {}", e.getMessage(), e);
-            Map<String, Object> error = new HashMap<>();
-            error.put("success", false);
-            error.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(error);
-        }
+        return ResponseEntity.ok(response);
     }
 
     public record CompleteReq(
@@ -96,21 +84,28 @@ public class PortOnePaymentController {
             @JsonProperty("merchant_uid") String merchantUid
     ) {}
 
-    // 결제 취소
     @PostMapping("/cancel")
     public ResponseEntity<Map<String, String>> cancelPayment(
             @Valid @RequestBody CancelReq payload,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        Long userId = authUtil.extractUserId(userDetails);
-        log.info("[PortOne] 결제 취소 요청 - imp_uid: {}, productId: {}, userId: {}", payload.impUid(), payload.productId(), userId);
+        Long userId = authUtil.extractUser(userDetails);
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
-        return portonePaymentService.cancelPayment(
+        Product product = productRepository.findById(payload.productId())
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+
+        log.info("[PortOne] 결제 취소 요청 - imp_uid: {}, productId: {}, userId: {}", payload.impUid(), product.getProductId(), user.getUserId());
+
+        portonePaymentService.cancelPayment(
                 payload.impUid(),
-                payload.productId(),
-                userId,
-                payload.reason() == null ? "사용자 요청" : payload.reason()
+                product,
+                user,
+                payload.reason() != null ? payload.reason() : "사용자 요청"
         );
+
+        return ResponseEntity.ok(Map.of("message", "결제가 취소되었습니다."));
     }
 
     public record CancelReq(
@@ -119,17 +114,14 @@ public class PortOnePaymentController {
             String reason
     ) {}
 
-    // PortOne 서버 콜백(Webhook)
     @PostMapping("/callback")
     public ResponseEntity<String> callback(@RequestBody Map<String, Object> payload) {
         log.info("[PortOne] 콜백 수신: {}", payload);
         return portonePaymentService.handleCallback(payload);
     }
 
-    // (선택) 기존 /webhook 엔드포인트도 유지
     @PostMapping("/webhook")
     public ResponseEntity<String> webhook(@RequestBody Map<String, Object> payload) {
         return callback(payload);
     }
-
 }

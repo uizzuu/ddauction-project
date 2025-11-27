@@ -1,5 +1,6 @@
 package com.my.backend.repository;
 
+import com.my.backend.entity.Users;
 import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
@@ -23,7 +24,7 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             ProductStatus productStatus, LocalDateTime now);
 
     // 판매자 기준 조회
-    List<Product> findByUserUserId(Long userId);
+    List<Product> findBySeller(Users seller);
 
     // 기본 검색
     List<Product> findByTitleContaining(String keyword);
@@ -48,5 +49,5 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     Page<Product> findByTitleContainingAndProductCategoryTypeAndProductStatus(String keyword, ProductCategoryType categoryType, ProductStatus productStatus, Pageable pageable);
 
     // 구매 완료 상품 조회
-    List<Product> findByPaymentUserIdAndPaymentStatus(Long paymentUserId, PaymentStatus paymentStatus);
+    List<Product> findByPaymentUserUserIdAndPaymentStatus(Long userId, PaymentStatus paymentStatus);
 }

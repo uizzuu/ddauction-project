@@ -86,14 +86,6 @@ public class ProductDto {
                 .updatedAt(product.getUpdatedAt())
                 .bidId(product.getBid() != null ? product.getBid().getBidId() : null)
                 .paymentId(product.getPayment() != null ? product.getPayment().getPaymentId() : null)
-                .images(
-                        product.getImages() != null
-                                ? product.getImages().stream()
-                                .map(ImageDto::fromEntity)
-                                .toList()
-                                : new ArrayList<>()
-                )
-
                 .build();
     }
 
