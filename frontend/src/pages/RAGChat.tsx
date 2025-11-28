@@ -177,198 +177,198 @@ export default function RAGChatModal({ isOpen, onClose }: Props) {
         >
           {/* 안내 메시지 */}
           {chatHistory.length === 0 && (
-                <div
+            <div
+              style={{
+                padding: "20px",
+                background: "#f8f9fa",
+                borderRadius: "8px",
+              }}
+            >
+              <p style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "12px" }}>
+                💡 사용 안내
+              </p>
+              <ul style={{ margin: 0, paddingLeft: "20px", lineHeight: "1.8" }}>
+                <li>땅땅옥션 이용 방법에 관한 질문을 자유롭게 해보세요.</li>
+                <li>예: "경매는 어떻게 진행되나요?"</li>
+                <li>예: "중고거래 시 주의사항이 있나요?"</li>
+                <li>예: "일반판매와 경매의 차이는 무엇인가요?"</li>
+              </ul>
+            </div>
+          )}
+
+          {/* 채팅 히스토리 */}
+          {chatHistory.map((chat) => (
+            <div key={chat.id} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {/* 사용자 질문 */}
+              <div
+                style={{
+                  alignSelf: "flex-end",
+                  maxWidth: "75%",
+                  background: "#007bff",
+                  color: "white",
+                  padding: "12px 16px",
+                  borderRadius: "12px 12px 0 12px",
+                }}
+              >
+                <p style={{ margin: 0, fontWeight: 500 }}>{chat.query}</p>
+                <span
                   style={{
-                    padding: "20px",
-                    background: "#f8f9fa",
-                    borderRadius: "8px",
+                    fontSize: "0.8rem",
+                    opacity: 0.8,
+                    display: "block",
+                    textAlign: "right",
+                    marginTop: "6px",
                   }}
                 >
-                  <p style={{ fontSize: "1rem", fontWeight: 600, marginBottom: "12px" }}>
-                    💡 사용 안내
-                  </p>
-                  <ul style={{ margin: 0, paddingLeft: "20px", lineHeight: "1.8" }}>
-                    <li>땅땅옥션 이용 방법에 관한 질문을 자유롭게 해보세요.</li>
-                    <li>예: "경매는 어떻게 진행되나요?"</li>
-                    <li>예: "중고거래 시 주의사항이 있나요?"</li>
-                    <li>예: "일반판매와 경매의 차이는 무엇인가요?"</li>
-                  </ul>
-                </div>
-              )}
+                  {formatDateTime(chat.timestamp)}
+                </span>
+              </div>
 
-              {/* 채팅 히스토리 */}
-              {chatHistory.map((chat) => (
-                <div key={chat.id} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  {/* 사용자 질문 */}
-                  <div
-                    style={{
-                      alignSelf: "flex-end",
-                      maxWidth: "75%",
-                      background: "#007bff",
-                      color: "white",
-                      padding: "12px 16px",
-                      borderRadius: "12px 12px 0 12px",
-                    }}
-                  >
-                    <p style={{ margin: 0, fontWeight: 500 }}>{chat.query}</p>
-                    <span
+              {/* AI 답변 */}
+              <div
+                style={{
+                  alignSelf: "flex-start",
+                  maxWidth: "75%",
+                  background: "#f1f3f5",
+                  padding: "12px 16px",
+                  borderRadius: "12px 12px 12px 0",
+                }}
+              >
+                <strong style={{ color: "#28a745", display: "block", marginBottom: "8px" }}>
+                  🤖 AI 답변
+                </strong>
+                <p style={{ margin: 0, whiteSpace: "pre-wrap", lineHeight: "1.6" }}>
+                  {chat.response.response}
+                </p>
+
+                {/* 참고 문서 */}
+                {chat.response.sources.length > 0 && (
+                  <details style={{ marginTop: "12px" }}>
+                    <summary
                       style={{
-                        fontSize: "0.8rem",
-                        opacity: 0.8,
-                        display: "block",
-                        textAlign: "right",
-                        marginTop: "6px",
+                        cursor: "pointer",
+                        color: "#666",
+                        fontSize: "0.9rem",
                       }}
                     >
-                      {formatDateTime(chat.timestamp)}
-                    </span>
-                  </div>
-
-                  {/* AI 답변 */}
-                  <div
-                    style={{
-                      alignSelf: "flex-start",
-                      maxWidth: "75%",
-                      background: "#f1f3f5",
-                      padding: "12px 16px",
-                      borderRadius: "12px 12px 12px 0",
-                    }}
-                  >
-                    <strong style={{ color: "#28a745", display: "block", marginBottom: "8px" }}>
-                      🤖 AI 답변
-                    </strong>
-                    <p style={{ margin: 0, whiteSpace: "pre-wrap", lineHeight: "1.6" }}>
-                      {chat.response.response}
-                    </p>
-
-                    {/* 참고 문서 */}
-                    {chat.response.documents.length > 0 && (
-                      <details style={{ marginTop: "12px" }}>
-                        <summary
+                      📚 참고 문서 ({chat.response.sources.length}개)
+                    </summary>
+                    <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {chat.response.sources.map((doc, index) => (
+                        <div
+                          key={index}
                           style={{
-                            cursor: "pointer",
-                            color: "#666",
-                            fontSize: "0.9rem",
+                            padding: "10px",
+                            background: "white",
+                            borderRadius: "6px",
+                            border: "1px solid #dee2e6",
+                            fontSize: "0.85rem",
                           }}
                         >
-                          📚 참고 문서 ({chat.response.documents.length}개)
-                        </summary>
-                        <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                          {chat.response.documents.map((doc, index) => (
-                            <div
-                              key={index}
-                              style={{
-                                padding: "10px",
-                                background: "white",
-                                borderRadius: "6px",
-                                border: "1px solid #dee2e6",
-                                fontSize: "0.85rem",
-                              }}
-                            >
-                              <strong style={{ color: "#495057", display: "block", marginBottom: "6px" }}>
-                                📄 {doc.source}
-                              </strong>
-                              <p style={{ margin: 0, color: "#6c757d", lineHeight: "1.5" }}>
-                                {doc.content.length > 200
-                                  ? `${doc.content.substring(0, 200)}...`
-                                  : doc.content}
-                              </p>
-                            </div>
-                          ))}
+                          <strong style={{ color: "#495057", display: "block", marginBottom: "6px" }}>
+                            📄 {doc.filename}
+                          </strong>
+                          <p style={{ margin: 0, color: "#6c757d", lineHeight: "1.5" }}>
+                            {doc.content_snippet.length > 200
+                              ? `${doc.content_snippet.substring(0, 200)}...`
+                              : doc.content_snippet}
+                          </p>
                         </div>
-                      </details>
-                    )}
-                  </div>
-                </div>
-              ))}
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+            </div>
+          ))}
 
-              {/* 로딩 인디케이터 */}
-              {loading && (
-                <div
-                  style={{
-                    alignSelf: "flex-start",
-                    padding: "12px 16px",
-                    background: "#f1f3f5",
-                    borderRadius: "12px",
-                  }}
-                >
-                  <p style={{ margin: 0, color: "#666" }}>답변 생성 중...</p>
-                </div>
-              )}
+          {/* 로딩 인디케이터 */}
+          {loading && (
+            <div
+              style={{
+                alignSelf: "flex-start",
+                padding: "12px 16px",
+                background: "#f1f3f5",
+                borderRadius: "12px",
+              }}
+            >
+              <p style={{ margin: 0, color: "#666" }}>답변 생성 중...</p>
+            </div>
+          )}
 
-              {/* 에러 메시지 */}
-              {error && (
-                <div
-                  style={{
-                    padding: "12px",
-                    background: "#ffe6e6",
-                    color: "#c92a2a",
-                    borderRadius: "8px",
-                    border: "1px solid #ffc9c9",
-                  }}
-                >
-                  ⚠️ {error}
-                </div>
-              )}
+          {/* 에러 메시지 */}
+          {error && (
+            <div
+              style={{
+                padding: "12px",
+                background: "#ffe6e6",
+                color: "#c92a2a",
+                borderRadius: "8px",
+                border: "1px solid #ffc9c9",
+              }}
+            >
+              ⚠️ {error}
+            </div>
+          )}
 
-              <div ref={chatEndRef} />
+          <div ref={chatEndRef} />
         </div>
 
         {/* 입력 폼 */}
         <div
-            style={{
-              padding: "16px 24px",
-              borderTop: "1px solid #e9ecef",
-              backgroundColor: "#f8f9fa",
-            }}
-          >
-            <form onSubmit={handleSubmit}>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <textarea
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="궁금한 점을 질문해주세요..."
-                  disabled={loading}
-                  style={{
-                    flex: 1,
-                    padding: "12px",
-                    border: "1px solid #dee2e6",
-                    borderRadius: "8px",
-                    resize: "none",
-                    fontSize: "0.95rem",
-                    minHeight: "60px",
-                    fontFamily: "inherit",
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmit(e);
-                    }
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={loading || !query.trim()}
-                  style={{
-                    padding: "12px 24px",
-                    border: "none",
-                    borderRadius: "8px",
-                    background: loading || !query.trim() ? "#dee2e6" : "#007bff",
-                    color: "white",
-                    cursor: loading || !query.trim() ? "not-allowed" : "pointer",
-                    fontSize: "0.95rem",
-                    fontWeight: 600,
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {loading ? "전송 중..." : "전송 🚀"}
-                </button>
-              </div>
-              <p style={{ margin: "8px 0 0 0", fontSize: "0.85rem", color: "#868e96" }}>
-                💡 Enter로 전송, Shift+Enter로 줄바꿈
-              </p>
-            </form>
-          </div>
+          style={{
+            padding: "16px 24px",
+            borderTop: "1px solid #e9ecef",
+            backgroundColor: "#f8f9fa",
+          }}
+        >
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: "flex", gap: "8px" }}>
+              <textarea
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="궁금한 점을 질문해주세요..."
+                disabled={loading}
+                style={{
+                  flex: 1,
+                  padding: "12px",
+                  border: "1px solid #dee2e6",
+                  borderRadius: "8px",
+                  resize: "none",
+                  fontSize: "0.95rem",
+                  minHeight: "60px",
+                  fontFamily: "inherit",
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
+              />
+              <button
+                type="submit"
+                disabled={loading || !query.trim()}
+                style={{
+                  padding: "12px 24px",
+                  border: "none",
+                  borderRadius: "8px",
+                  background: loading || !query.trim() ? "#dee2e6" : "#007bff",
+                  color: "white",
+                  cursor: loading || !query.trim() ? "not-allowed" : "pointer",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {loading ? "전송 중..." : "전송 🚀"}
+              </button>
+            </div>
+            <p style={{ margin: "8px 0 0 0", fontSize: "0.85rem", color: "#868e96" }}>
+              💡 Enter로 전송, Shift+Enter로 줄바꿈
+            </p>
+          </form>
+        </div>
       </div>
     </>
   );

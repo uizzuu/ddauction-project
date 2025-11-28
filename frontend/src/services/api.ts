@@ -385,7 +385,7 @@ export async function checkWinner(productId: number): Promise<{
 export async function queryRAG(query: string): Promise<RAGResponse> {
   const request: RAGRequest = { query };
 
-  const response = await fetch(`${API_BASE_URL}${API_BASE}/chat/`, {
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/chat/query`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -258,8 +258,8 @@ export interface PaymentPrepareResponse {
 
 // RAG 챗봇 관련 타입
 export interface RAGDocument {
-  source: string;
-  content: string;
+  filename: string;          // source → filename
+  content_snippet: string;   // content → content_snippet
 }
 
 export interface RAGRequest {
@@ -268,7 +268,7 @@ export interface RAGRequest {
 
 export interface RAGResponse {
   response: string;
-  documents: RAGDocument[];
+  sources: RAGDocument[];    // documents → sources
 }
 
 export interface ChatMessage {
