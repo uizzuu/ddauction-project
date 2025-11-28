@@ -62,7 +62,7 @@ export default function Login({ setUser }: Props) {
         localStorage.setItem("token", token);
 
         // 사용자 정보는 별도로 가져와야 함
-        const userResponse = await fetch("/api/users/me", {
+        const userResponse = await fetch("/api/auth/me", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
