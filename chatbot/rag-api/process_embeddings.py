@@ -69,7 +69,6 @@ def process_documents(doc_path: Path):
                 "source": md_file.name,
                 "document_id": md_file.stem,  # 파일명 (확장자 제외)
                 "chunk_id": f"{md_file.stem}_{i}",
-                "document": chunk  # 원본 텍스트 청크
             }
             documents.append((chunk, metadata))
 
