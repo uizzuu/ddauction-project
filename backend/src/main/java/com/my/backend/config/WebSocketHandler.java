@@ -25,6 +25,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
         sessions.add(session);
+        System.out.println("WebSocket 연결됨: " + session.getId());
     }
 
     @Override
@@ -56,5 +57,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         sessions.remove(session);
+        System.out.println("WebSocket 연결 종료: " + session.getId());
     }
 }

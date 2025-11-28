@@ -1,4 +1,3 @@
-// src/components/chat/UserChat.tsx
 import { useEffect, useRef, useState } from "react";
 import type { User, PrivateChat, PublicChat, ChatMessagePayload } from "../../types/types";
 
@@ -18,6 +17,8 @@ export default function UserChat({ user }: UserChatProps) {
 
     ws.current = new WebSocket("ws://localhost:8080/ws/chat");
 
+    ws.current.onopen = () => console.log("WebSocket 연결 성공");
+
     ws.current.onmessage = (event) => {
       try {
         const data: PrivateChat | PublicChat = JSON.parse(event.data);
@@ -27,13 +28,8 @@ export default function UserChat({ user }: UserChatProps) {
       }
     };
 
-    ws.current.onclose = () => {
-      console.log("WebSocket 연결 종료");
-    };
-
-    ws.current.onerror = (err) => {
-      console.error("WebSocket 오류:", err);
-    };
+    ws.current.onclose = () => console.log("WebSocket 연결 종료");
+    ws.current.onerror = (err) => console.error("WebSocket 오류:", err);
 
     return () => ws.current?.close();
   }, [user]);
