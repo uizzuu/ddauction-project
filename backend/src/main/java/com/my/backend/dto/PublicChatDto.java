@@ -17,6 +17,7 @@ public class PublicChatDto {
     private Long userId;
     private String content;
     private LocalDateTime createdAt;
+    private String nickName;
 
     // Entity → DTO
     public static PublicChatDto fromEntity(PublicChat publicChat) {
@@ -26,6 +27,8 @@ public class PublicChatDto {
                 .publicChatId(publicChat.getPublicChatId())
                 .userId(publicChat.getUser() != null ? publicChat.getUser().getUserId() : null)
                 .content(publicChat.getContent())
+                .nickName(publicChat.getUser() != null ? publicChat.getUser().getNickName() : null)
+                .createdAt(publicChat.getCreatedAt())
                 .build();
     }
 

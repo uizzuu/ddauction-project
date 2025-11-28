@@ -26,7 +26,13 @@ export default function UserChat({ user }: UserChatProps) {
 
     ws.current.onmessage = (event) => {
       try {
-        const data: PrivateChat | PublicChat = JSON.parse(event.data);
+        const data: any = JSON.parse(event.data);
+
+        // ★ nickName만 오는 경우 user 객체 만들어줌
+        if (!data.user && data.nickName) {
+          data.user = { userId: data.userId, nickName: data.nickName };
+        }
+
         setMessages((prev) => [...prev, data]);
       } catch (err) {
         console.error("메시지 파싱 오류:", err);
@@ -58,6 +64,7 @@ export default function UserChat({ user }: UserChatProps) {
       type: isPrivate ? "PRIVATE" : "PUBLIC",
       userId: user.userId,
       content: input,
+      nickName: user.nickName,
       ...(isPrivate && targetUserId ? { targetUserId } : {}),
     };
 
@@ -82,6 +89,14 @@ export default function UserChat({ user }: UserChatProps) {
           {messages.map((msg, i) => (
             <div key={i}>
               <b>{msg.user?.nickName ?? "익명"}:</b> {msg.content}
+              <span style={{ color: "#888", marginLeft: "6px", fontSize: "12px" }}>
+                {msg.createdAt
+                  ? new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                  : ""}
+              </span>
             </div>
           ))}
           <div ref={messagesEndRef} />
