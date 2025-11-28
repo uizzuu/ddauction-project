@@ -13,6 +13,7 @@ import org.springframework.web.client.RestTemplate;
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "*")
 public class ChatController {
 
     @Value("${rag.api.url}")
@@ -25,7 +26,7 @@ public class ChatController {
         try {
             log.info("RAG 질의 요청: {}", request.getQuery());
 
-            String url = ragApiUrl + "/rag/query";
+            String url = ragApiUrl + "/chat";
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
