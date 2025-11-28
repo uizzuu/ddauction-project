@@ -31,6 +31,7 @@ caches/
 *.dylib.lock
 *.jnilib
 bin/
+**/__pycache__/
 
 **/node_modules/
 **/dist/
@@ -89,6 +90,11 @@ infra/*.env.local
 infra/*.env.*.local
 infra/*.env.prod
 infra/*.env.*.prod
+
+##############################
+# chatbot
+##############################
+chatbot/.env
 
 ##############################
 # OS / Misc
