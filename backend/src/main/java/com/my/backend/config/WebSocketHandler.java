@@ -30,18 +30,22 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
+        System.out.println("서버 수신 메시지: " + message.getPayload()); // <- 추가
+
         Map<String, Object> map = objectMapper.readValue(message.getPayload(), Map.class);
         String type = (String) map.get("type"); // "private" or "public"
         Long userId = Long.valueOf(map.get("userId").toString());
         String content = (String) map.get("content");
 
-        if ("private".equals(type)) {
+        if ("PRIVATE".equalsIgnoreCase(type)) {
             PrivateChatDto dto = PrivateChatDto.builder().content(content).build();
             PrivateChatDto saved = chatService.savePrivateChat(userId, dto);
+            System.out.println("브로드캐스트 메시지: " + objectMapper.writeValueAsString(saved)); // <- 추가
             broadcast(objectMapper.writeValueAsString(saved));
-        } else if ("public".equals(type)) {
+        } else if ("PUBLIC".equalsIgnoreCase(type)) {
             PublicChatDto dto = PublicChatDto.builder().content(content).build();
             PublicChatDto saved = chatService.savePublicChat(userId, dto);
+            System.out.println("브로드캐스트 메시지: " + objectMapper.writeValueAsString(saved)); // <- 추가
             broadcast(objectMapper.writeValueAsString(saved));
         }
     }
@@ -59,4 +63,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
         sessions.remove(session);
         System.out.println("WebSocket 연결 종료: " + session.getId());
     }
+
+
 }

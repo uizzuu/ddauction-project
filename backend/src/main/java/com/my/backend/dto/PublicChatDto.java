@@ -26,7 +26,6 @@ public class PublicChatDto {
                 .publicChatId(publicChat.getPublicChatId())
                 .userId(publicChat.getUser() != null ? publicChat.getUser().getUserId() : null)
                 .content(publicChat.getContent())
-                .createdAt(publicChat.getCreatedAt())
                 .build();
     }
 

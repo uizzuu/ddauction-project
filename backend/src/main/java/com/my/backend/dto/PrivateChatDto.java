@@ -30,7 +30,6 @@ public class PrivateChatDto {
                 .nickName(chat.getUser() != null ? chat.getUser().getNickName() : null)
                 .content(chat.getContent())
                 .createdAt(chat.getCreatedAt())
-                .updatedAt(chat.getUpdatedAt())
                 .build();
     }
 
