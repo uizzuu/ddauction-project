@@ -38,7 +38,9 @@ export default function HeaderSub({ category, setCategory }: Props) {
   const handleProtectedNavigation = (path: string) => {
     const token = localStorage.getItem("token");
     if (!token) {
-      const goLogin = window.confirm("로그인 후 이용할 수 있습니다. 로그인하시겠습니까?");
+      const goLogin = window.confirm(
+        "로그인 후 이용할 수 있습니다. 로그인하시겠습니까?"
+      );
       if (goLogin) {
         navigate("/login");
       }
@@ -82,8 +84,6 @@ export default function HeaderSub({ category, setCategory }: Props) {
             onSelectCategory={(cat) => console.log("선택한 카테고리:", cat)}
             targetRef={menuBtnRef}
           />
-          
-          
 
           <NavLink to="/" className="nav-link">
             홈
@@ -95,13 +95,13 @@ export default function HeaderSub({ category, setCategory }: Props) {
           <NavLink to="/community" className="nav-link">
             커뮤니티
           </NavLink>
-          <NavLink to="/chatbot">
-             챗봇 문의
-          </NavLink>
-<RAGChat 
-  isOpen={isChatOpen}
-  onClose={() => setIsChatOpen(false)}
-/>
+          <button
+            onClick={() => setIsChatOpen(true)}
+            className="nav-link"
+          >
+            <p>챗봇문의</p>
+          </button>
+          <RAGChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
         </nav>
         <nav className="flex-box gap-16 flex-center">
           <button
