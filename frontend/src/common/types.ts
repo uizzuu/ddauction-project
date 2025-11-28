@@ -12,6 +12,7 @@ export interface User {
   password?: string;
   email?: string;
   phone?: string;
+  birthday?: string;
   createdAt?: string;
   updatedAt?: string;
   role?: Role;
@@ -74,6 +75,7 @@ export interface SignupForm {
   email: string;
   password: string;
   phone: string;
+  birthday: string;
 }
 
 // 상품 등록 폼 데이터 타입

@@ -6,12 +6,20 @@ import { API_BASE_URL } from "../common/api";
 export default function Signup() {
   const navigate = useNavigate();
 
-  const [form, setForm] = useState<SignupForm>({
+  const [form, setForm] = useState<SignupForm & {
+    address?: string;
+    zipCode?: string;
+    detailAddress?: string;
+  }>({
     userName: "",
     nickName: "",
     email: "",
     password: "",
     phone: "",
+    birthday: "",
+    address: "",
+    zipCode: "",
+    detailAddress: ""
   });
 
   const [isComposing, setIsComposing] = useState({
@@ -28,6 +36,8 @@ export default function Signup() {
     password: "",
     passwordConfirm: "",
     submit: "",
+    birthday: "",
+    address: "",
   });
 
   // 이메일 유효성 체크
@@ -43,6 +53,10 @@ export default function Signup() {
       password: "",
       passwordConfirm: "",
       submit: "",
+      birthday: "",
+      address: "",
+      zipCode: "",
+      detailAddress: "",
     };
 
     if (!form.userName) newErrors.userName = "이름을 입력해주세요";
@@ -218,6 +232,52 @@ export default function Signup() {
             className="input"
           />
           {errors.phone && <p className="error-message">{errors.phone}</p>}
+
+          {/* 생일 */}
+          <input
+            type="date"
+            placeholder="생일"
+            value={form.birthday}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, birthday: e.target.value }))
+            }
+            className="input"
+          />
+          {errors.birthday && <p className="error-message">{errors.birthday}</p>}
+
+          {/* 주소 */}
+          <input
+            type="text"
+            placeholder="주소"
+            value={form.address}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, address: e.target.value }))
+            }
+            className="input"
+          />
+          {errors.address && <p className="error-message">{errors.address}</p>}
+
+          {/* 우편번호 */}
+          <input
+            type="text"
+            placeholder="우편번호"
+            value={form.zipCode}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, zipCode: e.target.value }))
+            }
+            className="input"
+          />
+
+          {/* 상세주소 */}
+          <input
+            type="text"
+            placeholder="상세주소"
+            value={form.detailAddress}
+            onChange={(e) =>
+              setForm((prev) => ({ ...prev, detailAddress: e.target.value }))
+            }
+            className="input"
+          />
 
           {/* 비밀번호 */}
           <input
