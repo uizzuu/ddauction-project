@@ -11,7 +11,10 @@ build/
 *.jar
 *.war
 *.log
-!gradle/wrapper/gradle-wrapper.jar
+
+# gradle-wrapper 제외 !!
+!backend/gradle/wrapper/gradle-wrapper.jar
+!backend/gradle/wrapper/gradle-wrapper.properties
 
 # Gradle 캐시 / 빌드 산출물
 caches/
