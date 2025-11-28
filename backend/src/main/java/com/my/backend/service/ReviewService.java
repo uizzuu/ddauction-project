@@ -74,7 +74,7 @@ public class ReviewService {
     // productType 별 대상 유저 찾기
     private Long resolveTargetUserId(ProductType productType, Long refId) {
         return switch (productType) {
-            case AUCTION, USED, SALE -> {
+            case AUCTION, USED, STORE -> {
                 // 공통적으로 Product 테이블에서 refId로 조회
                 Product product = productRepository.findById(refId)
                         .orElseThrow(() -> new RuntimeException(

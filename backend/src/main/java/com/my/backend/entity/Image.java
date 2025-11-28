@@ -37,7 +37,7 @@ public class Image {
     private ImageType imageType;  // PRODUCT, USER, REVIEW
 
     @Enumerated(EnumType.STRING)
-    private ProductType productType; // AUCTION, USED, SALE (PRODUCT 이미지일 경우만)
+    private ProductType productType; // AUCTION, USED, STORE (PRODUCT 이미지일 경우만)
 
     @Column(nullable = false)
     private Long refId; // 실제 참조 대상 ID (상품ID, 유저ID, 리뷰ID)

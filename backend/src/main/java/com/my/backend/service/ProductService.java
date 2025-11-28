@@ -308,7 +308,9 @@ public class ProductService {
         product.setContent(dto.getContent());
         product.setTag(dto.getTag());
         product.setStartingPrice(dto.getStartingPrice());
-        product.setPrice(dto.getPrice());
+        product.setOriginalPrice(dto.getOriginalPrice());
+        product.setSalePrice(dto.getSalePrice());
+        product.setDiscountRate(dto.getDiscountRate());
         product.setAuctionEndTime(dto.getAuctionEndTime());
         product.setDeliveryIncluded(dto.isDeliveryIncluded());
         product.setDeliveryPrice(dto.getDeliveryPrice());

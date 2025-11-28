@@ -26,7 +26,9 @@ public class ProductDto {
     private String title;
     private String content;
     private Long startingPrice;
-    private Long price;
+    private Long originalPrice;
+    private Long salePrice;
+    private Long discountRate;
     // 경매 정보
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime auctionEndTime;
@@ -71,7 +73,9 @@ public class ProductDto {
                 .content(product.getContent())
                 .tag(product.getTag())
                 .startingPrice(product.getStartingPrice())
-                .price(product.getPrice())
+                .originalPrice(product.getOriginalPrice())
+                .salePrice(product.getSalePrice())
+                .discountRate(product.getDiscountRate())
                 .auctionEndTime(product.getAuctionEndTime())
                 .viewCount(product.getViewCount())
                 .deliveryIncluded(product.isDeliveryIncluded())
@@ -99,7 +103,9 @@ public class ProductDto {
                 .content(this.content)
                 .tag(this.tag)
                 .startingPrice(this.startingPrice)
-                .price(this.price)
+                .originalPrice(this.originalPrice)
+                .salePrice(this.salePrice)
+                .discountRate(this.discountRate)
                 .auctionEndTime(this.auctionEndTime)
                 .viewCount(this.viewCount != null ? this.viewCount : 0L)
                 .deliveryIncluded(this.deliveryIncluded)
@@ -113,7 +119,5 @@ public class ProductDto {
                 .bid(bid)
                 .payment(payment)
                 .build();
-
     }
-
 }

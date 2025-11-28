@@ -9,3 +9,6 @@ export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 
 export const CHAT_TYPE = ["PRIVATE", "PUBLIC"] as const;
 export type ChatType = (typeof CHAT_TYPE)[number];
+
+export const PRODUCT_TYPE = ["AUCTION", "USED", "STORE"] as const;
+export type ProductType = (typeof PRODUCT_TYPE)[number];

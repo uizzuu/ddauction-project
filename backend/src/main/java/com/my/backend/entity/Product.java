@@ -43,7 +43,11 @@ public class Product {
 
     private Long startingPrice;
 
-    private Long price;
+    private Long originalPrice;
+
+    private Long salePrice;
+
+    private Long discountRate;
 
     private LocalDateTime auctionEndTime;
 
