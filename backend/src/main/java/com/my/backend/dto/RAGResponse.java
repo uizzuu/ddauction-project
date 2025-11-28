@@ -18,6 +18,8 @@ public class RAGResponse {
     @AllArgsConstructor
     public static class RAGDocument {
         private String filename;
+
+        @JsonProperty("content_snippet")
         private String contentSnippet;
     }
 }
