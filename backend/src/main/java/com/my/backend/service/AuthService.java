@@ -106,11 +106,10 @@ public class AuthService {
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
             }
-
             String token = jwtUtil.createJwt(
                     user.getUserId(),
                     user.getEmail(),
-                    user.getRole().name(),
+                    user.getRole(),
                     user.getNickName(),
                     3600000L
             );
@@ -139,14 +138,14 @@ public class AuthService {
             String newAccessToken = jwtUtil.createJwt(
                     user.getUserId(),
                     user.getEmail(),
-                    user.getRole().name(),
+                    user.getRole(),
                     user.getNickName(),
                     3600000L
             );
             String newRefreshToken = jwtUtil.createJwt(
                     user.getUserId(),
                     user.getEmail(),
-                    user.getRole().name(),
+                    user.getRole(),
                     user.getNickName(),
                     604800000L
             );

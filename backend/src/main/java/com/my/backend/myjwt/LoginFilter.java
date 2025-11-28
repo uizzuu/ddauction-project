@@ -16,6 +16,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import java.io.IOException;
 import java.util.Collection;
 
+import com.my.backend.enums.Role;
+
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
     private final JWTUtil jwtUtil;
@@ -84,12 +86,26 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         System.out.println("[DEBUG] authorities = " + authorities);
-        String role = authorities.stream().findFirst().map(GrantedAuthority::getAuthority).orElse("ROLE_NONE");
+        String role = authorities.stream().findFirst().map(GrantedAuthority::getAuthority).orElse("ROLE_USER");
         System.out.println("[DEBUG] role = " + role);
 
         // ms, s 충돌 해결 (LoginFilter <-> JWTUtil)
         long expiredMs = 24 * 60 * 60 * 1000L; // 24시간 * 60분 * 60초 * 1000ms
-        String token = jwtUtil.createJwt(customUserDetails.getUser().getUserId(),customUserDetails.getEmail(), role,customUserDetails.getNickName(), expiredMs);
+        // GrantedAuthority에서 뽑은 문자열
+        String roleStr = authorities.stream()
+                .findFirst()
+                .map(GrantedAuthority::getAuthority)
+                .orElse("ROLE_USER");
+        // Role enum으로 변환
+        Role roleEnum = Role.valueOf(roleStr.replace("ROLE_", ""));
+        // JWT 생성
+        String token = jwtUtil.createJwt(
+                customUserDetails.getUser().getUserId(),
+                customUserDetails.getEmail(),
+                roleEnum,
+                customUserDetails.getNickName(),
+                expiredMs
+        );
         System.out.println("[DEBUG] token = " + token);
 
         if (token != null) {

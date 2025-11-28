@@ -1,7 +1,0 @@
-# Default ignored files
-/shelf/
-/workspace.xml
-
-# .gitignore
-infra/.env.local
-infra/.env.prod
