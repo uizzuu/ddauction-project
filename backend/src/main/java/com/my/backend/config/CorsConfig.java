@@ -15,7 +15,7 @@ public void addCorsMappings(CorsRegistry registry) {
     registry.addMapping("/**")
             .allowedOrigins("http://localhost:3000", "https://ddauction.shop")
             .allowedMethods("GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS")
-            .allowedHeaders("Authorization", "Content-Type", "Accept")
+            .allowedHeaders("*")
             .allowCredentials(true)
             .maxAge(3600); // preflight 캐싱
 }
