@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import type { User } from "../types/types";
+import type { User } from "../common/types";
 
 type Props = {
   setUser: (user: User) => void;

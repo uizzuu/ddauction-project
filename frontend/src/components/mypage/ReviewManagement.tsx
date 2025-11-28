@@ -1,4 +1,4 @@
-import type { Review } from "../../types/types";
+import type { Review } from "../../common/types";
 
 type Props = {
   averageRating: number;
@@ -89,9 +89,7 @@ export default function ReviewManagement({
             padding: "8px",
           }}
         />
-        <button onClick={handleSubmitReview}>
-          리뷰 등록
-        </button>
+        <button onClick={handleSubmitReview}>리뷰 등록</button>
       </div>
     </div>
   );

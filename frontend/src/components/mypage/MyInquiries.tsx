@@ -1,4 +1,4 @@
-import type { Inquiry } from "../../types/types";
+import type { Inquiry } from "../../common/types";
 
 type Props = {
   myInquiries: Inquiry[];
@@ -39,18 +39,30 @@ export default function MyInquiries({ myInquiries }: Props) {
 
                 {/* 답변 내용 */}
                 {answers.length > 0 && (
-                  <div style={{ marginTop: "10px", paddingLeft: "10px", borderLeft: "3px solid #000" }}>
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      paddingLeft: "10px",
+                      borderLeft: "3px solid #000",
+                    }}
+                  >
                     <strong>답변 완료</strong>
-                    <ul style={{ listStyle: "none", padding: 0, marginTop: "5px" }}>
-                        {answers.map((a) => (
-                          <li key={a.inquiryReviewId}>
-                            {a.nickName ?? "익명"}: {a.answer} (
-                            {a.createdAt
-                              ? new Date(a.createdAt).toLocaleString()
-                              : "작성일 없음"}
-                            )
-                          </li>
-                        ))}
+                    <ul
+                      style={{
+                        listStyle: "none",
+                        padding: 0,
+                        marginTop: "5px",
+                      }}
+                    >
+                      {answers.map((a) => (
+                        <li key={a.inquiryReviewId}>
+                          {a.nickName ?? "익명"}: {a.answer} (
+                          {a.createdAt
+                            ? new Date(a.createdAt).toLocaleString()
+                            : "작성일 없음"}
+                          )
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}

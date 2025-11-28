@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../services/api";
+import { API_BASE_URL } from "../common/api";
 
 export default function FindEmail() {
   const navigate = useNavigate();

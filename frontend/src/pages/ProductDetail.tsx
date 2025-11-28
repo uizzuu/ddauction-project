@@ -16,13 +16,13 @@ import type {
   Bid,
   EditProductForm,
   WinnerCheckResponse,
-} from "../types/types";
-import { API_BASE_URL } from "../services/api";
-import { formatDateTime } from "../utils/util";
+} from "../common/types";
+import { API_BASE_URL } from "../common/api";
+import { formatDateTime } from "../common/util";
 import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
-import { useAuction } from "../hooks/useAuction";
+import { useAuction } from "../common/hooks";
 
 type Props = {
   user: User | null;
@@ -548,7 +548,7 @@ export default function ProductDetail({ user }: Props) {
             📷 AR 트라이온
           </button>
         </div>
-      
+
         <div
           style={{
             flex: 1,
@@ -869,59 +869,59 @@ export default function ProductDetail({ user }: Props) {
           placeBid={handlePlaceBid}
         />
         {/* AR 모달 */}
-{showARModal && (
-  <div
-    style={{
-      position: "fixed",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.8)",
-      zIndex: 1000,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    }}
-    onClick={() => setShowARModal(false)}
-  >
-    <div
-      style={{
-        position: "relative",
-        width: "90%",
-        maxWidth: "800px",
-        height: "80vh",
-        backgroundColor: "#000",
-        borderRadius: "12px",
-        overflow: "hidden",
-      }}
-      onClick={(e) => e.stopPropagation()}
-    >
-      <button
-        onClick={() => setShowARModal(false)}
-        style={{
-          position: "absolute",
-          top: "10px",
-          right: "10px",
-          backgroundColor: "rgba(255, 255, 255, 0.9)",
-          border: "none",
-          borderRadius: "50%",
-          width: "40px",
-          height: "40px",
-          fontSize: "1.5rem",
-          cursor: "pointer",
-          zIndex: 10,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        ×
-      </button>
-      <AROverlayWithButton productId={product.productId} />
-    </div>
-  </div>
-)}
+        {showARModal && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.8)",
+              zIndex: 1000,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            onClick={() => setShowARModal(false)}
+          >
+            <div
+              style={{
+                position: "relative",
+                width: "90%",
+                maxWidth: "800px",
+                height: "80vh",
+                backgroundColor: "#000",
+                borderRadius: "12px",
+                overflow: "hidden",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowARModal(false)}
+                style={{
+                  position: "absolute",
+                  top: "10px",
+                  right: "10px",
+                  backgroundColor: "rgba(255, 255, 255, 0.9)",
+                  border: "none",
+                  borderRadius: "50%",
+                  width: "40px",
+                  height: "40px",
+                  fontSize: "1.5rem",
+                  cursor: "pointer",
+                  zIndex: 10,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                ×
+              </button>
+              <AROverlayWithButton productId={product.productId} />
+            </div>
+          </div>
+        )}
       </div>
       <ProductBidGraph
         bids={mergedBids}

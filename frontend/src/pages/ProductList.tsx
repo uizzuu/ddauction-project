@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Product } from "../types/types";
-import { API_BASE_URL } from "../services/api";
+import type { Product } from "../common/types";
+import { API_BASE_URL } from "../common/api";
 
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -94,8 +94,10 @@ export default function ProductList() {
                 >
                   <div className="product-image height-220">
                     {product.images && product.images.length > 0 ? (
-                      <img src={`${API_BASE_URL}${product.images[0].imagePath}`} alt={product.title} />
-
+                      <img
+                        src={`${API_BASE_URL}${product.images[0].imagePath}`}
+                        alt={product.title}
+                      />
                     ) : (
                       <div className="no-image-txt">이미지 없음</div>
                     )}

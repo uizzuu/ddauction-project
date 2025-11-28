@@ -1,11 +1,14 @@
-import type { Report } from "../../types/types";
+import type { Report } from "../../common/types";
 
 type Props = {
   reports: Report[];
   handleUpdateReportStatus: (reportId: number, status: boolean) => void;
 };
 
-export default function ReportManagement({ reports, handleUpdateReportStatus }: Props) {
+export default function ReportManagement({
+  reports,
+  handleUpdateReportStatus,
+}: Props) {
   return (
     <div className="admin-section">
       <h3>신고 관리</h3>
@@ -32,7 +35,10 @@ export default function ReportManagement({ reports, handleUpdateReportStatus }: 
                 <select
                   defaultValue={r.status ? "true" : "false"}
                   onChange={(e) =>
-                    handleUpdateReportStatus(r.reportId, e.target.value === "true")
+                    handleUpdateReportStatus(
+                      r.reportId,
+                      e.target.value === "true"
+                    )
                   }
                 >
                   <option value="false">보류</option>

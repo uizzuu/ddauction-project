@@ -12,7 +12,7 @@ import type {
   CommentForm,
   RAGRequest,
   RAGResponse,
-} from "../types/types";
+} from "./types";
 import { jwtDecode } from "jwt-decode";
 const API_BASE = "/api";
 export const API_BASE_URL =
@@ -82,7 +82,7 @@ async function authFetch(
 
   const headers = {
     "Content-Type": "application/json",
-    ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
 
@@ -110,7 +110,9 @@ export async function login(form: LoginForm): Promise<User> {
   const data: unknown = await response.json();
   if (!isUser(data)) throw new Error("API 반환값이 User 타입과 일치하지 않음");
   // 🔹 JWT decode해서 nickName 포함
-  const decoded = jwtDecode<{ email: string; nickName: string; role?: string }>(token);
+  const decoded = jwtDecode<{ email: string; nickName: string; role?: string }>(
+    token
+  );
 
   return {
     ...data,
@@ -170,9 +172,13 @@ export async function getCategories(): Promise<Category[]> {
 
 // ------------------- 게시글 API ------------------- //
 
-export async function getArticles(params?: { boardId?: number }): Promise<ArticleDto[]> {
+export async function getArticles(params?: {
+  boardId?: number;
+}): Promise<ArticleDto[]> {
   const query = params?.boardId ? `?boardId=${params.boardId}` : "";
-  const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles${query}`);
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/articles${query}`
+  );
   if (!response.ok) throw new Error("게시글 목록 조회 실패");
   return response.json();
 }
@@ -198,18 +204,24 @@ export async function updateArticle(
   id: number,
   articleData: ArticleForm
 ): Promise<ArticleDto> {
-  const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
-    method: "PUT",
-    body: JSON.stringify(articleData),
-  });
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/articles/${id}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(articleData),
+    }
+  );
   if (!response.ok) throw new Error("게시글 수정 실패");
   return response.json();
 }
 
 export async function deleteArticle(id: number): Promise<void> {
-  const response = await authFetch(`${API_BASE_URL}${API_BASE}/articles/${id}`, {
-    method: "DELETE",
-  });
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/articles/${id}`,
+    {
+      method: "DELETE",
+    }
+  );
   if (!response.ok) throw new Error("게시글 삭제 실패");
 }
 
@@ -244,18 +256,24 @@ export async function updateComment(
   commentId: number,
   form: CommentForm
 ): Promise<void> {
-  const response = await authFetch(`${API_BASE_URL}${API_BASE}/comments/${commentId}`, {
-    method: "PATCH",
-    body: JSON.stringify(form),
-  });
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/comments/${commentId}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(form),
+    }
+  );
 
   if (!response.ok) throw new Error("댓글 수정 실패");
 }
 
 export async function deleteComment(commentId: number): Promise<void> {
-  const response = await authFetch(`${API_BASE_URL}${API_BASE}/comments/${commentId}`, {
-    method: "DELETE",
-  });
+  const response = await authFetch(
+    `${API_BASE_URL}${API_BASE}/comments/${commentId}`,
+    {
+      method: "DELETE",
+    }
+  );
 
   if (!response.ok) throw new Error("댓글 삭제 실패");
 }
@@ -296,8 +314,9 @@ export async function preparePayment(productId: number): Promise<{
     `${API_BASE_URL}${API_BASE}/payments/portone/prepare`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json", 
-      Authorization: `Bearer ${token}`,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ productId }),
     }
@@ -354,8 +373,9 @@ export async function completePayment(data: {
     try {
       const err = JSON.parse(text);
       message = err.message || message;
-    } catch {}
-    throw new Error(`${message} (HTTP ${response.status})`);
+    } catch {
+      throw new Error(`${message} (HTTP ${response.status})`);
+    }
   }
   if (text) {
     try {
@@ -400,4 +420,3 @@ export async function queryRAG(query: string): Promise<RAGResponse> {
 
   return response.json();
 }
-

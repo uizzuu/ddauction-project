@@ -1,6 +1,6 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
-import type { User } from "../types/types";
+import type { User } from "../common/types";
 
 type Props = {
   user: User | null;
@@ -60,10 +60,7 @@ export default function HeaderMain({ user, setUser }: Props) {
     <header className="header">
       <div className="header-content height-70">
         {/* 로고 */}
-        <div
-          onClick={() => navigate("/")}
-          className="svg-wrap height-30"
-        >
+        <div onClick={() => navigate("/")} className="svg-wrap height-30">
           <svg
             viewBox="0 0 127 36"
             fill="none"
@@ -98,10 +95,7 @@ export default function HeaderMain({ user, setUser }: Props) {
               <span className="nav-link user-info">{user.nickName} 님</span>
               {/* 관리자 전용 버튼 */}
               {user.role === "ADMIN" && (
-                <NavLink
-                  to="/admin"
-                  className="nav-link"
-                >
+                <NavLink to="/admin" className="nav-link">
                   관리자 페이지
                 </NavLink>
               )}

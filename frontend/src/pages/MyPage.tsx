@@ -9,9 +9,9 @@ import type {
   Category,
   Inquiry,
   Review,
-} from "../types/types";
-import { PRODUCT_STATUS, PAYMENT_STATUS } from "../types/types";
-import { API_BASE_URL } from "../services/api";
+} from "../common/types";
+import { PRODUCT_STATUS, PAYMENT_STATUS } from "../common/enums";
+import { API_BASE_URL } from "../common/api";
 
 // Components Import
 import UserInfoEdit from "../components/mypage/UserInfoEdit";
@@ -25,56 +25,18 @@ import PaymentProducts from "../components/mypage/PaymentProducts";
 
 // ★ 이미지 URL 절대 경로 처리 (Helper Function)
 const normalizeProduct = (
-  p: Partial<Product>,
+  p: Partial<Product>
 ): Product & { imageUrl: string } =>
-({
-  productId: p.productId ?? 0,
-  title: p.title ?? "제목 없음",
-  content: p.content ?? "",
-  startingPrice: p.startingPrice ?? 0,
-  imageUrl: p.images?.[0]?.imagePath ?? "",
-  oneMinuteAuction: p.oneMinuteAuction ?? false,
-  auctionEndTime: p.auctionEndTime ?? (() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const day = String(now.getDate()).padStart(2, "0");
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
-    const seconds = String(now.getSeconds()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-  })(),
-  productStatus: p.productStatus ?? PRODUCT_STATUS[0],
-  paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
-  categoryId: p.categoryId ?? 0,
-  categoryName: p.categoryName ?? "없음",
-  sellerId: p.sellerId ?? 0,
-  sellerNickName: p.sellerNickName ?? "익명",
-  bidId: p.bidId,
-  bidPrice: p.bidPrice,
-  bids: (p.bids ?? []).map((b) => ({
-    bidId: b.bidId ?? 0,
-    bidPrice: b.bidPrice ?? 0,
-    userId: b.userId ?? 0,
-    isWinning: b.isWinning ?? false,
-    createdAt: b.createdAt ?? (() => {
-      const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const day = String(now.getDate()).padStart(2, "0");
-      const hours = String(now.getHours()).padStart(2, "0");
-      const minutes = String(now.getMinutes()).padStart(2, "0");
-      const seconds = String(now.getSeconds()).padStart(2, "0");
-      return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-    })(),
-  })),
-  bid: p.bid
-    ? {
-      bidId: p.bid.bidId ?? 0,
-      bidPrice: p.bid.bidPrice ?? 0,
-      userId: p.bid.userId ?? p.sellerId ?? 0,
-      isWinning: p.bid.isWinning ?? false,
-      createdAt: p.bid.createdAt ?? (() => {
+  ({
+    productId: p.productId ?? 0,
+    title: p.title ?? "제목 없음",
+    content: p.content ?? "",
+    startingPrice: p.startingPrice ?? 0,
+    imageUrl: p.images?.[0]?.imagePath ?? "",
+    oneMinuteAuction: p.oneMinuteAuction ?? false,
+    auctionEndTime:
+      p.auctionEndTime ??
+      (() => {
         const now = new Date();
         const year = now.getFullYear();
         const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -84,9 +46,53 @@ const normalizeProduct = (
         const seconds = String(now.getSeconds()).padStart(2, "0");
         return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
       })(),
-    }
-    : null,
-} as Product & { imageUrl: string });
+    productStatus: p.productStatus ?? PRODUCT_STATUS[0],
+    paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
+    categoryId: p.categoryId ?? 0,
+    categoryName: p.categoryName ?? "없음",
+    sellerId: p.sellerId ?? 0,
+    sellerNickName: p.sellerNickName ?? "익명",
+    bidId: p.bidId,
+    bidPrice: p.bidPrice,
+    bids: (p.bids ?? []).map((b) => ({
+      bidId: b.bidId ?? 0,
+      bidPrice: b.bidPrice ?? 0,
+      userId: b.userId ?? 0,
+      isWinning: b.isWinning ?? false,
+      createdAt:
+        b.createdAt ??
+        (() => {
+          const now = new Date();
+          const year = now.getFullYear();
+          const month = String(now.getMonth() + 1).padStart(2, "0");
+          const day = String(now.getDate()).padStart(2, "0");
+          const hours = String(now.getHours()).padStart(2, "0");
+          const minutes = String(now.getMinutes()).padStart(2, "0");
+          const seconds = String(now.getSeconds()).padStart(2, "0");
+          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+        })(),
+    })),
+    bid: p.bid
+      ? {
+          bidId: p.bid.bidId ?? 0,
+          bidPrice: p.bid.bidPrice ?? 0,
+          userId: p.bid.userId ?? p.sellerId ?? 0,
+          isWinning: p.bid.isWinning ?? false,
+          createdAt:
+            p.bid.createdAt ??
+            (() => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = String(now.getMonth() + 1).padStart(2, "0");
+              const day = String(now.getDate()).padStart(2, "0");
+              const hours = String(now.getHours()).padStart(2, "0");
+              const minutes = String(now.getMinutes()).padStart(2, "0");
+              const seconds = String(now.getSeconds()).padStart(2, "0");
+              return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+            })(),
+        }
+      : null,
+  } as Product & { imageUrl: string });
 
 type MypageSection =
   | "info"
@@ -235,13 +241,16 @@ export default function MyPage({ user, setUser }: Props) {
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/users/${user.userId}/withdraw`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/users/${user.userId}/withdraw`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (res.ok) {
         setUser(null);
         navigate("/");
@@ -295,9 +304,7 @@ export default function MyPage({ user, setUser }: Props) {
       });
       if (res.ok) {
         const data: Partial<Product>[] = await res.json();
-        setBookmarkedProducts(
-          data.map((p) => normalizeProduct(p))
-        );
+        setBookmarkedProducts(data.map((p) => normalizeProduct(p)));
       } else {
         alert("찜 상품 조회 실패");
       }
@@ -381,16 +388,18 @@ export default function MyPage({ user, setUser }: Props) {
             inquiryReviewId: a.inquiryReviewId,
             answer: a.answer,
             nickName: a.nickName ?? "익명",
-            createdAt: a.createdAt ?? (() => {
-              const now = new Date();
-              const year = now.getFullYear();
-              const month = String(now.getMonth() + 1).padStart(2, "0");
-              const day = String(now.getDate()).padStart(2, "0");
-              const hours = String(now.getHours()).padStart(2, "0");
-              const minutes = String(now.getMinutes()).padStart(2, "0");
-              const seconds = String(now.getSeconds()).padStart(2, "0");
-              return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-            })(),
+            createdAt:
+              a.createdAt ??
+              (() => {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const day = String(now.getDate()).padStart(2, "0");
+                const hours = String(now.getHours()).padStart(2, "0");
+                const minutes = String(now.getMinutes()).padStart(2, "0");
+                const seconds = String(now.getSeconds()).padStart(2, "0");
+                return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+              })(),
           })),
         }));
         setMyInquiries(mappedData);
@@ -513,10 +522,13 @@ export default function MyPage({ user, setUser }: Props) {
       // 이미지 파일 추가
       productForm.images?.forEach((file) => formData.append("images", file));
 
-      const res = await fetch(`${API_BASE_URL}/api/products/${editingProductId}`, {
-        method: "PUT",
-        body: formData,
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/products/${editingProductId}`,
+        {
+          method: "PUT",
+          body: formData,
+        }
+      );
 
       if (res.ok) {
         const updatedProduct = normalizeProduct(await res.json());

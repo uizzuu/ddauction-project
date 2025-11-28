@@ -1,11 +1,9 @@
-export const PRODUCT_STATUS = ["ACTIVE", "CLOSED", "SOLD"] as const;
+import { ROLE, PAYMENT_STATUS, PRODUCT_STATUS, CHAT_TYPE } from './enums';
+
+export type Role = (typeof ROLE)[number];
 export type ProductStatus = (typeof PRODUCT_STATUS)[number];
-
-export const PAYMENT_STATUS = ["PENDING", "PAID", "COMPLETED", "FAILED"] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
-
-export const ROLE = ["ADMIN", "USER", "BANNED"] as const;
-export  type Role = (typeof ROLE)[number];
+export type ChatType = (typeof CHAT_TYPE)[number];
 
 export interface User {
   userId: number;
@@ -95,7 +93,7 @@ export type EditProductForm = {
   content: string;
   categoryId?: number;
   startingPrice?: string;
-  productStatus: typeof PRODUCT_STATUS[number];
+  productStatus: ProductStatus;
   auctionEndTime: string;
   images?: File[];
 };
@@ -243,7 +241,7 @@ export interface WinningInfo {
   productImage: string | null;
   bidPrice: number;
   sellerName: string;
-  paymentStatus?: "PENDING" | "PAID" | "FAILED" | "CANCELLED" | "COMPLETED" | null;
+  paymentStatus?: PaymentStatus;
 }
 
 export interface PaymentPrepareResponse {
@@ -277,9 +275,6 @@ export interface ChatMessage {
   response: RAGResponse;
   timestamp: string;
 }
-
-// 채팅 타입
-export type ChatType = "private" | "public";
 
 // 최소 유저 정보 타입 (백엔드 Users 엔티티 일부)
 export interface ChatUser {

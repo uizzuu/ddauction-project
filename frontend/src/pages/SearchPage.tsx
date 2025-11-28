@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
-import { API_BASE_URL } from "../services/api";
-import type { Product, Category } from "../types/types";
+import { API_BASE_URL } from "../common/api";
+import type { Product, Category } from "../common/types";
 import SelectBox from "../components/SelectBox";
-import { formatDateTime, formatPrice, formatDate } from "../utils/util";
+import { formatDateTime, formatPrice, formatDate } from "../common/util";
 
 export default function ProductSearchPage() {
   const navigate = useNavigate();

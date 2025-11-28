@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { queryRAG } from "../../services/api";
-import type { ChatMessage, RAGResponse } from "../../types/types";
-import { formatDateTime } from "../../utils/util";
+import { queryRAG } from "../../common/api";
+import type { ChatMessage, RAGResponse } from "../../common/types";
+import { formatDateTime } from "../../common/util";
 
 interface Props {
   isOpen: boolean;

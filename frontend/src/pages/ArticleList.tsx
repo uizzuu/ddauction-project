@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getArticles } from "../services/api";
-import type { ArticleDto, User } from "../types/types";
+import { getArticles } from "../common/api";
+import type { ArticleDto, User } from "../common/types";
 
 interface Props {
   user: User | null;
@@ -42,9 +42,17 @@ export default function ArticleList({ user }: Props) {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid #ccc" }}>
-              <th style={{ textAlign: "left", padding: "0.5rem", width: "100%" }}>제목</th>
-              <th style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>작성자</th>
-              <th style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>작성일</th>
+              <th
+                style={{ textAlign: "left", padding: "0.5rem", width: "100%" }}
+              >
+                제목
+              </th>
+              <th style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>
+                작성자
+              </th>
+              <th style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>
+                작성일
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -57,7 +65,9 @@ export default function ArticleList({ user }: Props) {
                 }}
                 onClick={() => navigate(`/articles/${article.articleId}`)}
               >
-                <td style={{ padding: "0.5rem", width: "100%" }}>{article.title}</td>
+                <td style={{ padding: "0.5rem", width: "100%" }}>
+                  {article.title}
+                </td>
                 <td style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>
                   {article.nickName ?? "알 수 없음"}
                 </td>
@@ -65,7 +75,7 @@ export default function ArticleList({ user }: Props) {
                   style={{
                     padding: "0.5rem 2rem",
                     color: "#888",
-                    whiteSpace: "noWrap"
+                    whiteSpace: "noWrap",
                   }}
                 >
                   {new Date(article.createdAt).toLocaleDateString()}

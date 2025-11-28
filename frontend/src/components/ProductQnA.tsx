@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
-import type { User, Qna, Product } from "../types/types";
-import { ROLE } from "../types/types";
-import { API_BASE_URL } from "../services/api";
-import { formatDateTime } from "../utils/util";
+import type { User, Qna, Product } from "../common/types";
+import { ROLE } from "../common/enums";
+import { API_BASE_URL } from "../common/api";
+import { formatDateTime } from "../common/util";
 
 type Props = {
   user: User | null;

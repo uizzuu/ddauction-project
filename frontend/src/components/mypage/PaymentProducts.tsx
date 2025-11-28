@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { API_BASE_URL } from "../../services/api";
-import type { Product } from "../../types/types";
+import { API_BASE_URL } from "../../common/api";
+import type { Product } from "../../common/types";
 
 type Props = {
   token: string;

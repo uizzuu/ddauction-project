@@ -1,5 +1,13 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import type { Bid } from "../types/types";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import type { Bid } from "../common/types";
 
 type Props = {
   bids: Bid[];
@@ -14,7 +22,9 @@ export default function ProductBidGraph({ bids, startingPrice }: Props) {
 
   return (
     <div style={{ marginTop: "24px" }}>
-      <h3 style={{ fontSize: "1.2rem", fontWeight: "bold", marginBottom: "8px" }}>
+      <h3
+        style={{ fontSize: "1.2rem", fontWeight: "bold", marginBottom: "8px" }}
+      >
         입찰 그래프
       </h3>
       <div
@@ -31,7 +41,13 @@ export default function ProductBidGraph({ bids, startingPrice }: Props) {
             <XAxis dataKey="name" />
             <YAxis domain={[startingPrice, "auto"]} />
             <Tooltip />
-            <Line type="monotone" dataKey="bidPrice" stroke="#000" strokeWidth={2} name="입찰가" />
+            <Line
+              type="monotone"
+              dataKey="bidPrice"
+              stroke="#000"
+              strokeWidth={2}
+              name="입찰가"
+            />
           </LineChart>
         </ResponsiveContainer>
       </div>

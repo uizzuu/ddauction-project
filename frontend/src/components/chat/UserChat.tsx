@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import type { User, PrivateChat, PublicChat, ChatMessagePayload } from "../../types/types";
+import type {
+  User,
+  PrivateChat,
+  PublicChat,
+  ChatMessagePayload,
+} from "../../common/types";
 
 interface UserChatProps {
   user: User | null;
@@ -41,10 +46,16 @@ export default function UserChat({ user }: UserChatProps) {
 
   // 메시지 전송
   const sendMessage = (isPrivate = false, targetUserId?: number) => {
-    if (!input.trim() || !user || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    if (
+      !input.trim() ||
+      !user ||
+      !ws.current ||
+      ws.current.readyState !== WebSocket.OPEN
+    )
+      return;
 
     const payload: ChatMessagePayload = {
-      type: isPrivate ? "private" : "public",
+      type: isPrivate ? "PRIVATE" : "PUBLIC",
       userId: user.userId,
       content: input,
       ...(isPrivate && targetUserId ? { targetUserId } : {}),

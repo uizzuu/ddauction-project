@@ -1,4 +1,4 @@
-import type { Qna } from "../../types/types";
+import type { Qna } from "../../common/types";
 
 type Props = {
   myQnas: Qna[];
@@ -26,14 +26,24 @@ export default function MyQnas({ myQnas }: Props) {
               >
                 <div style={{ fontWeight: "bold" }}>제목: {qna.title}</div>
                 <div>질문: {qna.question}</div>
-                <div>
-                  작성일: {new Date(qna.createdAt).toLocaleString()}
-                </div>
+                <div>작성일: {new Date(qna.createdAt).toLocaleString()}</div>
 
                 {answers.length > 0 && (
-                  <div style={{ marginTop: "10px", paddingLeft: "10px", borderLeft: "3px solid #000" }}>
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      paddingLeft: "10px",
+                      borderLeft: "3px solid #000",
+                    }}
+                  >
                     <strong>답변 완료</strong>
-                    <ul style={{ listStyle: "none", padding: 0, marginTop: "5px" }}>
+                    <ul
+                      style={{
+                        listStyle: "none",
+                        padding: 0,
+                        marginTop: "5px",
+                      }}
+                    >
                       {answers.map((a) => (
                         <li key={a.qnaReviewId} style={{ marginTop: "5px" }}>
                           {a.nickName ?? "익명"}: {a.answer} (

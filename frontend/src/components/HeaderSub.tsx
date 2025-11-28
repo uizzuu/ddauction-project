@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import ModalCategory from "../components/ModalCategory";
-import type { Category } from "../types/types";
-import { API_BASE_URL } from "../services/api";
+import type { Category } from "../common/types";
+import { API_BASE_URL } from "../common/api";
 import RAGChat from "./chat/RAGChat";
 
 type Props = {

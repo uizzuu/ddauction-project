@@ -1,4 +1,4 @@
-import type { User } from "../../types/types";
+import type { User } from "../../common/types";
 
 type Props = {
   users: User[];
@@ -48,11 +48,7 @@ export default function UserManagement({
           value={userFilterField}
           onChange={(e) =>
             setUserFilterField(
-              e.target.value as
-                | "userName"
-                | "nickName"
-                | "email"
-                | "phone"
+              e.target.value as "userName" | "nickName" | "email" | "phone"
             )
           }
         >
@@ -120,14 +116,10 @@ export default function UserManagement({
                 )}
               </td>
               <td>
-                {u.createdAt
-                  ? new Date(u.createdAt).toLocaleString()
-                  : "-"}
+                {u.createdAt ? new Date(u.createdAt).toLocaleString() : "-"}
               </td>
               <td>
-                {u.updatedAt
-                  ? new Date(u.updatedAt).toLocaleString()
-                  : "-"}
+                {u.updatedAt ? new Date(u.updatedAt).toLocaleString() : "-"}
               </td>
 
               {/* 권한 칸 */}

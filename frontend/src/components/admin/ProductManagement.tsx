@@ -1,5 +1,5 @@
-import type { Product, Category, EditProductForm } from "../../types/types";
-import { PRODUCT_STATUS } from "../../types/types";
+import type { Product, Category, EditProductForm } from "../../common/types";
+import { PRODUCT_STATUS } from "../../common/enums";
 
 type Props = {
   products: Product[];

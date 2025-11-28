@@ -1,4 +1,4 @@
-import type { Inquiry } from "../../types/types";
+import type { Inquiry } from "../../common/types";
 
 type Props = {
   inquiries: Inquiry[];
@@ -6,7 +6,11 @@ type Props = {
   handleSaveInquiryAnswer: (inquiryId: number, answer?: string) => void;
 };
 
-export default function InquiryManagement({ inquiries, setInquiries, handleSaveInquiryAnswer }: Props) {
+export default function InquiryManagement({
+  inquiries,
+  setInquiries,
+  handleSaveInquiryAnswer,
+}: Props) {
   return (
     <div className="admin-section">
       <h3>1:1 문의 관리</h3>
@@ -49,7 +53,13 @@ export default function InquiryManagement({ inquiries, setInquiries, handleSaveI
                       );
                     }}
                   />
-                  <button onClick={() => handleSaveInquiryAnswer(inq.inquiryId, inq.newAnswer)}>답변 등록</button>
+                  <button
+                    onClick={() =>
+                      handleSaveInquiryAnswer(inq.inquiryId, inq.newAnswer)
+                    }
+                  >
+                    답변 등록
+                  </button>
                 </td>
                 <td>{new Date(inq.createdAt).toLocaleString()}</td>
               </tr>

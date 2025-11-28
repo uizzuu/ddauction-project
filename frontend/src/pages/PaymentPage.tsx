@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getWinningInfo, preparePayment, completePayment } from "../services/api";
-import type { WinningInfo } from "../types/types";
+import { getWinningInfo, preparePayment, completePayment } from "../common/api";
+import type { WinningInfo } from "../common/types";
 
 //  PortOne 타입 선언
 declare global {
@@ -84,7 +84,11 @@ export default function PaymentPage() {
       setWinningInfo(data);
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "낙찰 정보 조회 중 오류가 발생했습니다.");
+      alert(
+        err instanceof Error
+          ? err.message
+          : "낙찰 정보 조회 중 오류가 발생했습니다."
+      );
       navigate("/");
     } finally {
       setLoading(false);
@@ -158,7 +162,9 @@ export default function PaymentPage() {
       );
     } catch (err) {
       console.error(err);
-      alert(err instanceof Error ? err.message : "결제 처리 중 오류가 발생했습니다.");
+      alert(
+        err instanceof Error ? err.message : "결제 처리 중 오류가 발생했습니다."
+      );
     }
   };
 
@@ -194,7 +200,9 @@ export default function PaymentPage() {
 
   return (
     <div style={{ maxWidth: "800px", margin: "0 auto", padding: "20px" }}>
-      <h1 style={{ marginBottom: "30px", fontSize: "2rem", fontWeight: "bold" }}>
+      <h1
+        style={{ marginBottom: "30px", fontSize: "2rem", fontWeight: "bold" }}
+      >
         결제하기
       </h1>
 
@@ -251,7 +259,9 @@ export default function PaymentPage() {
           padding: "20px",
         }}
       >
-        <h2 style={{ marginBottom: "15px", fontSize: "1.3rem" }}>배송지 정보</h2>
+        <h2 style={{ marginBottom: "15px", fontSize: "1.3rem" }}>
+          배송지 정보
+        </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <input
             type="text"
@@ -370,7 +380,13 @@ export default function PaymentPage() {
           <span>배송비</span>
           <span>무료</span>
         </div>
-        <hr style={{ margin: "15px 0", border: "none", borderTop: "1px solid #ddd" }} />
+        <hr
+          style={{
+            margin: "15px 0",
+            border: "none",
+            borderTop: "1px solid #ddd",
+          }}
+        />
         <div
           style={{
             display: "flex",
@@ -401,7 +417,7 @@ export default function PaymentPage() {
         }}
       >
         {winningInfo.bidPrice.toLocaleString()}원 결제하기
-      </button> 
+      </button>
     </div>
   );
 }

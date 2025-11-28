@@ -1,5 +1,5 @@
 import React from "react";
-import type { Product, Category, ProductForm } from "../../types/types";
+import type { Product, Category, ProductForm } from "../../common/types";
 
 type Props = {
   sellingProducts: Product[];

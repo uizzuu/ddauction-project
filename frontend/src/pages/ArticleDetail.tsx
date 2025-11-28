@@ -7,9 +7,14 @@ import {
   createComment,
   updateComment,
   deleteComment,
-} from "../services/api";
-import type { ArticleDto, User, CommentDto, CommentForm } from "../types/types";
-import { formatDateTime } from "../utils/util";
+} from "../common/api";
+import type {
+  ArticleDto,
+  User,
+  CommentDto,
+  CommentForm,
+} from "../common/types";
+import { formatDateTime } from "../common/util";
 
 interface Props {
   user: User | null;
@@ -42,24 +47,30 @@ export default function ArticleDetail({ user }: Props) {
   }, [id]);
 
   // 댓글 불러오기 함수 (페이징 적용)
-  const loadComments =  useCallback(async (pageNum: number) => {
-    if (!id) return;
-    try {
-      const allComments = await getCommentsByArticleId(Number(id));
-      const start = (pageNum - 1) * COMMENTS_PER_PAGE;
-      const pagedComments = allComments.slice(start, start + COMMENTS_PER_PAGE);
-  
-      if (pageNum === 1) {
-        setComments(pagedComments);
-      } else {
-        setComments((prev) => [...prev, ...pagedComments]);
+  const loadComments = useCallback(
+    async (pageNum: number) => {
+      if (!id) return;
+      try {
+        const allComments = await getCommentsByArticleId(Number(id));
+        const start = (pageNum - 1) * COMMENTS_PER_PAGE;
+        const pagedComments = allComments.slice(
+          start,
+          start + COMMENTS_PER_PAGE
+        );
+
+        if (pageNum === 1) {
+          setComments(pagedComments);
+        } else {
+          setComments((prev) => [...prev, ...pagedComments]);
+        }
+
+        setHasMore(start + COMMENTS_PER_PAGE < allComments.length);
+      } catch (err) {
+        console.error("댓글 조회 실패:", err);
       }
-  
-      setHasMore(start + COMMENTS_PER_PAGE < allComments.length);
-    } catch (err) {
-      console.error("댓글 조회 실패:", err);
-    }
-  }, [id, setComments, setHasMore]);
+    },
+    [id, setComments, setHasMore]
+  );
 
   // 초기 댓글 로드
   useEffect(() => {

@@ -1,7 +1,7 @@
 // src/pages/UserQnaForm.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../services/api";
+import { API_BASE_URL } from "../common/api";
 
 export default function UserQnaForm() {
   const [title, setTitle] = useState("");

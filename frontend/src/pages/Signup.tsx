@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { SignupForm } from "../types/types";
-import { API_BASE_URL } from "../services/api";
+import type { SignupForm } from "../common/types";
+import { API_BASE_URL } from "../common/api";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -72,33 +72,37 @@ export default function Signup() {
   };
 
   const handleSubmit = async () => {
-  if (!validateAll()) return;
+    if (!validateAll()) return;
 
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    const data = await response.json(); // 항상 메시지 읽기
+      const data = await response.json(); // 항상 메시지 읽기
 
-    if (response.ok) {  // 200~299
-      alert(data.message || "회원가입 성공!");
-      navigate("/login");
-    } else {
-      setErrors((prev) => ({ ...prev, submit: data || "회원가입 실패" }));
+      if (response.ok) {
+        // 200~299
+        alert(data.message || "회원가입 성공!");
+        navigate("/login");
+      } else {
+        setErrors((prev) => ({ ...prev, submit: data || "회원가입 실패" }));
+      }
+    } catch (err) {
+      console.log(err);
+      setErrors((prev) => ({ ...prev, submit: "회원가입 실패" }));
     }
-  } catch (err) {
-    console.log(err);
-    setErrors((prev) => ({ ...prev, submit: "회원가입 실패" }));
-  }
-};
+  };
 
   return (
     <div className="auth-container">
       <div className="auth-box">
-        <h2 onClick={() => navigate("/")} className="width-fit margin-auto svg-wrap mb-48 height-40">
+        <h2
+          onClick={() => navigate("/")}
+          className="width-fit margin-auto svg-wrap mb-48 height-40"
+        >
           <svg
             viewBox="0 0 127 36"
             fill="none"
@@ -175,11 +179,12 @@ export default function Signup() {
             onChange={(e) => {
               const val = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣\s]/g, "");
               setForm((prev) => ({ ...prev, email: val }));
-            
+
               let msg = "";
               if (!val) msg = "이메일을 입력해주세요";
-              else if (!isEmailValid(val)) msg = "올바른 이메일 형식이 아닙니다";
-            
+              else if (!isEmailValid(val))
+                msg = "올바른 이메일 형식이 아닙니다";
+
               setErrors((prev) => ({ ...prev, email: msg }));
             }}
             onBlur={() => {

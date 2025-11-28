@@ -23,9 +23,9 @@ import {
   AdminPage,
   ErrorPage,
   OAuth2Redirect,
-} from "./import/import";
-import "./import/import.css";
-import type { User, Category } from "./types/types";
+} from "./common/import";
+import "./common/import.css";
+import type { User, Category } from "./common/types";
 
 // 유효한 경로 패턴 정의
 const VALID_PATHS = [
@@ -200,4 +200,4 @@ export default function App() {
     </div>
   );
 }
-// 
+//

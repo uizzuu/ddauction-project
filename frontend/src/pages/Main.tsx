@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { API_BASE_URL } from "../services/api";
-import type { Product } from "../types/types";
-import { formatDateTime, formatPrice, formatDate } from "../utils/util";
+import { API_BASE_URL } from "../common/api";
+import type { Product } from "../common/types";
+import { formatDateTime, formatPrice, formatDate } from "../common/util";
 
 export default function Main() {
   const navigate = useNavigate();
@@ -225,7 +225,8 @@ export default function Main() {
                         // 이미지 깨지면 no-image div로 대체
                         const parent = e.currentTarget.parentElement;
                         if (parent) {
-                          parent.innerHTML = '<div class="no-image-txt">이미지 없음</div>';
+                          parent.innerHTML =
+                            '<div class="no-image-txt">이미지 없음</div>';
                         }
                       }}
                     />

@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import type { User, ProductForm, Category } from "../types/types";
-import { API_BASE_URL } from "../services/api";
+import type { User, ProductForm, Category } from "../common/types";
+import { API_BASE_URL } from "../common/api";
 import SelectBox from "../components/SelectBox";
 
 type Props = {
@@ -38,14 +38,12 @@ export default function ProductRegister({ user }: Props) {
     setMinDateTime(now);
 
     const maxDate = new Date(now);
-    maxDate.setMonth(now.getMonth() + 3);  // 3개월 후 날짜로 설정
+    maxDate.setMonth(now.getMonth() + 3); // 3개월 후 날짜로 설정
     setMaxDateTime(maxDate);
 
     console.log("최소 날짜 (minDateTime):", now);
     console.log("최대 날짜 (maxDateTime):", maxDate);
   }, []);
-
-
 
   // DatePicker 변경 시 form도 업데이트
   const handleDateChange = (date: Date | null) => {
@@ -75,8 +73,6 @@ export default function ProductRegister({ user }: Props) {
       setError("");
     }
   };
-
-
 
   // 카테고리 로드
   useEffect(() => {

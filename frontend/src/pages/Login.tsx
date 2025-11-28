@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { User, LoginForm } from "../types/types";
-import { API_BASE_URL } from "../services/api";
+import type { User, LoginForm } from "../common/types";
+import { API_BASE_URL } from "../common/api";
 
 type Props = {
   setUser: (user: User) => void;
@@ -196,8 +196,7 @@ export default function Login({ setUser }: Props) {
             onClick={() => handleSocialLogin("naver")}
             className="btn-social flex-box flex-center naver"
           >
-            <svg xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 19.1 17.5">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.1 17.5">
               <defs>
                 <style>{`.cls-1 { fill: #fff; }`}</style>
               </defs>

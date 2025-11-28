@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import type { Category } from "../types/types";
+import type { Category } from "../common/types";
 
 interface ModalCategoryProps {
   isOpen: boolean;

@@ -6,8 +6,8 @@ import type {
   Category,
   EditProductForm,
   Inquiry,
-} from "../types/types";
-import { API_BASE_URL } from "../services/api";
+} from "../common/types";
+import { API_BASE_URL } from "../common/api";
 
 // 분리된 컴포넌트 임포트
 import UserManagement from "../components/admin/UserManagement";
