@@ -6,7 +6,8 @@ from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_pinecone import Pinecone as LangchainPinecone
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage
-from langchain_core.pydantic_v1 import BaseModel, Field
+from pydantic import BaseModel, Field
+
 
 # --- 환경 설정 로드 ---
 # .env 파일에서 환경 변수를 로드합니다.
