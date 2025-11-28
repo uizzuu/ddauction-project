@@ -384,9 +384,12 @@ export async function checkWinner(productId: number): Promise<{
 
 export async function queryRAG(query: string): Promise<RAGResponse> {
   const request: RAGRequest = { query };
-  
-  const response = await authFetch(`${API_BASE_URL}${API_BASE}/chat/query`, {
+
+  const response = await fetch(`${API_BASE_URL}${API_BASE}/chat/`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(request),
   });
 
