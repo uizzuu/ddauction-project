@@ -13,7 +13,6 @@ import org.springframework.web.client.RestTemplate;
 @RestController
 @RequestMapping("/api/chat")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class ChatController {
 
     @Value("${rag.api.url}")
