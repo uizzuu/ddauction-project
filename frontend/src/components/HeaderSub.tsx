@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import ModalCategory from "../components/ModalCategory";
 import type { Category } from "../types/types";
 import { API_BASE_URL } from "../services/api";
-import RAGChat from "../pages/RAGChat";
+import RAGChat from "./chat/RAGChat";
 
 type Props = {
   category: Category[];
@@ -95,10 +95,7 @@ export default function HeaderSub({ category, setCategory }: Props) {
           <NavLink to="/community" className="nav-link">
             커뮤니티
           </NavLink>
-          <button
-            onClick={() => setIsChatOpen(true)}
-            className="nav-link"
-          >
+          <button onClick={() => setIsChatOpen(true)} className="nav-link">
             <p>챗봇문의</p>
           </button>
           <RAGChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
