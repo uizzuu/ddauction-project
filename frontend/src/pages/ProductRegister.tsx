@@ -2,7 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import type { User, ProductForm, Category, AiDescriptionRequest, AiDescriptionResponse } from "../common/types";
+import type { 
+  User, 
+  ProductForm,
+  AiDescriptionRequest,
+  AiDescriptionResponse 
+} from "../common/types";
+import { CATEGORY_OPTIONS } from "../common/enums";  // ✅ 추가
 import { API_BASE_URL } from "../common/api";
 import SelectBox from "../components/SelectBox";
 
@@ -21,7 +27,7 @@ export default function ProductRegister({ user }: Props) {
     auctionEndTime: "",
     categoryId: null,
   });
-  const [categories, setCategories] = useState<Category[]>([]);
+  // const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
   const [minDateTime, setMinDateTime] = useState<Date | undefined>(undefined);
   const [maxDateTime, setMaxDateTime] = useState<Date | undefined>(undefined);
@@ -76,23 +82,23 @@ export default function ProductRegister({ user }: Props) {
   };
 
   // 카테고리 로드
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/categories`);
-        if (res.ok) {
-          const data: Category[] = await res.json();
-          setCategories(data);
-          if (data.length > 0) {
-            setForm((prev) => ({ ...prev, categoryId: data[0].categoryId }));
-          }
-        }
-      } catch (err) {
-        console.error("카테고리 로드 실패", err);
-      }
-    };
-    fetchCategories();
-  }, []);
+  // useEffect(() => {
+  //   const fetchCategories = async () => {
+  //     try {
+  //       const res = await fetch(`${API_BASE_URL}/api/categories`);
+  //       if (res.ok) {
+  //         const data: Category[] = await res.json();
+  //         setCategories(data);
+  //         if (data.length > 0) {
+  //           setForm((prev) => ({ ...prev, categoryId: data[0].categoryId }));
+  //         }
+  //       }
+  //     } catch (err) {
+  //       console.error("카테고리 로드 실패", err);
+  //     }
+  //   };
+  //   fetchCategories();
+  // }, []);
 
   // AI 상품 설명 자동 생성
   const generateAiDescriptionAuto = async () => {
@@ -318,7 +324,7 @@ export default function ProductRegister({ user }: Props) {
           />
 
           <label className="label">상세 설명 *</label>
-          // 이부분 추가함
+          // 이부분 추가
           <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
             <button
               type="button"
@@ -343,7 +349,6 @@ export default function ProductRegister({ user }: Props) {
               </span>
             )}
           </div>
-          //여기까지
           <textarea
             placeholder="상품 상세 설명"
             value={form.content}
@@ -454,10 +459,7 @@ export default function ProductRegister({ user }: Props) {
             onChange={(val) =>
               setForm({ ...form, categoryId: val === "" ? null : Number(val) })
             }
-            options={categories.map((c) => ({
-              value: String(c.categoryId),
-              label: c.name,
-            }))}
+            options={CATEGORY_OPTIONS}
             placeholder="카테고리를 선택하세요"
             className="register-category"
           />
