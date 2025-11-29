@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import type { User, ProductForm, Category } from "../common/types";
+import type { User, ProductForm, Category, AiDescriptionRequest, AiDescriptionResponse } from "../common/types";
 import { API_BASE_URL } from "../common/api";
 import SelectBox from "../components/SelectBox";
 
@@ -28,6 +28,7 @@ export default function ProductRegister({ user }: Props) {
   const [auctionEndDate, setAuctionEndDate] = useState<Date | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [uploading, setUploading] = useState(false);
+  const [aiGenerating, setAiGenerating] = useState(false);
 
   useEffect(() => {
     const now = new Date();
@@ -92,6 +93,51 @@ export default function ProductRegister({ user }: Props) {
     };
     fetchCategories();
   }, []);
+
+  // AI 상품 설명 자동 생성
+  const generateAiDescriptionAuto = async () => {
+    if (!form.title || form.title.trim().length < 2) {
+      alert("상품명을 2글자 이상 입력해주세요!");
+      return;
+    }
+
+    setAiGenerating(true);
+    setError("");
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const requestBody: AiDescriptionRequest = {
+        product_name: form.title,
+        keywords: [],  // 빈 배열: AI가 제목을 보고 자동 추론
+        target_audience: "일반 고객",
+        tone: "전문적인, 신뢰감 있는",
+      };
+
+      const response = await fetch(`${API_BASE_URL}/api/ai/generate-description`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error("AI 생성 실패");
+      }
+
+      const data: AiDescriptionResponse = await response.json();
+      setForm({ ...form, content: data.description });
+      alert("AI가 상품 설명을 생성했습니다!");
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "AI 생성 중 오류 발생");
+      alert("AI 생성에 실패했습니다. 다시 시도해주세요.");
+    } finally {
+      setAiGenerating(false);
+    }
+  };
 
   // 폼 validation
   const validateForm = () => {
@@ -272,6 +318,32 @@ export default function ProductRegister({ user }: Props) {
           />
 
           <label className="label">상세 설명 *</label>
+          // 이부분 추가함
+          <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+            <button
+              type="button"
+              onClick={generateAiDescriptionAuto}
+              className="btn-ai"
+              disabled={uploading || aiGenerating || !form.title || form.title.trim().length < 2}
+              style={{
+                padding: "8px 16px",
+                backgroundColor: !form.title || form.title.trim().length < 2 ? "#d1d5db" : "#6366f1",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+                cursor: !form.title || form.title.trim().length < 2 ? "not-allowed" : "pointer",
+                opacity: aiGenerating ? 0.7 : 1,
+              }}
+            >
+              {aiGenerating ? "⏳ AI 생성 중..." : "🤖 AI로 설명 자동 생성"}
+            </button>
+            {form.title && form.title.trim().length < 2 && (
+              <span style={{ fontSize: "12px", color: "#ef4444", alignSelf: "center" }}>
+                제목을 2글자 이상 입력하세요
+              </span>
+            )}
+          </div>
+          //여기까지
           <textarea
             placeholder="상품 상세 설명"
             value={form.content}

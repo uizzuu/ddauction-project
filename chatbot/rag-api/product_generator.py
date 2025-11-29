@@ -17,8 +17,9 @@ class ProductDescriptionGenerator:
 
         # 프롬프트 템플릿 정의
         # 역할 부여 -> 입력 데이터 명시 -> 출력 형식 지정
+        # product_generator.py 수정
         self.prompt = ChatPromptTemplate.from_messages([
-            ("system", "당신은 10년 경력의 이커머스 전문 카피라이터입니다. 고객의 구매 욕구를 자극하는 매력적이고 세련된 상품 설명을 작성합니다."),
+            ("system", "당신은 10년 경력의 이커머스 전문 카피라이터입니다."),
             ("human", """
             다음 상품 정보를 바탕으로 상세 페이지에 들어갈 상품 설명을 작성해주세요.
 
@@ -27,6 +28,9 @@ class ProductDescriptionGenerator:
             2. 주요 특징/키워드: {keywords}
             3. 타겟 고객: {target_audience}
             4. 원하는 분위기(톤앤매너): {tone}
+
+            ⚠️ 키워드가 비어있다면, 상품명을 분석해서 적절한 키워드를 자동으로 추론하세요.
+            ⚠️ 타겟 고객이 "일반 고객"이라면, 상품명을 보고 가장 적합한 타겟을 추론하세요.
 
             [작성 가이드]
             - 헤드라인: 눈길을 사로잡는 한 문장 카피

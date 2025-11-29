@@ -16,10 +16,10 @@ import java.util.List;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
-    @EntityGraph(attributePaths = "images")
+//    @EntityGraph(attributePaths = "images")
     Product findTopByProductStatusOrderByCreatedAtDesc(ProductStatus productStatus);
 
-    @EntityGraph(attributePaths = "images")
+//    @EntityGraph(attributePaths = "images")
     Product findTopByProductStatusAndAuctionEndTimeAfterOrderByAuctionEndTimeAsc(
             ProductStatus productStatus, LocalDateTime now);
 

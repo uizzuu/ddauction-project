@@ -310,3 +310,16 @@ content: string;
 nickName?: string; // 읽기용
 createdAt?: string;
 }
+
+//상품 내용 추천 관련 타입
+
+export interface AiDescriptionRequest {
+  product_name: string;
+  keywords: string[];
+  target_audience: string;
+  tone: string;
+}
+
+export interface AiDescriptionResponse {
+  description: string;
+}
