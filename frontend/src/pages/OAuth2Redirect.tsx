@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User } from "../common/types";
+import { fetchMe } from "../common/api";
 
 type Props = {
   setUser: (user: User) => void;
@@ -28,21 +29,12 @@ export default function OAuth2Redirect({ setUser }: Props) {
         localStorage.setItem("token", token);
 
         // 사용자 정보 조회
-        const userResponse = await fetch("/api/users/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const userData = await fetchMe(token);
 
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          console.log("✅ 사용자 정보 조회 성공:", userData);
-          setUser(userData);
-          navigate("/"); // 메인 페이지로 리다이렉트
-        } else {
-          console.error("사용자 정보 조회 실패");
-          navigate("/login?error=user_info");
-        }
+        console.log("✅ 사용자 정보 조회 성공:", userData);
+        setUser(userData);
+
+        navigate("/");
       } catch (error) {
         console.error("OAuth2 리다이렉트 처리 중 오류:", error);
         navigate("/login?error=oauth_error");

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { API_BASE_URL } from "../common/api";
 import type { Product } from "../common/types";
 import { formatDateTime, formatPrice, formatDate } from "../common/util";
+import { fetchLatestProducts, fetchBannerProducts } from "../common/api";
 
 export default function Main() {
   const navigate = useNavigate();
@@ -16,89 +16,34 @@ export default function Main() {
   const [current, setCurrent] = useState(0);
   const [imageFailed, setImageFailed] = useState<boolean[]>([]);
 
-  // 신상 상품 불러오기
-  const fetchProducts = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/products`);
-      if (!res.ok) throw new Error("상품 불러오기 실패");
-      const data: Product[] = await res.json();
-      const sorted = data
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt || "").getTime() -
-            new Date(a.createdAt || "").getTime()
-        )
-        .slice(0, 10);
-      setProducts(sorted);
-    } catch (err) {
-      console.error("❌ 상품 검색 중 오류 발생:", err);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 배너 상품 불러오기
-  const fetchBannerProducts = async () => {
-    try {
-      const [topRes, latestRes, endingRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/products/top-bookmarked`),
-        fetch(`${API_BASE_URL}/api/products/latest`),
-        fetch(`${API_BASE_URL}/api/products/ending-soon`),
-      ]);
-
-      if (!topRes.ok || !latestRes.ok || !endingRes.ok) {
-        throw new Error(
-          `배너 API 중 하나가 실패했습니다. topRes: ${topRes.status}, latestRes: ${latestRes.status}, endingRes: ${endingRes.status}`
-        );
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const latestProducts = await fetchLatestProducts();
+        setProducts(latestProducts);
+        const bannerData = await fetchBannerProducts();
+        setBanners(bannerData);
+      } catch (err) {
+        console.error(err);
+        setProducts([]);
+        setBanners([]);
+      } finally {
+        setLoading(false);
       }
+    };
+    loadData();
+  }, []);
 
-      const topData: Product[] = await topRes.json();
-      const latestData: Product = await latestRes.json();
-      const endingData: Product = await endingRes.json();
-
-      setBanners([
-        {
-          id: 1,
-          image: topData[0]?.images?.[0]?.imagePath,
-          text: "지금 가장 인기 있는 경매 상품 🔥",
-          product: topData[0],
-        },
-        {
-          id: 2,
-          image: latestData?.images?.[0]?.imagePath,
-          text: "오늘의 추천! 신규 등록 상품 🎉",
-          product: latestData,
-        },
-        {
-          id: 3,
-          image: endingData?.images?.[0]?.imagePath,
-          text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
-          product: endingData,
-        },
-      ]);
-    } catch (err) {
-      console.error("배너 상품 불러오기 실패:", err);
-    }
-  };
-
-  // 배너 데이터가 바뀔 때 imageFailed 초기화
   useEffect(() => {
     setImageFailed(new Array(banners.length).fill(false));
   }, [banners]);
-
-  useEffect(() => {
-    fetchProducts();
-    fetchBannerProducts();
-  }, []);
 
   const handlePrev = () =>
     setCurrent((prev) => (prev === 0 ? banners.length - 1 : prev - 1));
   const handleNext = () =>
     setCurrent((prev) => (prev === banners.length - 1 ? 0 : prev + 1));
 
-  // 자동 슬라이드
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrent((prev) => (prev === banners.length - 1 ? 0 : prev + 1));

@@ -1,139 +1,127 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { SignupForm } from "../common/types";
-import { API_BASE_URL } from "../common/api";
+import { signup } from "../common/api";
 
 export default function Signup() {
-const navigate = useNavigate();
+  const navigate = useNavigate();
 
-const [form, setForm] = useState<SignupForm & {
-address?: string;
-zipCode?: string;
-detailAddress?: string;
-}>({
-userName: "",
-nickName: "",
-email: "",
-password: "",
-phone: "",
-birthday: "",
-address: "",
-zipCode: "",
-detailAddress: ""
-});
-
-const [isComposing, setIsComposing] = useState({
-userName: false,
-nickName: false,
-});
-
-const [passwordConfirm, setPasswordConfirm] = useState("");
-const [errors, setErrors] = useState({
-userName: "",
-nickName: "",
-email: "",
-phone: "",
-password: "",
-passwordConfirm: "",
-submit: "",
-birthday: "",
-address: "",
-});
-
-const isEmailValid = (email: string) =>
-/^[^\s@]+@[^\s@]+.[^\s@]+$/.test(email);
-
-const validateAll = () => {
-const newErrors = {
-userName: "",
-nickName: "",
-email: "",
-phone: "",
-password: "",
-passwordConfirm: "",
-submit: "",
-birthday: "",
-address: "",
-zipCode: "",
-detailAddress: "",
-};
-
-
-if (!form.userName) newErrors.userName = "이름을 입력해주세요";
-if (!form.nickName) newErrors.nickName = "닉네임을 입력해주세요";
-else if (form.nickName.length < 3 || form.nickName.length > 12)
-  newErrors.nickName = "닉네임은 3~12자여야 합니다";
-
-if (!form.email) newErrors.email = "이메일을 입력해주세요";
-else if (!isEmailValid(form.email))
-  newErrors.email = "올바른 이메일 형식이 아닙니다";
-
-if (!form.phone) newErrors.phone = "전화번호를 입력해주세요";
-else if (form.phone.length < 10 || form.phone.length > 11)
-  newErrors.phone = "전화번호는 10~11자리 숫자여야 합니다";
-
-if (!form.password) newErrors.password = "비밀번호를 입력해주세요";
-else if (form.password.length < 8)
-  newErrors.password = "비밀번호는 8자리 이상이어야 합니다";
-
-if (!passwordConfirm)
-  newErrors.passwordConfirm = "비밀번호 확인을 입력해주세요";
-else if (passwordConfirm !== form.password)
-  newErrors.passwordConfirm = "비밀번호가 일치하지 않습니다";
-
-setErrors(newErrors);
-return Object.values(newErrors).every((err) => !err);
-
-
-};
-
-const handleSearchAddress = () => {
-// @ts-ignore
-new window.daum.Postcode({
-oncomplete: function (data: any) {
-setForm((prev) => ({
-...prev,
-address: data.address,
-zipCode: data.zonecode,
-detailAddress: "",
-}));
-},
-}).open();
-};
-
-const handleSubmit = async () => {
-if (!validateAll()) return;
-
-
-try {
-  const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(form),
+  const [form, setForm] = useState<SignupForm & {
+    address?: string;
+    zipCode?: string;
+    detailAddress?: string;
+  }>({
+    userName: "",
+    nickName: "",
+    email: "",
+    password: "",
+    phone: "",
+    birthday: "",
+    address: "",
+    zipCode: "",
+    detailAddress: ""
   });
 
-  const data = await response.json();
+  const [isComposing, setIsComposing] = useState({
+    userName: false,
+    nickName: false,
+  });
 
-  if (response.ok) {
-    alert(data.message || "회원가입 성공!");
-    navigate("/login");
-  } else {
-    setErrors((prev) => ({ ...prev, submit: data || "회원가입 실패" }));
-  }
-} catch (err) {
-  console.log(err);
-  setErrors((prev) => ({ ...prev, submit: "회원가입 실패" }));
-}
+  const [passwordConfirm, setPasswordConfirm] = useState("");
+  const [errors, setErrors] = useState({
+    userName: "",
+    nickName: "",
+    email: "",
+    phone: "",
+    password: "",
+    passwordConfirm: "",
+    submit: "",
+    birthday: "",
+    address: "",
+  });
+
+  const isEmailValid = (email: string) =>
+    /^[^\s@]+@[^\s@]+.[^\s@]+$/.test(email);
+
+  const validateAll = () => {
+    const newErrors = {
+      userName: "",
+      nickName: "",
+      email: "",
+      phone: "",
+      password: "",
+      passwordConfirm: "",
+      submit: "",
+      birthday: "",
+      address: "",
+      zipCode: "",
+      detailAddress: "",
+    };
 
 
-};
+    if (!form.userName) newErrors.userName = "이름을 입력해주세요";
+    if (!form.nickName) newErrors.nickName = "닉네임을 입력해주세요";
+    else if (form.nickName.length < 3 || form.nickName.length > 12)
+      newErrors.nickName = "닉네임은 3~12자여야 합니다";
 
-return ( <div className="auth-container"> <div className="auth-box">
-<h2
-onClick={() => navigate("/")}
-className="width-fit margin-auto svg-wrap mb-48 height-40"
->
-{/* 로고 SVG 생략 */} </h2>
+    if (!form.email) newErrors.email = "이메일을 입력해주세요";
+    else if (!isEmailValid(form.email))
+      newErrors.email = "올바른 이메일 형식이 아닙니다";
+
+    if (!form.phone) newErrors.phone = "전화번호를 입력해주세요";
+    else if (form.phone.length < 10 || form.phone.length > 11)
+      newErrors.phone = "전화번호는 10~11자리 숫자여야 합니다";
+
+    if (!form.password) newErrors.password = "비밀번호를 입력해주세요";
+    else if (form.password.length < 8)
+      newErrors.password = "비밀번호는 8자리 이상이어야 합니다";
+
+    if (!passwordConfirm)
+      newErrors.passwordConfirm = "비밀번호 확인을 입력해주세요";
+    else if (passwordConfirm !== form.password)
+      newErrors.passwordConfirm = "비밀번호가 일치하지 않습니다";
+
+    setErrors(newErrors);
+    return Object.values(newErrors).every((err) => !err);
+
+  };
+
+  const handleSearchAddress = () => {
+    // @ts-ignore
+    new window.daum.Postcode({
+      oncomplete: function (data: any) {
+        setForm((prev) => ({
+          ...prev,
+          address: data.address,
+          zipCode: data.zonecode,
+          detailAddress: "",
+        }));
+      },
+    }).open();
+  };
+
+  const handleSubmit = async () => {
+    if (!validateAll()) return;
+
+    try {
+      await signup(form);
+      alert("회원가입 성공!");
+      navigate("/login");
+    } catch (err: any) {
+      console.error(err);
+      setErrors((prev) => ({
+        ...prev,
+        submit: err.message || "회원가입 실패",
+      }));
+    }
+  };
+
+  return (<div className="auth-container"> <div className="auth-box">
+    <h2
+      onClick={() => navigate("/")}
+      className="width-fit margin-auto svg-wrap mb-48 height-40"
+    >
+      {/* 로고 SVG 생략 */} </h2>
 
 
     <div className="form-group">
@@ -350,8 +338,8 @@ className="width-fit margin-auto svg-wrap mb-48 height-40"
       </button>
     </div>
   </div>
-</div>
+  </div>
 
 
-);
+  );
 }

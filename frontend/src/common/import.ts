@@ -10,6 +10,15 @@ import ReportManagement from "../components/admin/ReportManagement";
 import StatsManagement from "../components/admin/StatsManagement";
 import InquiryManagement from "../components/admin/InquiryManagement";
 
+import UserInfoEdit from "../components/mypage/UserInfoEdit";
+import SellingProducts from "../components/mypage/SellingProducts";
+import BookmarkedProducts from "../components/mypage/BookmarkedProducts";
+import MyReports from "../components/mypage/MyReports";
+import MyQnas from "../components/mypage/MyQnas";
+import MyInquiries from "../components/mypage/MyInquiries";
+import ReviewManagement from "../components/mypage/ReviewManagement";
+import PaymentProducts from "../components/mypage/PaymentProducts";
+
 // pages
 import Main from "../pages/Main";
 import Login from "../pages/Login";
@@ -38,6 +47,15 @@ export {
   StatsManagement,
   InquiryManagement,
 
+  UserInfoEdit,
+  SellingProducts,
+  BookmarkedProducts,
+  MyReports,
+  MyQnas,
+  MyInquiries,
+  ReviewManagement,
+  PaymentProducts,
+
   Main,
   Login,
   Signup,
@@ -53,4 +71,3 @@ export {
   AROverlayWithButton,
   ProductQnA
 };
-// 
