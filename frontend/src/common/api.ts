@@ -1,5 +1,4 @@
 import type * as TYPE from "./types";
-import { jwtDecode } from "jwt-decode";
 
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
@@ -7,18 +6,6 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 
 // ===================== 타입가드 =====================
-
-function isUser(obj: unknown): obj is TYPE.User {
-  if (typeof obj !== "object" || obj === null) return false;
-  const o = obj as Record<string, unknown>;
-  return (
-    typeof o.userId === "number" &&
-    typeof o.userName === "string" &&
-    typeof o.nickName === "string" &&
-    (o.email === undefined || typeof o.email === "string") &&
-    (o.phone === undefined || typeof o.phone === "string")
-  );
-}
 
 function isBid(obj: unknown): obj is TYPE.Bid {
   if (typeof obj !== "object" || obj === null) return false;
@@ -291,33 +278,35 @@ export async function deleteComment(commentId: number): Promise<void> {
 }
 
 // 로그인
-export async function login(form: TYPE.LoginForm): Promise<TYPE.User> {
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/auth/login`, {
+export async function loginAPI(form: TYPE.LoginForm) {
+  const response = await fetch(`${SPRING_API}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(form),
   });
 
-  if (!response.ok) throw new Error("로그인 실패");
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.message || "로그인 실패");
+  }
 
-  // JWT는 Authorization 헤더에 담겨서 온다고 가정
-  const token = response.headers.get("Authorization")?.replace("Bearer ", "");
-  if (!token) throw new Error("토큰이 없습니다");
+  const authHeader = response.headers.get("Authorization");
+  if (!authHeader) throw new Error("토큰을 받지 못했습니다");
+  const token = authHeader.replace("Bearer ", "");
+  localStorage.setItem("token", token);
 
-  localStorage.setItem("token", token); // 저장
+  const userResponse = await fetch(`${SPRING_API}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
-  const data: unknown = await response.json();
-  if (!isUser(data)) throw new Error("API 반환값이 User 타입과 일치하지 않음");
-  // 🔹 JWT decode해서 nickName 포함
-  const decoded = jwtDecode<{ email: string; nickName: string; role?: string }>(
-    token
-  );
+  if (!userResponse.ok) throw new Error("사용자 정보를 가져오지 못했습니다");
+  const userData: TYPE.User = await userResponse.json();
+  return userData;
+}
 
-  return {
-    ...data,
-    nickName: decoded.nickName, // JWT에서 가져온 닉네임
-    role: decoded.role,
-  } as TYPE.User;
+// 소셜 로그인 URL 반환
+export function getSocialLoginURL(provider: "google" | "naver" | "kakao") {
+  return `${SPRING_API}/oauth2/authorization/${provider}`;
 }
 
 // 로그아웃
@@ -663,7 +652,7 @@ export async function updateUserRole(userId: number, role: TYPE.User["role"]): P
 }
 
 // 관리자 상품 조회 (필터 적용 가능)
-export async function getAdminProducts(keyword?: string, category?: TYPE.ProductCategoryType | null): Promise<TYPE.Product[]> {
+export async function fetchAdminProducts(keyword?: string, category?: TYPE.ProductCategoryType | null): Promise<TYPE.Product[]> {
   let url = `${API_BASE_URL}/api/products/search?`;
   if (keyword) url += `keyword=${encodeURIComponent(keyword)}&`;
   if (category) url += `category=${category}&`;
@@ -755,4 +744,55 @@ export async function fetchRecentPublicChats(): Promise<TYPE.PublicChat[]> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/chats/public/recent`, { credentials: "include" });
   if (!res.ok) throw new Error("공개 채팅 불러오기 실패");
   return (await res.json()) as TYPE.PublicChat[];
+}
+
+// QR 코드 이미지 가져오기
+export const fetchQrCodeImage = async (productId: number): Promise<string> => {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/qrcode/${productId}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+};
+
+// 상품 데이터 가져오기
+export const fetchProductByQr = async (productId: string): Promise<TYPE.Product> => {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`);
+  if (!res.ok) throw new Error("상품 조회 실패");
+  return res.json();
+};
+
+// 이메일 찾기
+export async function findEmail(phone: string, userName: string): Promise<string> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/auth/email-find`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, userName }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "입력한 정보와 일치하는 사용자가 없습니다.");
+  }
+
+  const data: { email: string } = await res.json();
+  return data.email;
+}
+
+// 비밀번호 재설정
+export async function resetPassword(params: {
+  email: string;
+  phone: string;
+  userName: string;
+  newPassword: string;
+}): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/api/auth/password-reset`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(params),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "입력한 정보와 일치하는 사용자가 없습니다.");
+  }
 }

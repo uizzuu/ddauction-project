@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../common/api";
+import { findEmail } from "../common/api";
 
 export default function FindEmail() {
   const navigate = useNavigate();
@@ -15,23 +15,12 @@ export default function FindEmail() {
     setEmail("");
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/email-find`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, userName }),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setEmail(data.email);
-        setMessage("가입된 이메일이 확인되었습니다.");
-      } else {
-        const data = await res.text();
-        setMessage(data || "입력한 정보와 일치하는 사용자가 없습니다.");
-      }
-    } catch (err) {
+      const foundEmail = await findEmail(phone, userName);
+      setEmail(foundEmail);
+      setMessage("가입된 이메일이 확인되었습니다.");
+    } catch (err: any) {
       console.error("이메일 찾기 오류:", err);
-      setMessage("이메일 찾기에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      setMessage(err.message || "이메일 찾기에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   };
 
