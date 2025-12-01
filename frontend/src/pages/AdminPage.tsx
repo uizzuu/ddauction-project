@@ -90,7 +90,7 @@ export default function AdminPage() {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const data = await API.getAdminProducts(filterKeyword, filterCategory);
+      const data = await API.fetchAdminProducts(filterKeyword, filterCategory);
       setProducts(data);
     } catch (err) {
       console.error("상품 조회 실패:", err);

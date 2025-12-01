@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../common/api";
+import { resetPassword } from "../common/api";
 
 export default function FindPassword() {
   const navigate = useNavigate();
@@ -15,23 +15,13 @@ export default function FindPassword() {
     setMessage("");
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/password-reset`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, phone, userName, newPassword }),
-      });
-
-      if (res.ok) {
-        setMessage("비밀번호가 성공적으로 변경되었습니다.");
-        // 필요 시 로그인 페이지로 자동 이동
-        // navigate("/login");
-      } else {
-        const data = await res.text();
-        setMessage(data || "입력한 정보와 일치하는 사용자가 없습니다.");
-      }
-    } catch (err) {
+      await resetPassword({ email, phone, userName, newPassword });
+      setMessage("비밀번호가 성공적으로 변경되었습니다.");
+      // 필요 시 로그인 페이지로 자동 이동
+      // navigate("/login");
+    } catch (err: any) {
       console.error("비밀번호 찾기 오류:", err);
-      setMessage("비밀번호 찾기에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      setMessage(err.message || "비밀번호 찾기에 실패했습니다. 잠시 후 다시 시도해주세요.");
     }
   };
 

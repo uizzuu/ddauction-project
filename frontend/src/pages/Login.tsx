@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User, LoginForm } from "../common/types";
-import { API_BASE_URL } from "../common/api";
+import { loginAPI, getSocialLoginURL } from "../common/api";
 
 type Props = {
   setUser: (user: User) => void;
@@ -36,58 +36,21 @@ export default function Login({ setUser }: Props) {
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
-    // 엔터나 버튼 클릭 시 새로고침 방지
     if (e) e.preventDefault();
-
     if (!validateAll()) return;
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-
-      if (response.ok) {
-        // 응답 헤더에서 토큰 추출
-        const authHeader = response.headers.get("Authorization");
-
-        if (!authHeader) {
-          throw new Error("토큰을 받지 못했습니다");
-        }
-
-        // "Bearer " 제거
-        const token = authHeader.replace("Bearer ", "");
-
-        localStorage.setItem("token", token);
-
-        // 사용자 정보는 별도로 가져와야 함
-        const userResponse = await fetch("/api/auth/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          setUser(userData);
-        }
-
-        navigate("/");
-      } else {
-        const data = await response.json();
-        setErrors((prev) => ({
-          ...prev,
-          submit: data.message || "로그인 실패",
-        }));
-      }
-    } catch {
-      setErrors((prev) => ({ ...prev, submit: "로그인 실패" }));
+      const userData = await loginAPI(form);
+      setUser(userData);
+      navigate("/");
+    } catch (err: any) {
+      setErrors((prev) => ({ ...prev, submit: err.message || "로그인 실패" }));
     }
   };
+
   // 소셜 로그인
   const handleSocialLogin = (provider: "google" | "naver" | "kakao") => {
-    window.location.href = `${API_BASE_URL}/oauth2/authorization/${provider}`;
+    window.location.href = getSocialLoginURL(provider);
   };
 
   return (

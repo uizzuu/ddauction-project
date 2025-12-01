@@ -1,16 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
-import { API_BASE_URL } from "../common/api";
+import { fetchQrCodeImage, fetchProductByQr } from "../common/api";
+import * as TYPE from "../common/types";
 
-interface AROverlayProps {
-  productId: number;
-}
-
-const AROverlayWithButton: React.FC<AROverlayProps> = ({ productId }) => {
-  const [mode, setMode] = useState<"initial" | "showQR" | "scanning">(
-    "initial"
-  );
+const AROverlayWithButton: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
+  const [mode, setMode] = useState<"initial" | "showQR" | "scanning">("initial");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [qrCodeUrl, setQrCodeUrl] = useState<string>("");
@@ -18,66 +13,29 @@ const AROverlayWithButton: React.FC<AROverlayProps> = ({ productId }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
 
-  // QR 코드 URL 생성 및 테스트
+  // QR 코드 URL 생성
   useEffect(() => {
-    const url = `${API_BASE_URL}/api/qrcode/${productId}`;
-    console.log("🔍 QR 코드 URL:", url);
-    console.log("🔍 productId:", productId);
-
-    fetch(url)
-      .then((res) => {
-        console.log("✅ API 응답 상태:", res.status);
-        console.log("✅ Content-Type:", res.headers.get("content-type"));
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-        return res.blob();
-      })
-      .then((blob) => {
-        console.log("✅ 이미지 크기:", blob.size, "bytes");
-        const objectUrl = URL.createObjectURL(blob);
-        setQrCodeUrl(objectUrl);
-      })
-      .catch((fetchError) => {
-        console.error("❌ QR API 오류:", fetchError);
-        setError(`백엔드 연결 실패: ${fetchError.message}`);
-      });
+    fetchQrCodeImage(productId)
+      .then(setQrCodeUrl)
+      .catch((err: unknown) => setError(err instanceof Error ? err.message : "QR 코드 로드 실패"));
   }, [productId]);
 
-  // handleScan 함수 - useCallback으로 메모이제이션
+  // handleScan
   const handleScan = useCallback(async (qrData: string) => {
-    console.log("📱 QR 스캔 결과:", qrData);
-
     try {
-      const apiUrl = `${API_BASE_URL}/api/products/${qrData}`;
-      console.log("🔍 상품 API 호출:", apiUrl);
-
-      const res = await fetch(apiUrl);
-      if (!res.ok) throw new Error("상품 조회 실패");
-
-      const data = await res.json();
-      console.log("✅ 상품 데이터:", data);
+      const data = await fetchProductByQr(qrData);
 
       if (data.images && data.images.length > 0) {
-        const imgPath = data.images[0].imagePath; //첫번째 이미지만 나옴
-        console.log("🖼️ AR 이미지:", imgPath);
-        setImageUrl(imgPath);
+        setImageUrl(data.images[0].imagePath);
         setError(null);
       } else if (data.imageUrl) {
-        console.log("🖼️ AR 이미지:", data.imageUrl);
         setImageUrl(data.imageUrl);
         setError(null);
       } else {
-        console.error("❌ 상품에 이미지가 없음");
         setError("상품 이미지가 없습니다.");
       }
     } catch (error) {
-      console.error("❌ 상품 조회 실패:", error);
-      setError(
-        `QR 코드 인식 실패: ${
-          error instanceof Error ? error.message : "알 수 없는 오류"
-        }`
-      );
+      setError(error instanceof Error ? error.message : "알 수 없는 오류");
     }
   }, []);
 

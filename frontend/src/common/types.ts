@@ -323,6 +323,11 @@ export interface UserChatProps {
   user: User;
 }
 
+// AROverlayWithButton 컴포넌트 props 타입
+export interface AROverlayProps {
+  productId: number;
+}
+
 //상품 내용 추천 관련 타입
 
 export interface AiDescriptionRequest {
