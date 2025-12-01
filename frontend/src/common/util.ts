@@ -1,5 +1,5 @@
-import type { Product, ProductType } from "./types";
-import { PRODUCT_STATUS, PAYMENT_STATUS } from "./enums";
+import type { Product, ProductCategoryType, ProductType } from "./types";
+import { PRODUCT_STATUS, PAYMENT_STATUS, PRODUCT_CATEGORY_LABELS } from "./enums";
 
 // SortOption
 export type SortOption = "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity";
@@ -179,4 +179,12 @@ export const sortProducts = async (
         return 0;
     }
   });
+};
+
+// 카테고리 코드를 한글 이름으로 변환
+export const getCategoryName = (
+  categoryCode: string | null | undefined
+): string => {
+  if (!categoryCode) return "없음";
+  return PRODUCT_CATEGORY_LABELS[categoryCode as ProductCategoryType] || "기타";
 };

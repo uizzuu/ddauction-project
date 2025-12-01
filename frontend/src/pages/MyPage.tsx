@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type {
   User,
-  Product, // Product 타입은 이미 productCategoryType을 포함한다고 가정
+  Product,
   Report,
   Qna,
   ProductForm,
@@ -11,10 +11,10 @@ import type {
 } from "../common/types";
 import {
   PRODUCT_STATUS,
-  PRODUCT_CATEGORY_LABELS, // common/enums에서 import
 } from "../common/enums";
-import type { ProductCategoryType, ProductType } from "../common/enums";
-import { API_BASE_URL } from "../common/api";
+import type { ProductType } from "../common/enums";
+import * as API from "../common/api";
+import { getCategoryName } from "../common/util";
 import {
   UserInfoEdit,
   SellingProducts,
@@ -24,9 +24,7 @@ import {
   MyInquiries,
   ReviewManagement,
   PaymentProducts,
-} from "../common/import"
-import { normalizeProduct } from "../common/util";
-
+} from "../common/import";
 
 type MypageSection =
   | "info"
@@ -46,17 +44,12 @@ type Props = {
   setUser: (user: User | null) => void;
 };
 
-// 상품 수정 시 ProductStatus를 추가하여 상태 관리
 type EditProductState = ProductForm & {
   productStatus: string;
 };
 
-
 export default function MyPage({ user, setUser }: Props) {
-  // 섹션 상태는 하나로 통합 (editing, showSelling 등을 대체)
   const [section, setSection] = useState<MypageSection>("info");
-
-  // 나머지 상태는 유지
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
 
   // Review states
@@ -80,7 +73,7 @@ export default function MyPage({ user, setUser }: Props) {
     startingPrice: "",
     auctionEndTime: "",
     productStatus: PRODUCT_STATUS[0],
-    productType: "AUCTION" as ProductType, // ProductType을 명시적으로 설정
+    productType: "AUCTION" as ProductType,
     images: [],
     productCategoryType: null,
   });
@@ -90,15 +83,13 @@ export default function MyPage({ user, setUser }: Props) {
   const [bookmarkedProducts, setBookmarkedProducts] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [myQnas, setMyQnas] = useState<Qna[]>([]);
-  // 🚨 categories 상태 제거 (types.ts 반영)
   const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
 
   const navigate = useNavigate();
 
   // ----------------------------------------------------
-  // Effects & Initial Load
+  // Effects
   // ----------------------------------------------------
-
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -106,23 +97,13 @@ export default function MyPage({ user, setUser }: Props) {
       return;
     }
 
-    fetch(`${API_BASE_URL}/api/users/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("유저 정보 불러오기 실패");
-        return res.json();
-      })
+    API.fetchMe(token)
       .then((data) => setUser(data))
       .catch((err) => {
         console.error(err);
         navigate("/");
       });
   }, [navigate, setUser]);
-
-  // 🚨 카테고리 로딩 useEffect 제거 (types.ts 및 enums 기반으로 변경)
 
   useEffect(() => {
     if (user) {
@@ -137,7 +118,6 @@ export default function MyPage({ user, setUser }: Props) {
   // ----------------------------------------------------
   // User Actions
   // ----------------------------------------------------
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -146,144 +126,84 @@ export default function MyPage({ user, setUser }: Props) {
     if (!user) return alert("로그인이 필요합니다.");
 
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/users/${user.userId}/mypage`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
-      if (res.ok) {
-        const updatedUser = await res.json();
-        setUser(updatedUser);
-        alert("정보가 수정되었습니다.");
-      } else {
-        const errorText = await res.text();
-        alert("정보 수정 실패: " + errorText);
-      }
+      const updatedUser = await API.updateMyInfo(user.userId, form);
+      setUser(updatedUser);
+      alert("정보가 수정되었습니다.");
     } catch (err) {
       console.error(err);
-      alert("서버 오류");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
   const handleDelete = async () => {
     if (!user) return alert("로그인이 필요합니다.");
-    if (!confirm("정말 회원 탈퇴하시겠습니까?")) return;
+    if (!confirm("정말 회원탈퇴하시겠습니까?")) return;
 
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(
-        `${API_BASE_URL}/api/users/${user.userId}/withdraw`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (res.ok) {
-        setUser(null);
-        navigate("/");
-        alert("회원탈퇴 완료");
-      } else {
-        const errorText = await res.text();
-        alert("회원 탈퇴 실패: " + errorText);
-      }
+      if (!token) return;
+      
+      await API.withdrawUser(user.userId, token);
+      setUser(null);
+      navigate("/");
+      alert("회원탈퇴 완료");
     } catch (err) {
       console.error(err);
-      alert("서버 오류");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
   // ----------------------------------------------------
-  // Data Fetching & Helpers
+  // Data Fetching
   // ----------------------------------------------------
-
-  // 카테고리 코드를 이름으로 변환하는 로컬 함수
-  const getCategoryName = (categoryCode: string | null | undefined): string => {
-    if (!categoryCode) return "없음";
-    return PRODUCT_CATEGORY_LABELS[categoryCode as ProductCategoryType] || "기타";
-  };
-
   const goToProductDetail = (productId: number) =>
     navigate(`/products/${productId}`);
 
-  const fetchSellingProducts = async () => {
+  const fetchSellingProductsData = async () => {
     if (!user) return;
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/products/seller/${user.userId}`
-      );
-      if (res.ok) {
-        const data: Partial<Product>[] = await res.json();
-        setSellingProducts(data.map((p) => normalizeProduct(p)));
-      } else {
-        alert("판매 상품 조회 실패");
-      }
+      const data = await API.fetchSellingProducts(user.userId);
+      setSellingProducts(data);
     } catch (err) {
       console.error(err);
-      alert("서버 오류");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
   const handleFetchBookmarkedProducts = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/bookmarks/mypage`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.ok) {
-        const data: Partial<Product>[] = await res.json();
-        setBookmarkedProducts(data.map((p) => normalizeProduct(p)));
-      } else {
-        alert("찜 상품 조회 실패");
-      }
+      if (!token) return;
+      
+      const data = await API.fetchBookmarkedProducts(token);
+      setBookmarkedProducts(data);
     } catch (err) {
       console.error(err);
-      alert("서버 오류");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
   const handleFetchReports = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/reports/mypage`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.ok) {
-        const data: Report[] = await res.json();
-        setReports(data);
-      } else {
-        alert("신고 내역 조회 실패");
-      }
+      if (!token) return;
+      
+      const data = await API.fetchMyReports(token);
+      setReports(data);
     } catch (err) {
       console.error(err);
-      alert("서버 오류");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
   const handleFetchMyQnas = async () => {
     if (!user) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/qna/user/${user.userId}`);
-      if (res.ok) {
-        const data: Qna[] = await res.json();
-        setMyQnas(data);
-      } else {
-        alert("Q&A 조회 실패");
-      }
+      const data = await API.fetchMyQnas(user.userId);
+      setMyQnas(data);
     } catch (err) {
       console.error(err);
-      alert("서버 오류");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
@@ -295,77 +215,23 @@ export default function MyPage({ user, setUser }: Props) {
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/inquiry/user`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.ok) {
-        const dataFromServer: {
-          inquiryId: number;
-          title: string;
-          content: string;
-          createdAt: string;
-          answers?: {
-            inquiryReviewId: number;
-            answer: string;
-            nickName?: string;
-            createdAt?: string;
-          }[];
-        }[] = await res.json();
-        const mappedData: Inquiry[] = dataFromServer.map((i) => ({
-          inquiryId: i.inquiryId,
-          title: i.title,
-          question: i.content,
-          createdAt: i.createdAt,
-          answers: (i.answers ?? []).map((a) => ({
-            inquiryReviewId: a.inquiryReviewId,
-            answer: a.answer,
-            nickName: a.nickName ?? "익명",
-            createdAt:
-              a.createdAt ??
-              (() => {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, "0");
-                const day = String(now.getDate()).padStart(2, "0");
-                const hours = String(now.getHours()).padStart(2, "0");
-                const minutes = String(now.getMinutes()).padStart(2, "0");
-                const seconds = String(now.getSeconds()).padStart(2, "0");
-                return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-              })(),
-          })),
-        }));
-        setMyInquiries(mappedData);
-      } else {
-        alert("문의 내역 조회 실패");
-      }
+      const data = await API.fetchMyInquiries(token);
+      setMyInquiries(data);
     } catch (err) {
       console.error(err);
-      alert("서버 오류");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
-  const fetchMyReviews = async () => {
+  const fetchReviewsData = async () => {
     if (!user) return;
     try {
-      const res = await fetch(`${API_BASE_URL}/reviews/user/${user.userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMyReviews(data);
-      }
-      const avgRes = await fetch(
-        `${API_BASE_URL}/reviews/user/${user.userId}/average`
-      );
-      if (avgRes.ok) {
-        const data = await avgRes.json();
-        setAverageRating(data.averageRating);
-      }
+      const { reviews, averageRating: avg } = await API.fetchMyReviews(user.userId);
+      setMyReviews(reviews);
+      setAverageRating(avg);
     } catch (err) {
       console.error(err);
-      alert("리뷰 불러오기 실패");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
@@ -377,35 +243,21 @@ export default function MyPage({ user, setUser }: Props) {
     if (!token) return alert("로그인이 필요합니다.");
 
     try {
-      const res = await fetch(`${API_BASE_URL}/reviews/${targetUserId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ rating, comments }),
-      });
-
-      if (res.ok) {
-        alert("리뷰가 등록되었습니다.");
-        fetchMyReviews();
-        setTargetUserId(0);
-        setComments("");
-        setRating(5);
-      } else {
-        const errorText = await res.text();
-        alert("리뷰 등록 실패: " + errorText);
-      }
+      await API.submitReview(targetUserId, rating, comments, token);
+      alert("리뷰가 등록되었습니다.");
+      fetchReviewsData();
+      setTargetUserId(0);
+      setComments("");
+      setRating(5);
     } catch (err) {
       console.error(err);
-      alert("서버 오류");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
   // ----------------------------------------------------
   // Product Edit Actions
   // ----------------------------------------------------
-
   const handleEditProduct = (product: Product) => {
     setEditingProductId(product.productId);
     setProductForm({
@@ -415,7 +267,7 @@ export default function MyPage({ user, setUser }: Props) {
       auctionEndTime: product.auctionEndTime,
       productCategoryType: product.productCategoryType ?? null,
       productStatus: product.productStatus ?? PRODUCT_STATUS[0],
-      productType: product.productType ?? 'AUCTION' as ProductType, // ProductType을 가져와서 설정
+      productType: product.productType ?? ("AUCTION" as ProductType),
       images: [],
     });
   };
@@ -433,9 +285,7 @@ export default function MyPage({ user, setUser }: Props) {
       return;
     }
 
-    // ProductStatus, ProductCategoryType, ProductType, string 필드 처리
     const value = e.target.value;
-
     setProductForm({ ...productForm, [e.target.name]: value });
   };
 
@@ -455,72 +305,77 @@ export default function MyPage({ user, setUser }: Props) {
       formData.append("productCategoryType", productForm.productCategoryType);
       formData.append("auctionEndTime", productForm.auctionEndTime);
       formData.append("productStatus", productForm.productStatus);
-      formData.append("productType", productForm.productType); // 상품 타입 추가
+      formData.append("productType", productForm.productType);
 
-      // 이미지 파일 추가
       productForm.images?.forEach((file) => formData.append("images", file));
 
-      const res = await fetch(
-        `${API_BASE_URL}/api/products/${editingProductId}`,
-        {
-          method: "PUT",
-          body: formData,
-        }
+      const updatedProduct = await API.updateProductWithImages(editingProductId, formData);
+      
+      setSellingProducts((prev) =>
+        prev.map((p) =>
+          p.productId === editingProductId ? updatedProduct : p
+        )
       );
-
-      if (res.ok) {
-        const updatedProduct = normalizeProduct(await res.json());
-        setSellingProducts((prev) =>
-          prev.map((p) =>
-            p.productId === editingProductId ? updatedProduct : p
-          )
-        );
-        setEditingProductId(null);
-        alert("상품이 수정되었습니다.");
-      } else {
-        const errorText = await res.text();
-        alert("상품 수정 실패: " + errorText);
-      }
+      setEditingProductId(null);
+      alert("상품이 수정되었습니다.");
     } catch (err) {
       console.error(err);
-      alert("서버 오류");
+      alert(err instanceof Error ? err.message : "서버 오류");
     }
   };
 
   const handleCancelProductEdit = () => setEditingProductId(null);
 
   // ----------------------------------------------------
-  // Section Change Logic (with Data Fetching)
+  // Section Change Logic
   // ----------------------------------------------------
-
   const handleSectionChange = (newSection: MypageSection) => {
     setSection(newSection);
-    setEditingProductId(null); // 상품 수정 모드 해제
+    setEditingProductId(null);
 
-    switch (newSection) {
-      case "selling":
-        fetchSellingProducts();
-        break;
-      case "bookmarks":
-        handleFetchBookmarkedProducts();
-        break;
-      case "reports":
-        handleFetchReports();
-        break;
-      case "qnas":
-        handleFetchMyQnas();
-        break;
-      case "inquiries":
-        handleFetchMyInquiries();
-        break;
-      case "reviews":
-        if (!user) return alert("로그인이 필요합니다.");
-        fetchMyReviews();
-        break;
-      default:
-        // 'info', 'payments', 'purchases', 'bids', 'withdrawal' 등은 별도 로직 없음
-        break;
-    }
+    const sectionFetchers: Record<string, () => void> = {
+      selling: fetchSellingProductsData,
+      bookmarks: handleFetchBookmarkedProducts,
+      reports: handleFetchReports,
+      qnas: handleFetchMyQnas,
+      inquiries: handleFetchMyInquiries,
+      reviews: fetchReviewsData,
+    };
+
+    sectionFetchers[newSection]?.();
+  };
+
+  // ----------------------------------------------------
+  // Menu Configuration
+  // ----------------------------------------------------
+  const mainMenuItems = [
+    { key: "info", name: "내 정보 수정" },
+    { key: "selling", name: "판매 상품 관리" },
+    { key: "bookmarks", name: "찜 목록" },
+    { key: "reports", name: "신고 내역" },
+    { key: "qnas", name: "내 Q&A" },
+    { key: "inquiries", name: "1:1 문의 내역" },
+    { key: "reviews", name: "리뷰 관리" },
+  ];
+
+  const otherMenuItems = [
+    { key: "payments", name: "결제 수단 관리" },
+    { key: "purchases", name: "결제 완료 상품" },
+    { key: "bids", name: "입찰 목록" },
+  ];
+
+  const sectionTitles: Record<MypageSection, string> = {
+    info: "내 정보 수정",
+    selling: "판매 상품 관리",
+    bookmarks: "찜 목록",
+    reports: "신고 내역",
+    qnas: "내 Q&A",
+    inquiries: "1:1 문의 내역",
+    reviews: "리뷰 관리",
+    payments: "결제 수단 관리",
+    purchases: "구매 상품",
+    bids: "입찰 목록",
+    withdrawal: "회원탈퇴",
   };
 
   // ----------------------------------------------------
@@ -536,7 +391,7 @@ export default function MyPage({ user, setUser }: Props) {
           backgroundColor: "#f4f4f4",
         }}
       >
-        {/* 1. 사이드바 (AdminPage.tsx와 동일한 스타일) */}
+        {/* Sidebar */}
         <nav
           className="sidebar"
           style={{
@@ -547,29 +402,11 @@ export default function MyPage({ user, setUser }: Props) {
             flexShrink: 0,
           }}
         >
-          <h2
-            style={{
-              color: "#fff",
-              marginBottom: "20px",
-            }}
-          >
-            마이페이지
-          </h2>
+          <h2 style={{ color: "#fff", marginBottom: "20px" }}>마이페이지</h2>
 
-          <div
-            style={{ marginTop: "20px" }}
-            className="flex-column gap-8 flex-left-a"
-          >
+          <div style={{ marginTop: "20px" }} className="flex-column gap-8 flex-left-a">
             <h4 style={{ color: "#ddd", marginBottom: "10px" }}>메인 메뉴</h4>
-            {[
-              { key: "info", name: "내 정보 수정" },
-              { key: "selling", name: "판매 상품 관리" },
-              { key: "bookmarks", name: "찜 목록" },
-              { key: "reports", name: "신고 내역" },
-              { key: "qnas", name: "내 Q&A" },
-              { key: "inquiries", name: "1:1 문의 내역" },
-              { key: "reviews", name: "리뷰 관리" },
-            ].map((item) => (
+            {mainMenuItems.map((item) => (
               <button
                 key={item.key}
                 style={{
@@ -593,66 +430,32 @@ export default function MyPage({ user, setUser }: Props) {
           >
             <h4 style={{ color: "#ddd", marginBottom: "10px" }}>기타 메뉴</h4>
             <div className="flex-column gap-8 flex-left-a">
-              <div className="flex-column gap-8 flex-left-a">
+              {otherMenuItems.map((item) => (
                 <button
+                  key={item.key}
                   className="text-16 color-ddd"
-                  onClick={() => handleSectionChange("payments")}
+                  onClick={() => handleSectionChange(item.key as MypageSection)}
                 >
-                  결제 수단 관리
+                  {item.name}
                 </button>
-                <button
-                  className="text-16 color-ddd"
-                  onClick={() => handleSectionChange("purchases")}
-                >
-                  결제 완료 상품
-                </button>
-                <button
-                  className="text-16 color-ddd"
-                  onClick={() => handleSectionChange("bids")}
-                >
-                  입찰 목록
-                </button>
-                <button className="text-16 color-ddd" onClick={handleDelete}>
-                  회원탈퇴
-                </button>
-              </div>
+              ))}
+              <button className="text-16 color-ddd" onClick={handleDelete}>
+                회원탈퇴
+              </button>
             </div>
           </div>
         </nav>
 
-        {/* 2. 메인 컨텐츠 영역 (AdminPage.tsx와 동일한 스타일) */}
+        {/* Main Content */}
         <main className="width-full p-20-30">
-          <h1
-            style={{
-              marginBottom: "20px",
-            }}
-          >
-            {
-              {
-                info: "내 정보 수정",
-                selling: "판매 상품 관리",
-                bookmarks: "찜 목록",
-                reports: "신고 내역",
-                qnas: "내 Q&A",
-                inquiries: "1:1 문의 내역",
-                reviews: "리뷰 관리",
-                payments: "결제 수단 관리",
-                purchases: "구매 상품",
-                bids: "입찰 목록",
-                withdrawal: "회원탈퇴",
-              }[section]
-            }
-          </h1>
+          <h1 style={{ marginBottom: "20px" }}>{sectionTitles[section]}</h1>
 
-          {/* 섹션별 컴포넌트 렌더링 */}
           {section === "info" && (
             <UserInfoEdit
               form={form}
               handleChange={handleChange}
               handleUpdate={handleUpdate}
-              setEditing={() => {
-                /* 이 레이아웃에서는 setEditing(false) 대신 섹션 전환을 사용하거나 내부 상태로 관리 */
-              }}
+              setEditing={() => {}}
             />
           )}
 
@@ -697,13 +500,14 @@ export default function MyPage({ user, setUser }: Props) {
             />
           )}
 
-          {/* 기타 메뉴에 대한 간단한 Placeholder */}
           {section === "payments" && <div>결제 수단 관리 페이지입니다.</div>}
+          
           {section === "purchases" && user && (
             <PaymentProducts token={localStorage.getItem("token") || ""} />
           )}
 
           {section === "bids" && <div>입찰 목록 페이지입니다.</div>}
+          
           {section === "withdrawal" && (
             <button
               style={{ width: "200px", backgroundColor: "red" }}
