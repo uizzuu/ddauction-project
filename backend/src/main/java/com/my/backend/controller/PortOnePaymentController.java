@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.my.backend.dto.portone.PortOnePaymentResponse;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.Users;
+import com.my.backend.enums.ProductType;
 import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.UserRepository;
 import com.my.backend.service.PortOnePaymentService;
@@ -34,20 +35,30 @@ public class PortOnePaymentController {
     private final UserRepository userRepository;
     private final AuthUtil authUtil;
 
+    // 결제 준비
     @PostMapping("/prepare")
     public ResponseEntity<Map<String, Object>> preparePayment(
             @Valid @RequestBody PrepareReq req,
             Authentication authentication) {
 
-        Long userId = authUtil.extractUser(authentication); // Long 반환
-        Users user = userRepository.findById(userId)       // DB 조회
+        Long userId = authUtil.extractUser(authentication);
+        Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         Product product = productRepository.findById(req.productId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        log.info("[PortOne] 결제 준비 요청 - productId: {}, userId: {}", product.getProductId(), user.getUserId());
-        Map<String, Object> paymentInfo = portonePaymentService.prepareBidPayment(product, user);
+        Map<String, Object> paymentInfo;
+
+        if (product.getProductType() == ProductType.AUCTION) {
+            log.info("[PortOne] 경매 결제 준비 - productId: {}, userId: {}", product.getProductId(), user.getUserId());
+            paymentInfo = portonePaymentService.prepareBidPayment(product, user);
+        } else {
+            log.info("[PortOne] 일반 결제 준비 - productId: {}, userId: {}, productType: {}",
+                    product.getProductId(), user.getUserId(), product.getProductType());
+            paymentInfo = portonePaymentService.prepareDirectPayment(product, user);
+        }
+
         return ResponseEntity.ok(paymentInfo);
     }
 
@@ -56,8 +67,8 @@ public class PortOnePaymentController {
     @PostMapping("/complete")
     public ResponseEntity<Map<String, Object>> completePayment(
             @Valid @RequestBody CompleteReq payload,
-            Authentication authentication
-    ) {
+            Authentication authentication) {
+
         Long userId = authUtil.extractUser(authentication);
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -65,10 +76,17 @@ public class PortOnePaymentController {
         Product product = productRepository.findById(payload.productId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        log.info("[PortOne] 결제 완료 검증 - imp_uid: {}, productId: {}, userId: {}",
-                payload.impUid(), product.getProductId(), user.getUserId());
+        PortOnePaymentResponse result;
 
-        PortOnePaymentResponse result = portonePaymentService.verifyAndComplete(payload.impUid(), product, user);
+        if (product.getProductType() == ProductType.AUCTION) {
+            log.info("[PortOne] 경매 결제 완료 검증 - imp_uid: {}, productId: {}, userId: {}",
+                    payload.impUid(), product.getProductId(), user.getUserId());
+            result = portonePaymentService.verifyAndComplete(payload.impUid(), product, user);
+        } else {
+            log.info("[PortOne] 일반 결제 완료 검증 - imp_uid: {}, productId: {}, userId: {}, productType: {}",
+                    payload.impUid(), product.getProductId(), user.getUserId(), product.getProductType());
+            result = portonePaymentService.verifyAndCompleteDirect(payload.impUid(), product, user);
+        }
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -87,8 +105,8 @@ public class PortOnePaymentController {
     @PostMapping("/cancel")
     public ResponseEntity<Map<String, String>> cancelPayment(
             @Valid @RequestBody CancelReq payload,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
+            @AuthenticationPrincipal UserDetails userDetails) {
+
         Long userId = authUtil.extractUser(userDetails);
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
@@ -96,14 +114,25 @@ public class PortOnePaymentController {
         Product product = productRepository.findById(payload.productId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        log.info("[PortOne] 결제 취소 요청 - imp_uid: {}, productId: {}, userId: {}", payload.impUid(), product.getProductId(), user.getUserId());
-
-        portonePaymentService.cancelPayment(
-                payload.impUid(),
-                product,
-                user,
-                payload.reason() != null ? payload.reason() : "사용자 요청"
-        );
+        if (product.getProductType() == ProductType.AUCTION) {
+            log.info("[PortOne] 경매 결제 취소 - imp_uid: {}, productId: {}, userId: {}",
+                    payload.impUid(), product.getProductId(), user.getUserId());
+            portonePaymentService.cancelPayment(
+                    payload.impUid(),
+                    product,
+                    user,
+                    payload.reason() != null ? payload.reason() : "사용자 요청"
+            );
+        } else {
+            log.info("[PortOne] 일반 결제 취소 - imp_uid: {}, productId: {}, userId: {}, productType: {}",
+                    payload.impUid(), product.getProductId(), user.getUserId(), product.getProductType());
+            portonePaymentService.cancelDirectPayment(
+                    payload.impUid(),
+                    product,
+                    user,
+                    payload.reason() != null ? payload.reason() : "사용자 요청"
+            );
+        }
 
         return ResponseEntity.ok(Map.of("message", "결제가 취소되었습니다."));
     }

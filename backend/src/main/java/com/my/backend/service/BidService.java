@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -35,9 +36,10 @@ public class BidService {
     private final AuctionWebSocketHandler webSocketHandler;
     private final ImageRepository imageRepository;
 
-    private static final long MIN_BID_INCREMENT = 1000; // 최소 입찰 단위
+    private static final long MIN_BID_INCREMENT = 1000;
 
-    // refId 대신 Product 기준
+    private final ConcurrentHashMap<Long, Object> productLocks = new ConcurrentHashMap<>();
+
     public List<Bid> getBidsByProduct(Product product) {
         return bidRepository.findByProduct(product);
     }
@@ -48,18 +50,32 @@ public class BidService {
         return bid.getProduct();
     }
 
-    // 입찰 등록
     public ResponseEntity<?> placeBid(Long productId, Long userId, Long bidPrice) {
-        // Product 조회
+        Object lock = productLocks.computeIfAbsent(productId, k -> new Object());
+        synchronized (lock) {
+            return placeBidInternal(productId, userId, bidPrice);
+        }
+    }
+
+    //  실제 입찰 처리 로직
+    private ResponseEntity<?> placeBidInternal(Long productId, Long userId, Long bidPrice) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
         if (userId == null) {
             return ResponseEntity.status(401).body(Map.of("error", "로그인이 필요합니다."));
         }
+
         try {
             if (product.getSeller().getUserId().equals(userId))
                 throw new IllegalArgumentException("판매자는 자신의 상품에 입찰할 수 없습니다.");
+
+            // 경매 종료 시간 체크
+            if (product.getAuctionEndTime() != null
+                    && LocalDateTime.now().isAfter(product.getAuctionEndTime())) {
+                throw new IllegalArgumentException("이미 종료된 경매입니다.");
+            }
+
             if (product.getProductStatus() != ProductStatus.ACTIVE)
                 throw new IllegalArgumentException("입찰이 가능한 상태의 상품이 아닙니다.");
 
@@ -68,12 +84,11 @@ public class BidService {
 
             log.info("입찰 요청: userId={}, productId={}, bidPrice={}", userId, product.getProductId(), bidPrice);
 
-            // 중복 입찰 2초 이내 차단
             LocalDateTime twoSecondsAgo = LocalDateTime.now().minusSeconds(2);
-            boolean duplicate = !bidRepository
-                    .findByProductAndUserAndBidPriceAndCreatedAtAfter(product, user, bidPrice, twoSecondsAgo)
-                    .isEmpty();
-            if (duplicate) {
+            List<Bid> duplicates = bidRepository
+                    .findByProductAndUserAndBidPriceAndCreatedAtAfter(product, user, bidPrice, twoSecondsAgo);
+
+            if (duplicates != null && !duplicates.isEmpty()) {
                 log.warn("중복 입찰 감지 (userId={}, productId={}, bidPrice={})", userId, product.getProductId(), bidPrice);
                 throw new IllegalArgumentException("이미 동일 금액으로 입찰이 처리되었습니다.");
             }
@@ -82,6 +97,7 @@ public class BidService {
             Long current = bidRepository.findTopByProductOrderByBidPriceDesc(product)
                     .map(Bid::getBidPrice)
                     .orElse(product.getStartingPrice());
+
             if (bidPrice < current + MIN_BID_INCREMENT)
                 throw new IllegalArgumentException(String.format("입찰가는 현재가보다 최소 %,d원 이상 높아야 합니다.", MIN_BID_INCREMENT));
 
@@ -89,7 +105,7 @@ public class BidService {
             Bid bid = Bid.builder()
                     .user(user)
                     .bidPrice(bidPrice)
-                    .isWinning(true)
+                    .isWinning(true)  // 실시간 최고 입찰자 (금액 기준)
                     .product(product)
                     .build();
             bidRepository.save(bid);
@@ -123,7 +139,6 @@ public class BidService {
         }
     }
 
-    @Transactional(readOnly = true)
     public ResponseEntity<?> getBidHistory(Long productId) {
         try {
             Product product = productRepository.findById(productId)
@@ -145,21 +160,18 @@ public class BidService {
             return ResponseEntity.ok(resp);
         } catch (Exception e) {
             log.error("입찰 내역 조회 중 오류", e);
-            return ResponseEntity.status(500).body(java.util.Collections.singletonMap("error", "입찰 내역 조회 중 오류가 발생했습니다."));
+            return ResponseEntity.status(500).body(Map.of("error", "입찰 내역 조회 중 오류가 발생했습니다."));
         }
     }
 
     @Transactional(readOnly = true)
     public ResponseEntity<?> getBidHistoryForChart(Long productId) {
         try {
-            // productId로 Product 조회
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-            // Product 기준 입찰 내역 조회
             List<Bid> bidHistory = bidRepository.findByProductOrderByCreatedAtAsc(product);
 
-            // 차트용 데이터 변환
             List<BidChartData> chartData = IntStream.range(0, bidHistory.size())
                     .mapToObj(i -> new BidChartData(
                             i + 1,
@@ -183,23 +195,19 @@ public class BidService {
         }
     }
 
-    @Transactional(readOnly = true)
     public ResponseEntity<?> checkWinner(Long productId, Long userId) {
         try {
-            // productId로 Product 조회
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-            // 경매 진행 중인지 확인
             if (product.getAuctionEndTime() != null && LocalDateTime.now().isBefore(product.getAuctionEndTime())) {
                 return ResponseEntity.ok(Map.of("isWinner", false, "message", "경매가 아직 진행중입니다."));
             }
 
-            // 최고 입찰 내역 조회
+            // 최고 금액 기준으로 낙찰자 조회
             Bid winningBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
                     .orElseThrow(() -> new IllegalArgumentException("입찰 내역이 없습니다."));
 
-            // 낙찰 상태 업데이트
             if (!winningBid.isWinning()) {
                 lazyCloseBid(product, winningBid);
             }
@@ -212,29 +220,24 @@ public class BidService {
         }
     }
 
-    @Transactional(readOnly = true)
     public ResponseEntity<?> getWinningInfo(Long productId, Long userId) {
         try {
-            // productId로 Product 조회
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-            // 최고 입찰 내역 조회
+            //  최고 금액 기준으로 낙찰자 조회
             Bid winningBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
                     .orElseThrow(() -> new IllegalArgumentException("입찰 내역이 없습니다."));
 
-            // 경매 종료 후 낙찰 상태 업데이트
             if (!winningBid.isWinning() && product.getAuctionEndTime() != null
                     && LocalDateTime.now().isAfter(product.getAuctionEndTime())) {
                 lazyCloseBid(product, winningBid);
             }
 
-            // 낙찰자가 아니면 접근 불가
             if (!winningBid.getUser().getUserId().equals(userId)) {
                 return ResponseEntity.status(403).body(Map.of("error", "낙찰자만 접근 가능합니다."));
             }
 
-            // 대표 이미지 조회
             String imagePath = "";
             List<Image> images = imageRepository.findByRefIdAndImageType(product.getProductId(), ImageType.PRODUCT);
             if (!images.isEmpty() && images.get(0).getImagePath() != null) {
@@ -256,25 +259,17 @@ public class BidService {
     }
 
     private void lazyCloseBid(Product product, Bid winningBid) {
-        bidRepository.findByProductAndIsWinning(product, true)
-                .forEach(b -> {
-                    b.setWinning(false);
-                    bidRepository.save(b);
-                });
+        List<Bid> prevWinningBids = bidRepository.findByProductAndIsWinning(product, true);
+        prevWinningBids.forEach(b -> b.setWinning(false));
+        bidRepository.saveAll(prevWinningBids);
 
+        // 최고 금액 입찰자만 낙찰 처리
         winningBid.setWinning(true);
         bidRepository.save(winningBid);
 
-        Payment payment = Payment.builder()
-                .product(product)
-                .totalPrice(winningBid.getBidPrice())
-                .paymentStatus(PaymentStatus.PENDING)
-                .build();
-        product.setPayment(payment);
-
+        product.setBid(winningBid);
         product.setProductStatus(ProductStatus.CLOSED);
         product.setPaymentStatus(PaymentStatus.PENDING);
-
         productRepository.save(product);
     }
 }
