@@ -2,16 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import type { 
-  User, 
-  ProductForm,
-  AiDescriptionRequest,
-  AiDescriptionResponse 
-} from "../common/types";
+import type { User, ProductForm } from "../common/types";
 import { CATEGORY_OPTIONS } from "../common/enums";
-import type {ProductCategoryType} from "../common/enums";
-import { API_BASE_URL } from "../common/api";
+import type { ProductCategoryType } from "../common/enums";
+import { generateAiDescription, registerProductWithImages } from "../common/api";
 import SelectBox from "../components/SelectBox";
+import { formatDateTime } from "../common/util";
 
 type Props = {
   user: User | null;
@@ -24,7 +20,7 @@ export default function ProductRegister({ user }: Props) {
     content: "",
     startingPrice: "",
     images: [],
-    productType:"AUCTION",
+    productType: "AUCTION",
     auctionEndTime: "",
     productCategoryType: null,
   });
@@ -56,15 +52,8 @@ export default function ProductRegister({ user }: Props) {
         setError("경매 종료 시간은 현재 시간 이후로만 선택 가능합니다.");
         return;
       }
-
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const day = String(date.getDate()).padStart(2, "0");
-      const hours = String(date.getHours()).padStart(2, "0");
-      const minutes = String(date.getMinutes()).padStart(2, "0");
-      const seconds = String(date.getSeconds()).padStart(2, "0");
-
-      const formatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      
+      const formatted = formatDateTime(date.toISOString());
 
       setForm((prev) => ({
         ...prev,
@@ -84,32 +73,9 @@ export default function ProductRegister({ user }: Props) {
     setError("");
 
     try {
-      const token = localStorage.getItem("token");
-      
-      const requestBody: AiDescriptionRequest = {
-        product_name: form.title,
-        keywords: [],
-        target_audience: "일반 고객",
-        tone: "전문적인, 신뢰감 있는",
-      };
-
-      const response = await fetch(`${API_BASE_URL}/ai/generate-description`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(requestBody),
-      });
-
-      if (!response.ok) {
-        throw new Error("AI 생성 실패");
-      }
-
-      const data: AiDescriptionResponse = await response.json();
-      setForm({ ...form, content: data.description });
+      const description = await generateAiDescription(form.title);
+      setForm({ ...form, content: description });
       alert("AI가 상품 설명을 생성했습니다!");
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : "AI 생성 중 오류 발생");
       alert("AI 생성에 실패했습니다. 다시 시도해주세요.");
@@ -123,31 +89,11 @@ export default function ProductRegister({ user }: Props) {
     if (!form.content) return "상세 설명은 필수 입력 항목입니다";
     if (!form.startingPrice || Number(form.startingPrice) <= 0)
       return "시작 가격은 1원 이상이어야 합니다";
-    if (!form.auctionEndTime)
-      return "경매 종료 시간을 입력해주세요";
+    if (!form.auctionEndTime) return "경매 종료 시간을 입력해주세요";
     if (!form.productCategoryType) return "카테고리를 선택해주세요";
     if (!form.images || form.images.length === 0)
       return "최소 1개 이상의 이미지를 선택해주세요";
     return "";
-  };
-
-  const uploadImageToS3 = async (
-    file: File,
-    token: string
-  ): Promise<string> => {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const response = await fetch(`${API_BASE_URL}/api/files/s3-upload`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
-    });
-
-    const data = await response.json();
-    return data.url;
   };
 
   const handleSubmit = async () => {
@@ -157,8 +103,7 @@ export default function ProductRegister({ user }: Props) {
       return;
     }
 
-    const token = localStorage.getItem("token");
-    if (!token || !user) {
+    if (!user) {
       alert("로그인이 필요합니다");
       navigate("/login");
       return;
@@ -172,70 +117,19 @@ export default function ProductRegister({ user }: Props) {
     try {
       setUploading(true);
 
-      // 1️⃣ 상품 등록
-      const productResponse = await fetch(`${API_BASE_URL}/api/products`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: form.title,
-          content: form.content,
-          startingPrice: startingPriceNumber,
-          auctionEndTime: form.auctionEndTime,
-          sellerId: user.userId,
-          productCategoryType: form.productCategoryType, // ✅ 수정
-          productStatus: "ACTIVE",
-          paymentStatus: "PENDING",
-          productType: form.productType,
-        }),
-      });
+      const productData = {
+        title: form.title,
+        content: form.content,
+        startingPrice: startingPriceNumber,
+        auctionEndTime: form.auctionEndTime,
+        sellerId: user.userId,
+        productCategoryType: form.productCategoryType,
+        productStatus: "ACTIVE",
+        paymentStatus: "PENDING",
+        productType: form.productType,
+      };
 
-      if (!productResponse.ok) {
-        const errorText = await productResponse.text();
-        setError(`상품 등록 실패: ${productResponse.status} - ${errorText}`);
-        return;
-      }
-
-      const productData = await productResponse.json();
-      const productId = productData.productId;
-      if (!productId) {
-        setError("서버에서 productId를 받지 못했습니다.");
-        return;
-      }
-
-      // 2️⃣ S3 이미지 업로드
-      const uploadedImageUrls: string[] = [];
-      if (form.images && form.images.length > 0) {
-        for (const file of Array.from(form.images)) {
-          try {
-            const s3Url = await uploadImageToS3(file, token);
-            uploadedImageUrls.push(s3Url);
-          } catch (err) {
-            console.error("S3 업로드 실패:", err);
-          }
-        }
-      }
-
-      // 3️⃣ 이미지 DB 등록
-      for (const url of uploadedImageUrls) {
-        try {
-          await fetch(`${API_BASE_URL}/api/images`, {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              productId,
-              imagePath: url,
-            }),
-          });
-        } catch (err) {
-          console.error("이미지 DB 등록 실패:", err);
-        }
-      }
+      await registerProductWithImages(productData, Array.from(form.images || []));
 
       alert("물품 등록 성공!");
       navigate("/search");
@@ -290,21 +184,38 @@ export default function ProductRegister({ user }: Props) {
               type="button"
               onClick={generateAiDescriptionAuto}
               className="btn-ai"
-              disabled={uploading || aiGenerating || !form.title || form.title.trim().length < 2}
+              disabled={
+                uploading ||
+                aiGenerating ||
+                !form.title ||
+                form.title.trim().length < 2
+              }
               style={{
                 padding: "8px 16px",
-                backgroundColor: !form.title || form.title.trim().length < 2 ? "#d1d5db" : "#6366f1",
+                backgroundColor:
+                  !form.title || form.title.trim().length < 2
+                    ? "#d1d5db"
+                    : "#6366f1",
                 color: "white",
                 border: "none",
                 borderRadius: "4px",
-                cursor: !form.title || form.title.trim().length < 2 ? "not-allowed" : "pointer",
+                cursor:
+                  !form.title || form.title.trim().length < 2
+                    ? "not-allowed"
+                    : "pointer",
                 opacity: aiGenerating ? 0.7 : 1,
               }}
             >
               {aiGenerating ? "⏳ AI 생성 중..." : "🤖 AI로 설명 자동 생성"}
             </button>
             {form.title && form.title.trim().length < 2 && (
-              <span style={{ fontSize: "12px", color: "#ef4444", alignSelf: "center" }}>
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: "#ef4444",
+                  alignSelf: "center",
+                }}
+              >
                 제목을 2글자 이상 입력하세요
               </span>
             )}
@@ -380,38 +291,36 @@ export default function ProductRegister({ user }: Props) {
             ))}
           </div>
 
-          {(
-            <>
-              <label className="label">경매 종료 시간 *</label>
-              <ReactDatePicker
-                selected={auctionEndDate}
-                onChange={handleDateChange}
-                showTimeSelect
-                timeFormat="HH:mm"
-                timeIntervals={5}
-                dateFormat="yyyy-MM-dd HH:mm"
-                minDate={minDateTime}
-                maxDate={maxDateTime}
-                placeholderText="날짜와 시간을 선택하세요"
-                className="input"
-                disabled={uploading}
-              />
-            </>
-          )}
+          <>
+            <label className="label">경매 종료 시간 *</label>
+            <ReactDatePicker
+              selected={auctionEndDate}
+              onChange={handleDateChange}
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={5}
+              dateFormat="yyyy-MM-dd HH:mm"
+              minDate={minDateTime}
+              maxDate={maxDateTime}
+              placeholderText="날짜와 시간을 선택하세요"
+              className="input"
+              disabled={uploading}
+            />
+          </>
 
           <label className="label">카테고리 *</label>
           <SelectBox
-  value={form.productCategoryType ?? ""}
-  onChange={(val) =>
-    setForm({ 
-      ...form, 
-      productCategoryType: (val || null) as ProductCategoryType | null 
-    })
-  }
-  options={CATEGORY_OPTIONS}
-  placeholder="카테고리를 선택하세요"
-  className="register-category"
-/>
+            value={form.productCategoryType ?? ""}
+            onChange={(val) =>
+              setForm({
+                ...form,
+                productCategoryType: (val || null) as ProductCategoryType | null,
+              })
+            }
+            options={CATEGORY_OPTIONS}
+            placeholder="카테고리를 선택하세요"
+            className="register-category"
+          />
         </div>
 
         {error && <p className="error-message">{error}</p>}

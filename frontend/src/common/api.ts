@@ -1,4 +1,6 @@
 import type * as TYPE from "./types";
+import { normalizeProduct } from "./util";
+import type { SortOption } from "./util";
 
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
@@ -592,6 +594,101 @@ export async function getPaymentProducts(): Promise<PaymentProduct[]> {
   return response.json();
 }
 
+// AI 상품 설명 생성
+export async function generateAiDescription(
+  productName: string,
+  keywords: string[] = [],
+  targetAudience: string = "일반 고객",
+  tone: string = "전문적인, 신뢰감 있는"
+): Promise<string> {
+  const requestBody: TYPE.AiDescriptionRequest = {
+    product_name: productName,
+    keywords,
+    target_audience: targetAudience,
+    tone,
+  };
+
+  const response = await authFetch(`${API_BASE_URL}${PYTHON_API}/generate-description`, {
+    method: "POST",
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) throw new Error("AI 생성 실패");
+
+  const data: TYPE.AiDescriptionResponse = await response.json();
+  return data.description;
+}
+
+// S3 이미지 업로드
+export async function uploadImageToS3(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const token = localStorage.getItem("token");
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/files/s3-upload`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) throw new Error("이미지 업로드 실패");
+
+  const data = await response.json();
+  return data.url;
+}
+
+// 상품 이미지 DB 등록
+export async function registerProductImage(
+  productId: number,
+  imagePath: string
+): Promise<void> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/images`, {
+    method: "POST",
+    body: JSON.stringify({ productId, imagePath }),
+  });
+
+  if (!response.ok) throw new Error("이미지 DB 등록 실패");
+}
+
+// 상품 등록 (이미지 포함 전체 프로세스)
+export async function registerProductWithImages(
+  productData: {
+    title: string;
+    content: string;
+    startingPrice: number;
+    auctionEndTime: string;
+    sellerId: number;
+    productCategoryType: TYPE.ProductCategoryType | null;
+    productStatus: string;
+    paymentStatus: string;
+    productType: string;
+  },
+  images: File[]
+): Promise<TYPE.Product> {
+  // 1. 상품 등록
+  const product = await createProduct(productData as unknown as TYPE.CreateProductRequest);
+
+  if (!product.productId) {
+    throw new Error("서버에서 productId를 받지 못했습니다.");
+  }
+
+  // 2. 이미지 업로드 및 DB 등록
+  const uploadPromises = images.map(async (file) => {
+    try {
+      const s3Url = await uploadImageToS3(file);
+      await registerProductImage(product.productId, s3Url);
+    } catch (err) {
+      console.error("이미지 처리 실패:", err);
+    }
+  });
+
+  await Promise.all(uploadPromises);
+
+  return product;
+}
+
 // admin 관련 API (api.ts에 추가하지 않고 AdminPage에서만 사용)
 export const fetchStatsApi = async () => {
   const token = localStorage.getItem("token");
@@ -785,7 +882,7 @@ export async function resetPassword(params: {
   userName: string;
   newPassword: string;
 }): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/api/auth/password-reset`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/auth/password-reset`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(params),
@@ -795,4 +892,194 @@ export async function resetPassword(params: {
     const text = await res.text();
     throw new Error(text || "입력한 정보와 일치하는 사용자가 없습니다.");
   }
+}
+
+// 신상품 가져오기
+export async function fetchLatestProducts(): Promise<TYPE.Product[]> {
+  const res = await fetch(`${SPRING_API}${SPRING_API}/products`);
+  if (!res.ok) throw new Error("상품 불러오기 실패");
+  const data: TYPE.Product[] = await res.json();
+  return data
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt || "").getTime() -
+        new Date(a.createdAt || "").getTime()
+    )
+    .slice(0, 10);
+}
+
+// 배너 상품 가져오기
+export async function fetchBannerProducts(): Promise<
+  { id: number; image?: string; text: string; product?: TYPE.Product }[]
+> {
+  try {
+    const [topRes, latestRes, endingRes] = await Promise.all([
+      fetch(`${SPRING_API}/api/products/top-bookmarked`),
+      fetch(`${SPRING_API}/api/products/latest`),
+      fetch(`${SPRING_API}/api/products/ending-soon`),
+    ]);
+
+    if (!topRes.ok || !latestRes.ok || !endingRes.ok) {
+      throw new Error(
+        `배너 API 중 하나가 실패했습니다. top: ${topRes.status}, latest: ${latestRes.status}, ending: ${endingRes.status}`
+      );
+    }
+
+    const topData: TYPE.Product[] = await topRes.json();
+    const latestData: TYPE.Product = await latestRes.json();
+    const endingData: TYPE.Product = await endingRes.json();
+
+    return [
+      {
+        id: 1,
+        image: topData[0]?.images?.[0]?.imagePath,
+        text: "지금 가장 인기 있는 경매 상품 🔥",
+        product: topData[0],
+      },
+      {
+        id: 2,
+        image: latestData?.images?.[0]?.imagePath,
+        text: "오늘의 추천! 신규 등록 상품 🎉",
+        product: latestData,
+      },
+      {
+        id: 3,
+        image: endingData?.images?.[0]?.imagePath,
+        text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
+        product: endingData,
+      },
+    ];
+  } catch (err) {
+    console.error("배너 상품 불러오기 실패:", err);
+    return [];
+  }
+}
+
+// 유저 정보
+export async function fetchMe(token: string): Promise<TYPE.User> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("유저 정보 불러오기 실패");
+  return res.json();
+}
+
+// 판매 상품
+export async function fetchSellingProducts(userId: number): Promise<TYPE.Product[]> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/products/seller/${userId}`);
+  if (!res.ok) throw new Error("판매 상품 조회 실패");
+  const data: Partial<TYPE.Product>[] = await res.json();
+  return data.map(normalizeProduct);
+}
+
+// 찜 상품
+export async function fetchBookmarkedProducts(token: string): Promise<TYPE.Product[]> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/mypage`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("찜 상품 조회 실패");
+  const data: Partial<TYPE.Product>[] = await res.json();
+  return data.map(normalizeProduct);
+}
+
+// 신고 내역
+export async function fetchReports(token: string): Promise<Report[]> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/reports/mypage`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("신고 내역 조회 실패");
+  return res.json();
+}
+
+// QnA
+export async function fetchMyQnas(userId: number): Promise<TYPE.Qna[]> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/qna/user/${userId}`);
+  if (!res.ok) throw new Error("Q&A 조회 실패");
+  return res.json();
+}
+
+// 1:1 문의
+export async function fetchMyInquiries(token: string): Promise<TYPE.Inquiry[]> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/inquiry/user`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("문의 내역 조회 실패");
+  const dataFromServer: any[] = await res.json();
+  return dataFromServer.map((i) => ({
+    inquiryId: i.inquiryId,
+    title: i.title,
+    question: i.content,
+    createdAt: i.createdAt,
+    answers: (i.answers ?? []).map((a: { inquiryReviewId: any; answer: any; nickName: any; createdAt: any; }) => ({
+      inquiryReviewId: a.inquiryReviewId,
+      answer: a.answer,
+      nickName: a.nickName ?? "익명",
+      createdAt: a.createdAt ?? new Date().toISOString(),
+    })),
+  }));
+}
+
+// 리뷰
+export async function fetchMyReviews(userId: number): Promise<{ reviews: TYPE.Review[]; averageRating: number }> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/reviews/user/${userId}`);
+  const avgRes = await fetch(`${API_BASE_URL}/reviews/user/${userId}/average`);
+  if (!res.ok || !avgRes.ok) throw new Error("리뷰 조회 실패");
+
+  const reviews: TYPE.Review[] = await res.json();
+  const { averageRating } = await avgRes.json();
+  return { reviews, averageRating };
+}
+
+// 리뷰 등록
+export async function submitReview(targetUserId: number, rating: number, comments: string, token: string) {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/reviews/${targetUserId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ rating, comments }),
+  });
+  if (!res.ok) throw new Error("리뷰 등록 실패");
+  return res.json();
+}
+
+// 상품 검색
+export async function fetchProductsBySearch(query: string, page: number = 0): Promise<TYPE.Product[]> {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/products/search?query=${encodeURIComponent(query)}&page=${page}`);
+  if (!response.ok) throw new Error("상품 검색 실패");
+  return response.json();
+}
+
+/**
+ * 키워드, 카테고리, 상태, 정렬 옵션을 통합하여 상품 목록을 조회합니다.
+ * @param params - 검색 및 필터링 파라미터
+ * @returns Product 배열
+ */
+export async function fetchFilteredProducts(params: {
+  keyword?: string;
+  category?: string; // categoryCode (PRODUCT_CATEGORY_TYPE)
+  productStatus?: string; // "ACTIVE" (거래 가능만)
+  sort?: SortOption; // "latest", "priceAsc" 등
+}): Promise<TYPE.Product[]> {
+  // 1. 쿼리 스트링 생성
+  const query = new URLSearchParams();
+  if (params.keyword) query.append("keyword", params.keyword);
+  if (params.category) query.append("category", params.category);
+  if (params.productStatus) query.append("productStatus", params.productStatus);
+  
+  // NOTE: 서버에서 정렬을 지원하지 않으면 클라이언트에서 처리해야 함. 
+  // 여기서는 API에 'sort' 파라미터를 추가하여 서버 정렬을 시도하는 방식으로 확장합니다.
+  if (params.sort) query.append("sort", params.sort); 
+
+  // 2. URL 결정
+  let url = `${API_BASE_URL}${SPRING_API}/products/search?${query.toString()}`;
+  
+  if (!params.keyword && !params.category && !params.productStatus) {
+    // 필터링 파라미터가 없으면 전체 목록 조회 API를 사용하거나, 
+    // 위 url을 그대로 사용하여 전체 목록을 가져올 수 있습니다.
+    url = `${API_BASE_URL}${SPRING_API}/products?${query.toString()}`;
+  }
+
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("상품 목록 조회 실패");
+  
+  return res.json() as Promise<TYPE.Product[]>;
 }

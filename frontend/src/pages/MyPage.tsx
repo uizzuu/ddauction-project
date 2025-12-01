@@ -9,96 +9,23 @@ import type {
   Inquiry,
   Review,
 } from "../common/types";
-import { 
-    PRODUCT_STATUS, 
-    PAYMENT_STATUS, 
-    PRODUCT_CATEGORY_LABELS, // common/enums에서 import
+import {
+  PRODUCT_STATUS,
+  PRODUCT_CATEGORY_LABELS, // common/enums에서 import
 } from "../common/enums";
-import type {ProductCategoryType, ProductType} from "../common/enums";
+import type { ProductCategoryType, ProductType } from "../common/enums";
 import { API_BASE_URL } from "../common/api";
-
-// Components Import
-import UserInfoEdit from "../components/mypage/UserInfoEdit";
-import SellingProducts from "../components/mypage/SellingProducts";
-import BookmarkedProducts from "../components/mypage/BookmarkedProducts";
-import MyReports from "../components/mypage/MyReports";
-import MyQnas from "../components/mypage/MyQnas";
-import MyInquiries from "../components/mypage/MyInquiries";
-import ReviewManagement from "../components/mypage/ReviewManagement";
-import PaymentProducts from "../components/mypage/PaymentProducts";
-
-
-// Product 타입에 categoryId, categoryName 제거 반영
-const normalizeProduct = (
-  p: Partial<Product>
-): Product & { imageUrl: string } =>
-  ({
-    productId: p.productId ?? 0,
-    title: p.title ?? "제목 없음",
-    content: p.content ?? "",
-    startingPrice: p.startingPrice ?? 0,
-    imageUrl: p.images?.[0]?.imagePath ?? "",
-    auctionEndTime:
-      p.auctionEndTime ??
-      (() => {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, "0");
-        const day = String(now.getDate()).padStart(2, "0");
-        const hours = String(now.getHours()).padStart(2, "0");
-        const minutes = String(now.getMinutes()).padStart(2, "0");
-        const seconds = String(now.getSeconds()).padStart(2, "0");
-        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-      })(),
-    productStatus: p.productStatus ?? PRODUCT_STATUS[0],
-    paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
-    // 🚨 categoryId, categoryName 필드 제거 (types.ts 반영)
-    productCategoryType: p.productCategoryType ?? null, // types.ts에 있는 필드는 유지
-    productType: p.productType ?? 'AUCTION' as ProductType, // types.ts에 있는 필드는 유지
-
-    sellerId: p.sellerId ?? 0,
-    sellerNickName: p.sellerNickName ?? "익명",
-    bidId: p.bidId,
-    bidPrice: p.bidPrice,
-    bids: (p.bids ?? []).map((b) => ({
-      bidId: b.bidId ?? 0,
-      bidPrice: b.bidPrice ?? 0,
-      userId: b.userId ?? 0,
-      isWinning: b.isWinning ?? false,
-      createdAt:
-        b.createdAt ??
-        (() => {
-          const now = new Date();
-          const year = now.getFullYear();
-          const month = String(now.getMonth() + 1).padStart(2, "0");
-          const day = String(now.getDate()).padStart(2, "0");
-          const hours = String(now.getHours()).padStart(2, "0");
-          const minutes = String(now.getMinutes()).padStart(2, "0");
-          const seconds = String(now.getSeconds()).padStart(2, "0");
-          return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-        })(),
-    })),
-    bid: p.bid
-      ? {
-          bidId: p.bid.bidId ?? 0,
-          bidPrice: p.bid.bidPrice ?? 0,
-          userId: p.bid.userId ?? p.sellerId ?? 0,
-          isWinning: p.bid.isWinning ?? false,
-          createdAt:
-            p.bid.createdAt ??
-            (() => {
-              const now = new Date();
-              const year = now.getFullYear();
-              const month = String(now.getMonth() + 1).padStart(2, "0");
-              const day = String(now.getDate()).padStart(2, "0");
-              const hours = String(now.getHours()).padStart(2, "0");
-              const minutes = String(now.getMinutes()).padStart(2, "0");
-              const seconds = String(now.getSeconds()).padStart(2, "0");
-              return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-            })(),
-        }
-      : null,
-  } as Product & { imageUrl: string });
+import {
+  UserInfoEdit,
+  SellingProducts,
+  BookmarkedProducts,
+  MyReports,
+  MyQnas,
+  MyInquiries,
+  ReviewManagement,
+  PaymentProducts,
+} from "../common/import"
+import { normalizeProduct } from "../common/util";
 
 
 type MypageSection =
@@ -120,8 +47,8 @@ type Props = {
 };
 
 // 상품 수정 시 ProductStatus를 추가하여 상태 관리
-type EditProductState = ProductForm & { 
-    productStatus: string; 
+type EditProductState = ProductForm & {
+  productStatus: string;
 };
 
 
@@ -153,7 +80,7 @@ export default function MyPage({ user, setUser }: Props) {
     startingPrice: "",
     auctionEndTime: "",
     productStatus: PRODUCT_STATUS[0],
-    productType:"AUCTION" as ProductType, // ProductType을 명시적으로 설정
+    productType: "AUCTION" as ProductType, // ProductType을 명시적으로 설정
     images: [],
     productCategoryType: null,
   });
@@ -437,7 +364,7 @@ export default function MyPage({ user, setUser }: Props) {
         setAverageRating(data.averageRating);
       }
     } catch (err) {
-      console.    error(err);
+      console.error(err);
       alert("리뷰 불러오기 실패");
     }
   };
@@ -505,7 +432,7 @@ export default function MyPage({ user, setUser }: Props) {
       }
       return;
     }
-    
+
     // ProductStatus, ProductCategoryType, ProductType, string 필드 처리
     const value = e.target.value;
 
@@ -514,8 +441,8 @@ export default function MyPage({ user, setUser }: Props) {
 
   const handleSaveProduct = async () => {
     if (!editingProductId) return;
-    
-    if (!productForm.productCategoryType) { 
+
+    if (!productForm.productCategoryType) {
       alert("카테고리를 선택해주세요.");
       return;
     }

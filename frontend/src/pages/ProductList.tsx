@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Product } from "../common/types";
-import { API_BASE_URL } from "../common/api";
+import { API_BASE_URL, fetchLatestProducts } from "../common/api";
 
 export default function ProductList() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -11,28 +11,23 @@ export default function ProductList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/products`);
-        if (res.ok) {
-          const data: Product[] = await res.json();
-          // 진행 중인 경매만 필터링
-          const now = new Date();
-          const activeProducts = data.filter(
-            (p) =>
-              p.productStatus === "ACTIVE" &&
-              new Date(p.auctionEndTime).getTime() > now.getTime()
-          );
-          setProducts(activeProducts);
-        }
-      } catch (err) {
-        console.error("서버 연결 실패", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProducts();
-  }, []);
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+
+      // 상품가져오기
+      const data = await fetchLatestProducts();
+
+      setProducts(data);
+    } catch (error) {
+      console.error("상품 목록 불러오기 실패:", error);
+      setError("상품을 불러오는 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  loadProducts();
+}, []);
 
   const totalPages = Math.ceil(products.length / pageSize);
   const currentProducts = products.slice(
@@ -161,3 +156,7 @@ export default function ProductList() {
     </div>
   );
 }
+function setError(_arg0: string) {
+  throw new Error("Function not implemented.");
+}
+
