@@ -18,24 +18,18 @@ import java.time.LocalDateTime;
 @Builder
 @Getter
 public class ChatRoom {
+
+
     @Id
     @GeneratedValue
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-<<<<<<< HEAD
-    @JoinColumn(name = "user_id")
-    private Users seller;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-=======
     @JoinColumn(name = "seller_id")
     private Users seller;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
->>>>>>> ba0e370 (컬럼이름수정)
     private Users sender;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -45,8 +39,6 @@ public class ChatRoom {
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-<<<<<<< HEAD
+
+
 }
-=======
-}
->>>>>>> ba0e370 (컬럼이름수정)
