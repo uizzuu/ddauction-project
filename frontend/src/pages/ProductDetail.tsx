@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
@@ -11,7 +10,6 @@ import AROverlayWithButton from "./AROverlayWithButton";
 import type {
   Product,
   User,
-  Category,
   Qna,
   Bid,
   EditProductForm,
@@ -23,6 +21,7 @@ import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
 import { useAuction } from "../common/hooks";
+import { CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../common/enums";
 
 type Props = {
   user: User | null;
@@ -54,10 +53,11 @@ export default function ProductDetail({ user }: Props) {
   const [productForm, setProductForm] = useState<EditProductForm>({
     title: "",
     content: "",
-    categoryId: undefined,
+    productCategoryType: null,
     startingPrice: "",
     productStatus: "ACTIVE",
     auctionEndTime: "",
+    productType:"AUCTION",
     images: [],
   });
 
@@ -137,23 +137,6 @@ export default function ProductDetail({ user }: Props) {
           console.warn("찜 수 조회 실패", e);
         }
 
-        // 카테고리명
-        if (data.categoryId && !data.categoryName) {
-          try {
-            const categoryRes = await fetch(
-              `${API_BASE_URL}/api/categories/${data.categoryId}`
-            );
-            if (categoryRes.ok) {
-              const c: Category = await categoryRes.json();
-              setProduct((prev) =>
-                prev ? { ...prev, categoryName: c.name } : prev
-              );
-            }
-          } catch {
-            console.warn("카테고리명 불러오기 실패");
-          }
-        }
-
         // 최고 입찰가
         try {
           const highestRes = await fetch(
@@ -200,7 +183,7 @@ export default function ProductDetail({ user }: Props) {
   // 입찰 내역을 가져오는 함수를 컴포넌트 내부에 정의
   const fetchAllBids = useCallback(async () => {
     try {
-      const token = user?.token || localStorage.getItem("token"); // user를 의존성에 추가하기 위해 user?.token을 사용
+      const token = user?.token || localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`, {
         headers: {
           "Content-Type": "application/json",
@@ -217,19 +200,17 @@ export default function ProductDetail({ user }: Props) {
     } catch (err) {
       console.error(err);
     }
-  }, [id, user?.token]); // id와 user?.token을 의존성에 추가
+  }, [id, user?.token]);
 
   // 초기 로딩 시 입찰 내역 fetch
   useEffect(() => {
     fetchAllBids();
-  }, [fetchAllBids]); // useCallback으로 만든 fetchAllBids를 의존성 배열에 넣습니다.
+  }, [fetchAllBids]);
 
   // AuctionBox에 전달할 새로운 placeBid 함수 정의
   const handlePlaceBid = useCallback(
     async (bidPrice: number) => {
-      // useAuction 훅의 livePlaceBid를 호출 (웹소켓 업데이트 역할)
       livePlaceBid(bidPrice);
-      // ⭐ 서버에서 전체 입찰 내역을 다시 가져와 allBids를 갱신
       await fetchAllBids();
     },
     [livePlaceBid, fetchAllBids]
@@ -246,12 +227,7 @@ export default function ProductDetail({ user }: Props) {
         now >= endTime || product.productStatus === "CLOSED";
 
       if (isAuctionEnded) {
-        console.log("🏁 경매 종료 감지됨 — 낙찰자 확인 요청");
-        console.log("📡 요청 URL:", `${API_BASE_URL}/api/bid/${id}/winner`);
-        const token = user?.token || localStorage.getItem("token");
-        console.log("📡 토큰:", token ? "있음" : "없음");
-
-        clearInterval(interval); // 중복 실행 방지
+        clearInterval(interval);
 
         try {
           const token = user?.token || localStorage.getItem("token");
@@ -275,7 +251,7 @@ export default function ProductDetail({ user }: Props) {
             console.warn(" checkWinner 요청 실패:", res.status);
           }
         } catch (err) {
-          console.error(" 낙찰자 확인 중 오류:", err);
+          console.error("낙찰자 확인 중 오류:", err);
         }
       }
     }, 1000);
@@ -372,9 +348,10 @@ export default function ProductDetail({ user }: Props) {
       content: product.content ?? "",
       startingPrice:
         product.startingPrice !== undefined
-          ? String(product.startingPrice) // number → string 변환
+          ? String(product.startingPrice)
           : "",
-      categoryId: product.categoryId,
+      productCategoryType: product.productCategoryType ?? null,
+      productType:"AUCTION",
       productStatus: product.productStatus ?? "ACTIVE",
       auctionEndTime: product.auctionEndTime,
       images: [],
@@ -389,7 +366,7 @@ export default function ProductDetail({ user }: Props) {
 
       const payload = {
         ...productForm,
-        categoryId: productForm.categoryId ?? null,
+        productCategoryType: productForm.productCategoryType ?? null,
         startingPrice: Number(productForm.startingPrice || 0),
         auctionEndTime: productForm.auctionEndTime
           ? (() => {
@@ -481,13 +458,8 @@ export default function ProductDetail({ user }: Props) {
 
     setProductForm((prev) => ({
       ...prev,
-      [name]: name === "startingPrice" ? value : value,
+      [name]: value,
     }));
-  };
-
-  const getCategoryName = (categoryId?: number) => {
-    if (!categoryId) return "없음";
-    return product?.categoryName ?? "알 수 없음";
   };
 
   if (!product)
@@ -636,7 +608,6 @@ export default function ProductDetail({ user }: Props) {
               </div>
             )}
 
-            {/* 경매 종료 & 내가 낙찰자일 때만 결제 버튼 보이게 */}
             {(() => {
               if (!product) return null;
 
@@ -646,7 +617,6 @@ export default function ProductDetail({ user }: Props) {
 
               if (!auctionEnded || !isWinner) return null;
 
-              // 이미 결제 완료되었거나 판매 완료된 경우
               if (
                 product.paymentStatus === "PAID" ||
                 product.productStatus === "SOLD"
@@ -664,7 +634,6 @@ export default function ProductDetail({ user }: Props) {
                 );
               }
 
-              // 아직 결제 전이라면 결제 버튼 표시
               return (
                 <div className="position-ab z-20 right-0">
                   <button
@@ -720,23 +689,24 @@ export default function ProductDetail({ user }: Props) {
                 />
                 <label className="label title-16">카테고리</label>
                 <select
-                  name="categoryId"
-                  value={productForm.categoryId ?? ""}
+                  name="productCategoryType"
+                  value={productForm.productCategoryType ?? ""}
                   onChange={(e) => {
                     const val = e.target.value;
                     setProductForm((prev) => ({
                       ...prev,
-                      categoryId: val === "" ? undefined : Number(val),
+                      productCategoryType: (val || null) as ProductCategoryType | null,
                     }));
                   }}
                   disabled={isEditingDisabled}
+                  className="input"
                 >
                   <option value="">카테고리 선택</option>
-                  {product?.categoryId && (
-                    <option value={product.categoryId}>
-                      {getCategoryName(product.categoryId)}
+                  {CATEGORY_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
                     </option>
-                  )}
+                  ))}
                 </select>
                 <label className="label title-16">경매 종료 시간</label>
                 <ReactDatePicker
@@ -777,21 +747,15 @@ export default function ProductDetail({ user }: Props) {
                   timeFormat="HH:mm"
                   timeIntervals={5}
                   dateFormat="yyyy-MM-dd HH:mm"
-                  minDate={originalEndDate} // 날짜 제한
+                  minDate={originalEndDate}
                   minTime={
                     productForm.auctionEndTime &&
                     new Date(productForm.auctionEndTime).toDateString() ===
                       originalEndDate.toDateString()
-                      ? originalEndDate // 같은 날이면 기존 종료시간 이전 선택 불가
-                      : new Date(0, 0, 0, 0, 0) // 다른 날이면 제한 없음 (0시 기준)
+                      ? originalEndDate
+                      : new Date(0, 0, 0, 0, 0)
                   }
-                  maxTime={
-                    productForm.auctionEndTime &&
-                    new Date(productForm.auctionEndTime).toDateString() ===
-                      originalEndDate.toDateString()
-                      ? new Date(23, 11, 31, 23, 59) // 같은 날이면 하루 끝까지 허용
-                      : new Date(23, 11, 31, 23, 59) // 다른 날도 하루 끝까지
-                  }
+                  maxTime={new Date(23, 11, 31, 23, 59)}
                   className="input"
                 />
                 <label className="label title-16">경매등록가</label>
@@ -833,7 +797,12 @@ export default function ProductDetail({ user }: Props) {
           {!editingProductId && (
             <>
               <p>판매자: {sellerNickName}</p>
-              <p>카테고리: {product.categoryName ?? "없음"}</p>
+              <p>
+                카테고리:{" "}
+                {product.productCategoryType
+                  ? PRODUCT_CATEGORY_LABELS[product.productCategoryType]
+                  : "없음"}
+              </p>
               <p style={{ color: "#555", fontSize: "0.9rem" }}>
                 등록시간:{" "}
                 {product.createdAt

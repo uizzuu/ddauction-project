@@ -1,9 +1,11 @@
-import { ROLE, PAYMENT_STATUS, PRODUCT_STATUS, CHAT_TYPE } from './enums';
+import { ROLE, PAYMENT_STATUS, PRODUCT_STATUS, CHAT_TYPE, PRODUCT_TYPE } from './enums';
+import type { ProductCategoryType } from './enums';
 
 export type Role = (typeof ROLE)[number];
 export type ProductStatus = (typeof PRODUCT_STATUS)[number];
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 export type ChatType = (typeof CHAT_TYPE)[number];
+export type ProductType = (typeof PRODUCT_TYPE)[number];
 
 export interface User {
   userId: number;
@@ -52,17 +54,16 @@ export interface Product {
   bidId?: number;
   bidPrice?: number | null;
   paymentId?: number | null;
-  categoryId: number;
-  categoryName?: string;
   bid?: Bid | null;
   bids?: Bid[]; // 입찰기록
   imageUrl?: string;
+  productCategoryType?: ProductCategoryType | null;
+  productType?: ProductType; // 상품 타입 추가 (경매/중고/스토어)
+  
+  // 정렬 로직 (인기순)을 위해 ProductSearchPage에서 사용되는 필드를 옵셔널로 추가
+  bookmarkCount?: number;
 }
 
-export interface Category {
-  categoryId: number;
-  name: string;
-}
 
 export interface LoginForm {
   email: string;
@@ -85,7 +86,8 @@ export interface ProductForm {
   startingPrice: string; // 숫자 입력 후 문자열로 변환하여 저장
   oneMinuteAuction: boolean;
   auctionEndTime: string;
-  categoryId: number | null;
+  productCategoryType: ProductCategoryType | null;
+  productType: ProductType; // 상품 타입 필드 추가
   images?: File[];
 }
 
@@ -93,10 +95,11 @@ export interface ProductForm {
 export type EditProductForm = {
   title: string;
   content: string;
-  categoryId?: number;
+  productCategoryType: ProductCategoryType | null;
   startingPrice?: string;
   productStatus: ProductStatus;
   auctionEndTime: string;
+  productType: ProductType; // 상품 타입 필드 추가
   images?: File[];
 };
 
@@ -115,7 +118,8 @@ export interface CreateProductRequest {
   oneMinuteAuction: boolean;
   auctionEndTime: string;
   sellerId: number;
-  categoryId: number;
+  productCategoryType: ProductCategoryType | null;
+  productType: ProductType; // 상품 타입 필드 추가
   productStatus: ProductStatus;
 }
 

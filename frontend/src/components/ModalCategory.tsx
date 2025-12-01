@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import type { Category } from "../common/types";
+import type { Option } from "../common/types";
 
 interface ModalCategoryProps {
   isOpen: boolean;
   onClose: () => void;
-  categories: Category[];
-  onSelectCategory: (category: Category) => void;
+  categories: Option[];
+  onSelectCategory: (option: Option) => void;
   targetRef: React.RefObject<HTMLButtonElement | null>;
 }
 
@@ -69,16 +69,16 @@ export default function ModalCategory({
       </p>
       <ul className="category-list">
         {categories.map((cat) => (
-          <li key={cat.categoryId}>
+          <li key={cat.value}>
             <button
               className="category-btn"
               onClick={() => {
                 onSelectCategory(cat);
-                navigate(`/search?category=${cat.categoryId}`);
+                navigate(`/search?category=${cat.value}`);
                 onClose();
               }}
             >
-              {cat.name}
+              {cat.label}
             </button>
           </li>
         ))}
