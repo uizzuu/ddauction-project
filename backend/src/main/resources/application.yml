@@ -189,7 +189,7 @@ app:
   frontend-url: https://ddauction.shop
 rag:
   api:
-    url: ${RAG_API_URL:http://rag-api:8000}
+    url: ${RAG_API_URL:http://chatbot:8000}
     timeout:
       connect: 20000  # 프로덕션에서는 더 여유있게
       read: 90000

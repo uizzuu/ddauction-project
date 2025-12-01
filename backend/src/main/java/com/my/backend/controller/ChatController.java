@@ -11,7 +11,7 @@ import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/ai/chat")
 @RequiredArgsConstructor
 public class ChatController {
 

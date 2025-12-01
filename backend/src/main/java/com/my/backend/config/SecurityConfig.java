@@ -87,7 +87,7 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
                         //챗봇인증허용
-                        .requestMatchers("/api/chat/**").permitAll()
+                        .requestMatchers("/ai/chat/**").permitAll()
                         //채팅 임시허용
                         .requestMatchers("/api/chats/**").permitAll()
 
@@ -105,7 +105,6 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/products/**",
-                                "/api/categories/**",
                                 "/api/articles/**",
                                 "/api/qna/**",
                                 "/api/bookmarks/**"
