@@ -39,4 +39,10 @@ public class ChattingController {
             return ResponseEntity.ok(List.of());
         }
     }
+
+    @GetMapping("/public")
+    public List<PublicChatDto> getPublicChats() {
+        return chatService.getRecentPublicChats();
+    }
+
 }

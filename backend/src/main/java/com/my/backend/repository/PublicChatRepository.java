@@ -10,5 +10,5 @@ import java.util.List;
 public interface PublicChatRepository extends JpaRepository<PublicChat, Long> {
 
     // 최근 공개 채팅 가져오기
-    List<PublicChat> findTop100ByOrderByCreatedAtAsc();
+    List<PublicChat> findTop50ByOrderByCreatedAtAsc();
 }
