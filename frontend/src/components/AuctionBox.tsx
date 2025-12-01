@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
-import { API_BASE_URL } from "../common/api";
+import * as API from "../common/api";
 import type { Bid } from "../common/types";
 
 interface AuctionBoxProps {
@@ -60,29 +60,14 @@ export const AuctionBox = ({
     }
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/bid/${productId}/bid`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ bidPrice: bidNum }),
-      });
-
-      if (res.ok) {
-        //  placeBid() 제거 — WebSocket이 알아서 반영함
-        setBidValue("");
-        alert("입찰 성공!");
-      } else {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error ?? "입찰 실패");
-      }
-    } catch (err) {
-      console.error("입찰 중 오류:", err);
-      alert("서버 오류");
-    } finally {
-      setIsBidding(false);
-    }
+    await API.placeBid(productId, bidNum, token); // productId와 bidNum 전달
+    setBidValue("");
+    alert("입찰 성공!");
+  } catch (err: any) {
+    alert(err.message || "서버 오류");
+  } finally {
+    setIsBidding(false);
+  }
   };
 
   const placeholderText =
