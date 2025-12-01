@@ -34,4 +34,8 @@ public class PrivateChat {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "chat_room_id")
     private ChatRoom chatRoom;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> ba0e370 (컬럼이름수정)
