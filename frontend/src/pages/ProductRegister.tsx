@@ -8,7 +8,8 @@ import type {
   AiDescriptionRequest,
   AiDescriptionResponse 
 } from "../common/types";
-import { CATEGORY_OPTIONS } from "../common/enums";  // ✅ 추가
+import { CATEGORY_OPTIONS } from "../common/enums";
+import type {ProductCategoryType} from "../common/enums";
 import { API_BASE_URL } from "../common/api";
 import SelectBox from "../components/SelectBox";
 
@@ -25,9 +26,8 @@ export default function ProductRegister({ user }: Props) {
     images: [],
     oneMinuteAuction: false,
     auctionEndTime: "",
-    categoryId: null,
+    productCategoryType: null,
   });
-  // const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
   const [minDateTime, setMinDateTime] = useState<Date | undefined>(undefined);
   const [maxDateTime, setMaxDateTime] = useState<Date | undefined>(undefined);
@@ -38,21 +38,16 @@ export default function ProductRegister({ user }: Props) {
 
   useEffect(() => {
     const now = new Date();
-    now.setSeconds(0); // 초를 0으로 설정
-    now.setMilliseconds(0); // 밀리초를 0으로 설정
+    now.setSeconds(0);
+    now.setMilliseconds(0);
 
-    // 최소 날짜와 최대 날짜 설정
     setMinDateTime(now);
 
     const maxDate = new Date(now);
-    maxDate.setMonth(now.getMonth() + 3); // 3개월 후 날짜로 설정
+    maxDate.setMonth(now.getMonth() + 3);
     setMaxDateTime(maxDate);
-
-    console.log("최소 날짜 (minDateTime):", now);
-    console.log("최대 날짜 (maxDateTime):", maxDate);
   }, []);
 
-  // DatePicker 변경 시 form도 업데이트
   const handleDateChange = (date: Date | null) => {
     setAuctionEndDate(date);
     if (date) {
@@ -62,7 +57,6 @@ export default function ProductRegister({ user }: Props) {
         return;
       }
 
-      // ✅ 로컬 시간을 그대로 문자열로 변환 (UTC 변환 ❌)
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
       const day = String(date.getDate()).padStart(2, "0");
@@ -71,36 +65,15 @@ export default function ProductRegister({ user }: Props) {
       const seconds = String(date.getSeconds()).padStart(2, "0");
 
       const formatted = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-      console.log("auctionEndTime 확인:", formatted);
 
       setForm((prev) => ({
         ...prev,
-        auctionEndTime: formatted, // ✅ Z(UTC 표시) 제거
+        auctionEndTime: formatted,
       }));
       setError("");
     }
   };
 
-  // 카테고리 로드
-  // useEffect(() => {
-  //   const fetchCategories = async () => {
-  //     try {
-  //       const res = await fetch(`${API_BASE_URL}/api/categories`);
-  //       if (res.ok) {
-  //         const data: Category[] = await res.json();
-  //         setCategories(data);
-  //         if (data.length > 0) {
-  //           setForm((prev) => ({ ...prev, categoryId: data[0].categoryId }));
-  //         }
-  //       }
-  //     } catch (err) {
-  //       console.error("카테고리 로드 실패", err);
-  //     }
-  //   };
-  //   fetchCategories();
-  // }, []);
-
-  // AI 상품 설명 자동 생성
   const generateAiDescriptionAuto = async () => {
     if (!form.title || form.title.trim().length < 2) {
       alert("상품명을 2글자 이상 입력해주세요!");
@@ -115,7 +88,7 @@ export default function ProductRegister({ user }: Props) {
       
       const requestBody: AiDescriptionRequest = {
         product_name: form.title,
-        keywords: [],  // 빈 배열: AI가 제목을 보고 자동 추론
+        keywords: [],
         target_audience: "일반 고객",
         tone: "전문적인, 신뢰감 있는",
       };
@@ -145,7 +118,6 @@ export default function ProductRegister({ user }: Props) {
     }
   };
 
-  // 폼 validation
   const validateForm = () => {
     if (!form.title) return "제목은 필수 입력 항목입니다";
     if (!form.content) return "상세 설명은 필수 입력 항목입니다";
@@ -153,13 +125,12 @@ export default function ProductRegister({ user }: Props) {
       return "시작 가격은 1원 이상이어야 합니다";
     if (!form.oneMinuteAuction && !form.auctionEndTime)
       return "경매 종료 시간을 입력해주세요";
-    if (!form.categoryId) return "카테고리를 선택해주세요";
+    if (!form.productCategoryType) return "카테고리를 선택해주세요";
     if (!form.images || form.images.length === 0)
       return "최소 1개 이상의 이미지를 선택해주세요";
     return "";
   };
 
-  // S3 업로드 함수
   const uploadImageToS3 = async (
     file: File,
     token: string
@@ -224,7 +195,7 @@ export default function ProductRegister({ user }: Props) {
           oneMinuteAuction: form.oneMinuteAuction,
           auctionEndTime: form.auctionEndTime,
           sellerId: user.userId,
-          categoryId: form.categoryId,
+          productCategoryType: form.productCategoryType, // ✅ 수정
           productStatus: "ACTIVE",
           paymentStatus: "PENDING",
         }),
@@ -252,7 +223,6 @@ export default function ProductRegister({ user }: Props) {
             uploadedImageUrls.push(s3Url);
           } catch (err) {
             console.error("S3 업로드 실패:", err);
-            // 실패해도 계속 진행 (이미지 없는 상품 가능)
           }
         }
       }
@@ -324,7 +294,6 @@ export default function ProductRegister({ user }: Props) {
           />
 
           <label className="label">상세 설명 *</label>
-          // 이부분 추가
           <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
             <button
               type="button"
@@ -455,14 +424,17 @@ export default function ProductRegister({ user }: Props) {
 
           <label className="label">카테고리 *</label>
           <SelectBox
-            value={form.categoryId === null ? "" : String(form.categoryId)}
-            onChange={(val) =>
-              setForm({ ...form, categoryId: val === "" ? null : Number(val) })
-            }
-            options={CATEGORY_OPTIONS}
-            placeholder="카테고리를 선택하세요"
-            className="register-category"
-          />
+  value={form.productCategoryType ?? ""}
+  onChange={(val) =>
+    setForm({ 
+      ...form, 
+      productCategoryType: (val || null) as ProductCategoryType | null 
+    })
+  }
+  options={CATEGORY_OPTIONS}
+  placeholder="카테고리를 선택하세요"
+  className="register-category"
+/>
         </div>
 
         {error && <p className="error-message">{error}</p>}

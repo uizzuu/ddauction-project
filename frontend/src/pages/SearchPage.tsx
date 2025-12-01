@@ -1,25 +1,29 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { API_BASE_URL } from "../common/api";
-import type { Product, Category } from "../common/types";
+import type { Product } from "../common/types"; // Option 타입 사용
+import { CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS } from "../common/enums"; // 정적 카테고리 데이터 import
 import SelectBox from "../components/SelectBox";
 import { formatDateTime, formatPrice, formatDate } from "../common/util";
+
+// SortOption 타입 재정의 (로컬에서 정의)
+type SortOption = "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity";
 
 export default function ProductSearchPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [keyword, setKeyword] = useState("");
-  const [categoryId, setCategoryId] = useState<number | "">("");
+  // 1. number ID 대신 string code 사용
+  const [categoryCode, setCategoryCode] = useState<string | "">(""); 
   const [activeOnly, setActiveOnly] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
   // 최신순, 오래된순, 가격 낮은순, 가격 높은순, 남은시간순, 인기순
-  const [sortOption, setSortOption] = useState<
-    "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity"
-  >("latest");
+  const [sortOption, setSortOption] = useState<SortOption>("latest");
+
+  // 🚨 제거: 카테고리 목록 상태 (categories) 및 fetch 로직 제거
 
   // 한국 시간대(+09:00) 기준으로 문자열을 Date로 파싱하는 함수
   const parseWithTZ = (s: string) => {
@@ -30,41 +34,21 @@ export default function ProductSearchPage() {
     return new Date(`${s}+09:00`);
   };
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/categories`);
-        if (!res.ok) throw new Error("카테고리 로드 실패");
-        const data: Category[] = await res.json();
-        setCategories(data.sort((a, b) => a.categoryId - b.categoryId));
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchCategories();
-  }, []);
-
   const fetchProducts = async (
     kw: string = "",
-    cat: number | "" = "",
+    catCode: string | "" = "", // string code로 변경
     active: boolean = false,
-    sort:
-      | "latest"
-      | "oldest"
-      | "priceAsc"
-      | "priceDesc"
-      | "timeLeft"
-      | "popularity" = "latest"
+    sort: SortOption = "latest"
   ) => {
     setLoading(true);
     try {
       let url = `${API_BASE_URL}/api/products`;
       const query = new URLSearchParams();
       if (kw) query.append("keyword", kw);
-      if (cat) query.append("category", cat.toString());
+      if (catCode) query.append("category", catCode); // .toString() 제거, string code 사용
       if (active) query.append("productStatus", "ACTIVE");
 
-      if (kw || cat || active) {
+      if (kw || catCode || active) {
         url = `${API_BASE_URL}/api/products/search?${query.toString()}`;
       }
       console.log("🔹 상품 fetch URL:", url); // 🔹 URL 확인
@@ -87,7 +71,7 @@ export default function ProductSearchPage() {
 
       let sorted = [...data];
 
-      // 인기순 정렬
+      // 인기순 정렬 (기존 로직 유지)
       if (sort === "popularity") {
         const productsWithBookmarkCount = await Promise.all(
           sorted.map(async (p) => {
@@ -128,14 +112,6 @@ export default function ProductSearchPage() {
             );
             break;
 
-          // case "timeLeft":
-          //   sorted.sort(
-          //     (a, b) =>
-          //       (new Date(a.auctionEndTime).getTime() || 0) -
-          //       (new Date(b.auctionEndTime).getTime() || 0)
-          //   );
-          //   break;
-
           case "timeLeft":
             sorted.sort(
               (a, b) =>
@@ -158,19 +134,22 @@ export default function ProductSearchPage() {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const kw = params.get("keyword") || "";
-    const cat = params.get("category") ? Number(params.get("category")) : "";
+    // Number() 변환 제거, string code를 그대로 사용
+    const catCode = params.get("category") || ""; 
 
     setKeyword(kw);
-    setCategoryId(cat);
+    setCategoryCode(catCode);
 
-    fetchProducts(kw, cat, activeOnly, sortOption);
+    // string code를 fetchProducts에 전달
+    fetchProducts(kw, catCode, activeOnly, sortOption);
   }, [location.search, activeOnly, sortOption]);
 
-  const handleCategoryChange = (id: number) => {
-    const newCat = categoryId === id ? "" : id;
+  // 카테고리 변경 핸들러 (string code 사용)
+  const handleCategoryChange = (code: string) => {
+    const newCode = categoryCode === code ? "" : code;
     const query = new URLSearchParams();
     if (keyword) query.append("keyword", keyword.trim());
-    if (newCat) query.append("category", newCat.toString());
+    if (newCode) query.append("category", newCode); // string code 사용
     query.append("page", "0");
     navigate(`/search?${query.toString()}`);
   };
@@ -179,7 +158,7 @@ export default function ProductSearchPage() {
     e.preventDefault();
     const query = new URLSearchParams();
     if (keyword) query.append("keyword", keyword.trim());
-    if (categoryId) query.append("category", categoryId.toString());
+    if (categoryCode) query.append("category", categoryCode); // string code 사용
     query.append("page", "0");
     navigate(`/search?${query.toString()}`);
   };
@@ -187,16 +166,18 @@ export default function ProductSearchPage() {
   const handleActiveOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setActiveOnly(e.target.checked);
   };
+  
+  // 카테고리 이름 찾기: string code를 PRODUCT_CATEGORY_LABELS에서 직접 찾음
+  const categoryName = categoryCode ? PRODUCT_CATEGORY_LABELS[categoryCode as keyof typeof PRODUCT_CATEGORY_LABELS] : "";
+
 
   return (
     <div className="container">
       <p className="title-32 mb-1rem">
-        {keyword || categoryId
+        {keyword || categoryCode
           ? `${keyword ? `${keyword} ` : ""}${
-              categoryId
-                ? `${
-                    categories.find((c) => c.categoryId === categoryId)?.name
-                  } `
+              categoryCode
+                ? `${categoryName || "카테고리"} ` 
                 : ""
             }검색`
           : "전체 검색"}
@@ -216,27 +197,25 @@ export default function ProductSearchPage() {
             className="search-input"
           />
           <SelectBox
-            value={categoryId === "" ? "" : String(categoryId)}
-            onChange={(val) => setCategoryId(val === "" ? "" : Number(val))}
-            options={categories.map((c) => ({
-              value: String(c.categoryId),
-              label: c.name,
-            }))}
+            // string code 사용
+            value={categoryCode}
+            onChange={(val) => {
+                const newCode = val === "" ? "" : val;
+                const query = new URLSearchParams();
+                if (keyword) query.append("keyword", keyword.trim());
+                if (newCode) query.append("category", newCode); // string code 사용
+                query.append("page", "0");
+                navigate(`/search?${query.toString()}`);
+            }}
+            // CATEGORY_OPTIONS (정적 데이터) 사용
+            options={CATEGORY_OPTIONS} 
             placeholder="전체 카테고리"
             className="min135"
           />
           <SelectBox
             value={sortOption}
             onChange={(val) =>
-              setSortOption(
-                val as
-                  | "latest"
-                  | "oldest"
-                  | "priceAsc"
-                  | "priceDesc"
-                  | "timeLeft"
-                  | "popularity"
-              )
+              setSortOption(val as SortOption)
             }
             options={[
               { value: "latest", label: "최신순" },
@@ -273,17 +252,18 @@ export default function ProductSearchPage() {
           </div>
           <div className="category-checkbox-group flex-column gap-4">
             <p className="title-20 mb-1rem">카테고리</p>
-            {categories.map((c) => (
+            {/* CATEGORY_OPTIONS (정적 데이터) 사용 */}
+            {CATEGORY_OPTIONS.map((c) => ( 
               <label
-                key={c.categoryId}
+                key={c.value} // value(code)를 key로 사용
                 className="category-label flex-box gap-4"
               >
                 <input
                   type="checkbox"
-                  checked={categoryId === c.categoryId}
-                  onChange={() => handleCategoryChange(c.categoryId)}
+                  checked={categoryCode === c.value} // code로 비교
+                  onChange={() => handleCategoryChange(c.value)} // code를 전달
                 />
-                <p>{c.name}</p>
+                <p>{c.label}</p>
               </label>
             ))}
           </div>
