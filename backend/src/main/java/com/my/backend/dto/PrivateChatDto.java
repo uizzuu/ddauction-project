@@ -14,15 +14,17 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class PrivateChatDto {
 
-
     private Long privateChatId;
     private Long userId;
-    private String nickName;          // 작성자 닉네임
+    private String nickName;
     private String content;
     private LocalDateTime createdAt;
-    private Long chatRoomId;          // 채팅방 ID
+    private Long chatRoomId;
 
-    private SimpleUserDto user;       // 간단한 사용자 정보
+    private SimpleUserDto user;
+
+    // Product 정보 추가
+    private Long productId;
 
     // Entity → DTO
     public static PrivateChatDto fromEntity(PrivateChat chat) {
@@ -40,6 +42,8 @@ public class PrivateChatDto {
                 .content(chat.getContent())
                 .createdAt(chat.getCreatedAt())
                 .chatRoomId(chat.getChatRoom() != null ? chat.getChatRoom().getId() : null)
+                .productId(chat.getChatRoom() != null && chat.getChatRoom().getProduct() != null
+                        ? chat.getChatRoom().getProduct().getProductId() : null)
                 .user(userDto)
                 .build();
     }
@@ -53,6 +57,4 @@ public class PrivateChatDto {
                 .content(this.content)
                 .build();
     }
-
-
 }
