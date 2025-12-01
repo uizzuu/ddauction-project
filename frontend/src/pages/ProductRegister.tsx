@@ -24,7 +24,7 @@ export default function ProductRegister({ user }: Props) {
     content: "",
     startingPrice: "",
     images: [],
-    oneMinuteAuction: false,
+    productType:"AUCTION",
     auctionEndTime: "",
     productCategoryType: null,
   });
@@ -123,7 +123,7 @@ export default function ProductRegister({ user }: Props) {
     if (!form.content) return "상세 설명은 필수 입력 항목입니다";
     if (!form.startingPrice || Number(form.startingPrice) <= 0)
       return "시작 가격은 1원 이상이어야 합니다";
-    if (!form.oneMinuteAuction && !form.auctionEndTime)
+    if (!form.auctionEndTime)
       return "경매 종료 시간을 입력해주세요";
     if (!form.productCategoryType) return "카테고리를 선택해주세요";
     if (!form.images || form.images.length === 0)
@@ -164,15 +164,6 @@ export default function ProductRegister({ user }: Props) {
       return;
     }
 
-    const endDate = form.oneMinuteAuction
-      ? new Date(new Date().getTime() + 60000)
-      : new Date(form.auctionEndTime);
-
-    if (!form.oneMinuteAuction && isNaN(endDate.getTime())) {
-      setError("경매 종료 시간이 유효하지 않습니다");
-      return;
-    }
-
     const startingPriceNumber = Math.max(
       Number(form.startingPrice.replace(/[^0-9]/g, "")),
       1
@@ -192,7 +183,6 @@ export default function ProductRegister({ user }: Props) {
           title: form.title,
           content: form.content,
           startingPrice: startingPriceNumber,
-          oneMinuteAuction: form.oneMinuteAuction,
           auctionEndTime: form.auctionEndTime,
           sellerId: user.userId,
           productCategoryType: form.productCategoryType, // ✅ 수정
@@ -389,21 +379,7 @@ export default function ProductRegister({ user }: Props) {
             ))}
           </div>
 
-          <div className="checkbox-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={form.oneMinuteAuction}
-                onChange={(e) =>
-                  setForm({ ...form, oneMinuteAuction: e.target.checked })
-                }
-                disabled={uploading}
-              />
-              <span>1분 경매 여부</span>
-            </label>
-          </div>
-
-          {!form.oneMinuteAuction && (
+          {(
             <>
               <label className="label">경매 종료 시간 *</label>
               <ReactDatePicker

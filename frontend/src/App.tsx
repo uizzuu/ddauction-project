@@ -25,7 +25,7 @@ import {
   OAuth2Redirect,
 } from "./common/import";
 import "./common/import.css";
-import type { User, Category } from "./common/types";
+import type { User } from "./common/types";
 
 // 유효한 경로 패턴 정의
 const VALID_PATHS = [
@@ -71,7 +71,6 @@ const isValidPath = (pathname: string): boolean => {
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
-  const [category, setCategory] = useState<Category[]>([]);
   const location = useLocation();
   const [isInvalidPath, setIsInvalidPath] = useState(false);
 
@@ -115,7 +114,7 @@ export default function App() {
   if (isInvalidPath) {
     <div style={{ minHeight: "100vh" }}>
       <HeaderMain user={user} setUser={setUser} />
-      <HeaderSub category={category} setCategory={setCategory} />
+      <HeaderSub />
       <ErrorPage />
     </div>;
   }
@@ -124,7 +123,7 @@ export default function App() {
     <div style={{ minHeight: "100vh" }}>
       {showHeader && <HeaderMain user={user} setUser={setUser} />}
       {showHeader && (
-        <HeaderSub category={category} setCategory={setCategory} />
+        <HeaderSub />
       )}
       <Routes>
         <Route path="/" element={<Main />} />

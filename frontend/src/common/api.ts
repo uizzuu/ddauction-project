@@ -4,7 +4,6 @@ import type {
   LoginForm,
   SignupForm,
   Product,
-  Category,
   CreateProductRequest,
   ArticleDto,
   ArticleForm,
@@ -62,15 +61,6 @@ function isProductArray(obj: unknown): obj is Product[] {
   return Array.isArray(obj) && obj.every(isProduct);
 }
 
-function isCategory(obj: unknown): obj is Category {
-  if (typeof obj !== "object" || obj === null) return false;
-  const o = obj as Record<string, unknown>;
-  return typeof o.categoryId === "number" && typeof o.name === "string";
-}
-
-function isCategoryArray(obj: unknown): obj is Category[] {
-  return Array.isArray(obj) && obj.every(isCategory);
-}
 
 // ------------------- 공통 fetch ------------------- //
 
@@ -157,16 +147,6 @@ export async function createProduct(
   const data: unknown = await response.json();
   if (!isProduct(data))
     throw new Error("API 반환값이 Product 타입과 일치하지 않음");
-  return data;
-}
-
-export async function getCategories(): Promise<Category[]> {
-  const response = await authFetch(`${API_BASE_URL}${API_BASE}/categories`);
-  if (!response.ok) throw new Error("카테고리 조회 실패");
-
-  const data: unknown = await response.json();
-  if (!isCategoryArray(data))
-    throw new Error("API 반환값이 Category[] 타입과 일치하지 않음");
   return data;
 }
 

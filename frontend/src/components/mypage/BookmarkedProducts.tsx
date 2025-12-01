@@ -2,7 +2,7 @@ import type { Product } from "../../common/types";
 
 type Props = {
   bookmarkedProducts: Product[];
-  getCategoryName: (categoryId?: number) => string;
+  getCategoryName: (categoryCode: string | null | undefined) => string;
   goToProductDetail: (productId: number) => void;
 };
 
@@ -83,7 +83,7 @@ export default function BookmarkedProducts({
                   {product.title} - {product.startingPrice?.toLocaleString()}원
                 </div>
                 <div>{product.content || "설명 없음"}</div>
-                <div>카테고리: {getCategoryName(product.categoryId)}</div>
+                <div>카테고리: {getCategoryName(product.productCategoryType)}</div>
                 <div>상품 상태: {product.productStatus}</div>
                 <div>결제 상태: {product.paymentStatus}</div>
               </div>

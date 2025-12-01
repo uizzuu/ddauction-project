@@ -45,7 +45,6 @@ export interface Product {
   content?: string;
   startingPrice?: number;
   images?: Image[];
-  oneMinuteAuction?: boolean;
   auctionEndTime: string;
   productStatus: ProductStatus;
   paymentStatus: PaymentStatus;
@@ -84,7 +83,6 @@ export interface ProductForm {
   title: string;
   content: string;
   startingPrice: string; // 숫자 입력 후 문자열로 변환하여 저장
-  oneMinuteAuction: boolean;
   auctionEndTime: string;
   productCategoryType: ProductCategoryType | null;
   productType: ProductType; // 상품 타입 필드 추가
@@ -115,7 +113,6 @@ export interface CreateProductRequest {
   content: string;
   startingPrice: string;
   imageUrl: string;
-  oneMinuteAuction: boolean;
   auctionEndTime: string;
   sellerId: number;
   productCategoryType: ProductCategoryType | null;

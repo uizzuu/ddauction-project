@@ -3,11 +3,11 @@ import type {
   User,
   Product,
   Report,
-  Category,
   EditProductForm,
   Inquiry,
 } from "../common/types";
 import { API_BASE_URL } from "../common/api";
+import type { ProductCategoryType } from "../common/enums";
 
 // 분리된 컴포넌트 임포트
 import UserManagement from "../components/admin/UserManagement";
@@ -15,8 +15,6 @@ import ProductManagement from "../components/admin/ProductManagement";
 import ReportManagement from "../components/admin/ReportManagement";
 import StatsManagement from "../components/admin/StatsManagement";
 import InquiryManagement from "../components/admin/InquiryManagement";
-
-// Recharts 관련 import 제거됨
 
 export default function AdminPage() {
   const [section, setSection] = useState<
@@ -31,12 +29,11 @@ export default function AdminPage() {
     reportCount?: number;
   }>({});
 
-  const [categories, setCategories] = useState<Category[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
 
   // --- 상품 필터 상태 (ProductManagement로 props 전달) ---
   const [filterKeyword, setFilterKeyword] = useState("");
-  const [filterCategory, setFilterCategory] = useState<number | null>(null);
+  const [filterCategory, setFilterCategory] = useState<ProductCategoryType | null>(null);
 
   // --- 회원 필터 상태 (UserManagement로 props 전달) ---
   const [userFilterField, setUserFilterField] = useState<
@@ -49,9 +46,10 @@ export default function AdminPage() {
   const [editProductForm, setEditProductForm] = useState<EditProductForm>({
     title: "",
     content: "",
-    categoryId: undefined,
+    productCategoryType: null,
     startingPrice: "",
     productStatus: "ACTIVE",
+    productType: "AUCTION",
     auctionEndTime: "",
   });
 
@@ -134,7 +132,7 @@ export default function AdminPage() {
 
     const data = await res.json();
     setUsers(data);
-  }, [userFilterKeyword, userFilterField]); // 의존성 유지
+  }, [userFilterKeyword, userFilterField]);
 
   const fetchProducts = useCallback(async () => {
     let url = `${API_BASE_URL}/api/products/search?`;
@@ -150,7 +148,7 @@ export default function AdminPage() {
     });
     const data = await res.json();
     setProducts(data);
-  }, [filterKeyword, filterCategory]); // 의존성 유지
+  }, [filterKeyword, filterCategory]);
 
   const fetchReports = useCallback(async () => {
     try {
@@ -172,12 +170,6 @@ export default function AdminPage() {
       console.error(err);
       setReports([]);
     }
-  }, []);
-
-  const fetchCategories = useCallback(async () => {
-    const res = await fetch(`${API_BASE_URL}/api/categories`);
-    const data = await res.json();
-    setCategories(data);
   }, []);
 
   const fetchInquiries = useCallback(async () => {
@@ -204,7 +196,6 @@ export default function AdminPage() {
         updatedAt: string;
       }[] = await res.json();
 
-      // Inquiry 타입에 맞춰서 매핑 및 답변 분리 로직 유지
       const mapped: Inquiry[] = data.map((d, idx) => {
         const [questionPart, answerPart] = d.content.split("[답변]:");
 
@@ -216,14 +207,14 @@ export default function AdminPage() {
           answers: answerPart
             ? [
                 {
-                  inquiryReviewId: idx + 1, // 백엔드에서 답변 id가 따로 없으니 임시 번호
+                  inquiryReviewId: idx + 1,
                   answer: answerPart.trim(),
                   nickName: "관리자",
                   createdAt: d.updatedAt,
                 },
               ]
             : [],
-          newAnswer: "", // 답변 상태를 로컬에서 관리하기 위해 추가
+          newAnswer: "",
         };
       });
 
@@ -305,10 +296,11 @@ export default function AdminPage() {
     setEditProductForm({
       title: product.title,
       content: product.content ?? "",
-      categoryId: product.categoryId,
+      productCategoryType: product.productCategoryType ?? null,
       startingPrice: product.startingPrice?.toString(),
       productStatus: product.productStatus,
       auctionEndTime: product.auctionEndTime,
+      productType : "AUCTION",
     });
   };
 
@@ -316,12 +308,12 @@ export default function AdminPage() {
     try {
       const payload: {
         title: string;
-        categoryId?: number;
+        productCategoryType?: ProductCategoryType | null;
         startingPrice?: string;
         productStatus: Product["productStatus"];
       } = {
         title: editProductForm.title,
-        categoryId: editProductForm.categoryId,
+        productCategoryType: editProductForm.productCategoryType,
         startingPrice: editProductForm.startingPrice,
         productStatus: editProductForm.productStatus,
       };
@@ -433,10 +425,6 @@ export default function AdminPage() {
   // ===================================
 
   useEffect(() => {
-    fetchCategories(); // 카테고리는 모든 섹션에서 필요할 수 있으므로 항상 로드
-  }, [fetchCategories]);
-
-  useEffect(() => {
     if (section === "user") fetchUsers();
     else if (section === "product") fetchProducts();
     else if (section === "report") fetchReports();
@@ -497,7 +485,6 @@ export default function AdminPage() {
               handleSaveUserClick={handleSaveUserClick}
               handleCancelUserClick={handleCancelUserClick}
               handleChangeRole={handleChangeRole}
-              // 필터링 관련 props
               userFilterField={userFilterField}
               setUserFilterField={setUserFilterField}
               userFilterKeyword={userFilterKeyword}
@@ -510,7 +497,6 @@ export default function AdminPage() {
           {section === "product" && (
             <ProductManagement
               products={products}
-              categories={categories}
               editingProductId={editingProductId}
               editProductForm={editProductForm}
               setEditProductForm={setEditProductForm}
@@ -518,7 +504,6 @@ export default function AdminPage() {
               handleSaveProductClick={handleSaveProductClick}
               handleCancelProductClick={handleCancelProductClick}
               handleDeleteProduct={handleDeleteProduct}
-              // 필터링 관련 props
               filterKeyword={filterKeyword}
               setFilterKeyword={setFilterKeyword}
               filterCategory={filterCategory}

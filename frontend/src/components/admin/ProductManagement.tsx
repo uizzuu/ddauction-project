@@ -1,9 +1,8 @@
-import type { Product, Category, EditProductForm } from "../../common/types";
-import { PRODUCT_STATUS } from "../../common/enums";
+import type { Product, EditProductForm } from "../../common/types";
+import { PRODUCT_STATUS, CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../../common/enums";
 
 type Props = {
   products: Product[];
-  categories: Category[];
   editingProductId: number | null;
   editProductForm: EditProductForm;
   setEditProductForm: React.Dispatch<React.SetStateAction<EditProductForm>>;
@@ -12,17 +11,16 @@ type Props = {
   handleCancelProductClick: () => void;
   handleDeleteProduct: (productId: number) => void;
 
-  // 필터링 관련 props 추가
+  // 필터링 관련 props
   filterKeyword: string;
   setFilterKeyword: React.Dispatch<React.SetStateAction<string>>;
-  filterCategory: number | null;
-  setFilterCategory: React.Dispatch<React.SetStateAction<number | null>>;
+  filterCategory: ProductCategoryType | null;
+  setFilterCategory: React.Dispatch<React.SetStateAction<ProductCategoryType | null>>;
   fetchProducts: () => void;
 };
 
 export default function ProductManagement({
   products,
-  categories,
   editingProductId,
   editProductForm,
   setEditProductForm,
@@ -49,7 +47,7 @@ export default function ProductManagement({
   return (
     <div className="admin-section">
       <h3>상품 관리</h3>
-      {/* --- 상품 필터 UI (AdminPage에서 이동) --- */}
+      {/* --- 상품 필터 UI --- */}
       <div style={{ marginBottom: "1rem" }}>
         <input
           placeholder="상품명 검색"
@@ -59,13 +57,13 @@ export default function ProductManagement({
         <select
           value={filterCategory ?? ""}
           onChange={(e) =>
-            setFilterCategory(e.target.value ? Number(e.target.value) : null)
+            setFilterCategory((e.target.value || null) as ProductCategoryType | null)
           }
         >
           <option value="">전체 카테고리</option>
-          {categories.map((c) => (
-            <option key={c.categoryId} value={c.categoryId}>
-              {c.name}
+          {CATEGORY_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
             </option>
           ))}
         </select>
@@ -105,24 +103,25 @@ export default function ProductManagement({
               <td>
                 {editingProductId === p.productId ? (
                   <select
-                    value={editProductForm.categoryId ?? ""}
+                    value={editProductForm.productCategoryType ?? ""}
                     onChange={(e) =>
                       setEditProductForm({
                         ...editProductForm,
-                        categoryId: Number(e.target.value),
+                        productCategoryType: (e.target.value || null) as ProductCategoryType | null,
                       })
                     }
                   >
-                    {categories.map((c) => (
-                      <option key={c.categoryId} value={c.categoryId}>
-                        {c.name}
+                    <option value="">카테고리 선택</option>
+                    {CATEGORY_OPTIONS.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
                       </option>
                     ))}
                   </select>
                 ) : (
-                  p.categoryName ??
-                  categories.find((c) => c.categoryId === p.categoryId)?.name ??
-                  "-"
+                  p.productCategoryType
+                    ? PRODUCT_CATEGORY_LABELS[p.productCategoryType]
+                    : "-"
                 )}
               </td>
               <td>

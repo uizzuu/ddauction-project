@@ -1,12 +1,34 @@
 import React from "react";
-import type { Product, Category, ProductForm } from "../../common/types";
+import type { Product, ProductForm } from "../../common/types";
+import { 
+    PRODUCT_CATEGORY_LABELS, 
+    CATEGORY_OPTIONS, 
+} from "../../common/enums";
+import type {ProductCategoryType} from "../../common/enums";
+
+
+
+// 카테고리 코드(string)를 받아 한글 이름으로 변환하는 함수
+const getCategoryName = (categoryCode: string | null | undefined): string => {
+  if (!categoryCode) return "N/A";
+  // 타입 단언을 사용하여 안전하게 매핑
+  return PRODUCT_CATEGORY_LABELS[categoryCode as ProductCategoryType] || "기타";
+};
+
+// 상품 상태 코드(string)를 받아 한글 이름으로 변환하는 함수
+// const getProductStatusLabel = (status: string | null | undefined): string => {
+//     switch (status) {
+//         case "ACTIVE": return "판매중";
+//         case "SOLD": return "판매완료";
+//         case "CLOSED": return "경매종료";
+//         default: return status || "알 수 없음";
+//     }
+// }
 
 type Props = {
   sellingProducts: Product[];
   editingProductId: number | null;
   productForm: ProductForm & { productStatus: string };
-  categories: Category[];
-  getCategoryName: (categoryId?: number) => string;
   goToProductDetail: (productId: number) => void;
   handleEditProduct: (product: Product) => void;
   handleChangeProductForm: (
@@ -22,8 +44,6 @@ export default function SellingProducts({
   sellingProducts,
   editingProductId,
   productForm,
-  categories,
-  getCategoryName,
   goToProductDetail,
   handleEditProduct,
   handleChangeProductForm,
@@ -101,15 +121,12 @@ export default function SellingProducts({
                     </div>
                     <div>설명: {product.content}</div>
                     <div>가격: {product.startingPrice?.toLocaleString()}원</div>
-                    <div>카테고리: {getCategoryName(product.categoryId)}</div>
+                    <div>카테고리: {getCategoryName(product.productCategoryType)}</div>
                     <div>상품 상태: {product.productStatus}</div>
                     <div>결제 상태: {product.paymentStatus}</div>
                     <div>
                       경매 종료:{" "}
                       {new Date(product.auctionEndTime).toLocaleString()}
-                    </div>
-                    <div>
-                      1분 경매: {product.oneMinuteAuction ? "예" : "아니오"}
                     </div>
                     <div>
                       판매자: {product.sellerNickName} (ID: {product.sellerId})
@@ -167,14 +184,14 @@ export default function SellingProducts({
                         className="textarea"
                       />
                       <select
-                        name="categoryId"
-                        value={productForm.categoryId ?? ""}
+                        name="productCategoryType"
+                        value={productForm.productCategoryType ?? ""}
                         onChange={handleChangeProductForm}
                       >
                         <option value="">카테고리 선택</option>
-                        {categories.map((c) => (
-                          <option key={c.categoryId} value={c.categoryId}>
-                            {c.name}
+                        {CATEGORY_OPTIONS.map((c) => (
+                          <option key={c.value} value={c.value}>
+                            {c.label}
                           </option>
                         ))}
                       </select>
