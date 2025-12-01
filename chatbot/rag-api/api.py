@@ -18,7 +18,7 @@ app = FastAPI()
 
 ALLOWED_ORIGINS = os.getenv(
     "ALLOWED_ORIGINS",
-    "http://localhost:8080"
+    "http://localhost:8080,http://localhost:8000"
 ).split(",")
 
 app.add_middleware(
