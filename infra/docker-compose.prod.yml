@@ -2,15 +2,15 @@ version: "3.9"
 
 services:
   # FastAPI RAG 서버 (맨 위로 이동)
-  rag-api:
-    image: ${RAG_API_IMAGE}
-    container_name: rag-api
+  chatbot:
+    image: ${CHATBOT_IMAGE}
+    container_name: chatbot
     pull_policy: always
     env_file:
       - .env.prod
     environment:
       TZ: "Asia/Seoul"
-      # RAG API 환경 변수
+      # 환경 변수
       ALLOWED_ORIGINS: http://localhost:3000,https://ddauction.shop/
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       PINECONE_API_KEY: ${PINECONE_API_KEY}

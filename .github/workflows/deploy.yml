@@ -10,13 +10,14 @@ env:
   DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/ddauction-backend
   FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/ddauction-frontend
+  CHATBOT_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/ddauction-chatbot
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [backend, frontend]
+        service: [backend, frontend, chatbot]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -77,7 +78,7 @@ jobs:
             cp .env.prod .env.prod.backup
 
             # 기존 .env.prod에서 AWS 항목 제거
-            sed -i '/^AWS_\|^GOOGLE_\|^NAVER_\|^KAKAO_/d' .env.prod
+            sed -i '/^AWS_\|^GOOGLE_\|^NAVER_\|^KAKAO_\|^OPENAI_\|^PINECONE_/d' .env.prod
 
             # 줄바꿈 추가 (중요!)
             echo "" >> .env.prod
@@ -102,7 +103,7 @@ jobs:
             # 1. pull: 최신 이미지를 먼저 다운로드
             docker-compose --env-file .env.prod -f docker-compose.prod.yml pull
             
-            # 2. up: 모든 서비스(backend, frontend)를 한 번에 강제 재시작 및 교체
+            # 2. up: 모든 서비스(backend, frontend, chatbot)를 한 번에 강제 재시작 및 교체
             # 이 명령 하나로 이전의 pull, sleep, 두 번의 up 명령을 대체합니다.
             docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --force-recreate
 
@@ -114,6 +115,9 @@ jobs:
 
             echo "=== Frontend 로그 (최근 30줄) ==="
             docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 frontend
+
+            echo "=== Chatbot 로그 (최근 30줄) ==="
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 chatbot
 
             echo "=== 사용하지 않는 이미지 정리 ==="
             docker image prune -af
