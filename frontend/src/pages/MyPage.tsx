@@ -2,15 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type {
   User,
-  Product,
+  Product, // Product 타입은 이미 productCategoryType을 포함한다고 가정
   Report,
   Qna,
   ProductForm,
-  Category,
   Inquiry,
   Review,
 } from "../common/types";
-import { PRODUCT_STATUS, PAYMENT_STATUS } from "../common/enums";
+import { 
+    PRODUCT_STATUS, 
+    PAYMENT_STATUS, 
+    PRODUCT_CATEGORY_LABELS, // common/enums에서 import
+} from "../common/enums";
+import type {ProductCategoryType, ProductType} from "../common/enums";
 import { API_BASE_URL } from "../common/api";
 
 // Components Import
@@ -23,7 +27,8 @@ import MyInquiries from "../components/mypage/MyInquiries";
 import ReviewManagement from "../components/mypage/ReviewManagement";
 import PaymentProducts from "../components/mypage/PaymentProducts";
 
-// ★ 이미지 URL 절대 경로 처리 (Helper Function)
+
+// Product 타입에 categoryId, categoryName 제거 반영
 const normalizeProduct = (
   p: Partial<Product>
 ): Product & { imageUrl: string } =>
@@ -33,7 +38,6 @@ const normalizeProduct = (
     content: p.content ?? "",
     startingPrice: p.startingPrice ?? 0,
     imageUrl: p.images?.[0]?.imagePath ?? "",
-    oneMinuteAuction: p.oneMinuteAuction ?? false,
     auctionEndTime:
       p.auctionEndTime ??
       (() => {
@@ -48,8 +52,10 @@ const normalizeProduct = (
       })(),
     productStatus: p.productStatus ?? PRODUCT_STATUS[0],
     paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
-    categoryId: p.categoryId ?? 0,
-    categoryName: p.categoryName ?? "없음",
+    // 🚨 categoryId, categoryName 필드 제거 (types.ts 반영)
+    productCategoryType: p.productCategoryType ?? null, // types.ts에 있는 필드는 유지
+    productType: p.productType ?? 'AUCTION' as ProductType, // types.ts에 있는 필드는 유지
+
     sellerId: p.sellerId ?? 0,
     sellerNickName: p.sellerNickName ?? "익명",
     bidId: p.bidId,
@@ -94,6 +100,7 @@ const normalizeProduct = (
       : null,
   } as Product & { imageUrl: string });
 
+
 type MypageSection =
   | "info"
   | "selling"
@@ -111,6 +118,12 @@ type Props = {
   user: User | null;
   setUser: (user: User | null) => void;
 };
+
+// 상품 수정 시 ProductStatus를 추가하여 상태 관리
+type EditProductState = ProductForm & { 
+    productStatus: string; 
+};
+
 
 export default function MyPage({ user, setUser }: Props) {
   // 섹션 상태는 하나로 통합 (editing, showSelling 등을 대체)
@@ -134,17 +147,15 @@ export default function MyPage({ user, setUser }: Props) {
   });
 
   // Product form state
-  const [productForm, setProductForm] = useState<
-    ProductForm & { productStatus: string }
-  >({
+  const [productForm, setProductForm] = useState<EditProductState>({
     title: "",
     content: "",
     startingPrice: "",
-    oneMinuteAuction: false,
     auctionEndTime: "",
-    categoryId: null,
     productStatus: PRODUCT_STATUS[0],
+    productType:"AUCTION" as ProductType, // ProductType을 명시적으로 설정
     images: [],
+    productCategoryType: null,
   });
 
   // Data states
@@ -152,7 +163,7 @@ export default function MyPage({ user, setUser }: Props) {
   const [bookmarkedProducts, setBookmarkedProducts] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [myQnas, setMyQnas] = useState<Qna[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  // 🚨 categories 상태 제거 (types.ts 반영)
   const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
 
   const navigate = useNavigate();
@@ -184,12 +195,7 @@ export default function MyPage({ user, setUser }: Props) {
       });
   }, [navigate, setUser]);
 
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/categories`)
-      .then((res) => res.json())
-      .then(setCategories)
-      .catch((err) => console.error("카테고리 불러오기 실패", err));
-  }, []);
+  // 🚨 카테고리 로딩 useEffect 제거 (types.ts 및 enums 기반으로 변경)
 
   useEffect(() => {
     if (user) {
@@ -269,8 +275,11 @@ export default function MyPage({ user, setUser }: Props) {
   // Data Fetching & Helpers
   // ----------------------------------------------------
 
-  const getCategoryName = (categoryId?: number) =>
-    categories.find((c) => c.categoryId === categoryId)?.name || "없음";
+  // 카테고리 코드를 이름으로 변환하는 로컬 함수
+  const getCategoryName = (categoryCode: string | null | undefined): string => {
+    if (!categoryCode) return "없음";
+    return PRODUCT_CATEGORY_LABELS[categoryCode as ProductCategoryType] || "기타";
+  };
 
   const goToProductDetail = (productId: number) =>
     navigate(`/products/${productId}`);
@@ -428,7 +437,7 @@ export default function MyPage({ user, setUser }: Props) {
         setAverageRating(data.averageRating);
       }
     } catch (err) {
-      console.error(err);
+      console.    error(err);
       alert("리뷰 불러오기 실패");
     }
   };
@@ -476,10 +485,10 @@ export default function MyPage({ user, setUser }: Props) {
       title: product.title,
       content: product.content ?? "",
       startingPrice: String(product.startingPrice ?? 0),
-      oneMinuteAuction: product.oneMinuteAuction ?? false,
       auctionEndTime: product.auctionEndTime,
-      categoryId: product.categoryId ?? null,
+      productCategoryType: product.productCategoryType ?? null,
       productStatus: product.productStatus ?? PRODUCT_STATUS[0],
+      productType: product.productType ?? 'AUCTION' as ProductType, // ProductType을 가져와서 설정
       images: [],
     });
   };
@@ -496,16 +505,17 @@ export default function MyPage({ user, setUser }: Props) {
       }
       return;
     }
-    const value =
-      e.target instanceof HTMLSelectElement && e.target.name !== "productStatus"
-        ? Number(e.target.value)
-        : e.target.value;
+    
+    // ProductStatus, ProductCategoryType, ProductType, string 필드 처리
+    const value = e.target.value;
+
     setProductForm({ ...productForm, [e.target.name]: value });
   };
 
   const handleSaveProduct = async () => {
     if (!editingProductId) return;
-    if (!productForm.categoryId) {
+    
+    if (!productForm.productCategoryType) { 
       alert("카테고리를 선택해주세요.");
       return;
     }
@@ -515,9 +525,10 @@ export default function MyPage({ user, setUser }: Props) {
       formData.append("title", productForm.title);
       formData.append("content", productForm.content);
       formData.append("startingPrice", productForm.startingPrice);
-      formData.append("categoryId", String(productForm.categoryId));
+      formData.append("productCategoryType", productForm.productCategoryType);
       formData.append("auctionEndTime", productForm.auctionEndTime);
-      formData.append("oneMinuteAuction", String(productForm.oneMinuteAuction));
+      formData.append("productStatus", productForm.productStatus);
+      formData.append("productType", productForm.productType); // 상품 타입 추가
 
       // 이미지 파일 추가
       productForm.images?.forEach((file) => formData.append("images", file));
@@ -723,8 +734,6 @@ export default function MyPage({ user, setUser }: Props) {
               sellingProducts={sellingProducts}
               editingProductId={editingProductId}
               productForm={productForm}
-              categories={categories}
-              getCategoryName={getCategoryName}
               goToProductDetail={goToProductDetail}
               handleEditProduct={handleEditProduct}
               handleChangeProductForm={handleChangeProductForm}
