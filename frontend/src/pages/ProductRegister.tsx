@@ -188,6 +188,7 @@ export default function ProductRegister({ user }: Props) {
           productCategoryType: form.productCategoryType, // ✅ 수정
           productStatus: "ACTIVE",
           paymentStatus: "PENDING",
+          productType: form.productType,
         }),
       });
 
