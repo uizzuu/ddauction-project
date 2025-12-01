@@ -77,7 +77,7 @@ async function authFetch(url: string, options: RequestInit = {}) {
 // 입찰 등록
 export async function placeBid(productId: number, bidPrice: number, token?: string) {
   const t = ensureToken(token);
-  return fetchJson(`${API_BASE_URL}/api/bid/${productId}/bid`, {
+  return fetchJson(`${API_BASE_URL}${SPRING_API}/bid/${productId}/bid`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
     body: JSON.stringify({ bidPrice }),
@@ -692,7 +692,7 @@ export async function registerProductWithImages(
 // admin 관련 API (api.ts에 추가하지 않고 AdminPage에서만 사용)
 export const fetchStatsApi = async () => {
   const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE_URL}/api/admin/stats`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/admin/stats`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: token ? `Bearer ${token}` : "",
@@ -713,7 +713,7 @@ export async function getUsers(
   field?: "userName" | "nickName" | "email" | "phone",
   keyword?: string
 ): Promise<TYPE.User[]> {
-  let url = `${API_BASE_URL}/api/users`;
+  let url = `${API_BASE_URL}${SPRING_API}/users`;
   if (field && keyword) {
     url += `?${field}=${encodeURIComponent(keyword)}`;
   }
@@ -729,7 +729,7 @@ export async function editUser(
   payload: { nickName: string; password?: string; phone: string }
 ): Promise<void> {
   const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE_URL}/api/users/${userId}/admin`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/admin`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
     body: JSON.stringify(payload),
@@ -740,7 +740,7 @@ export async function editUser(
 // 관리자 회원 역할 변경
 export async function updateUserRole(userId: number, role: TYPE.User["role"]): Promise<void> {
   const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE_URL}/api/users/${userId}/admin`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/admin`, {
     method: "PUT",
     headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
     body: JSON.stringify({ role }),
@@ -750,7 +750,7 @@ export async function updateUserRole(userId: number, role: TYPE.User["role"]): P
 
 // 관리자 상품 조회 (필터 적용 가능)
 export async function fetchAdminProducts(keyword?: string, category?: TYPE.ProductCategoryType | null): Promise<TYPE.Product[]> {
-  let url = `${API_BASE_URL}/api/products/search?`;
+  let url = `${API_BASE_URL}${SPRING_API}/products/search?`;
   if (keyword) url += `keyword=${encodeURIComponent(keyword)}&`;
   if (category) url += `category=${category}&`;
   const token = localStorage.getItem("token");
@@ -762,7 +762,7 @@ export async function fetchAdminProducts(keyword?: string, category?: TYPE.Produ
 // 관리자 상품 삭제
 export async function deleteAdminProduct(productId: number): Promise<void> {
   const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
     method: "DELETE",
     headers: { Authorization: token ? `Bearer ${token}` : "" },
   });
@@ -772,7 +772,7 @@ export async function deleteAdminProduct(productId: number): Promise<void> {
 // 관리자 신고 목록 조회
 export async function getReports(): Promise<TYPE.Report[]> {
   const token = localStorage.getItem("token");
-  return fetchJson<TYPE.Report[]>(`${API_BASE_URL}/api/reports/admin`, {
+  return fetchJson<TYPE.Report[]>(`${API_BASE_URL}${SPRING_API}/reports/admin`, {
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
 }
@@ -780,7 +780,7 @@ export async function getReports(): Promise<TYPE.Report[]> {
 // 관리자 신고 상태 변경
 export async function updateReportStatus(reportId: number, status: boolean): Promise<void> {
   const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE_URL}/api/reports/${reportId}/status?status=${status}`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/reports/${reportId}/status?status=${status}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
   });
@@ -790,7 +790,7 @@ export async function updateReportStatus(reportId: number, status: boolean): Pro
 // 관리자 문의 목록 조회
 export async function getInquiries(): Promise<TYPE.Inquiry[]> {
   const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE_URL}/api/inquiry/admin`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/inquiry/admin`, {
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
   if (!res.ok) throw new Error("문의 목록 조회 실패");
@@ -822,7 +822,7 @@ export async function getInquiries(): Promise<TYPE.Inquiry[]> {
 // 관리자 문의 답변 등록
 export async function saveInquiryAnswer(inquiryId: number, answer: string): Promise<void> {
   const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE_URL}/api/inquiry/${inquiryId}/answer`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/inquiry/${inquiryId}/answer`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
     body: JSON.stringify({ answer }),
@@ -896,7 +896,7 @@ export async function resetPassword(params: {
 
 // 신상품 가져오기
 export async function fetchLatestProducts(): Promise<TYPE.Product[]> {
-  const res = await fetch(`${SPRING_API}${SPRING_API}/products`);
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/products`);
   if (!res.ok) throw new Error("상품 불러오기 실패");
   const data: TYPE.Product[] = await res.json();
   return data
@@ -914,9 +914,9 @@ export async function fetchBannerProducts(): Promise<
 > {
   try {
     const [topRes, latestRes, endingRes] = await Promise.all([
-      fetch(`${SPRING_API}/api/products/top-bookmarked`),
-      fetch(`${SPRING_API}/api/products/latest`),
-      fetch(`${SPRING_API}/api/products/ending-soon`),
+      fetch(`${API_BASE_URL}${SPRING_API}/products/top-bookmarked`),
+      fetch(`${API_BASE_URL}${SPRING_API}/products/latest`),
+      fetch(`${API_BASE_URL}${SPRING_API}/products/ending-soon`),
     ]);
 
     if (!topRes.ok || !latestRes.ok || !endingRes.ok) {
@@ -1031,13 +1031,26 @@ export async function fetchMyReviews(userId: number): Promise<{ reviews: TYPE.Re
 }
 
 // 리뷰 등록
-export async function submitReview(targetUserId: number, rating: number, comments: string, token: string) {
+export async function submitReview(
+  targetUserId: number,
+  rating: number,
+  comments: string,
+  token: string
+): Promise<void> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/reviews/${targetUserId}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify({ rating, comments }),
   });
-  if (!res.ok) throw new Error("리뷰 등록 실패");
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || "리뷰 등록 실패");
+  }
+
   return res.json();
 }
 
@@ -1064,14 +1077,14 @@ export async function fetchFilteredProducts(params: {
   if (params.keyword) query.append("keyword", params.keyword);
   if (params.category) query.append("category", params.category);
   if (params.productStatus) query.append("productStatus", params.productStatus);
-  
+
   // NOTE: 서버에서 정렬을 지원하지 않으면 클라이언트에서 처리해야 함. 
   // 여기서는 API에 'sort' 파라미터를 추가하여 서버 정렬을 시도하는 방식으로 확장합니다.
-  if (params.sort) query.append("sort", params.sort); 
+  if (params.sort) query.append("sort", params.sort);
 
   // 2. URL 결정
   let url = `${API_BASE_URL}${SPRING_API}/products/search?${query.toString()}`;
-  
+
   if (!params.keyword && !params.category && !params.productStatus) {
     // 필터링 파라미터가 없으면 전체 목록 조회 API를 사용하거나, 
     // 위 url을 그대로 사용하여 전체 목록을 가져올 수 있습니다.
@@ -1080,6 +1093,92 @@ export async function fetchFilteredProducts(params: {
 
   const res = await fetch(url);
   if (!res.ok) throw new Error("상품 목록 조회 실패");
-  
+
   return res.json() as Promise<TYPE.Product[]>;
+}
+
+export async function submitUserQna(title: string, content: string): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/inquiry`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+    body: JSON.stringify({ title, question: content }),
+  });
+
+  if (!res.ok) {
+    let errMsg = "1:1 문의 제출 실패";
+    try {
+      const errData = await res.json();
+      errMsg = errData.message || errMsg;
+    } catch {
+      throw new Error(errMsg);
+    }
+    throw new Error(errMsg);
+  }
+}
+
+// 내 정보 수정
+export async function updateMyInfo(userId: number, payload: {
+  nickName: string;
+  password?: string;
+  phone: string;
+}): Promise<TYPE.User> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || "정보 수정 실패");
+  }
+  return res.json();
+}
+
+// 회원 탈퇴
+export async function withdrawUser(userId: number, token: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/withdraw`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || "회원탈퇴 실패");
+  }
+}
+
+// 상품 수정 (FormData 버전)
+export async function updateProductWithImages(
+  productId: number,
+  formData: FormData
+): Promise<TYPE.Product> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
+    method: "PUT",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || "상품 수정 실패");
+  }
+
+  return normalizeProduct(await res.json());
+}
+
+// 신고 내역 조회 (이미 fetchReports가 있지만 명확성을 위해 이름 변경)
+export async function fetchMyReports(token: string): Promise<TYPE.Report[]> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/reports/mypage`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) throw new Error("신고 내역 조회 실패");
+  return res.json();
 }

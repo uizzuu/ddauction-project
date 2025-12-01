@@ -1,7 +1,7 @@
 // src/pages/UserQnaForm.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../common/api";
+import { submitUserQna } from "../common/api";
 
 export default function UserQnaForm() {
   const [title, setTitle] = useState("");
@@ -21,34 +21,10 @@ export default function UserQnaForm() {
     }
 
     setLoading(true);
-
     try {
-      const token = localStorage.getItem("token");
-
-      const res = await fetch(`${API_BASE_URL}/api/inquiry`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        body: JSON.stringify({
-          title,
-          question: content,
-        }),
-      });
-
-      if (!res.ok) {
-        let errMsg = "1:1 문의 제출 실패";
-        try {
-          const errData = await res.json();
-          errMsg = errData.message || errMsg;
-        } catch {
-          throw new Error(errMsg);
-        }
-      }
-
+      await submitUserQna(title, content);
       alert("1:1 문의가 등록되었습니다.");
-      navigate("/mypage/qna"); // 마이페이지 문의 목록으로 이동
+      navigate("/mypage/qna");
     } catch (err: unknown) {
       if (err instanceof Error) setError(err.message);
       else setError("알 수 없는 오류가 발생했습니다.");
