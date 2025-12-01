@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { API_BASE_URL } from "../../common/api";
+import * as API from "../../common/api";
 import type { Product } from "../../common/types";
 
 type Props = {
@@ -18,21 +18,7 @@ export default function PaymentProducts({ token }: Props) {
   useEffect(() => {
     const fetchPaymentProducts = async () => {
       try {
-        // Backend에서 로그인 사용자 기준 구매 완료 상품 조회 URL
-        const res = await fetch(`${API_BASE_URL}/api/products/purchases`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!res.ok) {
-          if (res.status === 401) throw new Error("로그인이 필요합니다.");
-          throw new Error("결제 완료 상품 조회 실패");
-        }
-
-        // Product에 paymentAmount 필드가 포함되어 내려온다고 가정
-        const data: PaymentProduct[] = await res.json();
+        const data = await API.getPaymentProducts();
         setProducts(data);
       } catch (err) {
         console.error(err);
@@ -41,6 +27,7 @@ export default function PaymentProducts({ token }: Props) {
         setLoading(false);
       }
     };
+
 
     fetchPaymentProducts();
   }, [token]);
@@ -62,7 +49,7 @@ export default function PaymentProducts({ token }: Props) {
         >
           {p.images?.[0]?.imagePath && (
             <img
-              src={`${API_BASE_URL}${p.images[0].imagePath}`}
+              src={`${API.API_BASE_URL}${p.images[0].imagePath}`}
               alt={p.title}
               style={{ width: "80px", height: "80px", objectFit: "cover" }}
             />

@@ -194,7 +194,16 @@ export default function App() {
         <Route path="/error" element={<ErrorPage />} />
         <Route path="*" element={<ErrorPage />} />
         {/* 채팅 */}
-        <Route path="/chat" element={<UserChat user={user} />} />
+        <Route
+          path="/chat"
+          element={
+            user ? (
+              <UserChat user={user} />
+            ) : (
+              <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>
+            )
+          }
+        />
       </Routes>
     </div>
   );

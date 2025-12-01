@@ -1,7 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import type { User, Qna, Product } from "../common/types";
 import { ROLE } from "../common/enums";
-import { API_BASE_URL } from "../common/api";
+import {
+  getQnaList,
+  createQna,
+  updateQna,
+  deleteQna,
+  createQnaAnswer,
+  updateQnaAnswer,
+  deleteQnaAnswer,
+} from "../common/api";
 import { formatDateTime } from "../common/util";
 
 type Props = {
@@ -21,27 +29,19 @@ export default function ProductQnA({
 }: Props) {
   const [newQuestion, setNewQuestion] = useState({ title: "", question: "" });
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
-  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(
-    null
-  );
+  const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<{
     title: string;
     question: string;
   }>({ title: "", question: "" });
   const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
   const [editingAnswerContent, setEditingAnswerContent] = useState("");
-
   const [openQnaIds, setOpenQnaIds] = useState<number[]>([]);
 
   const fetchQnaList = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/qna/product/${productId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setQnaList(data);
-      } else {
-        setQnaList([]);
-      }
+      const data = await getQnaList(productId);
+      setQnaList(data);
     } catch {
       setQnaList([]);
     }
@@ -53,9 +53,11 @@ export default function ProductQnA({
 
   // 질문 등록
   const handleCreateQuestion = async () => {
+    if (!user) return alert("로그인 후 질문을 등록할 수 있습니다.");
+
     if (
       qnaList.some(
-        (q) => q.userId === user?.userId && q.productId === productId
+        (q) => q.userId === user.userId && q.productId === productId
       )
     ) {
       return alert("본인 글에는 질문을 작성할 수 없습니다.");
@@ -63,28 +65,17 @@ export default function ProductQnA({
 
     if (!newQuestion.question.trim()) return alert("질문 내용을 입력해주세요.");
 
-    const token = localStorage.getItem("token");
-    if (!token) return alert("로그인 후 질문을 등록할 수 있습니다.");
-
     try {
-      const res = await fetch(`${API_BASE_URL}/api/qna`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId, ...newQuestion, boardName: "qna" }),
+      await createQna({
+        productId,
+        title: newQuestion.title,
+        question: newQuestion.question,
+        boardName: "qna",
       });
-      if (res.ok) {
-        setNewQuestion({ title: "", question: "" });
-        fetchQnaList();
-      } else {
-        const msg = await res.text();
-        console.log("질문 등록 실패 : " + msg);
-        alert("질문 등록 실패");
-      }
-    } catch {
-      alert("질문 등록 중 오류 발생");
+      setNewQuestion({ title: "", question: "" });
+      fetchQnaList();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "질문 등록 중 오류 발생");
     }
   };
 
@@ -92,14 +83,7 @@ export default function ProductQnA({
   const handleQuestionDelete = async (qnaId: number) => {
     if (!window.confirm("질문을 삭제하시겠습니까?")) return;
     try {
-      const token = localStorage.getItem("token");
-      await fetch(`${API_BASE_URL}/api/qna/${qnaId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await deleteQna(qnaId);
       fetchQnaList();
     } catch {
       alert("질문 삭제 실패");
@@ -111,15 +95,7 @@ export default function ProductQnA({
     if (!editingQuestion.title.trim() || !editingQuestion.question.trim())
       return alert("내용을 입력해주세요.");
     try {
-      const token = localStorage.getItem("token");
-      await fetch(`${API_BASE_URL}/api/qna/${qnaId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(editingQuestion),
-      });
+      await updateQna(qnaId, editingQuestion);
       setEditingQuestionId(null);
       setEditingQuestion({ title: "", question: "" });
       fetchQnaList();
@@ -131,16 +107,14 @@ export default function ProductQnA({
   // 토글 버튼
   const toggleQna = (qnaId: number) => {
     setOpenQnaIds((prev) =>
-      prev.includes(qnaId)
-        ? prev.filter((id) => id !== qnaId)
-        : [...prev, qnaId]
+      prev.includes(qnaId) ? prev.filter((id) => id !== qnaId) : [...prev, qnaId]
     );
   };
 
   // 답변 권한 확인 함수
   const canAnswer = () => {
     if (!user || !product) return false;
-    return user?.role === ROLE[0] || user?.userId === product.sellerId;
+    return user.role === ROLE[0] || user.userId === product.sellerId;
   };
 
   // 답변 수정 시작
@@ -153,15 +127,7 @@ export default function ProductQnA({
   const saveEditingAnswer = async (answerId: number) => {
     if (!editingAnswerContent.trim()) return alert("내용을 입력해주세요.");
     try {
-      const token = localStorage.getItem("token");
-      await fetch(`${API_BASE_URL}/api/qna/${answerId}/review`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ answer: editingAnswerContent }),
-      });
+      await updateQnaAnswer(answerId, editingAnswerContent);
       setEditingAnswerId(null);
       setEditingAnswerContent("");
       fetchQnaList();
@@ -174,14 +140,7 @@ export default function ProductQnA({
   const handleAnswerDelete = async (answerId: number) => {
     if (!window.confirm("답변을 삭제하시겠습니까?")) return;
     try {
-      const token = localStorage.getItem("token");
-      await fetch(`${API_BASE_URL}/api/qna/${answerId}/review`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await deleteQnaAnswer(answerId);
       fetchQnaList();
     } catch {
       alert("답변 삭제 실패");
@@ -193,24 +152,11 @@ export default function ProductQnA({
     const answer = answers[qnaId];
     if (!answer?.trim()) return alert("답변 내용을 입력해주세요.");
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/qna/${qnaId}/review`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ answer }),
-      });
-      if (res.ok) {
-        setAnswers((prev) => ({ ...prev, [qnaId]: "" }));
-        fetchQnaList();
-      } else {
-        const msg = await res.text();
-        alert("답변 등록 실패: " + msg);
-      }
-    } catch {
-      alert("답변 등록 중 오류 발생");
+      await createQnaAnswer(qnaId, answer);
+      setAnswers((prev) => ({ ...prev, [qnaId]: "" }));
+      fetchQnaList();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "답변 등록 중 오류 발생");
     }
   };
 
@@ -271,9 +217,8 @@ export default function ProductQnA({
                     className="top-16 right-8 trans"
                   >
                     <span
-                      className={`custom-select-arrow ${
-                        openQnaIds.includes(q.qnaId) ? "open" : ""
-                      }`}
+                      className={`custom-select-arrow ${openQnaIds.includes(q.qnaId) ? "open" : ""
+                        }`}
                     />
                   </button>
                 </div>

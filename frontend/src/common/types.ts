@@ -1,6 +1,9 @@
 import { ROLE, PAYMENT_STATUS, PRODUCT_STATUS, CHAT_TYPE, PRODUCT_TYPE } from './enums';
 import type { ProductCategoryType } from './enums';
 
+// Re-export ProductCategoryType so it's available when importing from types.ts
+export type { ProductCategoryType };
+
 export type Role = (typeof ROLE)[number];
 export type ProductStatus = (typeof PRODUCT_STATUS)[number];
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
@@ -58,7 +61,7 @@ export interface Product {
   imageUrl?: string;
   productCategoryType?: ProductCategoryType | null;
   productType?: ProductType; // 상품 타입 추가 (경매/중고/스토어)
-  
+
   // 정렬 로직 (인기순)을 위해 ProductSearchPage에서 사용되는 필드를 옵셔널로 추가
   bookmarkCount?: number;
 }
@@ -281,36 +284,43 @@ export interface ChatMessage {
 
 // 최소 유저 정보 타입 (백엔드 Users 엔티티 일부)
 export interface ChatUser {
-userId: number;
-nickName: string;
+  userId: number;
+  nickName: string;
 }
 
 // 백엔드 PrivateChat 엔티티 기반
 export interface PrivateChat {
-privateChatId: number;
-content: string;
-createdAt?: string;
-updatedAt?: string;
-user: ChatUser;
-targetUserId?: number;
+  privateChatId: number;
+  type: "PRIVATE";
+  content: string;
+  createdAt?: string;
+  updatedAt?: string;
+  user: ChatUser;
+  targetUserId?: number;
 }
 
 // 백엔드 PublicChat 엔티티 기반
 export interface PublicChat {
-publicChatId: number;
-content: string;
-createdAt?: string;
-user: ChatUser;
+  publicChatId: number;
+  type: "PUBLIC";
+  content: string;
+  createdAt?: string;
+  user: ChatUser;
 }
 
 // WebSocket 메시지 송수신용 타입
 export interface ChatMessagePayload {
-type: ChatType;
-userId: number;
-targetUserId?: number; // private 채팅 시 상대
-content: string;
-nickName?: string; // 읽기용
-createdAt?: string;
+  type: ChatType;
+  userId: number;
+  targetUserId?: number; // private 채팅 시 상대
+  content: string;
+  nickName?: string; // 읽기용
+  createdAt?: string;
+}
+
+// UserChat 컴포넌트 props 타입
+export interface UserChatProps {
+  user: User;
 }
 
 //상품 내용 추천 관련 타입

@@ -1,43 +1,12 @@
 import { useEffect, useRef, useState } from "react";
+import * as TYPE from "../../common/types";
+import { fetchChatUsers, fetchRecentPublicChats } from "../../common/api";
 
-// 프론트에서 사용할 타입 정의
-interface User {
-  userId: number;
-  nickName: string;
-}
-
-interface PrivateChat {
-  user?: User;
-  targetUserId?: number;
-  content: string;
-  type: "PRIVATE" | "PUBLIC";
-  createdAt?: string;
-}
-
-interface PublicChat {
-  user?: User;
-  content: string;
-  type: "PUBLIC";
-  createdAt?: string;
-}
-
-interface ChatMessagePayload {
-  type: "PRIVATE" | "PUBLIC";
-  userId: number;
-  content: string;
-  nickName: string;
-  targetUserId?: number;
-}
-
-interface UserChatProps {
-  user: User | null;
-}
-
-export default function UserChat({ user }: UserChatProps) {
-  const [messages, setMessages] = useState<(PrivateChat | PublicChat)[]>([]);
+export default function UserChat({ user }: TYPE.UserChatProps) {
+  const [messages, setMessages] = useState<(TYPE.PrivateChat | TYPE.PublicChat)[]>([]);
   const [input, setInput] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<TYPE.ChatUser[]>([]);
+  const [selectedUser, setSelectedUser] = useState<TYPE.ChatUser | null>(null);
   const ws = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -45,24 +14,18 @@ export default function UserChat({ user }: UserChatProps) {
   useEffect(() => {
     if (!user) return;
 
-    fetch("http://localhost:8080/api/chats/users", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data: User[]) => {
-        const filtered = data.filter((u) => u.userId !== user.userId);
-        setUsers(filtered);
-      })
-      .catch((err) => console.error("유저 목록 가져오기 실패", err));
+    fetchChatUsers(user.userId)
+      .then(setUsers)
+      .catch((err: unknown) => console.error(err));
   }, [user]);
 
   // 공개채팅 초기 메시지 불러오기
   useEffect(() => {
     if (!user || selectedUser) return; // 공개채팅일 때만
-    fetch("http://localhost:8080/api/chats/public/recent", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data: PublicChat[]) => {
-        setMessages(data);
-      })
-      .catch((err) => console.error("공개 채팅 불러오기 실패", err));
+
+    fetchRecentPublicChats()
+      .then(setMessages)
+      .catch((err: unknown) => console.error(err));
   }, [user, selectedUser]);
 
   // WebSocket 연결
@@ -81,7 +44,7 @@ export default function UserChat({ user }: UserChatProps) {
 
     ws.current.onmessage = (event) => {
       try {
-        const data: PrivateChat | PublicChat = JSON.parse(event.data);
+        const data: TYPE.PrivateChat | TYPE.PublicChat = JSON.parse(event.data);
 
         // user 정보 없으면 추가
         if (!data.user && (data as any).nickName) {
@@ -121,7 +84,7 @@ export default function UserChat({ user }: UserChatProps) {
     if (!input.trim() || !user || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
 
     const isPrivate = !!selectedUser;
-    const payload: ChatMessagePayload = {
+    const payload: TYPE.ChatMessagePayload = {
       type: isPrivate ? "PRIVATE" : "PUBLIC",
       userId: user.userId,
       content: input,

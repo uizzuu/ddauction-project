@@ -1,6 +1,7 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import type { User } from "../common/types";
+import { logout } from "../common/api";
 
 type Props = {
   user: User | null;
@@ -13,25 +14,14 @@ export default function HeaderMain({ user, setUser }: Props) {
   const [searchKeyword, setSearchKeyword] = useState("");
 
   const handleLogout = async () => {
-    try {
-      // 1️⃣ 서버 세션 로그아웃 요청 (백엔드에 로그아웃 API가 있어야 함)
-      await fetch("/api/users/logout", {
-        method: "POST",
-      });
-
-      // 2️⃣ 로컬 스토리지 초기화
-      localStorage.removeItem("token");
-      localStorage.removeItem("loginUser"); // 로그인 정보를 localStorage에 저장했다면
-
-      // 3️⃣ 리액트 상태 초기화
-      setUser(null);
-
-      // 4️⃣ 메인 페이지 이동
-      navigate("/");
-    } catch (err) {
-      console.error("로그아웃 실패", err);
-    }
-  };
+  try {
+    await logout();
+    setUser(null);
+    navigate("/");
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   // URL 쿼리 변화 감지 → input에 동기화
   useEffect(() => {

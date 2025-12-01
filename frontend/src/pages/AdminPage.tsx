@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import type { ProductCategoryType } from "../common/enums";
 import type {
   User,
   Product,
@@ -6,15 +7,14 @@ import type {
   EditProductForm,
   Inquiry,
 } from "../common/types";
-import { API_BASE_URL } from "../common/api";
-import type { ProductCategoryType } from "../common/enums";
-
-// 분리된 컴포넌트 임포트
-import UserManagement from "../components/admin/UserManagement";
-import ProductManagement from "../components/admin/ProductManagement";
-import ReportManagement from "../components/admin/ReportManagement";
-import StatsManagement from "../components/admin/StatsManagement";
-import InquiryManagement from "../components/admin/InquiryManagement";
+import * as API from "../common/api";
+import {
+  UserManagement,
+  ProductManagement,
+  ReportManagement,
+  StatsManagement,
+  InquiryManagement,
+} from "../common/import"
 
 export default function AdminPage() {
   const [section, setSection] = useState<
@@ -65,188 +65,73 @@ export default function AdminPage() {
     phone: "",
   });
 
-  // ===================================
-  // 데이터 Fetch 함수
-  // ===================================
-
   const fetchStats = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("토큰이 없습니다. 관리자 로그인 필요");
-        return;
-      }
-
-      const res = await fetch(`${API_BASE_URL}/admin/stats`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        console.error("통계 데이터 조회 실패:", res.status);
-        return;
-      }
-
-      const data = await res.json();
+      const data = await API.fetchStatsApi();
       setStats({
         userCount: data.userCount,
         productCount: data.productCount,
         reportCount: data.reportCount,
       });
     } catch (err) {
-      console.error(err);
+      console.error("통계 조회 실패:", err);
     }
   }, []);
 
   const fetchUsers = useCallback(async () => {
-    let url = `${API_BASE_URL}/api/users`;
-
-    if (userFilterKeyword) {
-      url += "?";
-      if (userFilterField === "userName")
-        url += `userName=${encodeURIComponent(userFilterKeyword)}`;
-      else if (userFilterField === "nickName")
-        url += `nickName=${encodeURIComponent(userFilterKeyword)}`;
-      else if (userFilterField === "email")
-        url += `email=${encodeURIComponent(userFilterKeyword)}`;
-      else if (userFilterField === "phone")
-        url += `phone=${encodeURIComponent(userFilterKeyword)}`;
-    }
-
-    const token = localStorage.getItem("token");
-    const res = await fetch(url, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    });
-
-    if (!res.ok) {
-      console.error("회원 조회 실패:", res.status);
+    try {
+      const data = await API.getUsers(userFilterField, userFilterKeyword);
+      setUsers(data);
+    } catch (err) {
+      console.error("회원 조회 실패:", err);
       setUsers([]);
-      return;
     }
-
-    const data = await res.json();
-    setUsers(data);
-  }, [userFilterKeyword, userFilterField]);
+  }, [userFilterField, userFilterKeyword]);
 
   const fetchProducts = useCallback(async () => {
-    let url = `${API_BASE_URL}/api/products/search?`;
-    if (filterKeyword) url += `keyword=${filterKeyword}&`;
-    if (filterCategory) url += `category=${filterCategory}&`;
-
-    const token = localStorage.getItem("token");
-    const res = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    });
-    const data = await res.json();
-    setProducts(data);
+    try {
+      const data = await API.getAdminProducts(filterKeyword, filterCategory);
+      setProducts(data);
+    } catch (err) {
+      console.error("상품 조회 실패:", err);
+      setProducts([]);
+    }
   }, [filterKeyword, filterCategory]);
 
   const fetchReports = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/reports/admin`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-      if (!res.ok) {
-        console.error("신고 조회 실패:", res.status);
-        setReports([]);
-        return;
-      }
-      const data = await res.json();
+      const data = await API.getReports();
       setReports(data);
     } catch (err) {
-      console.error(err);
+      console.error("신고 조회 실패:", err);
       setReports([]);
     }
   }, []);
 
   const fetchInquiries = useCallback(async () => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/inquiry/admin`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      });
-
-      if (!res.ok) {
-        console.error("문의 조회 실패:", res.status);
-        setInquiries([]);
-        return;
-      }
-
-      const data: {
-        articleId: number;
-        title: string;
-        content: string;
-        createdAt: string;
-        updatedAt: string;
-      }[] = await res.json();
-
-      const mapped: Inquiry[] = data.map((d, idx) => {
-        const [questionPart, answerPart] = d.content.split("[답변]:");
-
-        return {
-          inquiryId: d.articleId,
-          title: d.title,
-          question: questionPart.trim(),
-          createdAt: d.createdAt,
-          answers: answerPart
-            ? [
-                {
-                  inquiryReviewId: idx + 1,
-                  answer: answerPart.trim(),
-                  nickName: "관리자",
-                  createdAt: d.updatedAt,
-                },
-              ]
-            : [],
-          newAnswer: "",
-        };
-      });
-
-      setInquiries(mapped);
+      const data = await API.getInquiries();
+      setInquiries(data);
     } catch (err) {
-      console.error("문의 불러오기 실패:", err);
+      console.error("문의 조회 실패:", err);
       setInquiries([]);
     }
   }, []);
 
-  // ===================================
-  // CRUD/Action Handler 함수
-  // ===================================
-
-  // 회원 관리 핸들러
+  // 회원 관리
   const handleChangeRole = async (userId: number, newRole: User["role"]) => {
-    const token = localStorage.getItem("token");
-    await fetch(`${API_BASE_URL}/api/users/${userId}/admin`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-      body: JSON.stringify({ role: newRole }),
-    });
-    fetchUsers();
+    try {
+      await API.updateUserRole(userId, newRole);
+      fetchUsers();
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleEditUserClick = (user: User) => {
     setEditingUserId(user.userId);
     setEditUserForm({
-      nickName: user.nickName || "",
+      nickName: user.nickName,
       password: "",
       phone: user.phone || "",
     });
@@ -254,169 +139,88 @@ export default function AdminPage() {
 
   const handleSaveUserClick = async (userId: number) => {
     try {
-      const payload: {
-        nickName: string;
-        password?: string;
-        phone: string;
-      } = {
-        nickName: editUserForm.nickName,
-        phone: editUserForm.phone,
-      };
-      if (editUserForm.password) payload.password = editUserForm.password;
-
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/users/${userId}/admin`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        console.error("회원 수정 실패:", res.status);
-        alert("회원 수정에 실패했습니다.");
-        return;
-      }
-
+      await API.editUser(userId, editUserForm);
       setEditingUserId(null);
       fetchUsers();
     } catch (err) {
       console.error(err);
-      alert("회원 수정 중 오류가 발생했습니다.");
+      alert("회원 수정 실패");
     }
   };
 
-  const handleCancelUserClick = () => setEditingUserId(null);
+  const handleCancelUserClick = () => {
+    setEditingUserId(null);
+    setEditUserForm({ nickName: "", password: "", phone: "" });
+  };
 
-  // 상품 관리 핸들러
+  // 상품 관리
   const handleEditProductClick = (product: Product) => {
     setEditingProductId(product.productId);
     setEditProductForm({
       title: product.title,
-      content: product.content ?? "",
+      content: product.content || "",
       productCategoryType: product.productCategoryType ?? null,
-      startingPrice: product.startingPrice?.toString(),
-      productStatus: product.productStatus,
-      auctionEndTime: product.auctionEndTime,
-      productType : "AUCTION",
+      startingPrice: product.startingPrice?.toString() || "",
+      productStatus: product.productStatus || "ACTIVE",
+      productType: product.productType || "AUCTION",
+      auctionEndTime: product.auctionEndTime || "",
     });
   };
 
   const handleSaveProductClick = async (productId: number) => {
     try {
-      const payload: {
-        title: string;
-        productCategoryType?: ProductCategoryType | null;
-        startingPrice?: string;
-        productStatus: Product["productStatus"];
-      } = {
-        title: editProductForm.title,
-        productCategoryType: editProductForm.productCategoryType,
-        startingPrice: editProductForm.startingPrice,
-        productStatus: editProductForm.productStatus,
-      };
-
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        console.error("상품 수정 실패:", res.status);
-        alert("상품 수정에 실패했습니다.");
-        return;
-      }
-
+      await API.editProduct(productId, editProductForm);
       setEditingProductId(null);
       fetchProducts();
     } catch (err) {
       console.error(err);
-      alert("상품 수정 중 오류가 발생했습니다.");
+      alert("상품 수정 실패");
     }
   };
 
-  const handleCancelProductClick = () => setEditingProductId(null);
+  const handleCancelProductClick = () => {
+    setEditingProductId(null);
+    setEditProductForm({
+      title: "",
+      content: "",
+      productCategoryType: null,
+      startingPrice: "",
+      productStatus: "ACTIVE",
+      productType: "AUCTION",
+      auctionEndTime: "",
+    });
+  };
 
   const handleDeleteProduct = async (productId: number) => {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: token ? `Bearer ${token}` : "",
-      },
-    });
-
-    if (!res.ok) {
-      alert("상품 삭제에 실패했습니다.");
-      console.error("상품 삭제 실패:", res.status);
-      return;
+    try {
+      await API.deleteAdminProduct(productId);
+      fetchProducts();
+    } catch (err) {
+      console.error(err);
+      alert("상품 삭제 실패");
     }
-    fetchProducts();
   };
 
-  // 신고 관리 핸들러
-  const handleUpdateReportStatus = async (
-    reportId: number,
-    status: boolean
-  ) => {
+  // 신고 관리
+  const handleUpdateReportStatus = async (reportId: number, status: boolean) => {
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `${API_BASE_URL}/api/reports/${reportId}/status?status=${status}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        }
-      );
-
-      if (!res.ok) {
-        console.error("신고 상태 변경 실패:", res.status);
-        return;
-      }
-
+      await API.updateReportStatus(reportId, status);
       fetchReports();
     } catch (err) {
-      console.error("신고 상태 변경 중 오류 발생:", err);
+      console.error(err);
     }
   };
 
-  // 문의 관리 핸들러
-  const handleSaveInquiryAnswer = async (
-    inquiryId: number,
-    answer?: string
-  ) => {
+  // 문의 관리
+  const handleSaveInquiryAnswer = async (inquiryId: number, answer?: string) => {
     if (!answer) return alert("답변을 입력해주세요.");
-
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `${API_BASE_URL}/api/inquiry/${inquiryId}/answer`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-          body: JSON.stringify({ answer }),
-        }
-      );
-      if (!res.ok) throw new Error("답변 저장 실패");
-
+      await API.saveInquiryAnswer(inquiryId, answer);
       alert("답변이 등록되었습니다.");
       fetchInquiries();
     } catch (err) {
       console.error(err);
-      alert("답변 등록 중 오류가 발생했습니다.");
+      alert("답변 등록 실패");
     }
   };
 
