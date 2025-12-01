@@ -19,10 +19,17 @@ public class PrivateChatDto {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private SimpleUserDto user;
 
     // Entity → DTO
     public static PrivateChatDto fromEntity(PrivateChat chat) {
         if (chat == null) return null;
+
+        // SimpleUserDto 생성
+        SimpleUserDto userDto = null;
+        if (chat.getUser() != null) {
+            userDto = new SimpleUserDto(chat.getUser().getUserId(), chat.getUser().getNickName());
+        }
 
         return PrivateChatDto.builder()
                 .privateChatId(chat.getPrivateChatId())
@@ -30,8 +37,10 @@ public class PrivateChatDto {
                 .nickName(chat.getUser() != null ? chat.getUser().getNickName() : null)
                 .content(chat.getContent())
                 .createdAt(chat.getCreatedAt())
+                .user(userDto) // 여기에 넣어야 함
                 .build();
     }
+
 
     // DTO → Entity
     public PrivateChat toEntity(Users user) {

@@ -2,6 +2,8 @@ package com.my.backend.controller;
 
 import com.my.backend.dto.PrivateChatDto;
 import com.my.backend.dto.PublicChatDto;
+import com.my.backend.dto.SimpleUserDto;
+import com.my.backend.dto.UsersDto;
 import com.my.backend.service.ChattingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,5 +28,15 @@ public class ChattingController {
     @GetMapping("/public/recent")
     public ResponseEntity<List<PublicChatDto>> getRecentPublicChats() {
         return ResponseEntity.ok(chatService.getRecentPublicChats());
+    }
+    // 채팅할 유저 조회
+    @GetMapping("/users")
+    public ResponseEntity<List<SimpleUserDto>> getAllUsers() {
+        try {
+            List<SimpleUserDto> users = chatService.getAllUsers();
+            return ResponseEntity.ok(users);
+        } catch (Exception e) {
+            return ResponseEntity.ok(List.of());
+        }
     }
 }

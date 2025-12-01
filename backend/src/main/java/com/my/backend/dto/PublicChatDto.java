@@ -18,10 +18,17 @@ public class PublicChatDto {
     private String content;
     private LocalDateTime createdAt;
     private String nickName;
+    private SimpleUserDto user;
 
     // Entity → DTO
     public static PublicChatDto fromEntity(PublicChat publicChat) {
         if (publicChat == null) return null;
+
+        // SimpleUserDto 생성
+        SimpleUserDto userDto = null;
+        if (publicChat.getUser() != null) {
+            userDto = new SimpleUserDto(publicChat.getUser().getUserId(), publicChat.getUser().getNickName());
+        }
 
         return PublicChatDto.builder()
                 .publicChatId(publicChat.getPublicChatId())
@@ -29,6 +36,7 @@ public class PublicChatDto {
                 .content(publicChat.getContent())
                 .nickName(publicChat.getUser() != null ? publicChat.getUser().getNickName() : null)
                 .createdAt(publicChat.getCreatedAt())
+                .user(userDto) // 여기에 넣어줘야 프론트에서 msg.user.userId, msg.user.nickName 사용 가능
                 .build();
     }
 

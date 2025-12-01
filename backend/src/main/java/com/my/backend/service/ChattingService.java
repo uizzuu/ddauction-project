@@ -2,6 +2,8 @@ package com.my.backend.service;
 
 import com.my.backend.dto.PrivateChatDto;
 import com.my.backend.dto.PublicChatDto;
+import com.my.backend.dto.SimpleUserDto;
+import com.my.backend.dto.UsersDto;
 import com.my.backend.entity.Users;
 import com.my.backend.repository.PrivateChatRepository;
 import com.my.backend.repository.PublicChatRepository;
@@ -49,6 +51,13 @@ public class ChattingService {
         return publicChatRepository.findTop100ByOrderByCreatedAtAsc()
                 .stream()
                 .map(PublicChatDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+    // ===================== 유저 목록 =====================
+    public List<SimpleUserDto> getAllUsers() {
+        return usersRepository.findAll()
+                .stream()
+                .map(user -> new SimpleUserDto(user.getUserId(), user.getNickName()))
                 .collect(Collectors.toList());
     }
 }

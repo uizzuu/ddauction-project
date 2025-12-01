@@ -291,6 +291,7 @@ content: string;
 createdAt?: string;
 updatedAt?: string;
 user: ChatUser;
+targetUserId?: number;
 }
 
 // 백엔드 PublicChat 엔티티 기반
