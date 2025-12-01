@@ -80,7 +80,7 @@ public class ChattingService {
 
     // ===================== 공개 채팅 조회 =====================
     public List<PublicChatDto> getRecentPublicChats() {
-        return publicChatRepository.findTop100ByOrderByCreatedAtAsc()
+        return publicChatRepository.findTop50ByOrderByCreatedAtAsc()
                 .stream()
                 .map(PublicChatDto::fromEntity)
                 .collect(Collectors.toList());
