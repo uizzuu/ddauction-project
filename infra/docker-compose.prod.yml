@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   # Nginx 서버
   nginx:
@@ -46,7 +44,7 @@ services:
       retries: 3
       start_period: 10s
     networks:
-    - ddauction-network 
+      - ddauction-network 
 
   backend:
     image: ${BACKEND_IMAGE}
@@ -95,7 +93,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
-    - ddauction-network 
+      - ddauction-network 
 
   frontend:
     image: ${FRONTEND_IMAGE}
@@ -111,7 +109,7 @@ services:
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     networks:
-    - ddauction-network 
+      - ddauction-network 
 
 volumes:
   upload-data:
