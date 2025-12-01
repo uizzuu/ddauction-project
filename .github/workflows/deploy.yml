@@ -64,11 +64,6 @@ jobs:
             git reset --hard origin/main
             git pull origin main
 
-            echo "=== Nginx 설정 업데이트 ==="
-            sudo cp ~/ddauction-project/infra/nginx/ddauction.conf /etc/nginx/sites-available/ddauction
-            sudo ln -sf /etc/nginx/sites-available/ddauction /etc/nginx/sites-enabled/ddauction
-            sudo nginx -t && sudo systemctl reload nginx
-
             cd ~/ddauction-project/infra
 
             echo "=== Docker 로그인 ==="
