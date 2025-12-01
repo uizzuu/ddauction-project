@@ -320,6 +320,27 @@ export async function login(form: TYPE.LoginForm): Promise<TYPE.User> {
   } as TYPE.User;
 }
 
+// 로그아웃
+export async function logout(): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/auth/logout`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "로그아웃 실패");
+  }
+
+  // 로컬 처리
+  localStorage.removeItem("token");
+  localStorage.removeItem("loginUser");
+}
+
 // 회원가입
 export async function signup(form: TYPE.SignupForm): Promise<void> {
   const response = await fetch(`${API_BASE_URL}${SPRING_API}/auth/signup`, {
@@ -474,4 +495,264 @@ export async function checkWinner(productId: number): Promise<{
   );
   if (!response.ok) throw new Error("낙찰자 확인 실패");
   return response.json();
+}
+// QnA 목록 조회
+export async function getQnaList(productId: number): Promise<TYPE.Qna[]> {
+  const response = await authFetch(
+    `${API_BASE_URL}${SPRING_API}/qna/product/${productId}`
+  );
+  if (!response.ok) return [];
+  return response.json();
+}
+
+// QnA 질문 등록
+export async function createQna(data: {
+  productId: number;
+  title: string;
+  question: string;
+  boardName: string;
+}): Promise<void> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/qna`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "질문 등록 실패");
+  }
+}
+
+// QnA 질문 수정
+export async function updateQna(
+  qnaId: number,
+  data: { title: string; question: string }
+): Promise<void> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/qna/${qnaId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) throw new Error("질문 수정 실패");
+}
+
+// QnA 질문 삭제
+export async function deleteQna(qnaId: number): Promise<void> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/qna/${qnaId}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) throw new Error("질문 삭제 실패");
+}
+
+// QnA 답변 등록
+export async function createQnaAnswer(
+  qnaId: number,
+  answer: string
+): Promise<void> {
+  const response = await authFetch(
+    `${API_BASE_URL}${SPRING_API}/qna/${qnaId}/review`,
+    {
+      method: "POST",
+      body: JSON.stringify({ answer }),
+    }
+  );
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "답변 등록 실패");
+  }
+}
+
+// QnA 답변 수정
+export async function updateQnaAnswer(
+  answerId: number,
+  answer: string
+): Promise<void> {
+  const response = await authFetch(
+    `${API_BASE_URL}${SPRING_API}/qna/${answerId}/review`,
+    {
+      method: "PUT",
+      body: JSON.stringify({ answer }),
+    }
+  );
+  if (!response.ok) throw new Error("답변 수정 실패");
+}
+
+// QnA 답변 삭제
+export async function deleteQnaAnswer(answerId: number): Promise<void> {
+  const response = await authFetch(
+    `${API_BASE_URL}${SPRING_API}/qna/${answerId}/review`,
+    {
+      method: "DELETE",
+    }
+  );
+  if (!response.ok) throw new Error("답변 삭제 실패");
+}
+
+// Product 타입 확장: 결제 금액 필드 추가
+export interface PaymentProduct extends TYPE.Product {
+  paymentAmount?: number | null;
+}
+
+// 결제 완료 상품 목록 조회
+export async function getPaymentProducts(): Promise<PaymentProduct[]> {
+  const response = await authFetch(
+    `${API_BASE_URL}${SPRING_API}/products/purchases`
+  );
+  if (!response.ok) {
+    if (response.status === 401) throw new Error("로그인이 필요합니다.");
+    throw new Error("결제 완료 상품 조회 실패");
+  }
+  return response.json();
+}
+
+// admin 관련 API (api.ts에 추가하지 않고 AdminPage에서만 사용)
+export const fetchStatsApi = async () => {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/api/admin/stats`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token ? `Bearer ${token}` : "",
+    },
+  });
+
+  if (!res.ok) throw new Error("통계 데이터 조회 실패");
+
+  return res.json() as Promise<{
+    userCount: number;
+    productCount: number;
+    reportCount: number;
+  }>;
+};
+
+// 관리자 회원 목록 조회 (필터 적용 가능)
+export async function getUsers(
+  field?: "userName" | "nickName" | "email" | "phone",
+  keyword?: string
+): Promise<TYPE.User[]> {
+  let url = `${API_BASE_URL}/api/users`;
+  if (field && keyword) {
+    url += `?${field}=${encodeURIComponent(keyword)}`;
+  }
+  const token = localStorage.getItem("token");
+  return fetchJson<TYPE.User[]>(url, {
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+}
+
+// 관리자 회원 수정
+export async function editUser(
+  userId: number,
+  payload: { nickName: string; password?: string; phone: string }
+): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/api/users/${userId}/admin`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error("회원 수정 실패");
+}
+
+// 관리자 회원 역할 변경
+export async function updateUserRole(userId: number, role: TYPE.User["role"]): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/api/users/${userId}/admin`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+    body: JSON.stringify({ role }),
+  });
+  if (!res.ok) throw new Error("회원 역할 변경 실패");
+}
+
+// 관리자 상품 조회 (필터 적용 가능)
+export async function getAdminProducts(keyword?: string, category?: TYPE.ProductCategoryType | null): Promise<TYPE.Product[]> {
+  let url = `${API_BASE_URL}/api/products/search?`;
+  if (keyword) url += `keyword=${encodeURIComponent(keyword)}&`;
+  if (category) url += `category=${category}&`;
+  const token = localStorage.getItem("token");
+  return fetchJson<TYPE.Product[]>(url, {
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+}
+
+// 관리자 상품 삭제
+export async function deleteAdminProduct(productId: number): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
+    method: "DELETE",
+    headers: { Authorization: token ? `Bearer ${token}` : "" },
+  });
+  if (!res.ok) throw new Error("상품 삭제 실패");
+}
+
+// 관리자 신고 목록 조회
+export async function getReports(): Promise<TYPE.Report[]> {
+  const token = localStorage.getItem("token");
+  return fetchJson<TYPE.Report[]>(`${API_BASE_URL}/api/reports/admin`, {
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+}
+
+// 관리자 신고 상태 변경
+export async function updateReportStatus(reportId: number, status: boolean): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/api/reports/${reportId}/status?status=${status}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+  });
+  if (!res.ok) throw new Error("신고 상태 변경 실패");
+}
+
+// 관리자 문의 목록 조회
+export async function getInquiries(): Promise<TYPE.Inquiry[]> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/api/inquiry/admin`, {
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+  });
+  if (!res.ok) throw new Error("문의 목록 조회 실패");
+
+  const data: { articleId: number; title: string; content: string; createdAt: string; updatedAt: string }[] = await res.json();
+
+  return data.map((d, idx) => {
+    const [questionPart, answerPart] = d.content.split("[답변]:");
+    return {
+      inquiryId: d.articleId,
+      title: d.title,
+      question: questionPart.trim(),
+      createdAt: d.createdAt,
+      answers: answerPart
+        ? [
+          {
+            inquiryReviewId: idx + 1,
+            answer: answerPart.trim(),
+            nickName: "관리자",
+            createdAt: d.updatedAt,
+          },
+        ]
+        : [],
+      newAnswer: "",
+    };
+  });
+}
+
+// 관리자 문의 답변 등록
+export async function saveInquiryAnswer(inquiryId: number, answer: string): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}/api/inquiry/${inquiryId}/answer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+    body: JSON.stringify({ answer }),
+  });
+  if (!res.ok) throw new Error("문의 답변 등록 실패");
+}
+
+export async function fetchChatUsers(currentUserId: number) {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/chats/users`, { credentials: "include" });
+  if (!res.ok) throw new Error("유저 목록 가져오기 실패");
+  const data = (await res.json()) as { userId: number; nickName: string }[];
+  return data.filter((u) => u.userId !== currentUserId);
+}
+
+export async function fetchRecentPublicChats(): Promise<TYPE.PublicChat[]> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/chats/public/recent`, { credentials: "include" });
+  if (!res.ok) throw new Error("공개 채팅 불러오기 실패");
+  return (await res.json()) as TYPE.PublicChat[];
 }

@@ -4,6 +4,12 @@ import HeaderSub from "../components/HeaderSub";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
 
+import UserManagement from "../components/admin/UserManagement";
+import ProductManagement from "../components/admin/ProductManagement";
+import ReportManagement from "../components/admin/ReportManagement";
+import StatsManagement from "../components/admin/StatsManagement";
+import InquiryManagement from "../components/admin/InquiryManagement";
+
 // pages
 import Main from "../pages/Main";
 import Login from "../pages/Login";
@@ -25,6 +31,12 @@ export {
   HeaderSub,
   ProductBidGraph,
   AuctionBox,
+
+  UserManagement,
+  ProductManagement,
+  ReportManagement,
+  StatsManagement,
+  InquiryManagement,
 
   Main,
   Login,
