@@ -1,6 +1,8 @@
 // components
 import HeaderMain from "../components/HeaderMain";
 import HeaderSub from "../components/HeaderSub";
+import ProductBidGraph from "../components/ProductBidGraph";
+import { AuctionBox } from "../components/AuctionBox";
 
 // pages
 import Main from "../pages/Main";
@@ -15,10 +17,15 @@ import AdminPage from '../pages/AdminPage';
 import UserQnaForm from "../pages/UserQnaForm";
 import ErrorPage from "../pages/ErrorPage";
 import OAuth2Redirect from "../pages/OAuth2Redirect";
+import AROverlayWithButton from "../pages/AROverlayWithButton";
+import ProductQnA from "../components/ProductQnA";
 
 export {
   HeaderMain,
   HeaderSub,
+  ProductBidGraph,
+  AuctionBox,
+
   Main,
   Login,
   Signup,
@@ -30,6 +37,8 @@ export {
   AdminPage,
   UserQnaForm,
   ErrorPage,
-  OAuth2Redirect
+  OAuth2Redirect,
+  AROverlayWithButton,
+  ProductQnA
 };
 // 

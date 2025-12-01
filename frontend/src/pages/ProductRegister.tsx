@@ -93,7 +93,7 @@ export default function ProductRegister({ user }: Props) {
         tone: "전문적인, 신뢰감 있는",
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/ai/generate-description`, {
+      const response = await fetch(`${API_BASE_URL}/ai/generate-description`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

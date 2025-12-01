@@ -26,7 +26,7 @@ services:
     environment:
       TZ: "Asia/Seoul"
       # 환경 변수
-      ALLOWED_ORIGINS: http://localhost:3000,https://ddauction.shop/
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
       OPENAI_API_KEY: ${OPENAI_API_KEY}
       PINECONE_API_KEY: ${PINECONE_API_KEY}
       PINECONE_ENVIRONMENT: ${PINECONE_ENVIRONMENT}
