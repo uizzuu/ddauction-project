@@ -71,15 +71,15 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     @Query("""
     SELECT p.title
     FROM Product p
-    WHERE p.productStatus = 'AVAILABLE'
-      AND (LOWER(p.title) LIKE LOWER(CONCAT(:keyword, '%'))
-        OR LOWER(p.tag) LIKE LOWER(CONCAT(:keyword, '%')))
+    WHERE LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
+       OR LOWER(p.tag)   LIKE LOWER(CONCAT('%', :keyword, '%'))
     ORDER BY p.viewCount DESC
     """)
     List<String> findSuggestionsForAutocomplete(
             @Param("keyword") String keyword,
             Pageable pageable
     );
+
 
     /**
      * 인기 검색어 (조회수 높은 상품 제목 TOP N)
