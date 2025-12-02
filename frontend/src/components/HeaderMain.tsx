@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { User } from "../common/types";
 import { logout } from "../common/api";
 
@@ -12,16 +12,24 @@ export default function HeaderMain({ user, setUser }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchKeyword, setSearchKeyword] = useState("");
+  
+  // 🆕 자동완성 관련 state
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  
+  const searchRef = useRef<HTMLDivElement>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleLogout = async () => {
-  try {
-    await logout();
-    setUser(null);
-    navigate("/");
-  } catch (err) {
-    console.error(err);
-  }
-};
+    try {
+      await logout();
+      setUser(null);
+      navigate("/");
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   // URL 쿼리 변화 감지 → input에 동기화
   useEffect(() => {
@@ -30,11 +38,81 @@ export default function HeaderMain({ user, setUser }: Props) {
     setSearchKeyword(kw);
   }, [location.search]);
 
+  // 🆕 외부 클릭 시 드롭다운 닫기
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 🆕 자동완성 API 호출
+  const fetchSuggestions = async (keyword: string) => {
+    if (keyword.trim() === "") {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://localhost:8080/api/autocomplete?keyword=${encodeURIComponent(keyword)}&limit=10`
+      );
+      // ✨ [핵심 수정 부분] 응답이 성공(200-299)인지 먼저 확인
+        if (!response.ok) {
+            console.error(`자동완성 API 요청 실패: Status ${response.status}`);
+            setSuggestions([]);
+            setShowSuggestions(false);
+            return; // 성공이 아니면 여기서 함수 종료
+        }
+      const data = await response.json();
+
+      if (data.success && data.suggestions && data.suggestions.length > 0) {
+        setSuggestions(data.suggestions);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (error) {
+      console.error("자동완성 API 오류:", error);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  // 🆕 검색어 입력 시 디바운스 처리
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchKeyword(value);
+    setSelectedIndex(-1);
+
+    // 기존 타이머 제거
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    // 300ms 후 API 호출
+    debounceTimer.current = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 300);
+  };
+
   // 검색 시 URL 쿼리로 이동 (공백 검색어 + 카테고리 반영)
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const trimmed = searchKeyword.trim();
-
+    
+    // 🆕 드롭다운에서 선택된 항목이 있으면 그것으로 검색
+    let keyword = searchKeyword;
+    if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
+      keyword = suggestions[selectedIndex];
+    }
+    
+    const trimmed = keyword.trim();
     const query = new URLSearchParams();
 
     if (trimmed !== "") query.append("keyword", trimmed);
@@ -44,6 +122,54 @@ export default function HeaderMain({ user, setUser }: Props) {
     if (currentCategory) query.append("category", currentCategory);
 
     navigate(`/search?${query.toString()}`);
+    
+    // 🆕 검색 후 드롭다운 닫기
+    setShowSuggestions(false);
+  };
+
+  // 🆕 연관 검색어 클릭
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchKeyword(suggestion);
+    
+    // 클릭한 키워드로 즉시 검색
+    const query = new URLSearchParams();
+    query.append("keyword", suggestion);
+
+    const params = new URLSearchParams(location.search);
+    const currentCategory = params.get("category");
+    if (currentCategory) query.append("category", currentCategory);
+
+    navigate(`/search?${query.toString()}`);
+    setShowSuggestions(false);
+  };
+
+  // 🆕 키보드 네비게이션 (위/아래 화살표, ESC)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedIndex(prev => 
+          prev < suggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
+        break;
+      case "Escape":
+        setShowSuggestions(false);
+        setSelectedIndex(-1);
+        break;
+    }
+  };
+
+  // 🆕 검색창 포커스 시
+  const handleInputFocus = () => {
+    if (searchKeyword.trim() !== "" && suggestions.length > 0) {
+      setShowSuggestions(true);
+    }
   };
 
   return (
@@ -64,35 +190,52 @@ export default function HeaderMain({ user, setUser }: Props) {
           </svg>
         </div>
 
-        {/* 검색창 */}
-        <form onSubmit={handleSearch} className="header-search">
-          <input
-            type="text"
-            placeholder="검색어를 입력하세요"
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
-            className="search-input"
-          />
-          <button type="submit" className="search-btn">
-            검색
-          </button>
-        </form>
+        {/* 검색창 + 🆕 자동완성 드롭다운 */}
+        <div ref={searchRef} style={{ position: "relative", flex: 1, maxWidth: "600px" }}>
+          <form onSubmit={handleSearch} className="header-search">
+            <input
+              type="text"
+              placeholder="검색어를 입력하세요"
+              value={searchKeyword}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
+              onFocus={handleInputFocus}
+              className="search-input"
+              autoComplete="off"
+            />
+            <button type="submit" className="search-btn">
+              검색
+            </button>
+          </form>
+
+          {/* 🆕 자동완성 드롭다운 */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="autocomplete-dropdown">
+              {suggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  className={`autocomplete-item ${selectedIndex === index ? "selected" : ""}`}
+                  onClick={() => handleSuggestionClick(suggestion)}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                >
+                  <span className="search-icon">🔍</span>
+                  {suggestion}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* 네비게이션 */}
         <nav className="flex-box gap-24 flex-center">
           {user ? (
             <>
               <span className="nav-link user-info">{user.nickName} 님</span>
-              {/* 관리자 전용 버튼 */}
               {user.role === "ADMIN" && (
                 <NavLink to="/admin" className="nav-link">
                   관리자 페이지
                 </NavLink>
               )}
-              {/* <NavLink to="/mypage" className="nav-link">
-                마이페이지
-              </NavLink> */}
-              {/* 1:1 문의 */}
               <NavLink to="/mypage/qna/new" className="nav-link">
                 1:1 문의
               </NavLink>
@@ -108,7 +251,6 @@ export default function HeaderMain({ user, setUser }: Props) {
               <NavLink to="/signup" className="nav-link">
                 회원가입
               </NavLink>
-              {/* 1:1 문의 (비로그인 시 필요 시) */}
               <NavLink to="/login" className="nav-link">
                 1:1 문의
               </NavLink>
