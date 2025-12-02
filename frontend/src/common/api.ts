@@ -6,7 +6,6 @@ const SPRING_API = "/api";
 const PYTHON_API = "/ai";
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
-const SOCIAL_URL = "http://localhost:8080"
 // ===================== 타입가드 =====================
 
 function isBid(obj: unknown): obj is TYPE.Bid {
@@ -311,7 +310,7 @@ export async function loginAPI(form: TYPE.LoginForm) {
 
 // 소셜 로그인 URL 반환
 export function getSocialLoginURL(provider: "google" | "naver" | "kakao") {
-  return `${SOCIAL_URL}/oauth2/authorization/${provider}`;
+  return `${API_BASE_URL}/oauth2/authorization/${provider}`;
 }
 
 // 로그아웃

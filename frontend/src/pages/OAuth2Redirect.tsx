@@ -16,9 +16,11 @@ export default function OAuth2Redirect({ setUser }: Props) {
         // URL에서 token 파라미터 추출
         const params = new URLSearchParams(window.location.search);
         const token = params.get("token");
+        
+        console.log("✅ URL 확인: ", window.location.href);
 
         if (!token) {
-          console.error("Token not found in URL");
+          console.error("❌ Token not found in URL");
           navigate("/login?error=no_token");
           return;
         }
@@ -29,6 +31,7 @@ export default function OAuth2Redirect({ setUser }: Props) {
         localStorage.setItem("token", token);
 
         // 사용자 정보 조회
+        console.log("🔄 사용자 정보 fetchMe 호출");
         const userData = await fetchMe(token);
 
         console.log("✅ 사용자 정보 조회 성공:", userData);
@@ -36,7 +39,7 @@ export default function OAuth2Redirect({ setUser }: Props) {
 
         navigate("/");
       } catch (error) {
-        console.error("OAuth2 리다이렉트 처리 중 오류:", error);
+        console.error("❌ OAuth2 리다이렉트 처리 중 오류:", error);
         navigate("/login?error=oauth_error");
       }
     };
