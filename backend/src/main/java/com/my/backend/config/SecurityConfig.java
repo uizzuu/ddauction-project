@@ -114,10 +114,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        .requestMatchers("/api/autocomplete").permitAll()
                         .requestMatchers("/ai/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
+                        .requestMatchers("/api/autocomplete/**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
