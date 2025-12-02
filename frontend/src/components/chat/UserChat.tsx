@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-// 프론트에서 사용할 타입 정의
 interface User {
 userId: number;
 nickName: string;
@@ -72,7 +71,7 @@ fetch("http://localhost:8080/api/chats/users", { credentials: "include" })
 
 // 공개 채팅 초기 메시지
 useEffect(() => {
-if (!user || selectedUser) return; // 개인 채팅 시 skip
+if (!user || selectedUser) return;
 
 
 fetch("http://localhost:8080/api/chats/public/recent", { credentials: "include" })
@@ -99,7 +98,7 @@ fetch(
 
 }, [user, selectedUser, selectedProductId]);
 
-// 유저 선택 시 messages 초기화 (공개 채팅과 분리)
+// 유저 선택 시 messages 초기화
 useEffect(() => {
 setMessages([]);
 }, [selectedUser, selectedProductId]);
@@ -123,7 +122,6 @@ ws.current.onmessage = (event) => {
   try {
     const data: PrivateChat | PublicChat = JSON.parse(event.data);
 
-    // 유저 정보 보정
     if (!data.user && (data as any).nickName) {
       data.user = {
         userId: (data as any).userId,
@@ -131,13 +129,11 @@ ws.current.onmessage = (event) => {
       };
     }
 
-    // 공개 채팅
     if (!selectedUser && data.type === "PUBLIC") {
       setMessages((prev) => [...prev, data]);
       return;
     }
 
-    // 개인 채팅
     if (selectedUser && data.type === "PRIVATE") {
       if (!selectedProductId && data.productId) {
         setSelectedProductId(data.productId);
@@ -196,7 +192,6 @@ setInput("");
 
 return (
 <div style={{ display: "flex", gap: "10px", padding: "20px" }}>
-{/* 유저 목록 */}
 <div style={{ width: "150px", borderRight: "1px solid #ccc" }}>
 <div
 style={{ padding: "5px", cursor: "pointer", fontWeight: !selectedUser ? "bold" : "normal" }}
@@ -226,7 +221,6 @@ setSelectedProductId(undefined);
     ))}
   </div>
 
-  {/* 채팅 영역 */}
   <div style={{ flex: 1 }}>
     <h1>
       {selectedUser
@@ -277,5 +271,3 @@ setSelectedProductId(undefined);
 
 );
 }
-
-

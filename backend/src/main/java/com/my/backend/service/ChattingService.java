@@ -134,4 +134,13 @@ public class ChattingService {
                 .productId(chatRoom.getProduct() != null ? chatRoom.getProduct().getProductId() : null)
                 .build();
     }
+
+    public List<PrivateChatDto> getPrivateChatsByChatRoom(Long chatRoomId) {
+        List<PrivateChat> chats = privateChatRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId);
+
+        return chats.stream()
+                .map(PrivateChatDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
 }

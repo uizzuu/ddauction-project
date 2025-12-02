@@ -313,6 +313,7 @@ export interface ChatMessagePayload {
   type: ChatType;
   userId: number;
   targetUserId?: number; // private 채팅 시 상대
+  productId?: number;
   content: string;
   nickName?: string; // 읽기용
   createdAt?: string;
