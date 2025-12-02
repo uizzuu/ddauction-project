@@ -5,11 +5,12 @@ import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
 import com.my.backend.entity.Product;
+import io.lettuce.core.dynamic.annotation.Param;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,4 +51,44 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     // 구매 완료 상품 조회
     List<Product> findByPaymentUserUserIdAndPaymentStatus(Long userId, PaymentStatus paymentStatus);
+
+    // ========================================
+    //  자동완성용 메서드 추가
+    // ========================================
+
+    /**
+     * 자동완성용 연관 검색어 추출
+     *
+     * 동작 방식:
+     * - 사용자가 "니" 입력 → title이나 tag가 "니"로 시작하는 상품들의 제목 반환
+     * - AVAILABLE 상태 상품만
+     * - 조회수 높은 순으로 정렬
+     * - DISTINCT로 중복 제거
+     *
+     * 예시:
+     * keyword = "니" → ["블랙 니트", "화이트 니트", "니트 원피스"]
+     */
+    @Query("""
+    SELECT p.title
+    FROM Product p
+    WHERE p.productStatus = 'AVAILABLE'
+      AND (LOWER(p.title) LIKE LOWER(CONCAT(:keyword, '%'))
+        OR LOWER(p.tag) LIKE LOWER(CONCAT(:keyword, '%')))
+    ORDER BY p.viewCount DESC
+    """)
+    List<String> findSuggestionsForAutocomplete(
+            @Param("keyword") String keyword,
+            Pageable pageable
+    );
+
+    /**
+     * 인기 검색어 (조회수 높은 상품 제목 TOP N)
+     *
+     * 사용자가 검색창을 클릭했는데 아무것도 입력 안 했을 때
+     * "인기 검색어" 형태로 보여줄 수 있음
+     */
+    @Query("SELECT p.title FROM Product p " +
+            "WHERE p.productStatus = 'AVAILABLE' " +
+            "ORDER BY p.viewCount DESC")
+    List<String> findTopKeywordsByViewCount(Pageable pageable);
 }
