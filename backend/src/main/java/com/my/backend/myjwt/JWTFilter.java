@@ -39,7 +39,7 @@ public class JWTFilter extends OncePerRequestFilter {
                 "OPTIONS".equalsIgnoreCase(request.getMethod()) ||
                 path.startsWith("/uploads/")||
                 path.startsWith("/api/qrcode/")||
-                path.startsWith("/ai/chat/")){
+                path.startsWith("/ai/")){
             System.out.println("✅ JWT 필터 스킵: " + path);
             filterChain.doFilter(request, response);
             return;
