@@ -12,8 +12,10 @@ from langgraph_app import run_langgraph_rag
 # 2. [NEW] 새로 만든 상품 설명 생성 서비스 가져오기
 from product_generator import generator_service
 
-load_dotenv()
+# 3.배경삭제
+from remove_bg import remove_background_from_qr
 
+load_dotenv()
 app = FastAPI()
 
 ALLOWED_ORIGINS = os.getenv(
@@ -95,6 +97,11 @@ async def generate_product_description(request: ProductRequest):
     )
 
     return {"description": description}
+
+@app.post("/remove-bg")
+async def remove_background(request: ProductImageRequest):
+    image_base64 = remove_background_from_qr(request.product_id)
+    return {"image_base64": image_base64, "message": "배경 제거 완료"}
 
 if __name__ == "__main__":
     uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)

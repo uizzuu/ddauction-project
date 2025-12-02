@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
-import { fetchQrCodeImage, fetchProductByQr } from "../common/api";
+import { fetchQrCodeImage, fetchProductByQr, removeProductBackground } from "../common/api";
 import * as TYPE from "../common/types";
 
 const AROverlayWithButton: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
@@ -352,6 +352,32 @@ const AROverlayWithButton: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
               setError("이미지를 불러올 수 없습니다.");
             }}
           />
+          {/* ✅ 배경제거 버튼 */}
+    <button
+      onClick={async () => {
+        try {
+          const bgRemovedUrl = await removeProductBackground(productId);
+          setImageUrl(bgRemovedUrl); // AR 이미지 교체
+        } catch (err) {
+          setError(err instanceof Error ? err.message : "배경 제거 실패");
+        }
+      }}
+      style={{
+        position: "absolute",
+        bottom: "80px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        padding: "10px 20px",
+        backgroundColor: "#ff6600",
+        color: "#fff",
+        border: "none",
+        borderRadius: "8px",
+        cursor: "pointer",
+        zIndex: 10,
+      }}
+    >
+      ✂️ 배경제거
+    </button>
         </>
       )}
     </div>

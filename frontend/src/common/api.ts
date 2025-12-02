@@ -854,6 +854,18 @@ export const fetchQrCodeImage = async (productId: number): Promise<string> => {
   return URL.createObjectURL(blob);
 };
 
+// 배경 제거 (Python FastAPI) 스프링 거칠필요없음 로컬에서 테스트 안함
+export const removeProductBackground = async (productId: number): Promise<string> => {
+  const res = await fetch(`${API_BASE_URL}${PYTHON_API}/remove-bg`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ product_id: productId }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  return `data:image/png;base64,${data.image_base64}`;
+};
+
 // 상품 데이터 가져오기
 export const fetchProductByQr = async (productId: string): Promise<TYPE.Product> => {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`);
