@@ -14,4 +14,5 @@ public interface PrivateChatRepository extends JpaRepository<PrivateChat, Long> 
     // 새로 추가: 채팅방 참여자 기준 메시지 조회
     List<PrivateChat> findByChatRoomSellerUserIdOrChatRoomSenderUserIdOrderByCreatedAtAsc(Long sellerId, Long senderId);
 
+    List<PrivateChat> findByChatRoomIdOrderByCreatedAtAsc(Long chatRoomId);
 }
