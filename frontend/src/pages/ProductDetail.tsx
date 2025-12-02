@@ -62,7 +62,12 @@ export default function ProductDetail({ user }: Props) {
 
   const originalEndDate = product?.auctionEndTime ? new Date(product.auctionEndTime) : new Date();
   const isEditingDisabled = product
+<<<<<<< HEAD
     ? product.productStatus === "ACTIVE" && new Date(product.auctionEndTime).getTime() > new Date().getTime()
+=======
+    ? product.productStatus === "ACTIVE" &&
+    new Date(product.auctionEndTime).getTime() > new Date().getTime()
+>>>>>>> 2038a8d (개인채팅활성화)
     : false;
   const remaining = product ? UTIL.calculateRemainingTime(product.auctionEndTime) : "";
 
@@ -205,6 +210,21 @@ export default function ProductDetail({ user }: Props) {
         ...productForm,
         productCategoryType: productForm.productCategoryType ?? null,
         startingPrice: Number(productForm.startingPrice || 0),
+<<<<<<< HEAD
+=======
+        auctionEndTime: productForm.auctionEndTime
+          ? (() => {
+            const end = new Date(productForm.auctionEndTime);
+            const year = end.getFullYear();
+            const month = String(end.getMonth() + 1).padStart(2, "0");
+            const day = String(end.getDate()).padStart(2, "0");
+            const hours = String(end.getHours()).padStart(2, "0");
+            const minutes = String(end.getMinutes()).padStart(2, "0");
+            const seconds = String(end.getSeconds()).padStart(2, "0");
+            return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+          })()
+          : null,
+>>>>>>> 2038a8d (개인채팅활성화)
       };
       const updated = await API.editProduct(product.productId, payload, token);
       setProduct(updated);
@@ -619,6 +639,18 @@ export default function ProductDetail({ user }: Props) {
             {product.content ?? "상세 설명이 없습니다."}
           </div>
         </div>
+
+        <button
+          onClick={() => {
+            console.log("productId:", product.productId);
+            navigate("/chat", {
+              state: { sellerId: product.sellerId, productId: product.productId },
+            });
+          }}
+        >
+          1:1 채팅하기
+        </button>
+
 
         <AuctionBox
           productId={product.productId}

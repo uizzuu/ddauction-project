@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+<<<<<<< HEAD
 import * as TYPE from "../../common/types";
 import { fetchChatUsers, fetchRecentPublicChats } from "../../common/api";
 
@@ -9,11 +10,56 @@ export default function UserChat({ user }: TYPE.UserChatProps) {
   const [selectedUser, setSelectedUser] = useState<TYPE.ChatUser | null>(null);
   const ws = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+=======
+import { useLocation } from "react-router-dom";
 
-  // DB에서 유저 목록 가져오기
-  useEffect(() => {
-    if (!user) return;
+// 프론트에서 사용할 타입 정의
+interface User {
+userId: number;
+nickName: string;
+}
 
+interface PrivateChat {
+user?: User;
+targetUserId?: number;
+content: string;
+type: "PRIVATE" | "PUBLIC";
+createdAt?: string;
+productId?: number;
+}
+
+interface PublicChat {
+user?: User;
+content: string;
+type: "PUBLIC";
+createdAt?: string;
+}
+
+interface ChatMessagePayload {
+type: "PRIVATE" | "PUBLIC";
+userId: number;
+content: string;
+nickName: string;
+targetUserId?: number;
+productId?: number;
+}
+
+interface UserChatProps {
+user: User | null;
+}
+
+export default function UserChat({ user }: UserChatProps) {
+const location = useLocation();
+const state = location.state as { sellerId?: number; productId?: number } | undefined;
+>>>>>>> 2038a8d (개인채팅활성화)
+
+const [messages, setMessages] = useState<(PrivateChat | PublicChat)[]>([]);
+const [input, setInput] = useState("");
+const [users, setUsers] = useState<User[]>([]);
+const [selectedUser, setSelectedUser] = useState<User | null>(null);
+const [selectedProductId, setSelectedProductId] = useState<number | undefined>(state?.productId);
+
+<<<<<<< HEAD
     fetchChatUsers(user.userId)
       .then(setUsers)
       .catch((err: unknown) => console.error(err));
@@ -27,62 +73,130 @@ export default function UserChat({ user }: TYPE.UserChatProps) {
       .then(setMessages)
       .catch((err: unknown) => console.error(err));
   }, [user, selectedUser]);
+=======
+const ws = useRef<WebSocket | null>(null);
+const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // WebSocket 연결
-  useEffect(() => {
-    if (!user) return;
+// 유저 목록 가져오기
+useEffect(() => {
+if (!user) return;
+>>>>>>> 2038a8d (개인채팅활성화)
 
-    // 선택된 유저가 있으면 1:1 WebSocket, 없으면 공개 채팅 WebSocket
-    const url = selectedUser
-      ? `ws://localhost:8080/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}`
-      : `ws://localhost:8080/ws/chat?userId=${user.userId}`;
 
-    ws.current?.close();
-    ws.current = new WebSocket(url);
+fetch("http://localhost:8080/api/chats/users", { credentials: "include" })
+  .then((res) => res.json())
+  .then((data: User[]) => {
+    const filtered = data.filter((u) => u.userId !== user.userId);
+    setUsers(filtered);
 
-    ws.current.onopen = () => console.log("WebSocket 연결 성공");
+    if (state?.sellerId) {
+      const seller = filtered.find((u) => u.userId === state.sellerId);
+      if (seller) setSelectedUser(seller);
+    }
+  })
+  .catch((err) => console.error("유저 목록 가져오기 실패", err));
 
+
+<<<<<<< HEAD
     ws.current.onmessage = (event) => {
       try {
         const data: TYPE.PrivateChat | TYPE.PublicChat = JSON.parse(event.data);
+=======
+}, [user, state]);
+>>>>>>> 2038a8d (개인채팅활성화)
 
-        // user 정보 없으면 추가
-        if (!data.user && (data as any).nickName) {
-          data.user = { userId: (data as any).userId, nickName: (data as any).nickName };
-        }
+// 공개 채팅 초기 메시지
+useEffect(() => {
+if (!user || selectedUser) return; // 개인 채팅 시 skip
 
-        // PRIVATE 메시지일 경우 선택된 상대와 관련된 메시지만 표시
-        if (data.type === "PRIVATE" && selectedUser) {
-          if (
-            data.user?.userId === selectedUser.userId ||
-            data.targetUserId === selectedUser.userId ||
-            data.user?.userId === user.userId
-          ) {
-            setMessages((prev) => [...prev, data]);
-          }
-        } else {
-          setMessages((prev) => [...prev, data]);
-        }
-      } catch (err) {
-        console.error("메시지 파싱 오류:", err);
+
+fetch("http://localhost:8080/api/chats/public/recent", { credentials: "include" })
+  .then((res) => res.json())
+  .then((data: PublicChat[]) => setMessages(data))
+  .catch((err) => console.error("공개 채팅 불러오기 실패", err));
+
+
+}, [user, selectedUser]);
+
+// 1:1 채팅 초기 메시지
+useEffect(() => {
+if (!user || !selectedUser || !selectedProductId) return;
+
+
+fetch(
+  `http://localhost:8080/api/chats/private?userId=${user.userId}&targetUserId=${selectedUser.userId}&productId=${selectedProductId}`,
+  { credentials: "include" }
+)
+  .then((res) => res.json())
+  .then((data: PrivateChat[]) => setMessages(data))
+  .catch((err) => console.error("1:1 채팅 불러오기 실패", err));
+
+
+}, [user, selectedUser, selectedProductId]);
+
+// 유저 선택 시 messages 초기화 (공개 채팅과 분리)
+useEffect(() => {
+setMessages([]);
+}, [selectedUser, selectedProductId]);
+
+// WebSocket 연결
+useEffect(() => {
+if (!user) return;
+if (selectedUser && !selectedProductId) return;
+
+
+const url = selectedUser
+  ? `ws://localhost:8080/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}&productId=${selectedProductId}`
+  : `ws://localhost:8080/ws/chat?userId=${user.userId}`;
+
+ws.current?.close();
+ws.current = new WebSocket(url);
+
+ws.current.onopen = () => console.log("WebSocket 연결 성공");
+
+ws.current.onmessage = (event) => {
+  try {
+    const data: PrivateChat | PublicChat = JSON.parse(event.data);
+
+    // 유저 정보 보정
+    if (!data.user && (data as any).nickName) {
+      data.user = {
+        userId: (data as any).userId,
+        nickName: (data as any).nickName,
+      };
+    }
+
+    // 공개 채팅
+    if (!selectedUser && data.type === "PUBLIC") {
+      setMessages((prev) => [...prev, data]);
+      return;
+    }
+
+    // 개인 채팅
+    if (selectedUser && data.type === "PRIVATE") {
+      if (!selectedProductId && data.productId) {
+        setSelectedProductId(data.productId);
       }
-    };
 
-    ws.current.onclose = () => console.log("WebSocket 연결 종료");
-    ws.current.onerror = (err) => console.error("WebSocket 오류:", err);
+      const isMyMsg = data.user?.userId === user.userId;
+      const isFromTarget = data.user?.userId === selectedUser.userId;
 
-    return () => ws.current?.close();
-  }, [user, selectedUser]);
+      if (isMyMsg || isFromTarget) {
+        setMessages((prev) => [...prev, data]);
+      }
+      return;
+    }
+  } catch (err) {
+    console.error("메시지 파싱 오류:", err);
+  }
+};
 
-  // 자동 스크롤
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+ws.current.onclose = () => console.log("WebSocket 연결 종료");
+ws.current.onerror = (err) => console.error("WebSocket 오류:", err);
 
-  // 메시지 전송
-  const sendMessage = () => {
-    if (!input.trim() || !user || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+return () => ws.current?.close();
 
+<<<<<<< HEAD
     const isPrivate = !!selectedUser;
     const payload: TYPE.ChatMessagePayload = {
       type: isPrivate ? "PRIVATE" : "PUBLIC",
@@ -91,76 +205,121 @@ export default function UserChat({ user }: TYPE.UserChatProps) {
       nickName: user.nickName,
       ...(isPrivate && selectedUser ? { targetUserId: selectedUser.userId } : {}),
     };
+=======
+>>>>>>> 2038a8d (개인채팅활성화)
 
-    ws.current.send(JSON.stringify(payload));
-    setInput("");
-  };
+}, [user, selectedUser, selectedProductId]);
 
-  return (
-    <div style={{ display: "flex", gap: "10px", padding: "20px" }}>
-      {/* 좌측: 사용자 목록 */}
-      <div style={{ width: "150px", borderRight: "1px solid #ccc" }}>
-        <div
-          style={{ padding: "5px", cursor: "pointer", fontWeight: !selectedUser ? "bold" : "normal" }}
-          onClick={() => setSelectedUser(null)}
-        >
-          공개 채팅
-        </div>
-        {users.map((u) => (
-          <div
-            key={u.userId}
-            style={{
-              padding: "5px",
-              cursor: "pointer",
-              fontWeight: selectedUser?.userId === u.userId ? "bold" : "normal",
-            }}
-            onClick={() => setSelectedUser(u)}
-          >
-            {u.nickName}
+// 자동 스크롤
+useEffect(() => {
+messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+}, [messages]);
+
+const sendMessage = () => {
+if (!input.trim() || !user || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+
+
+const isPrivate = !!selectedUser;
+
+if (isPrivate && !selectedProductId) {
+  alert("상품을 선택해야 1:1 채팅을 할 수 있습니다.");
+  return;
+}
+
+const payload: ChatMessagePayload = {
+  type: isPrivate ? "PRIVATE" : "PUBLIC",
+  userId: user.userId,
+  content: input,
+  nickName: user.nickName,
+  ...(isPrivate && selectedUser ? { targetUserId: selectedUser.userId, productId: selectedProductId } : {}),
+};
+
+ws.current.send(JSON.stringify(payload));
+setInput("");
+
+
+};
+
+return (
+<div style={{ display: "flex", gap: "10px", padding: "20px" }}>
+{/* 유저 목록 */}
+<div style={{ width: "150px", borderRight: "1px solid #ccc" }}>
+<div
+style={{ padding: "5px", cursor: "pointer", fontWeight: !selectedUser ? "bold" : "normal" }}
+onClick={() => {
+setSelectedUser(null);
+setSelectedProductId(undefined);
+}}
+>
+공개 채팅 </div>
+
+
+    {users.map((u) => (
+      <div
+        key={u.userId}
+        style={{
+          padding: "5px",
+          cursor: "pointer",
+          fontWeight: selectedUser?.userId === u.userId ? "bold" : "normal",
+        }}
+        onClick={() => {
+          setSelectedUser(u);
+          setSelectedProductId(state?.productId);
+        }}
+      >
+        {u.nickName}
+      </div>
+    ))}
+  </div>
+
+  {/* 채팅 영역 */}
+  <div style={{ flex: 1 }}>
+    <h1>
+      {selectedUser
+        ? `1:1 채팅${selectedProductId ? ` - ${selectedUser.nickName}` : " (상품 선택 필요)"}`
+        : "공개 채팅"}
+    </h1>
+
+    <div
+      style={{
+        border: "1px solid #ccc",
+        padding: "10px",
+        width: "100%",
+        height: "500px",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      <div style={{ flex: 1, overflowY: "auto", marginBottom: "10px" }}>
+        {messages.map((msg, i) => (
+          <div key={i} style={{ textAlign: msg.user?.userId === user?.userId ? "right" : "left" }}>
+            <b>{msg.user?.userId === user?.userId ? "나" : msg.user?.nickName}:</b> {msg.content}
+            <span style={{ color: "#888", marginLeft: "6px", fontSize: "12px" }}>
+              {msg.createdAt
+                ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+                : ""}
+            </span>
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
 
-      {/* 우측: 채팅창 */}
-      <div style={{ flex: 1 }}>
-        <h1>{selectedUser ? `1:1 채팅 - ${selectedUser.nickName}` : "공개 채팅"}</h1>
-        <div
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            width: "100%",
-            height: "500px",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div style={{ flex: 1, overflowY: "auto", marginBottom: "10px" }}>
-            {messages.map((msg, i) => (
-              <div key={i} style={{ textAlign: msg.user?.userId === user?.userId ? "right" : "left" }}>
-                <b>{msg.user?.userId === user?.userId ? "나" : msg.user?.nickName}:</b> {msg.content}
-                <span style={{ color: "#888", marginLeft: "6px", fontSize: "12px" }}>
-                  {msg.createdAt
-                    ? new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                    : ""}
-                </span>
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-          <div style={{ display: "flex" }}>
-            <input
-              style={{ flex: 1, padding: "5px" }}
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            />
-            <button onClick={sendMessage} style={{ marginLeft: "5px" }}>
-              전송
-            </button>
-          </div>
-        </div>
+      <div style={{ display: "flex" }}>
+        <input
+          style={{ flex: 1, padding: "5px" }}
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+        />
+        <button onClick={sendMessage} style={{ marginLeft: "5px" }}>
+          전송
+        </button>
       </div>
     </div>
-  );
+  </div>
+</div>
+
+
+);
 }
