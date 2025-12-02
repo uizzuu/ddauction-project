@@ -281,7 +281,7 @@ export async function deleteComment(commentId: number): Promise<void> {
 
 // 로그인
 export async function loginAPI(form: TYPE.LoginForm) {
-  const response = await fetch(`${SPRING_API}/auth/login`, {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(form),
@@ -292,12 +292,15 @@ export async function loginAPI(form: TYPE.LoginForm) {
     throw new Error(data.message || "로그인 실패");
   }
 
-  const authHeader = response.headers.get("Authorization");
-  if (!authHeader) throw new Error("토큰을 받지 못했습니다");
-  const token = authHeader.replace("Bearer ", "");
+  // body에서 token 받기 (백엔드가 이미 JSON으로 보냄)
+  const data = await response.json();
+  const token = data.token;
+
+  if (!token) throw new Error("토큰을 받지 못했습니다");
+
   localStorage.setItem("token", token);
 
-  const userResponse = await fetch(`${SPRING_API}/auth/me`, {
+  const userResponse = await fetch(`${API_BASE_URL}${SPRING_API}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
