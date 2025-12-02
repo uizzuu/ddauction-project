@@ -54,27 +54,22 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd ~/ddauction-project
+            # 에러 발생 시 스크립트 중단
+            set -e  
+
+            cd ~/ddauction-project/infra
 
             echo "=== Git 업데이트 ==="
             git fetch origin main
             git reset --hard origin/main
             git pull origin main
 
-            cd ~/ddauction-project/infra
-
-            echo "=== .env.prod 백업 (덮어쓰기) ==="
+            echo "=== .env.prod 백업 및 생성 ==="
             if [ -f .env.prod ]; then
               cp -f .env.prod .env.prod.backup
-              echo ".env.prod → .env.prod.backup 덮어쓰기 완료"
-            else
-              echo ".env.prod 파일이 없습니다."
+              echo ".env.prod → .env.prod.backup 완료"
             fi
 
-            echo "=== Docker 로그인 ==="
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-            echo "=== .env.prod 새로 생성 ==="
             cat > .env.prod << 'ENVEOF'
             # 기본 설정
             SPRING_PROFILES_ACTIVE=prod
@@ -117,25 +112,32 @@ jobs:
             PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}
             ENVEOF
 
-            echo "=== .env.prod 새로 생성 / 도커 pull ==="
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml pull || true
-            
-            echo "=== 컨테이너 재시작 ==="
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --pull=always --no-deps chatbot backend frontend
+            echo "=== Docker 로그인 ==="
+            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-            echo "=== 배포 및 컨테이너 상태 확인 ==="
+            echo "=== 이미지 Pull ==="
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml pull || true
+
+            echo "=== 컨테이너 중지 ==="
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml down
+
+            echo "=== 컨테이너 순서 재시작 ==="
+            # Backend → Chatbot → Frontend → Nginx
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --pull=always backend
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --pull=always chatbot
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --pull=always frontend
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --pull=always nginx
+
+            echo "=== 배포 상태 확인 ==="
             docker-compose --env-file .env.prod -f docker-compose.prod.yml ps
 
-            echo "=== Chatbot 로그 (최근 30줄) ==="
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 chatbot
+            echo "=== 로그 확인 (최근 30줄) ==="
+            for service in chatbot backend frontend nginx; do
+              echo "=== $service ==="
+              docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 $service
+            done
 
-            echo "=== Backend 로그 (최근 30줄) ==="
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 backend
-
-            echo "=== Frontend 로그 (최근 30줄) ==="
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 frontend
-
-            echo "=== 사용하지 않는 Docker 이미지 정리 ==="
+            echo "=== 사용하지 않는 이미지 정리 ==="
             docker builder prune -a -f || true
             docker image prune -a -f || true
 
