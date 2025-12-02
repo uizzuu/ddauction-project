@@ -55,67 +55,62 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/ddauction-project
-            echo "추가했어요 ==="
+            
+            echo "=== Docker 정리 ==="
             docker builder prune -a -f || true
             docker image prune -a -f || true
 
-            echo "=== Git 강제 초기화 및 Pull ==="
+            echo "=== Git 업데이트 ==="
             git fetch origin main
             git reset --hard origin/main
             git pull origin main
 
             cd ~/ddauction-project/infra
 
-            # .env.prod가 없거나 비어있으면 기본 템플릿 생성
-            if [ ! -s .env.prod ]; then
-              echo "=== .env.prod가 없거나 비어있습니다. 기본 템플릿 생성 ==="
-              cat > .env.prod << 'TEMPLATE'
-            SPRING_PROFILES_ACTIVE=prod
-            ALLOWED_ORIGINS=https://ddauction.shop,https://www.ddauction.shop
-            RDS_ENDPOINT=ddauction-db.cdycgq4uyj1v.ap-northeast-2.rds.amazonaws.com
-            SPRING_DATASOURCE_USERNAME=admin
-            SPRING_DATASOURCE_PASSWORD=dda1234!!
-            DOCKERHUB_USERNAME=uizzuu
-            BACKEND_IMAGE=uizzuu/ddauction-backend:latest
-            FRONTEND_IMAGE=uizzuu/ddauction-frontend:latest
-            CHATBOT_IMAGE=uizzuu/ddauction-chatbot:latest
-            JWT_SECRET=vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbbPLAINTEXT
-            PAYMENT_PORTONE_IMP_CODE=imp38147237
-            PAYMENT_PORTONE_API_KEY=4607256811104714
-            PAYMENT_PORTONE_API_SECRET=eemuGM3AVPFIfny5NDcHhvaheSOq0sniBIi2eU4dx0Lc8juTEkYOdo3gIuZSRjzk0SUmixLCrZb4XCd1
-            PAYMENT_PORTONE_CALLBACK_URL=http://15.165.25.115/api/payments/portone/callback
-            FILE_UPLOAD_DIRECTORY=/home/ubuntu/ddauction-project/backend/uploads
-            PINECONE_ENVIRONMENT=us-east-1
-            INDEX_NAME=ddauction-db
-            TEMPLATE
+            echo "=== .env.prod 백업 (덮어쓰기) ==="
+            if [ -f .env.prod ]; then
+              cp -f .env.prod .env.prod.backup
+              echo ".env.prod → .env.prod.backup 덮어쓰기 완료"
+            else
+              echo ".env.prod 파일이 없습니다."
             fi
 
             echo "=== Docker 로그인 ==="
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-            # 기존 .env.prod에서 AWS 항목 제거
-            echo "=== 기존 .env.prod에서 민감한 키들만 제거 (기존 내용 보존) ==="
-            sed -i '/^AWS_ACCESS_KEY_ID=/d' .env.prod
-            sed -i '/^AWS_SECRET_ACCESS_KEY=/d' .env.prod
-            sed -i '/^AWS_S3_BUCKET_NAME=/d' .env.prod
-            sed -i '/^AWS_REGION=/d' .env.prod
-            sed -i '/^GOOGLE_CLIENT_ID=/d' .env.prod
-            sed -i '/^GOOGLE_CLIENT_SECRET=/d' .env.prod
-            sed -i '/^NAVER_CLIENT_ID=/d' .env.prod
-            sed -i '/^NAVER_CLIENT_SECRET=/d' .env.prod
-            sed -i '/^KAKAO_CLIENT_ID=/d' .env.prod
-            sed -i '/^KAKAO_CLIENT_SECRET=/d' .env.prod
-            sed -i '/^OPENAI_API_KEY=/d' .env.prod
-            sed -i '/^PINECONE_API_KEY=/d' .env.prod
+            echo "=== .env.prod 새로 생성 ==="
+            cat > .env.prod << 'ENVEOF'
+            # 기본 설정
+            SPRING_PROFILES_ACTIVE=prod
+            ALLOWED_ORIGINS=https://ddauction.shop
+            RDS_ENDPOINT=ddauction-db.cdycgq4uyj1v.ap-northeast-2.rds.amazonaws.com
+            SPRING_DATASOURCE_USERNAME=admin
+            SPRING_DATASOURCE_PASSWORD=dda1234!!
 
-            # 줄바꿈 추가 (중요!)
-            echo "" >> .env.prod
+            # Docker 이미지
+            DOCKERHUB_USERNAME=uizzuu
+            BACKEND_IMAGE=uizzuu/ddauction-backend:latest
+            FRONTEND_IMAGE=uizzuu/ddauction-frontend:latest
+            CHATBOT_IMAGE=uizzuu/ddauction-chatbot:latest
 
-            # .env.prod에 OAuth 환경변수 추가
-            echo "=== GitHub Secrets에서 민감한 키들 추가 ==="
-            cat >> .env.prod << 'EOF'
+            # JWT
+            JWT_SECRET=vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbbPLAINTEXT
 
-            # AWS, S3
+            # 결제
+            PAYMENT_PORTONE_IMP_CODE=imp38147237
+            PAYMENT_PORTONE_API_KEY=4607256811104714
+            PAYMENT_PORTONE_API_SECRET=eemuGM3AVPFIfny5NDcHhvaheSOq0sniBIi2eU4dx0Lc8juTEkYOdo3gIuZSRjzk0SUmixLCrZb4XCd1
+            PAYMENT_PORTONE_CALLBACK_URL=https://ddauction.shop/api/payments/portone/callback
+
+            # 파일 업로드
+            FILE_UPLOAD_DIRECTORY=/home/ubuntu/ddauction-project/backend/uploads
+
+            # Chatbot
+            PINECONE_ENVIRONMENT=us-east-1
+            INDEX_NAME=ddauction-db
+            CHATBOT_URL=http://chatbot:8000
+
+            # AWS S3
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
@@ -129,12 +124,12 @@ jobs:
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
 
-            # Chatbot
+            # AI Chatbot
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}
-            EOF
+            ENVEOF
 
-            echo "=== 최신 이미지 pull ==="
+            echo "=== .env.prod 새로 생성 / 도커 pull ==="
             docker-compose --env-file .env.prod -f docker-compose.prod.yml pull
             
             echo "=== 컨테이너 재시작 ==="

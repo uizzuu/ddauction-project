@@ -84,7 +84,7 @@ spring:
     enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: ${DB_URL:jdbc:mysql://localhost:3306/ddauction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${DB_URL:jdbc:mysql://localhost:3306/ddauction_db?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true}
     username: ${DB_USERNAME:root}
     password: ${DB_PASSWORD:1111}
   jpa:
@@ -112,11 +112,9 @@ spring:
 
           kakao:
             redirect-uri: "http://localhost:8080/login/oauth2/code/kakao"
-
 file:
   upload:
     directory: ./uploads
-# ✅ AWS S3 설정 추가
 cloud:
   aws:
     s3:
@@ -126,7 +124,6 @@ cloud:
     credentials:
       access-key: ${AWS_ACCESS_KEY_ID}
       secret-key: ${AWS_SECRET_ACCESS_KEY}
-
 app:
   frontend-url: http://localhost:3000
 
@@ -144,7 +141,7 @@ spring:
     enabled: false
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${RDS_ENDPOINT}:3306/ddauction_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${RDS_ENDPOINT}:3306/ddauction_db?useSSL=false&serverTimezone=Asia/Seoul&allowPublicKeyRetrieval=true
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
@@ -158,7 +155,6 @@ spring:
           time_zone: Asia/Seoul
   jackson:
     time-zone: Asia/Seoul
-
   security:
     oauth2:
       client:
@@ -171,11 +167,9 @@ spring:
 
           kakao:
             redirect-uri: "https://ddauction.shop/login/oauth2/code/kakao"
-
 file:
   upload:
     directory: ${FILE_UPLOAD_DIRECTORY:/home/ubuntu/ddauction-project/backend/uploads}
-# ✅ AWS S3 설정 추가
 cloud:
   aws:
     s3:
@@ -189,7 +183,7 @@ app:
   frontend-url: https://ddauction.shop
 rag:
   api:
-    url: ${RAG_API_URL:http://chatbot:8000}
+    url: ${CHATBOT_URL:http://chatbot:8000}
     timeout:
       connect: 20000  # 프로덕션에서는 더 여유있게
       read: 90000
