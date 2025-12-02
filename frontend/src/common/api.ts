@@ -1212,3 +1212,17 @@ export const fetchSuggestions = async (keyword: string) => {
     return [];
   }
 };
+
+// 🆕 인기 검색어 API
+export const fetchPopularKeywords = async (limit: number = 10): Promise<string[]> => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}${SPRING_API}/autocomplete/popular?limit=${limit}`
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.success && data.keywords ? data.keywords : [];
+  } catch {
+    return [];
+  }
+};
