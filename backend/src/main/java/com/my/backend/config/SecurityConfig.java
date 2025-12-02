@@ -139,14 +139,11 @@ public class SecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .addFilterAt(loginFilter, UsernamePasswordAuthenticationFilter.class)
 
-                .oauth2Login(oauth2 ->
-                        oauth2.userInfoEndpoint(userInfo ->
-                                        userInfo.oidcUserService(new OidcUserService())
-                                )
-                                .userInfoEndpoint(userInfo ->
-                                        userInfo.userService(customOAuth2UserService)
-                                )
-                                .successHandler(oAuth2SuccessHandler)
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .successHandler(oAuth2SuccessHandler)
                 )
 
                 .sessionManagement(session ->
