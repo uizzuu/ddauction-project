@@ -1,16 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-<<<<<<< HEAD
-import * as TYPE from "../../common/types";
-import { fetchChatUsers, fetchRecentPublicChats } from "../../common/api";
-
-export default function UserChat({ user }: TYPE.UserChatProps) {
-  const [messages, setMessages] = useState<(TYPE.PrivateChat | TYPE.PublicChat)[]>([]);
-  const [input, setInput] = useState("");
-  const [users, setUsers] = useState<TYPE.ChatUser[]>([]);
-  const [selectedUser, setSelectedUser] = useState<TYPE.ChatUser | null>(null);
-  const ws = useRef<WebSocket | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
-=======
 import { useLocation } from "react-router-dom";
 
 // 프론트에서 사용할 타입 정의
@@ -51,7 +39,6 @@ user: User | null;
 export default function UserChat({ user }: UserChatProps) {
 const location = useLocation();
 const state = location.state as { sellerId?: number; productId?: number } | undefined;
->>>>>>> 2038a8d (개인채팅활성화)
 
 const [messages, setMessages] = useState<(PrivateChat | PublicChat)[]>([]);
 const [input, setInput] = useState("");
@@ -59,28 +46,12 @@ const [users, setUsers] = useState<User[]>([]);
 const [selectedUser, setSelectedUser] = useState<User | null>(null);
 const [selectedProductId, setSelectedProductId] = useState<number | undefined>(state?.productId);
 
-<<<<<<< HEAD
-    fetchChatUsers(user.userId)
-      .then(setUsers)
-      .catch((err: unknown) => console.error(err));
-  }, [user]);
-
-  // 공개채팅 초기 메시지 불러오기
-  useEffect(() => {
-    if (!user || selectedUser) return; // 공개채팅일 때만
-
-    fetchRecentPublicChats()
-      .then(setMessages)
-      .catch((err: unknown) => console.error(err));
-  }, [user, selectedUser]);
-=======
 const ws = useRef<WebSocket | null>(null);
 const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
 // 유저 목록 가져오기
 useEffect(() => {
 if (!user) return;
->>>>>>> 2038a8d (개인채팅활성화)
 
 
 fetch("http://localhost:8080/api/chats/users", { credentials: "include" })
@@ -97,13 +68,7 @@ fetch("http://localhost:8080/api/chats/users", { credentials: "include" })
   .catch((err) => console.error("유저 목록 가져오기 실패", err));
 
 
-<<<<<<< HEAD
-    ws.current.onmessage = (event) => {
-      try {
-        const data: TYPE.PrivateChat | TYPE.PublicChat = JSON.parse(event.data);
-=======
 }, [user, state]);
->>>>>>> 2038a8d (개인채팅활성화)
 
 // 공개 채팅 초기 메시지
 useEffect(() => {
@@ -196,17 +161,6 @@ ws.current.onerror = (err) => console.error("WebSocket 오류:", err);
 
 return () => ws.current?.close();
 
-<<<<<<< HEAD
-    const isPrivate = !!selectedUser;
-    const payload: TYPE.ChatMessagePayload = {
-      type: isPrivate ? "PRIVATE" : "PUBLIC",
-      userId: user.userId,
-      content: input,
-      nickName: user.nickName,
-      ...(isPrivate && selectedUser ? { targetUserId: selectedUser.userId } : {}),
-    };
-=======
->>>>>>> 2038a8d (개인채팅활성화)
 
 }, [user, selectedUser, selectedProductId]);
 
@@ -323,3 +277,5 @@ setSelectedProductId(undefined);
 
 );
 }
+
+
