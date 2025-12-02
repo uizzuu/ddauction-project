@@ -45,6 +45,10 @@ class ProductRequest(BaseModel):
     tone: Optional[str] = "전문적인, 신뢰감 있는"
 
 
+class ProductImageRequest(BaseModel):
+    product_id: int
+
+
 # --- 엔드포인트 정의 ---
 
 @app.get("/status")
@@ -97,6 +101,7 @@ async def generate_product_description(request: ProductRequest):
     )
 
     return {"description": description}
+
 
 @app.post("/remove-bg")
 async def remove_background(request: ProductImageRequest):
