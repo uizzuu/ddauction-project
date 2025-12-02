@@ -45,4 +45,10 @@ public class ChattingController {
         return chatService.getRecentPublicChats();
     }
 
+
+    @GetMapping("/private/room")
+    public ResponseEntity<List<PrivateChatDto>> getPrivateChatsByRoom(@RequestParam Long chatRoomId) {
+        return ResponseEntity.ok(chatService.getPrivateChatsByChatRoom(chatRoomId));
+    }
+
 }
