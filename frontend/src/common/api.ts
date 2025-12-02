@@ -1203,7 +1203,7 @@ export const fetchSuggestions = async (keyword: string) => {
   if (keyword.trim() === "") return [];
   try {
     const response = await fetch(
-      `http://localhost:8080/api/autocomplete?keyword=${encodeURIComponent(keyword)}&limit=10`
+      `${API_BASE_URL}${SPRING_API}/autocomplete?keyword=${encodeURIComponent(keyword)}&limit=10`
     );
     if (!response.ok) return [];
     const data = await response.json();
