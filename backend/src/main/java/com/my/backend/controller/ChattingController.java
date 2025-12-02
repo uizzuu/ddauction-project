@@ -1,9 +1,7 @@
 package com.my.backend.controller;
 
-import com.my.backend.dto.PrivateChatDto;
-import com.my.backend.dto.PublicChatDto;
-import com.my.backend.dto.SimpleUserDto;
-import com.my.backend.dto.UsersDto;
+import com.my.backend.dto.*;
+import com.my.backend.entity.ChatRoom;
 import com.my.backend.service.ChattingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -47,8 +45,13 @@ public class ChattingController {
 
 
     @GetMapping("/private/room")
-    public ResponseEntity<List<PrivateChatDto>> getPrivateChatsByRoom(@RequestParam Long chatRoomId) {
-        return ResponseEntity.ok(chatService.getPrivateChatsByChatRoom(chatRoomId));
+    public ResponseEntity<List<PrivateChatDto>> getPrivateChatsByRoom(
+            @RequestParam Long userId,
+            @RequestParam Long targetUserId,
+            @RequestParam Long productId) {
+
+        ChatRoomDto chatRoomDto = chatService.getOrCreateChatRoom(userId, targetUserId, productId);
+        return ResponseEntity.ok(chatService.getPrivateChatsByChatRoom(chatRoomDto.getChatRoomId()));
     }
 
 }

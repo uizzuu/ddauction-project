@@ -128,7 +128,7 @@ public class ChattingService {
         });
 
         return ChatRoomDto.builder()
-                .id(chatRoom.getId())
+                .chatRoomId(chatRoom.getId())
                 .sellerId(chatRoom.getSeller().getUserId())
                 .senderId(chatRoom.getSender().getUserId())
                 .productId(chatRoom.getProduct() != null ? chatRoom.getProduct().getProductId() : null)
