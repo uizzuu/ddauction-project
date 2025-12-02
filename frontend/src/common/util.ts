@@ -13,7 +13,8 @@ export const formatDateTime = (isoString: string | undefined) => {
   const day = String(d.getDate()).padStart(2, "0");
   const hour = String(d.getHours()).padStart(2, "0");
   const min = String(d.getMinutes()).padStart(2, "0");
-  return `${year}-${month}-${day} ${hour}:${min}`;
+  const sec = String(d.getSeconds()).padStart(2, "0");
+  return `${year}-${month}-${day}T${hour}:${min}:${sec}`;
 };
 
 // 남은 시간 “X일 X시간 X분 X초”

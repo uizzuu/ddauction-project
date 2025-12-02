@@ -34,6 +34,7 @@ public class Product {
     @Column(nullable = false)
     private String title;
 
+    @Lob
     @NotBlank
     @Column(nullable = false)
     private String content;
