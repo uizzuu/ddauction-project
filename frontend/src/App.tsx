@@ -112,11 +112,13 @@ export default function App() {
 
   // 유효하지 않은 경로면 에러 페이지 표시
   if (isInvalidPath) {
-    <div style={{ minHeight: "100vh" }}>
-      <HeaderMain user={user} setUser={setUser} />
-      <HeaderSub />
-      <ErrorPage />
-    </div>;
+    return (
+      <div style={{ minHeight: "100vh" }}>
+        <HeaderMain user={user} setUser={setUser} />
+        <HeaderSub />
+        <ErrorPage />
+      </div>
+    );
   }
 
   return (
