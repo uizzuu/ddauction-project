@@ -86,19 +86,27 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
         System.out.println("[DEBUG] authorities = " + authorities);
-        String role = authorities.stream().findFirst().map(GrantedAuthority::getAuthority).orElse("ROLE_USER");
-        System.out.println("[DEBUG] role = " + role);
 
-        // ms, s 충돌 해결 (LoginFilter <-> JWTUtil)
-        long expiredMs = 24 * 60 * 60 * 1000L; // 24시간 * 60분 * 60초 * 1000ms
-        // GrantedAuthority에서 뽑은 문자열
+        // 🔹 한 번만 선언
         String roleStr = authorities.stream()
                 .findFirst()
                 .map(GrantedAuthority::getAuthority)
                 .orElse("ROLE_USER");
-        // Role enum으로 변환
-        Role roleEnum = Role.valueOf(roleStr.replace("ROLE_", ""));
+
+        // ROLE_ 제거 후 소문자·공백 제거
+        String normalizedRole = roleStr.replace("ROLE_", "").trim().toUpperCase();
+
+        // Role enum으로 변환 (실패 시 기본값 USER)
+        Role roleEnum;
+        try {
+            roleEnum = Role.valueOf(normalizedRole);
+        } catch (IllegalArgumentException e) {
+            roleEnum = Role.USER;
+        }
+        System.out.println("[DEBUG] roleEnum = " + roleEnum);
+
         // JWT 생성
+        long expiredMs = 24 * 60 * 60 * 1000L; // 24시간
         String token = jwtUtil.createJwt(
                 customUserDetails.getUser().getUserId(),
                 customUserDetails.getEmail(),
@@ -111,10 +119,10 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         if (token != null) {
             response.setContentType("application/json;charset=UTF-8");
             response.setStatus(HttpServletResponse.SC_OK);
+            // 헤더와 body 모두 전송
             response.addHeader("Authorization", "Bearer " + token);
             response.getWriter().write("{\"token\":\"" + token + "\"}");
             response.getWriter().flush();
-
             System.out.println("[INFO] JWT 토큰 헤더에 추가 완료");
         } else {
             System.out.println("[ERROR] JWT token 생성 실패");
