@@ -1,7 +1,7 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { User } from "../common/types";
-import { logout } from "../common/api";
+import { logout, fetchSuggestions } from "../common/api";
 
 type Props = {
   user: User | null;
@@ -12,12 +12,12 @@ export default function HeaderMain({ user, setUser }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchKeyword, setSearchKeyword] = useState("");
-  
+
   // 🆕 자동완성 관련 state
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  
+
   const searchRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -50,34 +50,12 @@ export default function HeaderMain({ user, setUser }: Props) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 🆕 자동완성 API 호출
-  const fetchSuggestions = async (keyword: string) => {
-    if (keyword.trim() === "") {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
+  // 자동완성 API 호출
+  const handleFetchSuggestions = async (keyword: string) => {
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/autocomplete?keyword=${encodeURIComponent(keyword)}&limit=10`
-      );
-      // ✨ [핵심 수정 부분] 응답이 성공(200-299)인지 먼저 확인
-        if (!response.ok) {
-            console.error(`자동완성 API 요청 실패: Status ${response.status}`);
-            setSuggestions([]);
-            setShowSuggestions(false);
-            return; // 성공이 아니면 여기서 함수 종료
-        }
-      const data = await response.json();
-
-      if (data.success && data.suggestions && data.suggestions.length > 0) {
-        setSuggestions(data.suggestions);
-        setShowSuggestions(true);
-      } else {
-        setSuggestions([]);
-        setShowSuggestions(false);
-      }
+      const suggestions = await fetchSuggestions(keyword);
+      setSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
     } catch (error) {
       console.error("자동완성 API 오류:", error);
       setSuggestions([]);
@@ -85,7 +63,7 @@ export default function HeaderMain({ user, setUser }: Props) {
     }
   };
 
-  // 🆕 검색어 입력 시 디바운스 처리
+  // 검색어 입력 시 디바운스 처리
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchKeyword(value);
@@ -98,20 +76,20 @@ export default function HeaderMain({ user, setUser }: Props) {
 
     // 300ms 후 API 호출
     debounceTimer.current = setTimeout(() => {
-      fetchSuggestions(value);
+      handleFetchSuggestions(value);
     }, 300);
   };
 
   // 검색 시 URL 쿼리로 이동 (공백 검색어 + 카테고리 반영)
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // 🆕 드롭다운에서 선택된 항목이 있으면 그것으로 검색
     let keyword = searchKeyword;
     if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
       keyword = suggestions[selectedIndex];
     }
-    
+
     const trimmed = keyword.trim();
     const query = new URLSearchParams();
 
@@ -122,7 +100,7 @@ export default function HeaderMain({ user, setUser }: Props) {
     if (currentCategory) query.append("category", currentCategory);
 
     navigate(`/search?${query.toString()}`);
-    
+
     // 🆕 검색 후 드롭다운 닫기
     setShowSuggestions(false);
   };
@@ -130,7 +108,7 @@ export default function HeaderMain({ user, setUser }: Props) {
   // 🆕 연관 검색어 클릭
   const handleSuggestionClick = (suggestion: string) => {
     setSearchKeyword(suggestion);
-    
+
     // 클릭한 키워드로 즉시 검색
     const query = new URLSearchParams();
     query.append("keyword", suggestion);
@@ -150,7 +128,7 @@ export default function HeaderMain({ user, setUser }: Props) {
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < suggestions.length - 1 ? prev + 1 : prev
         );
         break;

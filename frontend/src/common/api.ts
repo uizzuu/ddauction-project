@@ -1197,3 +1197,18 @@ export async function fetchMyReports(token: string): Promise<TYPE.Report[]> {
   if (!res.ok) throw new Error("신고 내역 조회 실패");
   return res.json();
 }
+
+// 자동완성 API
+export const fetchSuggestions = async (keyword: string) => {
+  if (keyword.trim() === "") return [];
+  try {
+    const response = await fetch(
+      `http://localhost:8080/api/autocomplete?keyword=${encodeURIComponent(keyword)}&limit=10`
+    );
+    if (!response.ok) return [];
+    const data = await response.json();
+    return data.success && data.suggestions ? data.suggestions : [];
+  } catch {
+    return [];
+  }
+};
