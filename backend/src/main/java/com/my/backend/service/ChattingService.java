@@ -14,6 +14,7 @@ import com.my.backend.repository.PublicChatRepository;
 import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ChattingService {
 
     private final PrivateChatRepository privateChatRepository;
@@ -36,8 +38,13 @@ public class ChattingService {
                 .orElseThrow(() -> new RuntimeException("Sender not found"));
         Users seller = usersRepository.findById(targetUserId)
                 .orElseThrow(() -> new RuntimeException("Target user not found"));
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        Optional<Product> productOpt = productRepository.findById(productId);
+        if (productOpt.isEmpty()) {
+            log.warn("개인 채팅 생성 실패 - 존재하지 않는 productId: {}", productId);
+            throw new RuntimeException("상품 정보를 찾을 수 없습니다.");
+        }
+        Product product = productOpt.get();
 
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository
                 .findBySellerUserIdAndSenderUserIdAndProductProductId(targetUserId, userId, productId);
@@ -105,8 +112,13 @@ public class ChattingService {
                 .findBySellerUserIdAndSenderUserIdAndProductProductId(targetUserId, userId, productId);
 
         ChatRoom chatRoom = optionalChatRoom.orElseGet(() -> {
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+            Optional<Product> productOpt = productRepository.findById(productId);
+            if (productOpt.isEmpty()) {
+                log.warn("채팅방 생성 실패 - 존재하지 않는 productId: {}", productId);
+                throw new RuntimeException("상품 정보를 찾을 수 없습니다.");
+            }
+            Product product = productOpt.get();
+
             ChatRoom newRoom = ChatRoom.builder()
                     .seller(seller)
                     .sender(sender)
