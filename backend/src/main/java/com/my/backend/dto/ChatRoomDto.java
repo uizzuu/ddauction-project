@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class ChatRoomDto {
 
-    private Long id;
+    private Long chatRoomId;
     private Long sellerId;
     private String sellerNickName;
     private Long senderId;
@@ -26,7 +26,7 @@ public class ChatRoomDto {
         if (chatRoom == null) return null;
 
         return ChatRoomDto.builder()
-                .id(chatRoom.getId())
+                .chatRoomId(chatRoom.getId())
                 .sellerId(chatRoom.getSeller() != null ? chatRoom.getSeller().getUserId() : null)
                 .sellerNickName(chatRoom.getSeller() != null ? chatRoom.getSeller().getNickName() : null)
                 .senderId(chatRoom.getSender() != null ? chatRoom.getSender().getUserId() : null)
@@ -39,7 +39,7 @@ public class ChatRoomDto {
     // DTO → Entity (필요할 경우)
     public ChatRoom toEntity(Users seller, Users sender, com.my.backend.entity.Product product) {
         return ChatRoom.builder()
-                .id(this.id)
+                .id(this.chatRoomId)
                 .seller(seller)
                 .sender(sender)
                 .product(product)
