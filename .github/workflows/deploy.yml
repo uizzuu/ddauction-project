@@ -55,10 +55,6 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/ddauction-project
-            
-            echo "=== Docker 정리 ==="
-            docker builder prune -a -f || true
-            docker image prune -a -f || true
 
             echo "=== Git 업데이트 ==="
             git fetch origin main
@@ -86,36 +82,29 @@ jobs:
             RDS_ENDPOINT=ddauction-db.cdycgq4uyj1v.ap-northeast-2.rds.amazonaws.com
             SPRING_DATASOURCE_USERNAME=admin
             SPRING_DATASOURCE_PASSWORD=dda1234!!
-
             # Docker 이미지
             DOCKERHUB_USERNAME=uizzuu
             BACKEND_IMAGE=uizzuu/ddauction-backend:latest
             FRONTEND_IMAGE=uizzuu/ddauction-frontend:latest
             CHATBOT_IMAGE=uizzuu/ddauction-chatbot:latest
-
             # JWT
             JWT_SECRET=vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbbPLAINTEXT
-
             # 결제
             PAYMENT_PORTONE_IMP_CODE=imp38147237
             PAYMENT_PORTONE_API_KEY=4607256811104714
             PAYMENT_PORTONE_API_SECRET=eemuGM3AVPFIfny5NDcHhvaheSOq0sniBIi2eU4dx0Lc8juTEkYOdo3gIuZSRjzk0SUmixLCrZb4XCd1
             PAYMENT_PORTONE_CALLBACK_URL=https://ddauction.shop/api/payments/portone/callback
-
             # 파일 업로드
             FILE_UPLOAD_DIRECTORY=/home/ubuntu/ddauction-project/backend/uploads
-
             # Chatbot
             PINECONE_ENVIRONMENT=us-east-1
             INDEX_NAME=ddauction-db
             CHATBOT_URL=http://chatbot:8000
-
             # AWS S3
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             AWS_S3_BUCKET_NAME=${{ secrets.AWS_S3_BUCKET_NAME }}
             AWS_REGION=${{ secrets.AWS_REGION }}
-
             # OAuth
             GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
             GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
@@ -123,31 +112,31 @@ jobs:
             NAVER_CLIENT_SECRET=${{ secrets.NAVER_CLIENT_SECRET }}
             KAKAO_CLIENT_ID=${{ secrets.KAKAO_CLIENT_ID }}
             KAKAO_CLIENT_SECRET=${{ secrets.KAKAO_CLIENT_SECRET }}
-
             # AI Chatbot
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}
             ENVEOF
 
             echo "=== .env.prod 새로 생성 / 도커 pull ==="
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml pull
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml pull || true
             
             echo "=== 컨테이너 재시작 ==="
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --force-recreate
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml up -d --pull=always --no-deps chatbot backend frontend
 
             echo "=== 배포 및 컨테이너 상태 확인 ==="
             docker-compose --env-file .env.prod -f docker-compose.prod.yml ps
 
-            echo "=== Backen d 로그 (최근 30줄) ==="
+            echo "=== Chatbot 로그 (최근 30줄) ==="
+            docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 chatbot
+
+            echo "=== Backend 로그 (최근 30줄) ==="
             docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 backend
 
             echo "=== Frontend 로그 (최근 30줄) ==="
             docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 frontend
 
-            echo "=== Chatbot 로그 (최근 30줄) ==="
-            docker-compose --env-file .env.prod -f docker-compose.prod.yml logs --tail=30 chatbot
-
-            echo "=== 사용하지 않는 이미지 정리 ==="
-            docker image prune -af
+            echo "=== 사용하지 않는 Docker 이미지 정리 ==="
+            docker builder prune -a -f || true
+            docker image prune -a -f || true
 
             echo "=== 배포 완료 ==="
