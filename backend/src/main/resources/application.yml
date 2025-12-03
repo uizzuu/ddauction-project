@@ -99,6 +99,18 @@ spring:
           time_zone: Asia/Seoul
   jackson:
     time-zone: Asia/Seoul
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}      # 기본값: Gmail
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}            # Gmail 주소
+    password: ${MAIL_PASSWORD}            # 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 
   security:
     oauth2:
@@ -155,6 +167,19 @@ spring:
           time_zone: Asia/Seoul
   jackson:
     time-zone: Asia/Seoul
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}      # 기본값: Gmail
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}            # Gmail 주소
+    password: ${MAIL_PASSWORD}            # 앱 비밀번호
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   security:
     oauth2:
       client:
