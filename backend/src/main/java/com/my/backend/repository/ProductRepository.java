@@ -87,8 +87,12 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
      * 사용자가 검색창을 클릭했는데 아무것도 입력 안 했을 때
      * "인기 검색어" 형태로 보여줄 수 있음
      */
-    @Query("SELECT p.title FROM Product p " +
-            "WHERE p.productStatus = 'AVAILABLE' " +
-            "ORDER BY p.viewCount DESC")
+    @Query("""
+    SELECT p.title
+    FROM Product p
+    WHERE p.productStatus = com.my.backend.enums.ProductStatus.ACTIVE
+    ORDER BY p.viewCount DESC
+""")
     List<String> findTopKeywordsByViewCount(Pageable pageable);
+
 }
