@@ -32,6 +32,7 @@ public class UsersDto {
     private Long emailVerificationId;
     private Long phoneVerificationId;
     private LocalDate birthday;
+    private String businessNumber;
     @Builder.Default
     private List<ImageDto> images = new ArrayList<>();
 
@@ -54,6 +55,7 @@ public class UsersDto {
                 .emailVerificationId(user.getEmailVerification() != null ? user.getEmailVerification().getEmailVerificationId() : null)
                 .phoneVerificationId(user.getPhoneVerification() != null ? user.getPhoneVerification().getPhoneVerificationId() : null)
                 .birthday(user.getBirthday())
+                .businessNumber(user.getBusinessNumber())
                 .build();
     }
 
@@ -73,6 +75,7 @@ public class UsersDto {
                 .emailVerification(emailVerification)
                 .phoneVerification(phoneVerification)
                 .birthday(this.birthday)
+                .businessNumber(this.businessNumber)
                 .build();
     }
 }
