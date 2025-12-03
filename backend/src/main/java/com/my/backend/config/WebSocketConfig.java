@@ -2,6 +2,7 @@ package com.my.backend.config;
 
 
 import com.my.backend.websocket.AuctionWebSocketHandler;
+import com.my.backend.websocket.RealTimeSearchWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
@@ -22,6 +23,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     private final AuctionWebSocketHandler auctionWebSocketHandler;
     private final WebSocketHandler chatWebSocketHandler;
+    private final RealTimeSearchWebSocketHandler realTimeSearchWebSocketHandler;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
@@ -62,5 +64,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
                                                org.springframework.web.socket.WebSocketHandler wsHandler, Exception exception) {
                     }
                 });
-}
+        // 실시간 검색어용
+        registry.addHandler(realTimeSearchWebSocketHandler, "/ws/realtime-search")
+                .setAllowedOrigins("*");
+    }
 }
