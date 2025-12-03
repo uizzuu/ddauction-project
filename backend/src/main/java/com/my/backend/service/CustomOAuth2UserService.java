@@ -1,22 +1,25 @@
 package com.my.backend.service;
 
-import com.my.backend.dto.auth.CustomOAuth2User;
-import com.my.backend.entity.Users;
-import com.my.backend.enums.Role;
-import com.my.backend.oauth2.OAuth2UserInfo;
-import com.my.backend.oauth2.OAuth2UserInfoFactory;
-import com.my.backend.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.Random;
+import java.util.UUID;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.Random;
-import java.util.UUID;
+import com.my.backend.dto.auth.CustomOAuth2User;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
+import com.my.backend.oauth2.OAuth2UserInfo;
+import com.my.backend.oauth2.OAuth2UserInfoFactory;
+import com.my.backend.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -81,6 +84,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                         .nickName(nickName)
                         .userName(userName)
                         .phone(phone)
+                        .birthday(LocalDate.of(1900, 1, 1)) // DB Not Null 제약 대응
                         .role(Role.USER)
                         .createdAt(now)
                         .updatedAt(now)
