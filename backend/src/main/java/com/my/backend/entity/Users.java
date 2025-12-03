@@ -44,7 +44,7 @@ public class Users {
     private Long userId;
 
     @NotBlank
-    @Pattern(regexp = "^[가-힣a-zA-Z]+$")
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9]+$")
     @Column(nullable = false)
     private String userName;
 
