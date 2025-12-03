@@ -37,12 +37,50 @@ public class PortOnePaymentService {
     private static final String VERIFY_PAYMENT_URL = PORTONE_API_BASE + "/payments/";
     private static final String CANCEL_PAYMENT_URL = PORTONE_API_BASE + "/payments/cancel";
 
-    // 결제 준비 (경매 전용)
+
+    //  토큰 & 결제 정보 조회
+    private String getAccessToken() {
+        Map<String, String> body = new HashMap<>();
+        body.put("imp_key", props.getPortone().getApiKey());
+        body.put("imp_secret", props.getPortone().getApiSecret());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<PortOneTokenResponse> response = restTemplate.postForEntity(
+                GET_TOKEN_URL, new HttpEntity<>(body, headers), PortOneTokenResponse.class);
+
+        if (response.getBody() == null || response.getBody().getResponse() == null) {
+            throw new IllegalStateException("토큰 발급 실패");
+        }
+
+        return response.getBody().getResponse().getAccess_token();
+    }
+
+    private PortOnePaymentResponse getPaymentInfo(String impUid, String accessToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<PortOnePaymentResponse> response = restTemplate.exchange(
+                VERIFY_PAYMENT_URL + impUid,
+                HttpMethod.GET,
+                new HttpEntity<>(headers),
+                PortOnePaymentResponse.class
+        );
+
+        if (response.getBody() == null || response.getBody().getCode() != 0) {
+            throw new IllegalStateException("결제 정보 조회 실패");
+        }
+        return response.getBody();
+    }
+
+    //  경매 결제 준비
     public Map<String, Object> prepareBidPayment(Product product, Users user) {
         Product p = productRepository.findById(product.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        // 경매 종료 전 결제시도 시 막아줌
+        // 경매 종료 전 결제 시도 방지
         if (p.getAuctionEndTime() != null && LocalDateTime.now().isBefore(p.getAuctionEndTime())) {
             throw new IllegalStateException("경매가 아직 진행 중입니다. 경매 종료 후에만 결제할 수 있습니다.");
         }
@@ -87,43 +125,8 @@ public class PortOnePaymentService {
         return paymentInfo;
     }
 
-    private String getAccessToken() {
-        Map<String, String> body = new HashMap<>();
-        body.put("imp_key", props.getPortone().getApiKey());
-        body.put("imp_secret", props.getPortone().getApiSecret());
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        ResponseEntity<PortOneTokenResponse> response = restTemplate.postForEntity(
-                GET_TOKEN_URL, new HttpEntity<>(body, headers), PortOneTokenResponse.class);
-
-        if (response.getBody() == null || response.getBody().getResponse() == null) {
-            throw new IllegalStateException("토큰 발급 실패");
-        }
-
-        return response.getBody().getResponse().getAccess_token();
-    }
-
-    private PortOnePaymentResponse getPaymentInfo(String impUid, String accessToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        ResponseEntity<PortOnePaymentResponse> response = restTemplate.exchange(
-                VERIFY_PAYMENT_URL + impUid,
-                HttpMethod.GET,
-                new HttpEntity<>(headers),
-                PortOnePaymentResponse.class
-        );
-
-        if (response.getBody() == null || response.getBody().getCode() != 0) {
-            throw new IllegalStateException("결제 정보 조회 실패");
-        }
-        return response.getBody();
-    }
-
-    // 결제 취소
+    //  경매 결제 취소
     public void cancelPayment(String impUid, Product product, Users user, String reason) {
         Product p = productRepository.findById(product.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
@@ -163,7 +166,8 @@ public class PortOnePaymentService {
                 p.getProductId(), user.getUserId(), reason);
     }
 
-    // 결제 검증 후 완료 처리 (경매 전용)
+
+    //  경매 결제 완료 검증
     public PortOnePaymentResponse verifyAndComplete(String impUid, Product product, Users user) {
         Product p = productRepository.findById(product.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
@@ -172,39 +176,57 @@ public class PortOnePaymentService {
         PortOnePaymentResponse paymentInfo = getPaymentInfo(impUid, accessToken);
         var resp = paymentInfo.getResponse();
 
-        // PortOne 결제 상태 체크
+        if (resp == null) {
+            throw new IllegalStateException("포트원 결제 응답이 비어 있습니다.");
+        }
+
+        // 1) 포트원 결제 상태 체크
         if (!"paid".equalsIgnoreCase(resp.getStatus())) {
             throw new IllegalStateException("결제가 완료되지 않았습니다.");
         }
 
+        // 2) 낙찰 입찰 & 사용자 검증
         Bid winningBid = bidRepository.findTopByProductOrderByBidPriceDesc(p)
                 .orElseThrow(() -> new IllegalStateException("낙찰자가 존재하지 않습니다."));
 
-        // 낙찰자 검증 (엔티티 equals 대신 ID 기준 비교)
         if (!winningBid.getUser().getUserId().equals(user.getUserId())) {
             throw new SecurityException("현재 사용자는 낙찰자가 아닙니다.");
         }
 
-        // 금액 검증
-        if (!resp.getPaidAmount().equals(winningBid.getBidPrice().intValue())) {
+        // 3) 우리 시스템 기준 기대 금액 (최종 낙찰가)
+        Long expectedAmountLong = winningBid.getBidPrice();
+        if (expectedAmountLong == null || expectedAmountLong <= 0) {
+            throw new IllegalStateException("낙찰 금액이 존재하지 않습니다.");
+        }
+        int expectedAmount = expectedAmountLong.intValue();
+
+        // 4) PortOne 금액 검증 (null 방어)
+        Integer paidAmount = resp.getPaidAmount();
+        if (paidAmount == null) {
+            log.warn("[PortOne] paidAmount가 null 입니다. impUid={}, expectedAmount={}",
+                    impUid, expectedAmount);
+            // 포트원에서 금액을 안 내려줘도, 우리 금액 기준으로 진행
+            paidAmount = expectedAmount;
+        } else if (!paidAmount.equals(expectedAmount)) {
             throw new IllegalStateException("결제 금액 불일치");
         }
 
-        // PortOne 결제 수단 → 내부 enum으로 매핑
+        // 5) PortOne 결제 수단 → 내부 enum으로 매핑
         PaymentMethodType methodType = PaymentMethodType.fromPortOne(resp.getPayMethod());
 
-        // Payment 엔티티 생성 및 사용자/상품 연결
+        // 6) Payment 엔티티 생성 및 사용자/상품 연결
         Payment payment = Payment.builder()
                 .product(p)
                 .user(user)
                 .paymentMethodType(methodType)
-                .totalPrice(resp.getPaidAmount().longValue())
+                .totalPrice(expectedAmountLong)   // ⭐ 최종 낙찰가 그대로 저장
                 .paymentStatus(PaymentStatus.PAID)
                 .productType(p.getProductType())
                 .build();
 
         paymentRepository.save(payment);
 
+        // 7) 상품 상태 갱신
         p.setBid(winningBid);
         p.setPayment(payment);
         p.setProductStatus(ProductStatus.SOLD);
@@ -212,18 +234,23 @@ public class PortOnePaymentService {
         productRepository.save(p);
 
         log.info("[Auction] 결제 완료 처리: productId={}, userId={}, amount={}",
-                p.getProductId(), user.getUserId(), resp.getPaidAmount());
+                p.getProductId(), user.getUserId(), expectedAmount);
 
         return paymentInfo;
     }
+
+    // ============================
+    //  콜백 / 웹훅
+    // ============================
 
     public ResponseEntity<String> handleCallback(Map<String, Object> payload) {
         log.info("[PortOne] handleCallback 호출: {}", payload);
         return ResponseEntity.ok("Callback received");
     }
 
-    // ------------------------------------------------------------
-    // 일반, 중고 결제 관련 메서드
+    // ============================
+    //  일반/중고 결제 준비
+    // ============================
 
     public Map<String, Object> prepareDirectPayment(Product product, Users buyer) {
         // 상품 다시 조회 (항상 영속 상태 보장)
@@ -262,6 +289,10 @@ public class PortOnePaymentService {
 
         return paymentInfo;
     }
+
+    // ============================
+    //  일반/중고 결제 취소
+    // ============================
 
     public void cancelDirectPayment(String impUid, Product product, Users buyer, String reason) {
         Product p = productRepository.findById(product.getProductId())
@@ -303,6 +334,10 @@ public class PortOnePaymentService {
                 p.getProductId(), buyer.getUserId(), reason);
     }
 
+    // ============================
+    //  일반/중고 결제 완료 검증
+    // ============================
+
     public PortOnePaymentResponse verifyAndCompleteDirect(String impUid, Product product, Users buyer) {
         Product p = productRepository.findById(product.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
@@ -311,49 +346,60 @@ public class PortOnePaymentService {
         PortOnePaymentResponse paymentInfo = getPaymentInfo(impUid, accessToken);
         var resp = paymentInfo.getResponse();
 
-        // 결제 상태 검증
+        if (resp == null) {
+            throw new IllegalStateException("포트원 결제 응답이 비어 있습니다.");
+        }
+
+        // 1) 결제 상태 검증
         if (!"paid".equalsIgnoreCase(resp.getStatus())) {
             throw new IllegalStateException("결제가 완료되지 않았습니다.");
         }
 
-        // 판매 상태 검증 (이미 SOLD면 중복 결제 방지)
+        // 2) 판매 상태 검증 (이미 SOLD면 중복 결제 방지)
         if (p.getProductStatus() == ProductStatus.SOLD) {
             throw new IllegalStateException("이미 판매 완료된 상품입니다.");
         }
 
-        // 결제 금액 재계산 (준비 단계와 동일 로직)
-        Long expectedAmount = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
-        if (expectedAmount == null || expectedAmount <= 0) {
+        // 3) 우리 시스템 기준 기대 금액
+        Long expectedAmountLong = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
+        if (expectedAmountLong == null || expectedAmountLong <= 0) {
             throw new IllegalStateException("상품 결제 금액이 설정되어 있지 않습니다.");
         }
+        int expectedAmount = expectedAmountLong.intValue();
 
-        if (!resp.getPaidAmount().equals(expectedAmount.intValue())) {
+        // 4) PortOne 금액 검증 (null 방어)
+        Integer paidAmount = resp.getPaidAmount();
+        if (paidAmount == null) {
+            log.warn("[PortOne] paidAmount가 null 입니다. impUid={}, expectedAmount={}",
+                    impUid, expectedAmount);
+            paidAmount = expectedAmount;
+        } else if (!paidAmount.equals(expectedAmount)) {
             throw new IllegalStateException("결제 금액 불일치");
         }
 
-        // PortOne 결제 수단
+        // 5) PortOne 결제 수단
         PaymentMethodType methodType = PaymentMethodType.fromPortOne(resp.getPayMethod());
 
-        // Payment 엔티티 생성
+        // 6) Payment 엔티티 생성
         Payment payment = Payment.builder()
                 .product(p)
                 .user(buyer)
                 .paymentMethodType(methodType)
-                .totalPrice(resp.getPaidAmount().longValue())
+                .totalPrice(expectedAmountLong)   // ⭐ 상품 가격 그대로 저장
                 .paymentStatus(PaymentStatus.PAID)
                 .productType(p.getProductType())
                 .build();
 
         paymentRepository.save(payment);
 
-        // Product <-> Payment 양방향 연결
+        // 7) Product <-> Payment 양방향 연결
         p.setPayment(payment);
         p.setProductStatus(ProductStatus.SOLD);
         p.setPaymentStatus(PaymentStatus.PAID);
         productRepository.save(p);
 
         log.info("[Direct] 결제 완료 처리: productId={}, userId={}, amount={}",
-                p.getProductId(), buyer.getUserId(), resp.getPaidAmount());
+                p.getProductId(), buyer.getUserId(), expectedAmount);
 
         return paymentInfo;
     }
