@@ -5,9 +5,12 @@ export default {
     extend: {
       colors: {},
       fontWeight: {},
+      fontSize: {},
       spacing: {},
       borderRadius: {},
-      borderRadius: {},
+      fontFamily: {
+        sans: ["Pretendard", ...defaultTheme.fontFamily.sans],
+      },
     },
   },
   plugins: [],

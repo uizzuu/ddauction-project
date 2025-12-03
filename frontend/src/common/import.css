@@ -1,3 +1,7 @@
+/* 기본 설정 (리셋, 변수) */
+@import "../css/reset.css"; 
+@import "../css/base.css";
+
 @import "../css/AdminPage.css";
 @import "../css/App.css";
 @import "../css/Article.css";
@@ -8,10 +12,6 @@
 @import "../css/ProductDetail.css";
 @import "../css/ProductList.css";
 @import "../css/ProductRegister.css";
-
-/* 기본 설정 (리셋, 변수) */
-@import "../css/reset.css"; 
-@import "../css/base.css";
 
 @tailwind base;
 
