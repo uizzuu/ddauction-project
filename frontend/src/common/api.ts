@@ -5,7 +5,9 @@ import type { SortOption } from "./util";
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
 export const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+  import.meta.env.MODE === "production"
+    ? ""
+    : import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
 // ===================== 타입가드 =====================
 
 function isBid(obj: unknown): obj is TYPE.Bid {
