@@ -1227,3 +1227,18 @@ export const fetchPopularKeywords = async (limit: number = 10): Promise<string[]
     return [];
   }
 };
+// 검색 로그 저장
+export const saveSearchLog = async (keyword: string): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/search/log`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include",
+    body: JSON.stringify({ keyword }),
+  });
+
+  if (!response.ok) {
+    throw new Error("검색 로그 저장 실패");
+  }
+};

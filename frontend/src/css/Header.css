@@ -232,6 +232,35 @@
     font-size: 13px;
   }
 }
+.keyword-tabs {
+  display: flex;
+  border-bottom: 1px solid #eee;
+}
+
+.keyword-tabs .tab {
+  flex: 1;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.keyword-tabs .tab.active {
+  color: #B17576;
+  border-bottom: 2px solid #B17576;
+  font-weight: 600;
+}
+
+.keyword-tabs .tab:hover {
+  background: #f9f9f9;
+}
+
+.keyword-tabs .tab-icon {
+  margin-right: 6px;
+}
 
 
 @media (max-width: 480px) {
