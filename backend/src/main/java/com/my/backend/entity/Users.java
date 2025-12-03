@@ -57,6 +57,10 @@ public class Users {
     @Column(nullable = false)
     private LocalDate birthday;
 
+    @Pattern(regexp = "^\\d{10}$", message = "사업자번호는 숫자 10자리여야 합니다.")
+    @Column(name = "business_number", unique = true)
+    private String businessNumber;
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
