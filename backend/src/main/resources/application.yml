@@ -80,6 +80,11 @@ spring:
   config:
     activate:
       on-profile: local
+  redis:
+    host: localhost
+    port: 6379
+    password: ${REDIS_PASSWORD:}  # 필요 없으면 빈 값
+    timeout: 2000ms
   ssl:
     enabled: false
   datasource:
@@ -147,6 +152,13 @@ spring:
   config:
     activate:
       on-profile: prod
+  redis:
+    host: ${REDIS_HOST:redis-server주소}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 2000ms
+    ssl:
+      enabled: false
   server:
     forward-headers-strategy: framework
   ssl:
