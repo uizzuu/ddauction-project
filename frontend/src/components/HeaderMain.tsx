@@ -2,6 +2,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { User } from "../common/types";
 import { logout, fetchSuggestions, fetchPopularKeywords } from "../common/api";
+import { useRealTimeSearch } from "../common/useRealTimeSearch";
 
 type Props = {
   user: User | null;
@@ -12,16 +13,20 @@ export default function HeaderMain({ user, setUser }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchKeyword, setSearchKeyword] = useState("");
-  
+
   // 자동완성 관련 state
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  
+
   // 인기 검색어 state
   const [popularKeywords, setPopularKeywords] = useState<string[]>([]);
+  // 실시간 검색어 (WebSocket)
+  const { rankings, isConnected } = useRealTimeSearch();
+
+  // 어떤 탭을 보여줄지
+  const [keywordTab, setKeywordTab] = useState<"popular" | "realtime">("popular");
   const [isShowingPopular, setIsShowingPopular] = useState(false);
-  
   const searchRef = useRef<HTMLDivElement>(null);
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -77,7 +82,7 @@ export default function HeaderMain({ user, setUser }: Props) {
       const results = await fetchSuggestions(keyword);
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
-      setIsShowingPopular(false); // 자동완성 표시 중
+      setIsShowingPopular(false);
     } catch (error) {
       console.error("❌ 자동완성 API 오류:", error);
       setSuggestions([]);
@@ -91,16 +96,17 @@ export default function HeaderMain({ user, setUser }: Props) {
     setSearchKeyword(value);
     setSelectedIndex(-1);
 
-    // 기존 타이머 제거
     if (debounceTimer.current) {
       clearTimeout(debounceTimer.current);
     }
 
-    // 입력값이 비어있으면 인기 검색어 표시
+    // 입력값이 비어있으면 인기/실시간 검색어 표시
     if (value.trim() === "") {
       setSuggestions([]);
       setIsShowingPopular(true);
-      setShowSuggestions(popularKeywords.length > 0);
+      const hasData = (keywordTab === "popular" && popularKeywords.length > 0) ||
+                      (keywordTab === "realtime" && rankings.length > 0);
+      setShowSuggestions(hasData);
       return;
     }
 
@@ -110,18 +116,19 @@ export default function HeaderMain({ user, setUser }: Props) {
     }, 300);
   };
 
-  // 검색 시 URL 쿼리로 이동 (공백 검색어 + 카테고리 반영)
+  // 검색 시 URL 쿼리로 이동
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    // 드롭다운에서 선택된 항목이 있으면 그것으로 검색
+
     let keyword = searchKeyword;
-    const displayList = isShowingPopular ? popularKeywords : suggestions;
-    
+    const displayList = isShowingPopular
+      ? (keywordTab === "popular" ? popularKeywords : rankings.map(r => r.keyword))
+      : suggestions;
+
     if (selectedIndex >= 0 && selectedIndex < displayList.length) {
       keyword = displayList[selectedIndex];
     }
-    
+
     const trimmed = keyword.trim();
     const query = new URLSearchParams();
 
@@ -132,16 +139,13 @@ export default function HeaderMain({ user, setUser }: Props) {
     if (currentCategory) query.append("category", currentCategory);
 
     navigate(`/search?${query.toString()}`);
-    
-    // 검색 후 드롭다운 닫기
     setShowSuggestions(false);
   };
 
   // 연관 검색어 클릭
   const handleSuggestionClick = (suggestion: string) => {
     setSearchKeyword(suggestion);
-    
-    // 클릭한 키워드로 즉시 검색
+
     const query = new URLSearchParams();
     query.append("keyword", suggestion);
 
@@ -153,16 +157,18 @@ export default function HeaderMain({ user, setUser }: Props) {
     setShowSuggestions(false);
   };
 
-  // 키보드 네비게이션 (위/아래 화살표, ESC)
+  // 키보드 네비게이션
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const displayList = isShowingPopular ? popularKeywords : suggestions;
-    
+    const displayList = isShowingPopular
+      ? (keywordTab === "popular" ? popularKeywords : rankings.map(r => r.keyword))
+      : suggestions;
+
     if (!showSuggestions || displayList.length === 0) return;
 
     switch (e.key) {
       case "ArrowDown":
         e.preventDefault();
-        setSelectedIndex(prev => 
+        setSelectedIndex(prev =>
           prev < displayList.length - 1 ? prev + 1 : prev
         );
         break;
@@ -177,20 +183,32 @@ export default function HeaderMain({ user, setUser }: Props) {
     }
   };
 
-  // 검색창 포커스 시 - 인기 검색어 표시
+  // 검색창 포커스 시
   const handleInputFocus = () => {
     if (searchKeyword.trim() === "") {
-      // 입력 없으면 인기 검색어 표시
       setIsShowingPopular(true);
-      setShowSuggestions(popularKeywords.length > 0);
+      
+      // 현재 탭에 데이터가 없으면 다른 탭으로 전환
+      if (keywordTab === "realtime" && rankings.length === 0 && popularKeywords.length > 0) {
+        setKeywordTab("popular");
+        setShowSuggestions(true);
+      } else if (keywordTab === "popular" && popularKeywords.length === 0 && rankings.length > 0) {
+        setKeywordTab("realtime");
+        setShowSuggestions(true);
+      } else {
+        const hasData = (keywordTab === "popular" && popularKeywords.length > 0) ||
+                        (keywordTab === "realtime" && rankings.length > 0);
+        setShowSuggestions(hasData);
+      }
     } else if (suggestions.length > 0) {
-      // 입력 있고 연관 검색어 있으면 표시
       setShowSuggestions(true);
     }
   };
 
   // 표시할 목록 결정
-  const displayList = isShowingPopular ? popularKeywords : suggestions;
+  const displayList = isShowingPopular
+    ? (keywordTab === "popular" ? popularKeywords : rankings.map(r => r.keyword))
+    : suggestions;
 
   return (
     <header className="header">
@@ -231,14 +249,37 @@ export default function HeaderMain({ user, setUser }: Props) {
           {/* 자동완성 또는 인기 검색어 드롭다운 */}
           {showSuggestions && displayList.length > 0 && (
             <div className="autocomplete-dropdown">
-              {/* 헤더 (인기 검색어일 때만 표시) */}
+              {/* 키워드 목록을 보여줄 때만 탭 표시 */}
               {isShowingPopular && (
-                <div className="autocomplete-header">
-                  <span className="header-icon">🔥</span>
-                  <span className="header-text">인기 검색어</span>
+                <div className="keyword-tabs">
+                  <button
+                    className={`tab ${keywordTab === "realtime" ? "active" : ""}`}
+                    onClick={() => {
+                      setKeywordTab("realtime");
+                      setSelectedIndex(-1);
+                      setShowSuggestions(rankings.length > 0);
+                    }}
+                  >
+                    <span className="tab-icon">🔥</span>
+                    실시간 검색어
+                    {keywordTab === "realtime" && !isConnected && (
+                      <span className="connection-status"> (연결 중...)</span>
+                    )}
+                  </button>
+                  <button
+                    className={`tab ${keywordTab === "popular" ? "active" : ""}`}
+                    onClick={() => {
+                      setKeywordTab("popular");
+                      setSelectedIndex(-1);
+                      setShowSuggestions(popularKeywords.length > 0);
+                    }}
+                  >
+                    <span className="tab-icon">⭐</span>
+                    인기 검색어
+                  </button>
                 </div>
               )}
-              
+
               {displayList.map((item, index) => (
                 <div
                   key={index}
@@ -246,7 +287,6 @@ export default function HeaderMain({ user, setUser }: Props) {
                   onClick={() => handleSuggestionClick(item)}
                   onMouseEnter={() => setSelectedIndex(index)}
                 >
-                  {/* 인기 검색어는 순위 표시, 일반 검색어는 🔍 */}
                   {isShowingPopular ? (
                     <span className={`ranking-badge ${index < 3 ? "top3" : ""}`}>
                       {index + 1}
