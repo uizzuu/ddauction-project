@@ -75,7 +75,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
                 // PrivateChat DTO 생성 및 DB 저장
                 PrivateChatDto privateChatDto = PrivateChatDto.builder()
-                        .chatRoomId(chatRoomDto.getId())
+                        .chatRoomId(chatRoomDto.getChatRoomId())
                         .content(content)
                         .build();
 
@@ -84,7 +84,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
                 // JSON 생성
                 Map<String, Object> jsonMap = new HashMap<>();
                 jsonMap.put("type", "PRIVATE");
-                jsonMap.put("chatRoomId", chatRoomDto.getId());
+                jsonMap.put("chatRoomId", chatRoomDto.getChatRoomId());
                 jsonMap.put("userId", savedChat.getUserId());
                 jsonMap.put("targetUserId", targetUserId);
                 jsonMap.put("content", savedChat.getContent());
