@@ -45,6 +45,7 @@ const VALID_PATHS = [
   "/find-password",
   "/oauth2/redirect",
   "/error",
+  "/chat",
 ];
 
 // 동적 경로 패턴 (예: /products/123, /articles/456 등)
