@@ -1,7 +1,7 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { User } from "../common/types";
-import { logout, fetchSuggestions, fetchPopularKeywords } from "../common/api";
+import { logout, fetchSuggestions, fetchPopularKeywords, saveSearchLog } from "../common/api";
 import { useRealTimeSearch } from "../common/useRealTimeSearch";
 
 type Props = {
@@ -132,7 +132,14 @@ export default function HeaderMain({ user, setUser }: Props) {
     const trimmed = keyword.trim();
     const query = new URLSearchParams();
 
-    if (trimmed !== "") query.append("keyword", trimmed);
+    if (trimmed !== "") {
+    query.append("keyword", trimmed);
+    
+    // 🆕 검색 로그 저장
+    saveSearchLog(trimmed).catch(err => 
+      console.error("검색 로그 저장 실패:", err)
+    );
+  }
 
     const params = new URLSearchParams(location.search);
     const currentCategory = params.get("category");
@@ -148,6 +155,11 @@ export default function HeaderMain({ user, setUser }: Props) {
 
     const query = new URLSearchParams();
     query.append("keyword", suggestion);
+    
+    // 🆕 검색 로그 저장
+  saveSearchLog(suggestion).catch(err => 
+    console.error("검색 로그 저장 실패:", err)
+  );
 
     const params = new URLSearchParams(location.search);
     const currentCategory = params.get("category");
