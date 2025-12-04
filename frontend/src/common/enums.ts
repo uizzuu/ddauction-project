@@ -13,6 +13,9 @@ export type ChatType = (typeof CHAT_TYPE)[number];
 export const PRODUCT_TYPE = ["AUCTION", "USED", "STORE"] as const;
 export type ProductType = (typeof PRODUCT_TYPE)[number];
 
+export const IMAGE_TYPE = ["PRODUCT", "REVIEW", "USER"] as const;
+export type ImageType = (typeof IMAGE_TYPE)[number];
+
 export const PRODUCT_CATEGORY_TYPE = [
   "ELECTRONICS",
   "APPLIANCES",
