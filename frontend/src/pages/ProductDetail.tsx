@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -20,8 +20,58 @@ import { formatDateTime } from "../common/util";
 import ProductQnA from "../components/ProductQnA";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
-import { useAuction } from "../common/hooks";
 import { CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../common/enums";
+
+interface UseAuctionProps {
+  productId: number;
+}
+
+const useAuction = ({ productId }: UseAuctionProps) => {
+  const wsRef = useRef<WebSocket | null>(null);
+  const [bids, setBids] = useState<Bid[]>([]);
+  const [currentHighestBid, setCurrentHighestBid] = useState(0);
+
+  useEffect(() => {
+    const wsUrl =
+      API_BASE_URL.replace("http", "ws").replace("/api", "") +
+      `/ws/auction?productId=${productId}`;
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("WebSocket connected:", productId);
+    };
+
+    ws.onmessage = (event) => {
+      const bidList: Bid[] = JSON.parse(event.data);
+      setBids(bidList);
+
+      const highest =
+        bidList.length > 0 ? Math.max(...bidList.map((b) => b.bidPrice)) : 0;
+      setCurrentHighestBid(highest);
+    };
+
+    ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket closed");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [productId]);
+
+  const placeBid = (bidPrice: number) => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ bidPrice }));
+    }
+  };
+
+  return { bids, currentHighestBid, placeBid };
+};
 
 type Props = {
   user: User | null;
