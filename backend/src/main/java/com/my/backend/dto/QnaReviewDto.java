@@ -18,6 +18,7 @@ public class QnaReviewDto {
     private Long qnaUserId;   // 작성자 ID (엔티티: qnaUser)
     private Long productQnaId; // 리뷰 대상 Qna ID (엔티티: qna)
     private String content;
+    private String nickName;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

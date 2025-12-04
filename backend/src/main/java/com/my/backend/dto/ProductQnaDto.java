@@ -16,6 +16,7 @@ public class ProductQnaDto {
 
     private Long productQnaId;
     private Long userId;
+    private String nickName;
     private String title;
     private String content;
     private LocalDateTime createdAt;

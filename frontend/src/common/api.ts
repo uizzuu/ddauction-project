@@ -511,7 +511,7 @@ export async function checkWinner(productId: number): Promise<{
 }
 
 // QnA 목록 조회 (인증 불필요)
-export async function getQnaList(productId: number): Promise<TYPE.Qna[]> {
+export async function getQnaList(productId: number): Promise<TYPE.ProductQna[]> {
   const response = await fetch(
     `${API_BASE_URL}${SPRING_API}/qna/product/${productId}`
   );
@@ -1076,7 +1076,7 @@ export async function fetchReports(token: string): Promise<Report[]> {
 }
 
 // QnA
-export async function fetchMyQnas(userId: number): Promise<TYPE.Qna[]> {
+export async function fetchMyQnas(userId: number): Promise<TYPE.ProductQna[]> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/qna/user/${userId}`);
   if (!res.ok) throw new Error("Q&A 조회 실패");
   return res.json();

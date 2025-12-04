@@ -19,6 +19,7 @@ public class ReviewDto {
     private Long reviewId;
     private Long refId;          // 실제 참조 대상 ID (상품ID 등)
     private String content;
+    private String nickName;
     private Integer rating;
     private ProductType productType;
     private LocalDateTime createdAt;
