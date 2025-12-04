@@ -1,4 +1,4 @@
-import { ROLE, PAYMENT_STATUS, PRODUCT_STATUS, CHAT_TYPE, PRODUCT_TYPE } from './enums';
+import { ROLE, PAYMENT_STATUS, PRODUCT_STATUS, CHAT_TYPE, PRODUCT_TYPE, IMAGE_TYPE } from './enums';
 import type { ProductCategoryType } from './enums';
 
 // Re-export ProductCategoryType so it's available when importing from types.ts
@@ -9,6 +9,7 @@ export type ProductStatus = (typeof PRODUCT_STATUS)[number];
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 export type ChatType = (typeof CHAT_TYPE)[number];
 export type ProductType = (typeof PRODUCT_TYPE)[number];
+export type ImageType = (typeof IMAGE_TYPE)[number];
 
 export interface User {
   userId: number;
@@ -35,8 +36,10 @@ export interface Bid {
 
 export interface Image {
   imageId: number;
-  productId: number;
+  refId: number;
   imagePath: string;
+  productType?: ProductType; // PRODUCT 이미지일 경우 (옵셔널)
+  imageType: ImageType;
 }
 
 // 상품 조회/표시에 사용할 타입
