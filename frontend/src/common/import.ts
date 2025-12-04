@@ -37,6 +37,7 @@ import UserQnaForm from "../components/modal/ReportModal";
 import ErrorPage from "../pages/main/ErrorPage";
 import OAuth2Redirect from "../pages/auth/OAuth2Redirect";
 import ProductQnA from "../components/product/ProductQnA";
+import VerifyPage from "../pages/VerifyPage";
 
 export {
   HeaderMain,
@@ -74,8 +75,6 @@ export {
   ErrorPage,
   OAuth2Redirect,
   AROverlayModal,
-  ProductQnA
-  AROverlayWithButton,
   ProductQnA,
   VerifyPage,
 };

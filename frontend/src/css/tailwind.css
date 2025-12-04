@@ -1,13 +1,8 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
 
 /* @apply를 사용하는 커스텀 모듈 */
 @import "../css/layout.css";
 @import "../css/modules.css";
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
 /* 필요 시 사용
 @import "../css/login.css"; 다른 페이지와 완전히 다른 레이아웃과 스타일 가질 때
