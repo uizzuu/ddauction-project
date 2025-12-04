@@ -643,17 +643,59 @@ export async function uploadImageToS3(file: File): Promise<string> {
   return data.url;
 }
 
-// 상품 이미지 DB 등록
-export async function registerProductImage(
-  productId: number,
-  imagePath: string
+// 🔹 공통 함수 (private 처럼 사용)
+async function saveImageToDatabase(
+  refId: number,
+  imagePath: string,
+  imageType: "PRODUCT" | "USER" | "REVIEW",
+  productType?: string | null
 ): Promise<void> {
-  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/images`, {
+  const imageDto = {
+    imagePath: imagePath,
+    imageType: imageType,
+    productType: productType || null,
+    refId: refId,
+  };
+  const token = localStorage.getItem("token");
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/images/batch`, {
     method: "POST",
-    body: JSON.stringify({ productId, imagePath }),
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify([imageDto]),
   });
 
-  if (!response.ok) throw new Error("이미지 DB 등록 실패");
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("이미지 DB 저장 실패:", errorText);
+    throw new Error("이미지 DB 저장 실패");
+  }
+}
+
+// 🔹 상품 이미지 저장 (public)
+export async function registerProductImage(
+  productId: number,
+  imagePath: string,
+  productType: string
+): Promise<void> {
+  return saveImageToDatabase(productId, imagePath, "PRODUCT", productType);
+}
+
+// 🔹 유저 이미지 저장 (public)
+export async function registerUserImage(
+  userId: number,
+  imagePath: string
+): Promise<void> {
+  return saveImageToDatabase(userId, imagePath, "USER");
+}
+
+// 🔹 리뷰 이미지 저장 (public)
+export async function registerReviewImage(
+  reviewId: number,
+  imagePath: string
+): Promise<void> {
+  return saveImageToDatabase(reviewId, imagePath, "REVIEW");
 }
 
 // 상품 등록 (이미지 포함 전체 프로세스)
@@ -679,16 +721,23 @@ export async function registerProductWithImages(
   }
 
   // 2. 이미지 업로드 및 DB 등록
-  const uploadPromises = images.map(async (file) => {
+  for (let i = 0; i < images.length; i++) {  // ✅ 순차 처리로 변경 (디버깅 쉽게)
+    const file = images[i];
+    console.log(`이미지 ${i + 1}/${images.length} 처리 중:`, file.name);
+
     try {
       const s3Url = await uploadImageToS3(file);
-      await registerProductImage(product.productId, s3Url);
+      console.log(`S3 업로드 성공:`, s3Url);
+      
+      await registerProductImage(product.productId, s3Url, productData.productType);
+      console.log(`DB 저장 완료`);
     } catch (err) {
-      console.error("이미지 처리 실패:", err);
+      console.error(`이미지 ${i + 1} 처리 실패:`, err);
+      throw err;  // 하나라도 실패하면 전체 실패
     }
-  });
+  }
 
-  await Promise.all(uploadPromises);
+  console.log("=== 모든 이미지 등록 완료 ===");
 
   return product;
 }
