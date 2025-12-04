@@ -34,6 +34,7 @@ import ErrorPage from "../pages/ErrorPage";
 import OAuth2Redirect from "../pages/OAuth2Redirect";
 import AROverlayWithButton from "../pages/AROverlayWithButton";
 import ProductQnA from "../components/ProductQnA";
+import VerifyPage from "../pages/VerifyPage";
 
 export {
   HeaderMain,
@@ -69,5 +70,6 @@ export {
   ErrorPage,
   OAuth2Redirect,
   AROverlayWithButton,
-  ProductQnA
+  ProductQnA,
+  VerifyPage,
 };

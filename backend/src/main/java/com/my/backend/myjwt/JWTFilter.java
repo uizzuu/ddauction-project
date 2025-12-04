@@ -43,7 +43,11 @@ public class JWTFilter extends OncePerRequestFilter {
                 path.startsWith("/api/autocomplete?") ||
                 path.startsWith("/api/chats/") ||
                 path.equals("/api/autocomplete") ||
-                path.startsWith("/ai/")){
+                path.startsWith("/ai/") ||
+                path.equals("/api/auth/verify-email") ||
+                path.equals("/api/auth/register")
+
+        ){
             System.out.println("✅ JWT 필터 스킵: " + path);
             filterChain.doFilter(request, response);
             return;

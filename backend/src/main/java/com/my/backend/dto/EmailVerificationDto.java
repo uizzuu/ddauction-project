@@ -39,6 +39,7 @@ public class EmailVerificationDto {
                 .emailVerificationToken(this.emailVerificationToken)
                 .createdAt(this.createdAt)
                 .expiredAt(this.expiredAt)
+                .verified(false)
                 .build();
     }
 }
