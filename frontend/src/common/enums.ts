@@ -58,7 +58,7 @@ export const PRODUCT_CATEGORY_LABELS: Record<ProductCategoryType, string> = {
   ETC: "기타 물품"
 };
 
-// SelectBox용 옵션 배열
+// SSelectStyle용 옵션 배열
 export const CATEGORY_OPTIONS = PRODUCT_CATEGORY_TYPE.map(code => ({
   value: code,
   label: PRODUCT_CATEGORY_LABELS[code]
