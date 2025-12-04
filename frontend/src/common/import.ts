@@ -73,4 +73,7 @@ export {
   OAuth2Redirect,
   AROverlayModal,
   ProductQnA
+  AROverlayWithButton,
+  ProductQnA,
+  VerifyPage,
 };

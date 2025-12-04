@@ -47,6 +47,7 @@ public class RegisterRequest {
     private String address;
 
     // 회원가입 시 기본 ROLE 지정 가능 (보통 USER)
+    @Builder.Default
     private Role role = Role.USER;
 
     // 주소 관련 필드 추가

@@ -1,6 +1,7 @@
 package com.my.backend.controller;
 
 
+import com.my.backend.dto.EmailRequest;
 import com.my.backend.dto.UsersDto;
 import com.my.backend.dto.auth.LoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
@@ -28,17 +29,22 @@ public class AuthController {
 
     // 회원가입
     @PostMapping("/signup")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest request) {
-        try {
-            var result = authService.register(request);
-            return ResponseEntity.status(201).body(
-                    Map.of("message", "회원가입 성공", "user", result)
-            );
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("message", e.getMessage())
-            );
-        }
+    public ResponseEntity<?> sendVerificationEmail(@RequestBody EmailRequest request) {
+
+        return authService.sendVerificationEmail(request.getEmail());
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<?> verifyEmail(@RequestParam String email,
+                                         @RequestParam String code) {
+        return authService.verifyEmailCode(email, code); // 이제 RegisterRequest 필요 없음
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
+        log.info("RegisterRequest: {}", request); // request로 바꿔야 함
+
+        return authService.register(request); // 주석: 새로운 register 메서드
     }
 
     // 로그인
