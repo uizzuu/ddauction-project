@@ -19,7 +19,7 @@ type Props = {
   fetchProducts: () => void;
 };
 
-export default function ProductManagement({
+export default function ProductManage({
   products,
   editingProductId,
   editProductForm,

@@ -8,7 +8,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function RAGChatModal({ isOpen, onClose }: Props) {
+export default function AIChatBot({ isOpen, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);

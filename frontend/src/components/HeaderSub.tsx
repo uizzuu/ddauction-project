@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import ModalCategory from "../components/ModalCategory";
 import { CATEGORY_OPTIONS } from "../common/enums"; // 정적 데이터 직접 import
-import RAGChat from "./chat/RAGChat";
+import AIChatBot from "./chat/AIChatBot";
 
 // Props 타입 정의 제거 (부모에서 받을 필요 없음)
 
@@ -78,7 +78,7 @@ export default function HeaderSub() {
           <button onClick={() => setIsChatOpen(true)} className="nav-link">
             <p>챗봇문의</p>
           </button>
-          <RAGChat isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
+          <AIChatBot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
         </nav>
         
         <nav className="flex-box gap-16 flex-center">

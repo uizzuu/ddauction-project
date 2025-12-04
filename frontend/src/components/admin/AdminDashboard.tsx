@@ -4,7 +4,7 @@ type Props = {
   stats: { userCount?: number; productCount?: number; reportCount?: number };
 };
 
-export default function StatsManagement({ stats }: Props) {
+export default function AdminDashBoard({ stats }: Props) {
   return (
     <div className="admin-section">
       <h3>통계</h3>

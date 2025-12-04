@@ -4,10 +4,11 @@ import HeaderSub from "../components/HeaderSub";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
 
-import UserManagement from "../components/admin/UserManagement";
-import ProductManagement from "../components/admin/ProductManagement";
-import ReportManagement from "../components/admin/ReportManagement";
-import StatsManagement from "../components/admin/StatsManagement";
+import UserManage from "../components/admin/UserManage";
+import ProductManage from "../components/admin/ProductManage";
+import ReportManage from "../components/admin/ReportManage";
+import PublicChatManage from "../components/admin/PublicChatManage"; 
+import AdminDashboard from "../components/admin/AdminDashboard";
 import InquiryManagement from "../components/admin/InquiryManagement";
 
 import UserInfoEdit from "../components/mypage/UserInfoEdit";
@@ -41,10 +42,11 @@ export {
   ProductBidGraph,
   AuctionBox,
 
-  UserManagement,
-  ProductManagement,
-  ReportManagement,
-  StatsManagement,
+  UserManage,
+  ProductManage,
+  ReportManage,
+  AdminDashboard,
+  PublicChatManage,
   InquiryManagement,
 
   UserInfoEdit,

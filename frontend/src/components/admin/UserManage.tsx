@@ -22,7 +22,7 @@ type Props = {
   fetchUsers: () => void;
 };
 
-export default function UserManagement({
+export default function UserManage({
   users,
   editingUserId,
   editUserForm,

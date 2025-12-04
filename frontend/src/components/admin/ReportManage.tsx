@@ -5,7 +5,7 @@ type Props = {
   handleUpdateReportStatus: (reportId: number, status: boolean) => void;
 };
 
-export default function ReportManagement({
+export default function ReportManage({
   reports,
   handleUpdateReportStatus,
 }: Props) {

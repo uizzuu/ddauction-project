@@ -9,10 +9,10 @@ import type {
 } from "../common/types";
 import * as API from "../common/api";
 import {
-  UserManagement,
-  ProductManagement,
-  ReportManagement,
-  StatsManagement,
+  UserManage,
+  ProductManage,
+  ReportManage,
+  AdminDashboard,
   InquiryManagement,
 } from "../common/import"
 
@@ -280,7 +280,7 @@ export default function AdminPage() {
         <main className="admin-main">
           {/* 회원 관리 컴포넌트 */}
           {section === "user" && (
-            <UserManagement
+            <UserManage
               users={users}
               editingUserId={editingUserId}
               editUserForm={editUserForm}
@@ -299,7 +299,7 @@ export default function AdminPage() {
 
           {/* 상품 관리 컴포넌트 */}
           {section === "product" && (
-            <ProductManagement
+            <ProductManage
               products={products}
               editingProductId={editingProductId}
               editProductForm={editProductForm}
@@ -318,14 +318,14 @@ export default function AdminPage() {
 
           {/* 신고 관리 컴포넌트 */}
           {section === "report" && (
-            <ReportManagement
+            <ReportManage
               reports={reports}
               handleUpdateReportStatus={handleUpdateReportStatus}
             />
           )}
 
           {/* 통계 컴포넌트 */}
-          {section === "stats" && <StatsManagement stats={stats} />}
+          {section === "stats" && <AdminDashboard stats={stats} />}
 
           {/* 1:1 문의 관리 컴포넌트 */}
           {section === "inquiry" && (
