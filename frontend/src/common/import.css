@@ -1,5 +1,7 @@
-/* Tailwind CSS v4 */
-@import "tailwindcss";
+/* Tailwind CSS v3 Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* 기본 설정 (리셋, 변수) */
 @import "../css/reset.css";

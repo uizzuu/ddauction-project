@@ -6,7 +6,7 @@ export default function Header() {
 
     return (
         <header
-            className="tail-container"
+            className="flex w-[1280px] mx-auto items-center justify-between gap-5 relative"
             data-model-id="395:13790"
             role="banner"
         >

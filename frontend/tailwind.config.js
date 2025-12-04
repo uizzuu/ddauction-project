@@ -5,16 +5,20 @@ export default {
   content: [
     "./index.html", 
     "./src/**/*.{js,ts,jsx,tsx}",
-    "./src/css/**/*.css",
   ],
   theme: {
     extend: {
       fontFamily: {
         sans: ["Pretendard", ...defaultTheme.fontFamily.sans],
       },
-      // Add custom spacing, colors, etc. here if needed
-      // Don't override with empty objects - it disables all default utilities
+      colors: {
+        primary: "#b17576",
+      },
     },
   },
   plugins: [],
+  // Tailwind v3 호환성 유지
+  corePlugins: {
+    preflight: true,
+  },
 };

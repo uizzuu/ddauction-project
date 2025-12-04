@@ -1,3 +1,4 @@
+import "./common/import.css";
 import { useState, useEffect } from "react"; // 🔹 useEffect 추가
 import { Routes, Route, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // 🔹 JWT decode 라이브러리 추가
@@ -27,7 +28,6 @@ import {
   ErrorPage,
   OAuth2Redirect,
 } from "./common/import";
-import "./common/import.css";
 import type { User } from "./common/types";
 
 // 유효한 경로 패턴 정의
