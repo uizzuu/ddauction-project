@@ -1,3 +1,11 @@
+/* Tailwind CSS (Preflight & Utilities) */
+@import "../css/tailwind.css";
+
+/* 기본 설정 (리셋, 변수) */
+@import "../css/reset.css";
+@import "../css/base.css";
+
+/* 컴포넌트 스타일 */
 @import "../css/AdminPage.css";
 @import "../css/App.css";
 @import "../css/Article.css";
@@ -8,9 +16,3 @@
 @import "../css/ProductDetail.css";
 @import "../css/ProductList.css";
 @import "../css/ProductRegister.css";
-
-/* 기본 설정 (리셋, 변수) */
-@import "../css/reset.css";
-@import "../css/base.css";
-
-@import "../css/tailwind.css";
