@@ -186,11 +186,6 @@ export interface Report {
   updatedAt: string;
 }
 
-export interface Board {
-  boardId: number;
-  boardName: string;
-}
-
 export interface Qna {
   qnaId: number;
   title: string;
