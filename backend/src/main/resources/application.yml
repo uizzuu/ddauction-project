@@ -40,13 +40,20 @@ spring:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
-
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
 jwt:
   secret: ${JWT_SECRET:vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbbPLAINTEXT}
 
 server:
   port: 8080
   forward-headers-strategy: framework
+  tomcat:
+    max-http-post-size: 50MB
+    max-swallow-size: 50MB
+    max-http-header-size: 20KB
 
 app:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost,http://localhost:5173}
