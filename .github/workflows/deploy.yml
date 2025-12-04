@@ -112,6 +112,11 @@ jobs:
             # AI Chatbot
             OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }}
+            # 이메일인증
+            MAIL_HOST=smtp.gmail.com
+            MAIL_PORT=587
+            MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+            MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
             ENVEOF
 
             echo "=== Docker 로그인 ==="
