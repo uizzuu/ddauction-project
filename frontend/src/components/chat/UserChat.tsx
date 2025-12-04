@@ -1,43 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-
-// -----------------------------
-// 타입 정의
-// -----------------------------
-interface User {
-  userId: number;
-  nickName: string;
-}
-
-interface PrivateChat {
-  user?: User;
-  content: string;
-  type: "PRIVATE";
-  createdAt?: string;
-  chatRoomId?: number;
-  productId?: number;
-}
-
-interface PublicChat {
-  user?: User;
-  content: string;
-  type: "PUBLIC";
-  createdAt?: string;
-}
-
-interface ChatMessagePayload {
-  type: "PRIVATE" | "PUBLIC";
-  userId: number;
-  content: string;
-  nickName: string;
-  targetUserId?: number;
-  productId?: number;
-  chatRoomId?: number;
-}
-
-interface UserChatProps {
-  user: User | null;
-}
+import "../../css/UserChat.css"; 
+import type { UserChatProps, PrivateChat, PublicChat, ChatMessagePayload, User } from "../../common/types";
 
 // -----------------------------
 // UserChat 컴포넌트
@@ -102,7 +66,6 @@ export default function UserChat({ user }: UserChatProps) {
 
     const loadPrivateMessages = async () => {
       try {
-        // 1) 채팅방 조회/생성
         const roomRes = await fetch(
           `${backendHost}/api/chats/private/room?userId=${user.userId}&targetUserId=${selectedUser.userId}&productId=${selectedProductId}`,
           { credentials: "include" }
@@ -112,12 +75,10 @@ export default function UserChat({ user }: UserChatProps) {
 
         const roomData = await roomRes.json();
 
-        const roomId = roomData[0].chatRoomId; // ChatRoomDto id 사용
-        console.log("roomData:", roomData); // 객체 그대로 출력
-        console.log("roomId:", roomId); // roomId 값만 출력
+        const roomId = roomData[0].chatRoomId;
+        console.log("roomData:", roomData);
+        console.log("roomId:", roomId);
         setChatRoomId(roomId);
-
-
 
         const msgData: PrivateChat[] = roomData;
         setMessages(msgData);
@@ -156,13 +117,11 @@ export default function UserChat({ user }: UserChatProps) {
           data.user = { userId: data.userId, nickName: data.nickName };
         }
 
-        // PUBLIC 메시지
         if (!selectedUser && data.type === "PUBLIC") {
           setMessages((prev) => [...prev, data]);
           return;
         }
 
-        // PRIVATE 메시지
         if (selectedUser && data.type === "PRIVATE") {
           if (chatRoomId && data.chatRoomId === chatRoomId) {
             setMessages((prev) => [...prev, data]);
@@ -206,11 +165,9 @@ export default function UserChat({ user }: UserChatProps) {
       content: input,
       nickName: user.nickName,
       ...(isPrivate
-        ? { targetUserId: selectedUser?.userId, productId: selectedProductId, chatRoomId: chatRoomId || undefined } // ✅ chatRoomId 사용
+        ? { targetUserId: selectedUser?.userId, productId: selectedProductId, chatRoomId: chatRoomId || undefined }
         : {}),
-        
     };
-
 
     ws.current.send(JSON.stringify(payload));
     setInput("");
@@ -220,15 +177,11 @@ export default function UserChat({ user }: UserChatProps) {
   // 7. 화면 렌더링
   // -----------------------------
   return (
-    <div style={{ display: "flex", gap: "10px", padding: "20px" }}>
+    <div className="user-chat-container">
       {/* 유저 목록 */}
-      <div style={{ width: "150px", borderRight: "1px solid #ccc" }}>
+      <div className="user-list">
         <div
-          style={{
-            padding: "5px",
-            cursor: "pointer",
-            fontWeight: !selectedUser ? "bold" : "normal",
-          }}
+          className={!selectedUser ? "selected" : ""}
           onClick={() => {
             setSelectedUser(null);
             setSelectedProductId(undefined);
@@ -242,11 +195,7 @@ export default function UserChat({ user }: UserChatProps) {
         {users.map((u) => (
           <div
             key={u.userId}
-            style={{
-              padding: "5px",
-              cursor: "pointer",
-              fontWeight: selectedUser?.userId === u.userId ? "bold" : "normal",
-            }}
+            className={selectedUser?.userId === u.userId ? "selected" : ""}
             onClick={() => {
               setSelectedUser(u);
               setSelectedProductId(state?.productId);
@@ -260,64 +209,40 @@ export default function UserChat({ user }: UserChatProps) {
       </div>
 
       {/* 메시지 영역 */}
-      <div style={{ flex: 1 }}>
-        <h1>
-          {selectedUser
-            ? `1:1 채팅 - ${selectedUser.nickName}`
-            : "공개 채팅"}
-        </h1>
+      <div className="chat-area">
+        <h1>{selectedUser ? `1:1 채팅 - ${selectedUser.nickName}` : "공개 채팅"}</h1>
 
-        <div
-          style={{
-            border: "1px solid #ccc",
-            padding: "10px",
-            width: "100%",
-            height: "500px",
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div style={{ flex: 1, overflowY: "auto", marginBottom: "10px" }}>
+        <div className="chat-box">
+          <div className="chat-messages">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                style={{
-                  textAlign:
-                    msg.user?.userId === user?.userId ? "right" : "left",
-                }}
+                className="chat-message"
+                style={{ textAlign: msg.user?.userId === user?.userId ? "right" : "left" }}
               >
                 <b>{msg.user?.userId === user?.userId ? "나" : msg.user?.nickName}:</b>{" "}
                 {msg.content}
-                <span
-                  style={{
-                    color: "#888",
-                    marginLeft: "6px",
-                    fontSize: "12px",
-                  }}
-                >
-                  {msg.createdAt
-                    ? new Date(msg.createdAt).toLocaleTimeString([], {
+                {msg.createdAt && (
+                  <span>
+                    {new Date(msg.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
-                    })
-                    : ""}
-                </span>
+                    })}
+                  </span>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />
           </div>
 
-          <div style={{ display: "flex" }}>
+          <div className="chat-input">
             <input
-              style={{ flex: 1, padding: "5px" }}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             />
-            <button onClick={sendMessage} style={{ marginLeft: "5px" }}>
-              전송
-            </button>
+            <button onClick={sendMessage}>전송</button>
           </div>
         </div>
       </div>

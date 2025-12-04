@@ -297,38 +297,36 @@ export interface ChatUser {
 
 // 백엔드 PrivateChat 엔티티 기반
 export interface PrivateChat {
-  privateChatId: number;
-  type: "PRIVATE";
+  user?: User;
   content: string;
+  type: "PRIVATE";
   createdAt?: string;
-  updatedAt?: string;
-  user: ChatUser;
-  targetUserId?: number;
+  chatRoomId?: number;
+  productId?: number;
 }
 
 // 백엔드 PublicChat 엔티티 기반
 export interface PublicChat {
-  publicChatId: number;
-  type: "PUBLIC";
+  user?: User;
   content: string;
+  type: "PUBLIC";
   createdAt?: string;
-  user: ChatUser;
 }
 
 // WebSocket 메시지 송수신용 타입
 export interface ChatMessagePayload {
-  type: ChatType;
+  type: "PRIVATE" | "PUBLIC";
   userId: number;
-  targetUserId?: number; // private 채팅 시 상대
-  productId?: number;
   content: string;
-  nickName?: string; // 읽기용
-  createdAt?: string;
+  nickName: string;
+  targetUserId?: number;
+  productId?: number;
+  chatRoomId?: number;
 }
 
 // UserChat 컴포넌트 props 타입
 export interface UserChatProps {
-  user: User;
+  user: User | null;
 }
 
 // AROverlayModal 컴포넌트 props 타입
