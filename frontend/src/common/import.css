@@ -1,7 +1,3 @@
-/* 기본 설정 (리셋, 변수) */
-@import "../css/reset.css"; 
-@import "../css/base.css";
-
 @import "../css/AdminPage.css";
 @import "../css/App.css";
 @import "../css/Article.css";
@@ -13,16 +9,8 @@
 @import "../css/ProductList.css";
 @import "../css/ProductRegister.css";
 
-@tailwind base;
+/* 기본 설정 (리셋, 변수) */
+@import "../css/reset.css";
+@import "../css/base.css";
 
-/* 커스텀 (레이아웃, 컴포넌트) */
-@tailwind components;
-@import "../css/layout.css";
-@import "../css/modules.css";
-
-/* 커스텀 (페이지, 모드) */
-@tailwind utilities;
-/* 필요 시 사용
-@import "../css/login.css"; 다른 페이지와 완전히 다른 레이아웃과 스타일 가질 때
-@import "../css/dark.css"; 다크모드 등 전역색상이나 테마가 일괄적으로 변경될 때 
-*/
+@import "../css/tailwind.css";

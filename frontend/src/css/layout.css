@@ -1,0 +1,5 @@
+@layer components {
+  .tail-container {
+    @apply flex w-[1280px] mx-auto items-center justify-between gap-5 relative;
+  }
+}
