@@ -360,12 +360,30 @@ export async function getProducts(): Promise<TYPE.Product[]> {
 export async function createProduct(
   productData: TYPE.CreateProductRequest
 ): Promise<TYPE.Product> {
-  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/products`, {
+  const token = localStorage.getItem('token'); 
+
+  // 2. 토큰 유효성 검사
+  if (!token) {
+    throw new Error("상품 등록 실패: 인증 토큰이 없습니다. 로그인이 필요합니다."); 
+  }
+
+  // 3. 일반 fetch를 사용하여 요청을 보냅니다.
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/products`, {
     method: "POST",
+    headers: {
+      // ⭐ 토큰과 JSON 타입을 명시적으로 추가
+      "Authorization": `Bearer ${token}`, 
+      "Content-Type": "application/json", // JSON 데이터임을 명시
+    },
     body: JSON.stringify(productData),
   });
 
-  if (!response.ok) throw new Error("상품 등록 실패");
+  if (!response.ok) {
+    if (response.status === 401) {
+        throw new Error("상품 등록 실패: 인증이 만료되었거나 유효하지 않습니다.");
+    }
+    throw new Error(`상품 등록 실패: ${response.status}: ${response.statusText}`);
+  }
 
   const data: unknown = await response.json();
   if (!isProduct(data))
@@ -491,9 +509,10 @@ export async function checkWinner(productId: number): Promise<{
   if (!response.ok) throw new Error("낙찰자 확인 실패");
   return response.json();
 }
-// QnA 목록 조회
+
+// QnA 목록 조회 (인증 불필요)
 export async function getQnaList(productId: number): Promise<TYPE.Qna[]> {
-  const response = await authFetch(
+  const response = await fetch(
     `${API_BASE_URL}${SPRING_API}/qna/product/${productId}`
   );
   if (!response.ok) return [];
