@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect } from "react";
-import type { SelectBoxProps } from "../common/types";
+import type { SelectStyleProps } from "../../../common/types";
 
-export default function SelectBox({
+export default function SelectStyle({
   value,
   onChange,
   options,
   placeholder = "선택하세요",
   className = "",
-}: SelectBoxProps) {
+}: SelectStyleProps) {
   const [open, setOpen] = useState(false);
   const [selectedLabel, setSelectedLabel] = useState<string>(placeholder);
   const boxRef = useRef<HTMLDivElement>(null);

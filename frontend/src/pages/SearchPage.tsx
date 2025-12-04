@@ -3,7 +3,7 @@ import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import { fetchFilteredProducts } from "../common/api";
 import type { Product } from "../common/types";
 import { CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS } from "../common/enums";
-import SelectBox from "../components/SelectBox";
+import SelectStyle from "../components/ui/form/SelectStyle";
 import {
   formatDateTime,
   formatPrice,
@@ -102,7 +102,7 @@ export default function ProductSearchPage() {
             onChange={(e) => setKeyword(e.target.value)}
             className="search-input"
           />
-          <SelectBox
+          <SelectStyle
             value={categoryCode}
             onChange={(val) => {
               const newCode = val === "" ? "" : val;
@@ -112,7 +112,7 @@ export default function ProductSearchPage() {
             placeholder="전체 카테고리"
             className="min135"
           />
-          <SelectBox
+          <SelectStyle
             value={sortOption}
             onChange={(val) => setSortOption(val as SortOption)}
             options={[

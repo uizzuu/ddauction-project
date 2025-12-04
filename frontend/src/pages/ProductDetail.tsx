@@ -17,9 +17,9 @@ import type {
 } from "../common/types";
 import { API_BASE_URL } from "../common/api";
 import { formatDateTime } from "../common/util";
-import ProductQnA from "../components/ProductQnA";
-import ProductBidGraph from "../components/ProductBidGraph";
-import { AuctionBox } from "../components/AuctionBox";
+import ProductQnA from "../components/product/ProductQnA";
+import AuctionBidGraph from "../components/product/AuctionBidGraph";
+import { AuctionBidding } from "../components/product/AuctionBidding";
 import { CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../common/enums";
 
 interface UseAuctionProps {
@@ -257,7 +257,7 @@ export default function ProductDetail({ user }: Props) {
     fetchAllBids();
   }, [fetchAllBids]);
 
-  // AuctionBox에 전달할 새로운 placeBid 함수 정의
+  // AuctionBidding에 전달할 새로운 placeBid 함수 정의
   const handlePlaceBid = useCallback(
     async (bidPrice: number) => {
       livePlaceBid(bidPrice);
@@ -893,7 +893,7 @@ export default function ProductDetail({ user }: Props) {
         </button>
 
 
-        <AuctionBox
+        <AuctionBidding
           productId={product.productId}
           mergedBids={mergedBids}
           currentHighestBid={currentHighestBid}
@@ -954,7 +954,7 @@ export default function ProductDetail({ user }: Props) {
           </div>
         )}
       </div>
-      <ProductBidGraph
+      <AuctionBidGraph
         bids={mergedBids}
         startingPrice={product?.startingPrice ?? 0}
       />

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-import type { User, Qna, Product } from "../common/types";
-import { ROLE } from "../common/enums";
+import type { User, Qna, Product } from "../../common/types";
+import { ROLE } from "../../common/enums";
 import {
   getQnaList,
   createQna,
@@ -9,8 +9,8 @@ import {
   createQnaAnswer,
   updateQnaAnswer,
   deleteQnaAnswer,
-} from "../common/api";
-import { formatDateTime } from "../common/util";
+} from "../../common/api";
+import { formatDateTime } from "../../common/util";
 
 type Props = {
   user: User | null;

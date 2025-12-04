@@ -1,8 +1,8 @@
 import { useState, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import CategoryModal from "../components/modal/CategoryModal";
-import { CATEGORY_OPTIONS } from "../common/enums"; // 정적 데이터 직접 import
-import AIChatBot from "./chat/AIChatBot";
+import CategoryModal from "../modal/CategoryModal";
+import { CATEGORY_OPTIONS } from "../../common/enums"; // 정적 데이터 직접 import
+import AIChatBot from "../chat/AIChatBot";
 
 // Props 타입 정의 제거 (부모에서 받을 필요 없음)
 
@@ -60,7 +60,7 @@ export default function HeaderSub() {
           <CategoryModal
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
-            categories={CATEGORY_OPTIONS} 
+            categories={CATEGORY_OPTIONS}
             onSelectCategory={(option) => console.log("선택한 코드:", option.value)}
             targetRef={menuBtnRef}
           />
@@ -80,7 +80,7 @@ export default function HeaderSub() {
           </button>
           <AIChatBot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
         </nav>
-        
+
         <nav className="flex-box gap-16 flex-center">
           <button
             onClick={() => handleProtectedNavigation("/register")}

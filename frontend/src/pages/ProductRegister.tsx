@@ -6,7 +6,7 @@ import type { User, ProductForm } from "../common/types";
 import { CATEGORY_OPTIONS } from "../common/enums";
 import type { ProductCategoryType } from "../common/enums";
 import { generateAiDescription, registerProductWithImages } from "../common/api";
-import SelectBox from "../components/SelectBox";
+import SelectStyle from "../components/ui/form/SelectStyle";
 import { formatDateTime } from "../common/util";
 
 type Props = {
@@ -309,7 +309,7 @@ export default function ProductRegister({ user }: Props) {
           </>
 
           <label className="label">카테고리 *</label>
-          <SelectBox
+          <SelectStyle
             value={form.productCategoryType ?? ""}
             onChange={(val) =>
               setForm({

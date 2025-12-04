@@ -1,8 +1,8 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import type { User } from "../common/types";
-import { logout, fetchSuggestions, fetchPopularKeywords, saveSearchLog } from "../common/api";
-import { RealTimeSearch } from "../common/websocket";
+import type { User } from "../../common/types";
+import { logout, fetchSuggestions, fetchPopularKeywords, saveSearchLog } from "../../common/api";
+import { RealTimeSearch } from "../../common/websocket";
 
 type Props = {
   user: User | null;
@@ -105,7 +105,7 @@ export default function HeaderMain({ user, setUser }: Props) {
       setSuggestions([]);
       setIsShowingPopular(true);
       const hasData = (keywordTab === "popular" && popularKeywords.length > 0) ||
-                      (keywordTab === "realtime" && rankings.length > 0);
+        (keywordTab === "realtime" && rankings.length > 0);
       setShowSuggestions(hasData);
       return;
     }
@@ -133,13 +133,13 @@ export default function HeaderMain({ user, setUser }: Props) {
     const query = new URLSearchParams();
 
     if (trimmed !== "") {
-    query.append("keyword", trimmed);
-    
-    // 🆕 검색 로그 저장
-    saveSearchLog(trimmed).catch(err => 
-      console.error("검색 로그 저장 실패:", err)
-    );
-  }
+      query.append("keyword", trimmed);
+
+      // 🆕 검색 로그 저장
+      saveSearchLog(trimmed).catch(err =>
+        console.error("검색 로그 저장 실패:", err)
+      );
+    }
 
     const params = new URLSearchParams(location.search);
     const currentCategory = params.get("category");
@@ -155,11 +155,11 @@ export default function HeaderMain({ user, setUser }: Props) {
 
     const query = new URLSearchParams();
     query.append("keyword", suggestion);
-    
+
     // 🆕 검색 로그 저장
-  saveSearchLog(suggestion).catch(err => 
-    console.error("검색 로그 저장 실패:", err)
-  );
+    saveSearchLog(suggestion).catch(err =>
+      console.error("검색 로그 저장 실패:", err)
+    );
 
     const params = new URLSearchParams(location.search);
     const currentCategory = params.get("category");
@@ -199,7 +199,7 @@ export default function HeaderMain({ user, setUser }: Props) {
   const handleInputFocus = () => {
     if (searchKeyword.trim() === "") {
       setIsShowingPopular(true);
-      
+
       // 현재 탭에 데이터가 없으면 다른 탭으로 전환
       if (keywordTab === "realtime" && rankings.length === 0 && popularKeywords.length > 0) {
         setKeywordTab("popular");
@@ -209,7 +209,7 @@ export default function HeaderMain({ user, setUser }: Props) {
         setShowSuggestions(true);
       } else {
         const hasData = (keywordTab === "popular" && popularKeywords.length > 0) ||
-                        (keywordTab === "realtime" && rankings.length > 0);
+          (keywordTab === "realtime" && rankings.length > 0);
         setShowSuggestions(hasData);
       }
     } else if (suggestions.length > 0) {

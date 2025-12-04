@@ -168,7 +168,7 @@ export interface Option {
   label: string;
 }
 
-export interface SelectBoxProps {
+export interface SelectStyleProps {
   value: string;
   onChange: (value: string) => void;
   options: Option[];

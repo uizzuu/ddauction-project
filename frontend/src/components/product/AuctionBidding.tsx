@@ -1,20 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
-import * as API from "../common/api";
-import type { Bid } from "../common/types";
+import * as API from "../../common/api";
+import type { Bid } from "../../common/types";
 
-interface AuctionBoxProps {
+interface AuctionBiddingProps {
   productId: number;
   mergedBids: Bid[];
   currentHighestBid: number;
   placeBid: (bidPrice: number) => void; // WebSocket용, 직접 호출 X
 }
 
-export const AuctionBox = ({
+export const AuctionBidding = ({
   productId,
   mergedBids,
   currentHighestBid,
-}: AuctionBoxProps) => {
+}: AuctionBiddingProps) => {
   const [bidValue, setBidValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isBidding, setIsBidding] = useState(false);
@@ -60,14 +60,14 @@ export const AuctionBox = ({
     }
 
     try {
-    await API.placeBid(productId, bidNum, token); // productId와 bidNum 전달
-    setBidValue("");
-    alert("입찰 성공!");
-  } catch (err: any) {
-    alert(err.message || "서버 오류");
-  } finally {
-    setIsBidding(false);
-  }
+      await API.placeBid(productId, bidNum, token); // productId와 bidNum 전달
+      setBidValue("");
+      alert("입찰 성공!");
+    } catch (err: any) {
+      alert(err.message || "서버 오류");
+    } finally {
+      setIsBidding(false);
+    }
   };
 
   const placeholderText =

@@ -7,14 +7,14 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import type { Bid } from "../common/types";
+import type { Bid } from "../../common/types";
 
 type Props = {
   bids: Bid[];
   startingPrice: number;
 };
 
-export default function ProductBidGraph({ bids, startingPrice }: Props) {
+export default function AuctionBidGraph({ bids, startingPrice }: Props) {
   const graphData = bids.map((b, i) => ({
     name: `${i + 1}`,
     bidPrice: b.bidPrice,

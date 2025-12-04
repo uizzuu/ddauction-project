@@ -17,7 +17,7 @@ import type { ProductCategoryType, ProductType } from "../common/enums";
 import { API_BASE_URL } from "../common/api";
 import {
   MyProfile,
-  SellingProducts,
+  MySellingProducts,
   MyLikes,
   MyReports,
   MyProductQna,
@@ -657,7 +657,7 @@ export default function MyPage({ user, setUser }: Props) {
           )}
 
           {section === "selling" && (
-            <SellingProducts
+            <MySellingProducts
               sellingProducts={sellingProducts}
               editingProductId={editingProductId}
               productForm={productForm}

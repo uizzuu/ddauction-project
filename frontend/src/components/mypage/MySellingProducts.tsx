@@ -40,7 +40,7 @@ type Props = {
   handleCancelProductEdit: () => void;
 };
 
-export default function SellingProducts({
+export default function MySellingProducts({
   sellingProducts,
   editingProductId,
   productForm,
