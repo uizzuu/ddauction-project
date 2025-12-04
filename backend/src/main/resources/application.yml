@@ -46,25 +46,20 @@ spring:
       max-request-size: 50MB
 jwt:
   secret: ${JWT_SECRET:vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbbPLAINTEXT}
-
 server:
   port: 8080
   forward-headers-strategy: framework
   tomcat:
-    max-http-post-size: 50MB
     max-swallow-size: 50MB
     max-http-header-size: 20KB
-
 app:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost,http://localhost:5173}
-
 payment:
   portone:
     imp-code: ${PAYMENT_PORTONE_IMP_CODE}
     api-key: ${PAYMENT_PORTONE_API_KEY}
     api-secret: ${PAYMENT_PORTONE_API_SECRET}
     callback-url: ${PAYMENT_PORTONE_CALLBACK_URL}
-
 file:
   upload:
     directory: ./uploads
@@ -87,11 +82,6 @@ spring:
   config:
     activate:
       on-profile: local
-  redis:
-    host: localhost
-    port: 6379
-    password: ${REDIS_PASSWORD:}  # 필요 없으면 빈 값
-    timeout: 2000ms
   ssl:
     enabled: false
   datasource:
@@ -122,8 +112,6 @@ spring:
           auth: true
           starttls:
             enable: true
-
-
   security:
     oauth2:
       client:
@@ -159,13 +147,6 @@ spring:
   config:
     activate:
       on-profile: prod
-  redis:
-    host: ${REDIS_HOST:redis-server주소}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
-    timeout: 2000ms
-    ssl:
-      enabled: false
   server:
     forward-headers-strategy: framework
   ssl:
@@ -186,7 +167,6 @@ spring:
           time_zone: Asia/Seoul
   jackson:
     time-zone: Asia/Seoul
-
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}      # 기본값: Gmail
     port: ${MAIL_PORT:587}
@@ -198,7 +178,6 @@ spring:
           auth: true
           starttls:
             enable: true
-
   security:
     oauth2:
       client:
