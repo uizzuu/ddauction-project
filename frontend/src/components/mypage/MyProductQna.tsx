@@ -1,7 +1,7 @@
-import type { Qna } from "../../common/types";
+import type { ProductQna } from "../../common/types";
 
 type Props = {
-  MyProductQna: Qna[];
+  MyProductQna: ProductQna[];
 };
 
 export default function MyProductQna({ MyProductQna }: Props) {
@@ -16,7 +16,7 @@ export default function MyProductQna({ MyProductQna }: Props) {
             const answers = qna.answers ?? [];
             return (
               <li
-                key={qna.qnaId}
+                key={qna.productQnaId}
                 style={{
                   marginBottom: "15px",
                   border: "1px solid #eee",
@@ -25,7 +25,7 @@ export default function MyProductQna({ MyProductQna }: Props) {
                 }}
               >
                 <div style={{ fontWeight: "bold" }}>제목: {qna.title}</div>
-                <div>질문: {qna.question}</div>
+                <div>질문: {qna.content}</div>
                 <div>작성일: {new Date(qna.createdAt).toLocaleString()}</div>
 
                 {answers.length > 0 && (
@@ -46,7 +46,7 @@ export default function MyProductQna({ MyProductQna }: Props) {
                     >
                       {answers.map((a) => (
                         <li key={a.qnaReviewId} style={{ marginTop: "5px" }}>
-                          {a.nickName ?? "익명"}: {a.answer} (
+                          {a.nickName ?? "익명"}: {a.content} (
                           {new Date(a.createdAt).toLocaleString()})
                         </li>
                       ))}

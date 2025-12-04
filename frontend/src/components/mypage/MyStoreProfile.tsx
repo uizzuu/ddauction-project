@@ -46,7 +46,7 @@ export default function MyStoreProfile({
                 }}
               >
                 <strong>평점:</strong> {r.rating}점 <br />
-                <strong>내용:</strong> {r.comments} <br />
+                <strong>내용:</strong> {r.content} <br />
                 <small>
                   작성일:{" "}
                   {r.createdAt
