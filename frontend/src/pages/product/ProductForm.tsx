@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ReactDatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import type { User, ProductForm } from "../common/types";
-import { CATEGORY_OPTIONS } from "../common/enums";
-import type { ProductCategoryType } from "../common/enums";
-import { generateAiDescription, registerProductWithImages } from "../common/api";
-import SelectStyle from "../components/ui/form/SelectStyle";
-import { formatDateTime } from "../common/util";
+import type { User, ProductForm } from "../../common/types";
+import { CATEGORY_OPTIONS } from "../../common/enums";
+import type { ProductCategoryType } from "../../common/enums";
+import { generateAiDescription, registerProductWithImages } from "../../common/api";
+import SelectStyle from "../../components/ui/form/SelectStyle";
+import { formatDateTime } from "../../common/util";
 
 type Props = {
   user: User | null;
@@ -52,7 +52,7 @@ export default function ProductRegister({ user }: Props) {
         setError("경매 종료 시간은 현재 시간 이후로만 선택 가능합니다.");
         return;
       }
-      
+
       const formatted = formatDateTime(date.toISOString());
 
       setForm((prev) => ({

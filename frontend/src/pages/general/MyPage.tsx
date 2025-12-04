@@ -8,13 +8,13 @@ import type {
   ProductForm,
   Inquiry,
   Review,
-} from "../common/types";
+} from "../../common/types";
 import {
   PRODUCT_STATUS,
   PRODUCT_CATEGORY_LABELS, // common/enums에서 import
-} from "../common/enums";
-import type { ProductCategoryType, ProductType } from "../common/enums";
-import { API_BASE_URL } from "../common/api";
+} from "../../common/enums";
+import type { ProductCategoryType, ProductType } from "../../common/enums";
+import { API_BASE_URL } from "../../common/api";
 import {
   MyProfile,
   MySellingProducts,
@@ -24,8 +24,8 @@ import {
   MyInquiries,
   MyStoreProfile,
   MyPaymentHistory,
-} from "../common/import"
-import { normalizeProduct } from "../common/util";
+} from "../../common/import"
+import { normalizeProduct } from "../../common/util";
 
 
 type MypageSection =

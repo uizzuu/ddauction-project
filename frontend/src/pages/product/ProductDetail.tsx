@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import AROverlayModal from "../components/modal/AROverlayModal";
+import AROverlayModal from "../../components/modal/AROverlayModal";
 
 import type {
   Product,
@@ -14,13 +14,13 @@ import type {
   Bid,
   EditProductForm,
   WinnerCheckResponse,
-} from "../common/types";
-import { API_BASE_URL } from "../common/api";
-import { formatDateTime } from "../common/util";
-import ProductQnA from "../components/product/ProductQnA";
-import AuctionBidGraph from "../components/product/AuctionBidGraph";
-import { AuctionBidding } from "../components/product/AuctionBidding";
-import { CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../common/enums";
+} from "../../common/types";
+import { API_BASE_URL } from "../../common/api";
+import { formatDateTime } from "../../common/util";
+import ProductQnA from "../../components/product/ProductQnA";
+import AuctionBidGraph from "../../components/product/AuctionBidGraph";
+import { AuctionBidding } from "../../components/product/AuctionBidding";
+import { CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../../common/enums";
 
 interface UseAuctionProps {
   productId: number;

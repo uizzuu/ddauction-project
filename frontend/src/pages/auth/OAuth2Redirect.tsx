@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { User } from "../common/types";
-import { fetchMe } from "../common/api";
+import type { User } from "../../common/types";
+import { fetchMe } from "../../common/api";
 
 type Props = {
   setUser: (user: User) => void;

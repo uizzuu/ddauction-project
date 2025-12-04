@@ -1,20 +1,20 @@
 import { useState, useEffect, useCallback } from "react";
-import type { ProductCategoryType } from "../common/enums";
+import type { ProductCategoryType } from "../../common/enums";
 import type {
   User,
   Product,
   Report,
   EditProductForm,
   Inquiry,
-} from "../common/types";
-import * as API from "../common/api";
+} from "../../common/types";
+import * as API from "../../common/api";
 import {
   UserManage,
   ProductManage,
   ReportManage,
   AdminDashboard,
   InquiryManagement,
-} from "../common/import"
+} from "../../common/import"
 
 export default function AdminPage() {
   const [section, setSection] = useState<

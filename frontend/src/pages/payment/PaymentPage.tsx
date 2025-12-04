@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getWinningInfo, preparePayment, completePayment } from "../common/api";
-import type { WinningInfo } from "../common/types";
+import { getWinningInfo, preparePayment, completePayment } from "../../common/api";
+import type { WinningInfo } from "../../common/types";
 
 //  PortOne 타입 선언
 declare global {

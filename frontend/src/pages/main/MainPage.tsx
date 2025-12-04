@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Product } from "../common/types";
-import { formatDateTime, formatPrice, formatDate } from "../common/util";
-import { fetchLatestProducts, fetchBannerProducts } from "../common/api";
+import type { Product } from "../../common/types";
+import { formatDateTime, formatPrice, formatDate } from "../../common/util";
+import { fetchLatestProducts, fetchBannerProducts } from "../../common/api";
 
 export default function Main() {
   const navigate = useNavigate();
@@ -126,9 +126,8 @@ export default function Main() {
           banners.map((_, i) => (
             <div
               key={i}
-              className={`width-8 height-8 radius-full transition-all ${
-                i === current ? "bg-aaa" : "bg-ddd"
-              }`}
+              className={`width-8 height-8 radius-full transition-all ${i === current ? "bg-aaa" : "bg-ddd"
+                }`}
             />
           ))
         ) : (

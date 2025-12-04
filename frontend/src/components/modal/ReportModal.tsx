@@ -1,7 +1,7 @@
 // src/pages/UserQnaForm.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { submitUserQna } from "../common/api";
+import { submitUserQna } from "../../common/api";
 
 export default function UserQnaForm() {
   const [title, setTitle] = useState("");

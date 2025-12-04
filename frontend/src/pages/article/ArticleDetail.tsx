@@ -7,14 +7,14 @@ import {
   createComment,
   updateComment,
   deleteComment,
-} from "../common/api";
+} from "../../common/api";
 import type {
   ArticleDto,
   User,
   CommentDto,
   CommentForm,
-} from "../common/types";
-import { formatDateTime } from "../common/util";
+} from "../../common/types";
+import { formatDateTime } from "../../common/util";
 
 interface Props {
   user: User | null;

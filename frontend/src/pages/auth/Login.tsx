@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { User, LoginForm } from "../common/types";
-import { loginAPI, getSocialLoginURL } from "../common/api";
+import type { User, LoginForm } from "../../common/types";
+import { loginAPI, getSocialLoginURL } from "../../common/api";
 
 type Props = {
   setUser: (user: User) => void;

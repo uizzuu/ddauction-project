@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { createArticle, getArticleById, updateArticle } from "../common/api";
-import type { ArticleForm as ArticleFormType } from "../common/types";
+import { createArticle, getArticleById, updateArticle } from "../../common/api";
+import type { ArticleForm as ArticleFormType } from "../../common/types";
 
 interface Props {
   userId: number | null; // 현재 로그인한 사용자 ID

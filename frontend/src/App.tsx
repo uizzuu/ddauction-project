@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react"; // 🔹 useEffect 추가
 import { Routes, Route, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // 🔹 JWT decode 라이브러리 추가
-import ArticleForm from "./pages/ArticleForm";
-import ArticleDetail from "./pages/ArticleDetail";
-import SearchPage from "./pages/SearchPage";
-import UserQnaForm from "./pages/UserQnaForm";
-import PaymentPage from "./pages/PaymentPage";
+import ArticleForm from "./pages/article/ArticleForm";
+import ArticleDetail from "./pages/article/ArticleDetail";
+import SearchPage from "./pages/product/ProductList";
+import UserQnaForm from "./components/modal/ReportModal";
+import PaymentPage from "./pages/payment/PaymentPage";
 import FindEmail from "./pages/FindEmail";
 import FindPassword from "./pages/FindPassword";
 import UserChat from "./components/chat/UserChat";

@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
-import { fetchFilteredProducts } from "../common/api";
-import type { Product } from "../common/types";
-import { CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS } from "../common/enums";
-import SelectStyle from "../components/ui/form/SelectStyle";
+import { fetchFilteredProducts } from "../../common/api";
+import type { Product } from "../../common/types";
+import { CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS } from "../../common/enums";
+import SelectStyle from "../../components/ui/form/SelectStyle";
 import {
   formatDateTime,
   formatPrice,
   formatDate,
   parseWithTZ,
   buildSearchQuery
-} from "../common/util";
-import type { SortOption } from "../common/util";
+} from "../../common/util";
+import type { SortOption } from "../../common/util";
 
 export default function ProductSearchPage() {
   const navigate = useNavigate();

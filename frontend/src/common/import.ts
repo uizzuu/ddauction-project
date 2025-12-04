@@ -23,18 +23,18 @@ import MyStoreProfile from "../components/mypage/MyStoreProfile";
 import MyPaymentHistory from "../components/mypage/MyPaymentHistory";
 
 // pages
-import Main from "../pages/Main";
-import Login from "../pages/Login";
+import Main from "../pages/main/MainPage";
+import Login from "../pages/auth/Login";
 import Signup from "../pages/Signup";
-import ProductList from "../pages/ProductList";
-import ProductRegister from "../pages/ProductRegister";
-import MyPage from "../pages/MyPage";
-import ProductDetail from "../pages/ProductDetail";
-import ArticleList from "../pages/ArticleList";
-import AdminPage from '../pages/AdminPage';
-import UserQnaForm from "../pages/UserQnaForm";
-import ErrorPage from "../pages/ErrorPage";
-import OAuth2Redirect from "../pages/OAuth2Redirect";
+import ProductList from "../pages/product/ProductList";
+import ProductRegister from "../pages/product/ProductForm";
+import MyPage from "../pages/general/MyPage";
+import ProductDetail from "../pages/product/ProductDetail";
+import ArticleList from "../pages/article/ArticleList";
+import AdminPage from '../pages/general/AdminPage';
+import UserQnaForm from "../components/modal/ReportModal";
+import ErrorPage from "../pages/main/ErrorPage";
+import OAuth2Redirect from "../pages/auth/OAuth2Redirect";
 import ProductQnA from "../components/product/ProductQnA";
 
 export {

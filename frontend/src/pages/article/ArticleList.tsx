@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getArticles } from "../common/api";
-import type { ArticleDto, User } from "../common/types";
+import { getArticles } from "../../common/api";
+import type { ArticleDto, User } from "../../common/types";
 
 interface Props {
   user: User | null;
