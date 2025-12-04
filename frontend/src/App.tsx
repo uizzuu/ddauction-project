@@ -9,6 +9,8 @@ import PaymentPage from "./pages/payment/PaymentPage";
 import FindEmail from "./pages/FindEmail";
 import FindPassword from "./pages/FindPassword";
 import UserChat from "./components/chat/UserChat";
+import VerifyPage from "./pages/VerifyPage";
+
 import {
   HeaderMain,
   HeaderSub,
@@ -47,6 +49,7 @@ const VALID_PATHS = [
   "/oauth2/redirect",
   "/error",
   "/chat",
+   "/verify",
 ];
 
 // 동적 경로 패턴 (예: /products/123, /articles/456 등)
@@ -207,6 +210,8 @@ export default function App() {
             )
           }
         />
+
+        <Route path="/verify" element={<VerifyPage />} /> {/* 이메일 인증용 */}
       </Routes>
     </div>
   );

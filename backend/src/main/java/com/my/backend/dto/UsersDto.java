@@ -70,7 +70,7 @@ public class UsersDto {
                 .password(this.password)
                 .phone(this.phone)
                 .email(this.email)
-                .role(this.role)
+                .role(this.role != null ? this.role : Role.USER)
                 .address(address)
                 .emailVerification(emailVerification)
                 .phoneVerification(phoneVerification)

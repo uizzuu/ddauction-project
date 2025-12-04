@@ -86,6 +86,42 @@ export default function Signup() {
 
   };
 
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+
+  const sendVerificationEmail = async () => {
+    if (!isEmailValid(form.email)) {
+      setEmailMessage("올바른 이메일을 입력해주세요");
+      return;
+    }
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setEmailMessage("인증 메일이 발송되었습니다.");
+    } catch (err: any) {
+      setEmailMessage(err.message || "인증 메일 발송 실패");
+    }
+  };
+
+  const verifyEmailCode = async () => {
+    try {
+      const res = await fetch(`/api/auth/verify-email?email=${encodeURIComponent(form.email)}&code=${encodeURIComponent(verificationCode)}`, {
+        method: "POST",
+      });
+      if (!res.ok) throw new Error(await res.text());
+      setIsEmailVerified(true);
+      setEmailMessage("이메일 인증 완료!");
+    } catch (err: any) {
+      setEmailMessage(err.message || "인증 실패");
+    }
+  };
+
+
   const handleSearchAddress = () => {
     // @ts-ignore
     new window.daum.Postcode({
@@ -104,11 +140,15 @@ export default function Signup() {
     if (!validateAll()) return;
 
     try {
-      await signup(form);
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error(await res.text());
       alert("회원가입 성공!");
       navigate("/login");
     } catch (err: any) {
-      console.error(err);
       setErrors((prev) => ({
         ...prev,
         submit: err.message || "회원가입 실패",
@@ -180,23 +220,53 @@ export default function Signup() {
         <p className="error-message">{errors.nickName}</p>
       )}
 
-      {/* 이메일 */}
-      <input
-        type="text"
-        placeholder="이메일"
-        value={form.email}
-        onChange={(e) => {
-          const val = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣\s]/g, "");
-          setForm((prev) => ({ ...prev, email: val }));
-          let msg = "";
-          if (!val) msg = "이메일을 입력해주세요";
-          else if (!isEmailValid(val))
-            msg = "올바른 이메일 형식이 아닙니다";
-          setErrors((prev) => ({ ...prev, email: msg }));
-        }}
-        className="input"
-      />
-      {errors.email && <p className="error-message">{errors.email}</p>}
+      {/* 이메일 + 인증 버튼 */}
+      <div className="form-group">
+        <label>이메일</label>
+        <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+          <input
+            type="text"
+            placeholder="이메일"
+            value={form.email}
+            onChange={(e) => {
+              const val = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣\s]/g, "");
+              setForm((prev) => ({ ...prev, email: val }));
+              setIsEmailVerified(false);
+              setErrors((prev) => ({ ...prev, email: "" }));
+            }}
+            className="input"
+            style={{ flex: 1 }}
+          />
+          <button onClick={sendVerificationEmail} className="btn-small">
+            인증 메일 발송
+          </button>
+        </div>
+        {errors.email && <p className="error-message">{errors.email}</p>}
+        {emailMessage && <p className="info-message">{emailMessage}</p>}
+      </div>
+
+      {/* 인증 코드 입력 */}
+      {!isEmailVerified && (
+        <div className="form-group">
+          <label>인증 코드</label>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <input
+              type="text"
+              placeholder="인증 코드 입력"
+              value={verificationCode}
+              onChange={(e) => setVerificationCode(e.target.value)}
+              className="input"
+              style={{ flex: 1 }}
+            />
+            <button onClick={verifyEmailCode} className="btn-small">
+              인증 확인
+            </button>
+          </div>
+        </div>
+      )}
+
+      <p>{emailMessage}</p>
+
 
       {/* 전화번호 */}
       <input
@@ -325,7 +395,11 @@ export default function Signup() {
 
     {errors.submit && <p className="error-message">{errors.submit}</p>}
 
-    <button onClick={handleSubmit} className="btn-submit">
+    <button
+      onClick={handleSubmit}
+      className="btn-submit"
+      disabled={!isEmailVerified}
+    >
       회원가입
     </button>
 
