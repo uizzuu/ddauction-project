@@ -186,29 +186,43 @@ export interface Report {
   updatedAt: string;
 }
 
-export interface Qna {
-  qnaId: number;
-  title: string;
-  question: string;
-  createdAt: string;
-  updatedAt?: string;
-  answers?: QnaAnswer[];
-  boardId?: number;
-  boardName?: string;
-  productId?: number;
-  userId: number;
-  nickName?: string;
-}
 
-export interface QnaAnswer {
-  qnaReviewId: number;
-  answer: string;
+// 리뷰 타입
+export interface Review {
+  reviewId: number;
+  refId: number;        // 실제 참조 대상 ID (상품ID 등)
+  content: string;
   nickName: string;
-  userId: number;
-  role?: Role;
+  rating: number;
+  productType: ProductType;
   createdAt: string;
   updatedAt: string;
+  images: Image[];
+}
+
+// 상품 QnA 타입
+export interface ProductQna {
+  productQnaId: number;
+  userId: number;
+  nickName: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  updatedAt?: string;
+  refId: number;
+  productType: ProductType;
+  answers?: QnaReview[];
+}
+
+// QnA 리뷰 타입
+export interface QnaReview {
+  qnaReviewId: number;
   qnaUserId: number;
+  productQnaId: number;
+  content: string;
+  nickName: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Inquiry {
@@ -225,11 +239,6 @@ export interface Inquiry {
   newAnswer?: string;
 }
 
-export type Review = {
-  rating: number;
-  comments: string;
-  createdAt?: string;
-}
 
 // 최종낙찰 후 결제창 관련 타입 추가
 
