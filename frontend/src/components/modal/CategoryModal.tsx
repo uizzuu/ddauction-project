@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import type { Option } from "../common/types";
+import type { Option } from "../../common/types";
 
-interface ModalCategoryProps {
+interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   categories: Option[];
@@ -11,13 +11,13 @@ interface ModalCategoryProps {
   targetRef: React.RefObject<HTMLButtonElement | null>;
 }
 
-export default function ModalCategory({
+export default function CategoryModal({
   isOpen,
   onClose,
   categories,
   onSelectCategory,
   targetRef,
-}: ModalCategoryProps) {
+}: CategoryModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [position, setPosition] = useState({ top: 0, left: 0 });

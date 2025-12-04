@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import ModalCategory from "../components/ModalCategory";
+import CategoryModal from "../components/modal/CategoryModal";
 import { CATEGORY_OPTIONS } from "../common/enums"; // 정적 데이터 직접 import
 import AIChatBot from "./chat/AIChatBot";
 
@@ -57,7 +57,7 @@ export default function HeaderSub() {
           </button>
 
           {/* categories에 변환 없이 바로 옵션 전달 */}
-          <ModalCategory
+          <CategoryModal
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             categories={CATEGORY_OPTIONS} 

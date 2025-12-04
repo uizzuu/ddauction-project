@@ -5,7 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
-import AROverlayWithButton from "./AROverlayWithButton";
+import AROverlayModal from "../components/modal/AROverlayModal";
 
 import type {
   Product,
@@ -949,7 +949,7 @@ export default function ProductDetail({ user }: Props) {
               >
                 ×
               </button>
-              <AROverlayWithButton productId={product.productId} />
+              <AROverlayModal productId={product.productId} />
             </div>
           </div>
         )}

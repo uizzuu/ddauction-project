@@ -1,18 +1,18 @@
 import type { Qna } from "../../common/types";
 
 type Props = {
-  myQnas: Qna[];
+  MyProductQna: Qna[];
 };
 
-export default function MyQnas({ myQnas }: Props) {
+export default function MyProductQna({ MyProductQna }: Props) {
   return (
     <div style={{ marginBottom: "20px" }}>
       <h3>내 Q&A</h3>
-      {myQnas.length === 0 ? (
+      {MyProductQna.length === 0 ? (
         <p>작성한 질문이 없습니다.</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
-          {myQnas.map((qna) => {
+          {MyProductQna.map((qna) => {
             const answers = qna.answers ?? [];
             return (
               <li

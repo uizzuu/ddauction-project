@@ -4,6 +4,7 @@ import HeaderSub from "../components/HeaderSub";
 import ProductBidGraph from "../components/ProductBidGraph";
 import { AuctionBox } from "../components/AuctionBox";
 
+// admin
 import UserManage from "../components/admin/UserManage";
 import ProductManage from "../components/admin/ProductManage";
 import ReportManage from "../components/admin/ReportManage";
@@ -11,11 +12,12 @@ import PublicChatManage from "../components/admin/PublicChatManage";
 import AdminDashboard from "../components/admin/AdminDashboard";
 import InquiryManagement from "../components/admin/InquiryManagement";
 
-import UserInfoEdit from "../components/mypage/UserInfoEdit";
+import AROverlayModal from "../components/modal/AROverlayModal"
+import MyProfile from "../components/mypage/MyProfile";
 import SellingProducts from "../components/mypage/SellingProducts";
 import BookmarkedProducts from "../components/mypage/BookmarkedProducts";
 import MyReports from "../components/mypage/MyReports";
-import MyQnas from "../components/mypage/MyQnas";
+import MyProductQna from "../components/mypage/MyProductQna";
 import MyInquiries from "../components/mypage/MyInquiries";
 import ReviewManagement from "../components/mypage/ReviewManagement";
 import PaymentProducts from "../components/mypage/PaymentProducts";
@@ -33,7 +35,6 @@ import AdminPage from '../pages/AdminPage';
 import UserQnaForm from "../pages/UserQnaForm";
 import ErrorPage from "../pages/ErrorPage";
 import OAuth2Redirect from "../pages/OAuth2Redirect";
-import AROverlayWithButton from "../pages/AROverlayWithButton";
 import ProductQnA from "../components/ProductQnA";
 
 export {
@@ -49,11 +50,11 @@ export {
   PublicChatManage,
   InquiryManagement,
 
-  UserInfoEdit,
+  MyProfile,
   SellingProducts,
   BookmarkedProducts,
   MyReports,
-  MyQnas,
+  MyProductQna,
   MyInquiries,
   ReviewManagement,
   PaymentProducts,
@@ -70,6 +71,6 @@ export {
   UserQnaForm,
   ErrorPage,
   OAuth2Redirect,
-  AROverlayWithButton,
+  AROverlayModal,
   ProductQnA
 };

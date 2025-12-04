@@ -2,7 +2,7 @@ import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { User } from "../common/types";
 import { logout, fetchSuggestions, fetchPopularKeywords, saveSearchLog } from "../common/api";
-import { useRealTimeSearch } from "../common/useRealTimeSearch";
+import { RealTimeSearch } from "../common/websocket";
 
 type Props = {
   user: User | null;
@@ -22,7 +22,7 @@ export default function HeaderMain({ user, setUser }: Props) {
   // 인기 검색어 state
   const [popularKeywords, setPopularKeywords] = useState<string[]>([]);
   // 실시간 검색어 (WebSocket)
-  const { rankings, isConnected } = useRealTimeSearch();
+  const { rankings, isConnected } = RealTimeSearch();
 
   // 어떤 탭을 보여줄지
   const [keywordTab, setKeywordTab] = useState<"popular" | "realtime">("popular");

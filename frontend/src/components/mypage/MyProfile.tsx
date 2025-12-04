@@ -7,7 +7,7 @@ type Props = {
   setEditing: (editing: boolean) => void;
 };
 
-export default function UserInfoEdit({
+export default function MyProfile({
   form,
   handleChange,
   handleUpdate,

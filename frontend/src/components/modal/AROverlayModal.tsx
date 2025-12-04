@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
-import { fetchQrCodeImage, fetchProductByQr, removeProductBackground } from "../common/api";
-import * as TYPE from "../common/types";
+import { fetchQrCodeImage, fetchProductByQr, removeProductBackground } from "../../common/api";
+import * as TYPE from "../../common/types";
 
-const AROverlayWithButton: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
+const AROverlayModal: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
   const [mode, setMode] = useState<"initial" | "showQR" | "scanning">("initial");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -384,4 +384,4 @@ const AROverlayWithButton: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
   );
 };
 
-export default AROverlayWithButton;
+export default AROverlayModal;

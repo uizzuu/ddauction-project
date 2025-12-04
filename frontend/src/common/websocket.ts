@@ -12,7 +12,7 @@ interface RankingResponse {
   timestamp: number;
 }
 
-export const useRealTimeSearch = () => {
+export const RealTimeSearch = () => {
   const wsRef = useRef<WebSocket | null>(null);
   const [rankings, setRankings] = useState<RankingItem[]>([]);
   const [isConnected, setIsConnected] = useState(false);
