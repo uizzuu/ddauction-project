@@ -12,6 +12,7 @@ import UserChat from "./components/chat/UserChat";
 import {
   HeaderMain,
   HeaderSub,
+  Header,
   Main,
   Login,
   Signup,
@@ -125,9 +126,8 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh" }}>
       {showHeader && <HeaderMain user={user} setUser={setUser} />}
-      {showHeader && (
-        <HeaderSub />
-      )}
+      {showHeader && <HeaderSub />}
+      {showHeader && <Header />}
       <Routes>
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login setUser={setUser} />} />
