@@ -1,13 +1,13 @@
 import type { Product } from "../../common/types";
 
 type Props = {
-  bookmarkedProducts: Product[];
+  MyLikes: Product[];
   getCategoryName: (categoryCode: string | null | undefined) => string;
   goToProductDetail: (productId: number) => void;
 };
 
-export default function BookmarkedProducts({
-  bookmarkedProducts,
+export default function MyLikes({
+  MyLikes,
   getCategoryName,
   goToProductDetail,
 }: Props) {
@@ -15,11 +15,11 @@ export default function BookmarkedProducts({
     <div style={{ marginBottom: "20px" }}>
       <div className="title-24 mb-10">찜한 상품</div>
 
-      {bookmarkedProducts.length === 0 ? (
+      {MyLikes.length === 0 ? (
         <p>찜한 상품이 없습니다.</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0 }}>
-          {bookmarkedProducts.map((product) => (
+          {MyLikes.map((product) => (
             <li
               key={product.productId}
               style={{

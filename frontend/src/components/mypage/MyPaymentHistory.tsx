@@ -11,7 +11,7 @@ interface PaymentProduct extends Product {
   paymentAmount?: number | null;
 }
 
-export default function PaymentProducts({ token }: Props) {
+export default function MyPaymentHistory({ token }: Props) {
   const [products, setProducts] = useState<PaymentProduct[]>([]);
   const [loading, setLoading] = useState(true);
 

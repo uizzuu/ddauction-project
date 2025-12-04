@@ -15,12 +15,12 @@ import InquiryManagement from "../components/admin/InquiryManagement";
 import AROverlayModal from "../components/modal/AROverlayModal"
 import MyProfile from "../components/mypage/MyProfile";
 import SellingProducts from "../components/mypage/SellingProducts";
-import BookmarkedProducts from "../components/mypage/BookmarkedProducts";
+import MyLikes from "../components/mypage/MyLikes";
 import MyReports from "../components/mypage/MyReports";
 import MyProductQna from "../components/mypage/MyProductQna";
 import MyInquiries from "../components/mypage/MyInquiries";
-import ReviewManagement from "../components/mypage/ReviewManagement";
-import PaymentProducts from "../components/mypage/PaymentProducts";
+import MyStoreProfile from "../components/mypage/MyStoreProfile";
+import MyPaymentHistory from "../components/mypage/MyPaymentHistory";
 
 // pages
 import Main from "../pages/Main";
@@ -52,12 +52,12 @@ export {
 
   MyProfile,
   SellingProducts,
-  BookmarkedProducts,
+  MyLikes,
   MyReports,
   MyProductQna,
   MyInquiries,
-  ReviewManagement,
-  PaymentProducts,
+  MyStoreProfile,
+  MyPaymentHistory,
 
   Main,
   Login,

@@ -12,7 +12,7 @@ type Props = {
   handleSubmitReview: () => Promise<void>;
 };
 
-export default function ReviewManagement({
+export default function MyStoreProfile({
   averageRating,
   myReviews,
   rating,

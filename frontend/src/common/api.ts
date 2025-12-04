@@ -989,7 +989,7 @@ export async function fetchSellingProducts(userId: number): Promise<TYPE.Product
 }
 
 // 찜 상품
-export async function fetchBookmarkedProducts(token: string): Promise<TYPE.Product[]> {
+export async function fetchMyLikes(token: string): Promise<TYPE.Product[]> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/mypage`, {
     headers: { Authorization: `Bearer ${token}` },
   });

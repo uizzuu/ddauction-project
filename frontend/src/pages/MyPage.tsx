@@ -18,12 +18,12 @@ import { API_BASE_URL } from "../common/api";
 import {
   MyProfile,
   SellingProducts,
-  BookmarkedProducts,
+  MyLikes,
   MyReports,
   MyProductQna,
   MyInquiries,
-  ReviewManagement,
-  PaymentProducts,
+  MyStoreProfile,
+  MyPaymentHistory,
 } from "../common/import"
 import { normalizeProduct } from "../common/util";
 
@@ -31,7 +31,7 @@ import { normalizeProduct } from "../common/util";
 type MypageSection =
   | "info"
   | "selling"
-  | "bookmarks"
+  | "likes"
   | "reports"
   | "qnas"
   | "inquiries"
@@ -87,7 +87,7 @@ export default function MyPage({ user, setUser }: Props) {
 
   // Data states
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
-  const [bookmarkedProducts, setBookmarkedProducts] = useState<Product[]>([]);
+  const [myLikes, setMyLikes] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [myQnas, setMyQnas] = useState<Qna[]>([]);
   // 🚨 categories 상태 제거 (types.ts 반영)
@@ -229,7 +229,7 @@ export default function MyPage({ user, setUser }: Props) {
     }
   };
 
-  const handleFetchBookmarkedProducts = async () => {
+  const handleFetchMyLikes = async () => {
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(`${API_BASE_URL}/api/bookmarks/mypage`, {
@@ -240,7 +240,7 @@ export default function MyPage({ user, setUser }: Props) {
       });
       if (res.ok) {
         const data: Partial<Product>[] = await res.json();
-        setBookmarkedProducts(data.map((p) => normalizeProduct(p)));
+        setMyLikes(data.map((p) => normalizeProduct(p)));
       } else {
         alert("찜 상품 조회 실패");
       }
@@ -501,8 +501,8 @@ export default function MyPage({ user, setUser }: Props) {
       case "selling":
         fetchSellingProducts();
         break;
-      case "bookmarks":
-        handleFetchBookmarkedProducts();
+      case "likes":
+        handleFetchMyLikes();
         break;
       case "reports":
         handleFetchReports();
@@ -631,7 +631,7 @@ export default function MyPage({ user, setUser }: Props) {
               {
                 info: "내 정보 수정",
                 selling: "판매 상품 관리",
-                bookmarks: "찜 목록",
+                likes: "찜 목록",
                 reports: "신고 내역",
                 qnas: "내 Q&A",
                 inquiries: "1:1 문의 내역",
@@ -669,9 +669,9 @@ export default function MyPage({ user, setUser }: Props) {
             />
           )}
 
-          {section === "bookmarks" && (
-            <BookmarkedProducts
-              bookmarkedProducts={bookmarkedProducts}
+          {section === "likes" && (
+            <MyLikes
+              MyLikes={myLikes}
               getCategoryName={getCategoryName}
               goToProductDetail={goToProductDetail}
             />
@@ -684,7 +684,7 @@ export default function MyPage({ user, setUser }: Props) {
           {section === "inquiries" && <MyInquiries myInquiries={myInquiries} />}
 
           {section === "reviews" && (
-            <ReviewManagement
+            <MyStoreProfile
               averageRating={averageRating}
               myReviews={myReviews}
               rating={rating}
@@ -700,7 +700,7 @@ export default function MyPage({ user, setUser }: Props) {
           {/* 기타 메뉴에 대한 간단한 Placeholder */}
           {section === "payments" && <div>결제 수단 관리 페이지입니다.</div>}
           {section === "purchases" && user && (
-            <PaymentProducts token={localStorage.getItem("token") || ""} />
+            <MyPaymentHistory token={localStorage.getItem("token") || ""} />
           )}
 
           {section === "bids" && <div>입찰 목록 페이지입니다.</div>}
