@@ -14,6 +14,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
 import java.util.List;
 
 public class JWTFilter extends OncePerRequestFilter {
@@ -25,50 +26,46 @@ public class JWTFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, java.io.IOException {
-
-        String path = request.getRequestURI();
+                                    FilterChain filterChain) throws ServletException, IOException {
 
         System.out.println("🔹 JWTFilter request: " + request.getMethod() + " " + request.getRequestURI() +
                 " Authorization: " + request.getHeader("Authorization"));
+        String path = request.getRequestURI();
 
-        // JWT 검사 제외 경로
+        // 1. JWT 검사 제외 경로 (필요 시 수정)
+        // 여기에 "/api/qna/" 등을 굳이 넣지 않아도 아래 로직이 안전하면 괜찮습니다.
         if (path.startsWith("/api/auth/login") ||
                 path.equals("/api/auth/signup") ||
                 path.startsWith("/oauth2/") ||
                 path.startsWith("/login/oauth2/") ||
                 "OPTIONS".equalsIgnoreCase(request.getMethod()) ||
-                path.startsWith("/uploads/")||
-                path.startsWith("/api/qrcode/")||
-                path.startsWith("/api/autocomplete?") ||
-                path.startsWith("/api/chats/") ||
-                path.equals("/api/autocomplete") ||
+                path.startsWith("/uploads/") ||
+                path.startsWith("/api/qrcode/") ||
+                path.startsWith("/api/autocomplete") ||
                 path.startsWith("/api/search/log") ||
-                path.startsWith("/ai/")){
-            System.out.println("✅ JWT 필터 스킵: " + path);
+                path.startsWith("/ai/")) {
+
             filterChain.doFilter(request, response);
             return;
         }
 
         String authorization = request.getHeader("Authorization");
 
-        // ❌ Authorization 헤더가 없거나 Bearer가 없으면 그냥 통과 (SecurityConfig에서 처리)
+        // 2. 헤더가 없으면 통과 (비로그인 요청 허용)
         if (authorization == null || !authorization.startsWith("Bearer ")) {
-            System.out.println("⚠️ Authorization 헤더 없음 또는 Bearer 없음");
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authorization.substring(7);
-        if (jwtUtil.isExpired(token)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        // 예외 처리 추가
+        // 3. 토큰 검증 (전체를 try-catch로 감싸서 안전하게 처리)
         try {
+            String token = authorization.substring(7);
+
+            // 토큰 만료 여부 확인
             if (jwtUtil.isExpired(token)) {
                 System.out.println("⚠️ 토큰 만료됨");
+                // 만료된 경우라도 401을 던지지 않고, 인증 정보 없이 필터 진행
+                // -> SecurityConfig에서 permitAll()이면 통과, 아니면 401 됨
                 filterChain.doFilter(request, response);
                 return;
             }
@@ -77,8 +74,7 @@ public class JWTFilter extends OncePerRequestFilter {
             String userEmail = jwtUtil.getEmail(token);
             String role = jwtUtil.getRole(token);
 
-            System.out.println("✅ JWT 토큰 검증 성공: userId=" + userId + ", role=" + role);
-
+            System.out.println("✅ JWT 토큰 검증 성공: [" + request.getMethod() + " " + request.getRequestURI() + "] userId=" + userId);
             Users user = new Users();
             user.setUserId(userId);
             user.setEmail(userEmail);
@@ -86,20 +82,19 @@ public class JWTFilter extends OncePerRequestFilter {
 
             CustomUserDetails customUserDetails = new CustomUserDetails(user);
 
-            // 권한 강제 세팅
             List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + role));
-
             Authentication authToken = new UsernamePasswordAuthenticationToken(customUserDetails, null, authorities);
+
+            // 인증 정보 저장
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
-            System.out.println("✅ Authentication 설정 완료: " + authToken.getPrincipal());
-
         } catch (Exception e) {
-            System.err.println("❌ JWT 검증 중 예외 발생: " + e.getMessage());
-            e.printStackTrace();
-            // 예외 발생해도 계속 진행 (SecurityConfig에서 401 처리)
+            // 🚨 토큰이 잘못되었거나 파싱 에러가 나도 여기서 잡아서 넘겨줘야 함
+            // 그래야 permitAll 경로인 경우 401이 안 뜨고 접속 가능함
+            System.out.println("❌ JWT 검증 실패 (유효하지 않은 토큰): " + e.getMessage());
         }
 
+        // 4. 다음 필터로 진행
         filterChain.doFilter(request, response);
     }
 }
