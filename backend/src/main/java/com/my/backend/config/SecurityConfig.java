@@ -124,7 +124,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/qna/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/product-qnas/product/*").permitAll()  // 상품별 QnA 목록만
+                        .requestMatchers(HttpMethod.GET, "/api/qna-reviews/product-qna/*").permitAll()  // 특정 QnA의 답변 목록만
                         .requestMatchers(HttpMethod.GET, "/api/bookmarks/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()

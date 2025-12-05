@@ -1,6 +1,7 @@
 package com.my.backend.dto.auth;
 
 import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -18,6 +19,11 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
+    // ⭐ 추가: userId 반환
+    public Long getUserId() {
+        return user.getUserId();
+    }
+
     public String getEmail() {
         return user.getEmail();
     }
@@ -30,13 +36,18 @@ public class CustomUserDetails implements UserDetails {
         return user.getNickName();
     }
 
+    // ⭐ 추가: Role enum 반환
+    public Role getRole() {
+        return user.getRole();
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> collection = new ArrayList<>();
         collection.add(new GrantedAuthority() {
             @Override
             public String getAuthority() {
-                return String.valueOf(user.getRole());
+                return "ROLE_" + user.getRole().toString();  // ROLE_ 접두사 추가 권장
             }
         });
         return collection;
@@ -51,7 +62,6 @@ public class CustomUserDetails implements UserDetails {
     public String getUsername() {
         return user.getUserName();
     }
-
 
     @Override
     public boolean isAccountNonExpired() {
