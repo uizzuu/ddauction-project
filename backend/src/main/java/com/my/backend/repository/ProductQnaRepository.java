@@ -21,4 +21,7 @@ public interface ProductQnaRepository extends JpaRepository<ProductQna, Long> {
 
     // refId + ProductType으로 문의 조회
     List<ProductQna> findByRefIdAndProductType(Long refId, ProductType productType);
+
+    //  1:1 문의 조회 메서드
+    List<ProductQna> findByUserUserIdAndRefId(Long userId, Long refId);
 }
