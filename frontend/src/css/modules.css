@@ -9,34 +9,61 @@
 }
 
 .icon-container {
-  @apply
-  inline-flex flex-col items-center gap-px p-px relative flex-[0_0_auto];
+  @apply inline-flex flex-col items-center gap-px p-px relative flex-[0_0_auto];
 }
 
 .icon-img {
-  @apply
-  h-[24.5px] aspect-[0.95] relative
+  @apply h-[24.5px] aspect-[0.95] relative
   mt-[-0.75px] mb-[-0.75px] ml-[-0.75px] mr-[-0.75px];
 }
 
 .cart-badge-container {
-  @apply 
-  flex w-[18px] h-[18px] items-center justify-center 
+  @apply flex w-[18px] h-[18px] items-center justify-center 
   rounded-full border text-center;
   background-color: var(--color-alert-red);
   border-color: var(--color-alert-red);
 }
 
 .cart-badge-count {
-  @apply 
-  font-medium text-[10px] leading-[7px] text-white;
-  trainsition: opacity 0.3s;
+  @apply font-medium text-[10px] leading-[7px] text-white;
+  transition: opacity 0.3s;
+}
+
+.search-container {
+  @apply w-[450px] h-[42px] border border-[#111111] rounded-[0.4rem] relative z-20 bg-white;
+}
+
+.search-container.active {
+  @apply rounded-b-none border-b-0;
+}
+
+.search-bar {
+  @apply w-full h-full px-3
+  flex items-center gap-2 flex-1 relative;
+}
+
+.search-bar.active {
+  @apply border-b-0;
+}
+
+.search-divider {
+  @apply w-[1px] h-[14px] bg-[#ddd] mx-1;
+}
+
+.dropdown-arrow {
+  @apply inline-flex flex-col items-start gap-2.5 
+  p-[0.5px] relative flex-[0_0_auto] rotate-0;
+  transition: opacity 0.3s;
+}
+
+.dropdown-arrow.active {
+  @apply rotate-180;
 }
 
 .autocomplete-dropdown {
-  @apply absolute top-full left-0 w-[400px] bg-white 
-  border border-[#ddd] border-t-0 rounded-b-lg 
-  shadow-md max-h-[400px] overflow-y-auto z-10 mt-0;
+  @apply absolute top-full left-[-1px] w-[calc(100%+2px)] bg-white 
+  border border-[#111] border-t-0 rounded-b-lg 
+  max-h-[400px] overflow-y-auto z-10 mt-0;
 }
 
 .keyword-tabs {
@@ -64,7 +91,11 @@
 }
 
 .autocomplete-item.selected {
-  @apply bg-[#f5f5f5]; 
+  @apply bg-[#f5f5f5];
+}
+
+.selected {
+  @apply bg-[#f5f5f5];
 }
 
 /* 🆕 인기 검색어 순위 뱃지 */

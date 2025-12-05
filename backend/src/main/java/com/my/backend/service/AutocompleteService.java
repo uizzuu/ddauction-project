@@ -1,15 +1,17 @@
 package com.my.backend.service;
 
-import com.my.backend.repository.ProductRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import com.my.backend.repository.ProductRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -34,29 +36,39 @@ public class AutocompleteService {
     public List<String> getSuggestions(String keyword, int limit) {
         // 입력값 검증
         if (keyword == null || keyword.trim().isEmpty()) {
-            log.warn("⚠️ 빈 키워드로 자동완성 요청");
             return List.of();
         }
 
-        // 공백 제거 및 소문자 변환
+        // 공백 제거
         String normalizedKeyword = keyword.trim();
 
-        log.info("🔍 연관 검색어 요청: '{}' (최대 {}개)", normalizedKeyword, limit);
+        // 초성 검색 여부 확인
+        boolean isChosungSearch = com.my.backend.util.KoreanChosungUtil.isChosungOnly(normalizedKeyword);
 
-        // 페이징 객체 생성 (limit만큼만 가져오기)
-        Pageable pageable = PageRequest.of(0, limit);
-
-        // DB에서 제목과 태그 검색
-        List<String> suggestions = productRepository
-                .findSuggestionsForAutocomplete(normalizedKeyword, pageable);
-
-        // 중복 제거 및 최종 정리
-        List<String> result = suggestions.stream()
-                .distinct() // 혹시 모를 중복 제거
-                .limit(limit) // 최대 개수 제한
-                .collect(Collectors.toList());
-
-        log.info("✅ 연관 검색어 {}개 반환: {}", result.size(), result);
+        List<String> result;
+        
+        if (isChosungSearch) {
+            // 초성 검색: 모든 상품을 가져와서 초성 매칭 필터링
+            Pageable pageable = PageRequest.of(0, 1000); // 충분히 많은 데이터 가져오기
+            List<String> allSuggestions = productRepository
+                    .findSuggestionsForAutocomplete("", pageable); // 빈 문자열로 모든 상품 가져오기
+            
+            result = allSuggestions.stream()
+                    .filter(title -> com.my.backend.util.KoreanChosungUtil.matchesChosung(title, normalizedKeyword))
+                    .distinct()
+                    .limit(limit)
+                    .collect(Collectors.toList());
+        } else {
+            // 일반 검색: DB 쿼리로 필터링
+            Pageable pageable = PageRequest.of(0, limit);
+            List<String> suggestions = productRepository
+                    .findSuggestionsForAutocomplete(normalizedKeyword, pageable);
+            
+            result = suggestions.stream()
+                    .distinct()
+                    .limit(limit)
+                    .collect(Collectors.toList());
+        }
 
         return result;
     }
@@ -71,14 +83,10 @@ public class AutocompleteService {
      * @return 인기 검색어 리스트
      */
     public List<String> getPopularKeywords(int limit) {
-        log.info("📊 인기 검색어 요청 (최대 {}개)", limit);
-
         Pageable pageable = PageRequest.of(0, limit);
 
         List<String> popularKeywords = productRepository
                 .findTopKeywordsByViewCount(pageable);
-
-        log.info("✅ 인기 검색어 {}개 반환", popularKeywords.size());
 
         return popularKeywords;
     }
