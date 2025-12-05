@@ -297,12 +297,12 @@ export interface ChatUser {
 
 // 백엔드 PrivateChat 엔티티 기반
 export interface PrivateChat {
-  user?: User;
+  chatId: number;
   content: string;
-  type: "PRIVATE";
-  createdAt?: string;
-  chatRoomId?: number;
-  productId?: number;
+  createdAt: string;
+  user: User;               // ★ user는 반드시 존재한다
+  chatRoomId: number;       // ★ 없으면 추가
+  targetUserId?: number;    // ★ websocket 메시지 받을 때 필요함
 }
 
 // 백엔드 PublicChat 엔티티 기반
