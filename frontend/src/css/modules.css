@@ -32,3 +32,49 @@
   font-medium text-[10px] leading-[7px] text-white;
   trainsition: opacity 0.3s;
 }
+
+.autocomplete-dropdown {
+  @apply absolute top-full left-0 w-[400px] bg-white 
+  border border-[#ddd] border-t-0 rounded-b-lg 
+  shadow-md max-h-[400px] overflow-y-auto z-10 mt-0;
+}
+
+.keyword-tabs {
+  @apply flex border-b border-[#ddd] bg-gray-50;
+}
+
+.tab {
+  @apply px-4 py-2 text-sm font-semibold text-gray-500 
+  hover:bg-gray-100 transition-colors;
+}
+
+.tab.active {
+  @apply text-black bg-white border-b-2 border-[#B17576];
+}
+
+.tab-icon {
+  @apply inline-block mr-1;
+}
+
+.autocomplete-item {
+  @apply py-3 px-4 cursor-pointer 
+  flex items-center gap-2 text-sm text-[#333] 
+  border-b border-[#f0f0f0] transition-colors
+  hover:bg-[#f5f5f5];
+}
+
+.autocomplete-item.selected {
+  @apply bg-[#f5f5f5]; 
+}
+
+/* 🆕 인기 검색어 순위 뱃지 */
+.ranking-badge {
+  @apply inline-flex items-center justify-center 
+  w-5 h-5 text-xs font-bold text-[#666] bg-[#f0f0f0] 
+  rounded flex-shrink-0;
+}
+
+.ranking-badge.top3 {
+  @apply text-white bg-gradient-to-br 
+  from-[#B17576] to-[#d89899];
+}

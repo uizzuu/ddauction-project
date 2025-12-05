@@ -85,12 +85,21 @@ export default function Header({ user, setUser }: Props) {
         try {
             const results = await fetchSuggestions(keyword);
             setSuggestions(results);
-            setShowSuggestions(results.length > 0);
-            setIsShowingPopular(false);
+
+            // 결과가 있으면 자동완성 보여주기, 없으면 인기검색어 유지
+            if (results.length > 0) {
+                setIsShowingPopular(false);
+                setShowSuggestions(true);
+            } else {
+                setIsShowingPopular(true);
+                setShowSuggestions(true);
+            }
         } catch (error) {
             console.error("❌ 자동완성 API 오류:", error);
             setSuggestions([]);
-            setShowSuggestions(false);
+            // 에러 시 인기검색어 보여주기
+            setIsShowingPopular(true);
+            setShowSuggestions(true);
         }
     };
 
@@ -104,7 +113,6 @@ export default function Header({ user, setUser }: Props) {
             clearTimeout(debounceTimer.current);
         }
 
-        // 입력값이 비어있으면 인기/실시간 검색어 표시
         if (value.trim() === "") {
             setSuggestions([]);
             setIsShowingPopular(true);
@@ -114,44 +122,47 @@ export default function Header({ user, setUser }: Props) {
             return;
         }
 
-        // 300ms 후 API 호출
+        // 입력 중에는 일단 인기검색어 보여주기 (무조건 뜨게)
+        setShowSuggestions(true);
+        setIsShowingPopular(true);
+
         debounceTimer.current = setTimeout(() => {
             handleFetchSuggestions(value);
         }, 300);
     };
 
     // 검색 시 URL 쿼리로 이동
-    // const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    //     e.preventDefault();
+    const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
 
-    //     let keyword = searchKeyword;
-    //     const displayList = isShowingPopular
-    //         ? (keywordTab === "popular" ? popularKeywords : rankings.map(r => r.keyword))
-    //         : suggestions;
+        let keyword = searchKeyword;
+        const displayList = isShowingPopular
+            ? (keywordTab === "popular" ? popularKeywords : rankings.map(r => r.keyword))
+            : suggestions;
 
-    //     if (selectedIndex >= 0 && selectedIndex < displayList.length) {
-    //         keyword = displayList[selectedIndex];
-    //     }
+        if (selectedIndex >= 0 && selectedIndex < displayList.length) {
+            keyword = displayList[selectedIndex];
+        }
 
-    //     const trimmed = keyword.trim();
-    //     const query = new URLSearchParams();
+        const trimmed = keyword.trim();
+        const query = new URLSearchParams();
 
-    //     if (trimmed !== "") {
-    //         query.append("keyword", trimmed);
+        if (trimmed !== "") {
+            query.append("keyword", trimmed);
 
-    //         // 🆕 검색 로그 저장
-    //         saveSearchLog(trimmed).catch(err =>
-    //             console.error("검색 로그 저장 실패:", err)
-    //         );
-    //     }
+            // 🆕 검색 로그 저장
+            saveSearchLog(trimmed).catch(err =>
+                console.error("검색 로그 저장 실패:", err)
+            );
+        }
 
-    //     const params = new URLSearchParams(location.search);
-    //     const currentCategory = params.get("category");
-    //     if (currentCategory) query.append("category", currentCategory);
+        const params = new URLSearchParams(location.search);
+        const currentCategory = params.get("category");
+        if (currentCategory) query.append("category", currentCategory);
 
-    //     navigate(`/search?${query.toString()}`);
-    //     setShowSuggestions(false);
-    // };
+        navigate(`/search?${query.toString()}`);
+        setShowSuggestions(false);
+    };
 
     // 연관 검색어 클릭
     const handleSuggestionClick = (suggestion: string) => {
@@ -282,16 +293,13 @@ export default function Header({ user, setUser }: Props) {
                 </a>
 
                 {/* 검색바 */}
-                <div className="w-full">
+                <div className="w-full" ref={searchRef}>
                     <form
                         className="
                         header-search-form w-[450px] px-3 py-2 border border-[#111111] rounded-[0.4rem]
                         flex items-center gap-2 flex-1 grow flex relative"
                         role="search"
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            console.log("Search submitted:", searchKeyword);
-                        }}
+                        onSubmit={handleSearch}
                     >
                         <label htmlFor="search-input" className="sr-only">
                             검색
@@ -321,60 +329,6 @@ export default function Header({ user, setUser }: Props) {
                             />
                         </button>
 
-                        {/* 자동완성 또는 인기 검색어 드롭다운 */}
-                        {showSuggestions && displayList.length > 0 && (
-                            <div className="autocomplete-dropdown">
-                                {/* 키워드 목록을 보여줄 때만 탭 표시 */}
-                                {isShowingPopular && (
-                                    <div className="keyword-tabs">
-                                        <button
-                                            className={`tab ${keywordTab === "realtime" ? "active" : ""}`}
-                                            onClick={() => {
-                                                setKeywordTab("realtime");
-                                                setSelectedIndex(-1);
-                                                setShowSuggestions(rankings.length > 0);
-                                            }}
-                                        >
-                                            <span className="tab-icon">🔥</span>
-                                            실시간 검색어
-                                            {keywordTab === "realtime" && !isConnected && (
-                                                <span className="connection-status"> (연결 중...)</span>
-                                            )}
-                                        </button>
-                                        <button
-                                            className={`tab ${keywordTab === "popular" ? "active" : ""}`}
-                                            onClick={() => {
-                                                setKeywordTab("popular");
-                                                setSelectedIndex(-1);
-                                                setShowSuggestions(popularKeywords.length > 0);
-                                            }}
-                                        >
-                                            <span className="tab-icon">⭐</span>
-                                            인기 검색어
-                                        </button>
-                                    </div>
-                                )}
-
-                                {displayList.map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className={`autocomplete-item ${selectedIndex === index ? "selected" : ""}`}
-                                        onClick={() => handleSuggestionClick(item)}
-                                        onMouseEnter={() => setSelectedIndex(index)}
-                                    >
-                                        {isShowingPopular ? (
-                                            <span className={`ranking-badge ${index < 3 ? "top3" : ""}`}>
-                                                {index + 1}
-                                            </span>
-                                        ) : (
-                                            <span className="search-icon">🔍</span>
-                                        )}
-                                        {item}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
                         <div
                             className="search-divider"
                             aria-hidden="true"
@@ -388,6 +342,62 @@ export default function Header({ user, setUser }: Props) {
                             />
                         </button>
                     </form>
+
+
+
+                    {/* 자동완성 또는 인기 검색어 드롭다운 */}
+                    {showSuggestions && (
+                        <div className="autocomplete-dropdown">
+                            {/* 키워드 목록을 보여줄 때만 탭 표시 */}
+                            {isShowingPopular && (
+                                <div className="keyword-tabs">
+                                    <button
+                                        className={`tab ${keywordTab === "realtime" ? "active" : ""}`}
+                                        onClick={() => {
+                                            setKeywordTab("realtime");
+                                            setSelectedIndex(-1);
+                                            setShowSuggestions(rankings.length > 0);
+                                        }}
+                                    >
+                                        <span className="tab-icon">🔥</span>
+                                        실시간 검색어
+                                        {keywordTab === "realtime" && !isConnected && (
+                                            <span className="connection-status"> (연결 중...)</span>
+                                        )}
+                                    </button>
+                                    <button
+                                        className={`tab ${keywordTab === "popular" ? "active" : ""}`}
+                                        onClick={() => {
+                                            setKeywordTab("popular");
+                                            setSelectedIndex(-1);
+                                            setShowSuggestions(popularKeywords.length > 0);
+                                        }}
+                                    >
+                                        <span className="tab-icon">⭐</span>
+                                        인기 검색어
+                                    </button>
+                                </div>
+                            )}
+
+                            {displayList.map((item, index) => (
+                                <div
+                                    key={index}
+                                    className={`py-3 px-4 cursor-pointer flex items-center gap-2 text-sm text-[#333] transition-colors border-b border-[#f0f0f0] ${selectedIndex === index ? "selected" : "hover:bg-[#f5f5f5]"} ${index === displayList.length - 1 ? "border-b-0" : ""}`}
+                                    onClick={() => handleSuggestionClick(item)}
+                                    onMouseEnter={() => setSelectedIndex(index)}
+                                >
+                                    {isShowingPopular ? (
+                                        <span className={`ranking-badge ${index < 3 ? "top3" : ""}`}>
+                                            {index + 1}
+                                        </span>
+                                    ) : (
+                                        <span className="text-base opacity-60">🔍</span>
+                                    )}
+                                    {item}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* 아이콘 */}
