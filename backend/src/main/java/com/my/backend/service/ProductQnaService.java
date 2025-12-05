@@ -108,10 +108,13 @@ public class ProductQnaService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
         Long currentUserId = userDetails.getUserId();
+        String role = userDetails.getRole().toString();
 
-        if (!productQna.getUser().getUserId().equals(currentUserId)) {
+        //  관리자 체크 추가
+        if (!productQna.getUser().getUserId().equals(currentUserId) && !"ADMIN".equals(role)) {
             throw new IllegalStateException("본인이 작성한 질문만 수정할 수 있습니다.");
         }
+
 
         productQna.setTitle(productQnaDto.getTitle());
         productQna.setContent(productQnaDto.getContent());
@@ -145,5 +148,43 @@ public class ProductQnaService {
         }
 
         productQnaRepository.deleteById(id);
+    }
+
+    //  1:1 문의 등록
+    @Transactional
+    public ProductQnaDto insertUserQna(ProductQnaDto productQnaDto) {
+        if (productQnaDto.getTitle() == null || productQnaDto.getTitle().isBlank()) {
+            throw new IllegalArgumentException("제목은 필수입니다.");
+        }
+        if (productQnaDto.getContent() == null || productQnaDto.getContent().isBlank()) {
+            throw new IllegalArgumentException("내용은 필수입니다.");
+        }
+
+        Users user = null;
+        if (productQnaDto.getUserId() != null) {
+            user = userRepository.findById(productQnaDto.getUserId())
+                    .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+        } else {
+            user = Users.builder().userId(1L).build();
+        }
+        ProductQna productQna = productQnaDto.toEntity(user);
+        productQna.setRefId(0L);
+        productQna.setProductType(ProductType.STORE);
+        ProductQna saved = productQnaRepository.save(productQna);
+        return ProductQnaDto.fromEntity(saved);
+    }
+    //  사용자 1:1 문의 조회
+    public List<ProductQnaDto> getUserQnasByUserId(Long userId) {
+        return productQnaRepository.findByUserUserId(userId).stream()
+                .filter(qna -> qna.getRefId() != null && qna.getRefId().equals(0L))
+                .map(ProductQnaDto::fromEntity)
+                .toList();
+    }
+
+    //  모든 1:1 문의 조회 (관리자용)
+    public List<ProductQnaDto> getAllUserQnas() {
+        return productQnaRepository.findByRefId(0L).stream()
+                .map(ProductQnaDto::fromEntity)
+                .toList();
     }
 }

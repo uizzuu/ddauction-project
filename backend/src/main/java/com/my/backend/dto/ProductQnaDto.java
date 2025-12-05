@@ -24,6 +24,9 @@ public class ProductQnaDto {
     private Long refId;
     private ProductType productType;
 
+    public void setQuestion(String question) { this.content = question; }
+    public void setProductId(Long productId) { this.refId = productId; }
+
     // Entity → DTO
     public static ProductQnaDto fromEntity(ProductQna productQna) {
         if (productQna == null) return null;
