@@ -121,7 +121,7 @@ export default function UserChat({ user }: UserChatProps) {
     const host = isLocal ? "localhost:8080" : window.location.host;
 
     const url = selectedUser
-      ? `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}&productId=${selectedProductId}`
+      ? `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}` // ← 여기에 productId 없어야 함
       : `${protocol}://${host}/ws/chat?userId=${user.userId}`;
 
     ws.current?.close();
@@ -168,7 +168,7 @@ export default function UserChat({ user }: UserChatProps) {
     ws.current.onerror = (err) => console.error("웹소켓 에러:", err);
 
     return () => ws.current?.close();
-  }, [user, selectedUser, selectedProductId, chatRoomId, isLocal]);
+  }, [user, selectedUser, selectedProductId, isLocal]);
 
   // -----------------------------
   // 5. 자동 스크롤

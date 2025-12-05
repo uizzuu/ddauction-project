@@ -31,15 +31,28 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Object userIdAttr = session.getAttributes().get("userId");
+        Object targetIdAttr = session.getAttributes().get("targetUserId");
+
         if (userIdAttr == null) {
-            System.err.println("세션에 userId 없음, 연결 종료: " + session.getId());
             session.close(CloseStatus.BAD_DATA);
             return;
         }
 
         Long userId = Long.valueOf(userIdAttr.toString());
+
+        // ⭐ 수정: targetUserId 누락 방지 - 없는 경우 로그 남기기
+        Long targetUserId = null;
+        if (targetIdAttr != null) {
+            targetUserId = Long.valueOf(targetIdAttr.toString());
+        } else {
+            System.err.println("[경고] targetUserId 없음 → 개인채팅 수신 불가"); // ← 수정된 부분
+        }
+
+        // 세션 저장
         userSessions.computeIfAbsent(userId, k -> new ArrayList<>()).add(session);
-        System.out.println("WebSocket 연결됨: " + session.getId() + " / userId: " + userId);
+
+        // targetUserId 저장
+        session.getAttributes().put("targetUserId", targetUserId);
     }
 
     @Override
