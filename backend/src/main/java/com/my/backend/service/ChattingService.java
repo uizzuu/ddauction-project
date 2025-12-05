@@ -65,14 +65,7 @@ public class ChattingService {
     }
 
     // ===================== 개인 채팅 조회 =====================
-    public List<PrivateChatDto> getPrivateChatsByUser(Long userId) {
-        List<PrivateChat> chats = privateChatRepository
-                .findByChatRoomSellerUserIdOrChatRoomSenderUserIdOrderByCreatedAtAsc(userId, userId);
 
-        return chats.stream()
-                .map(PrivateChatDto::fromEntity)
-                .collect(Collectors.toList());
-    }
 
     // ===================== 공개 채팅 저장 =====================
     public PublicChatDto savePublicChat(Long userId, PublicChatDto dto) {
@@ -136,11 +129,9 @@ public class ChattingService {
     }
 
     public List<PrivateChatDto> getPrivateChatsByChatRoom(Long chatRoomId) {
-        List<PrivateChat> chats = privateChatRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId);
-
-        return chats.stream()
+        return privateChatRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId)
+                .stream()
                 .map(PrivateChatDto::fromEntity)
                 .collect(Collectors.toList());
     }
-
 }

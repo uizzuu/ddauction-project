@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import "../../css/UserChat.css"; 
+import "../../css/UserChat.css";
 import type { UserChatProps, PrivateChat, PublicChat, ChatMessagePayload, User } from "../../common/types";
 
 // -----------------------------
@@ -66,6 +66,7 @@ export default function UserChat({ user }: UserChatProps) {
 
     const loadPrivateMessages = async () => {
       try {
+        // ✅ ChatRoomDto 단일 객체 반환됨
         const roomRes = await fetch(
           `${backendHost}/api/chats/private/room?userId=${user.userId}&targetUserId=${selectedUser.userId}&productId=${selectedProductId}`,
           { credentials: "include" }
@@ -75,13 +76,31 @@ export default function UserChat({ user }: UserChatProps) {
 
         const roomData = await roomRes.json();
 
-        const roomId = roomData[0].chatRoomId;
-        console.log("roomData:", roomData);
-        console.log("roomId:", roomId);
-        setChatRoomId(roomId);
+        // --------------------------
+        // ✅ 단일 객체에서 chatRoomId 가져옴 (수정됨)
+        // --------------------------
+        const roomId = roomData.chatRoomId; // ✔ 수정됨
 
-        const msgData: PrivateChat[] = roomData;
-        setMessages(msgData);
+        if (!roomId) {
+          setChatRoomId(null);
+          setMessages([]);
+          return;
+        }
+
+        setChatRoomId(roomId); // ✔ 채팅방 ID 저장
+
+        // --------------------------
+        // 2단계: 이제 해당 방의 메시지 불러오기 (신규 추가됨)
+        // --------------------------
+        const msgRes = await fetch(
+          `${backendHost}/api/chats/private/messages?chatRoomId=${roomId}`, // ✔ 새로운 엔드포인트 필요
+          { credentials: "include" }
+        );
+
+        const msgData = await msgRes.json();
+
+        setMessages(msgData); // ✔ 메시지 세팅
+
       } catch (e) {
         console.error("1:1 채팅 내역 불러오기 실패", e);
       }
@@ -89,6 +108,7 @@ export default function UserChat({ user }: UserChatProps) {
 
     loadPrivateMessages();
   }, [user, selectedUser, selectedProductId]);
+
 
   // -----------------------------
   // 4. WebSocket 연결
@@ -117,20 +137,32 @@ export default function UserChat({ user }: UserChatProps) {
           data.user = { userId: data.userId, nickName: data.nickName };
         }
 
+        // ---------- PUBLIC ----------
         if (!selectedUser && data.type === "PUBLIC") {
           setMessages((prev) => [...prev, data]);
           return;
         }
 
-        if (selectedUser && data.type === "PRIVATE") {
-          if (chatRoomId && data.chatRoomId === chatRoomId) {
+        // ---------- PRIVATE ----------
+        if (data.type === "PRIVATE") {
+
+          // chatRoomId 아직 없으면 → 방 번호 먼저 세팅
+          if (!chatRoomId && data.chatRoomId) {
+            setChatRoomId(data.chatRoomId);
+          }
+
+          // 방 번호가 같으면 메시지 반영
+          if (data.chatRoomId === chatRoomId || !chatRoomId) {
             setMessages((prev) => [...prev, data]);
           }
+
+          return;
         }
       } catch (err) {
         console.error("메시지 파싱 오류:", err);
       }
     };
+
 
     ws.current.onclose = () => console.log("웹소켓 종료");
     ws.current.onerror = (err) => console.error("웹소켓 에러:", err);

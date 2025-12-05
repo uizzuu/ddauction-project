@@ -17,10 +17,7 @@ public class ChattingController {
     private final ChattingService chatService;
 
     // ===================== 개인 채팅 조회 =====================
-    @GetMapping("/private/{userId}")
-    public ResponseEntity<List<PrivateChatDto>> getPrivateChats(@PathVariable Long userId) {
-        return ResponseEntity.ok(chatService.getPrivateChatsByUser(userId));
-    }
+
 
     // ===================== 공개 채팅 조회 =====================
     @GetMapping("/public/recent")
@@ -52,6 +49,10 @@ public class ChattingController {
 
         ChatRoomDto chatRoomDto = chatService.getOrCreateChatRoom(userId, targetUserId, productId);
         return ResponseEntity.ok(chatService.getPrivateChatsByChatRoom(chatRoomDto.getChatRoomId()));
+    }
+    @GetMapping("/private/messages")
+    public ResponseEntity<List<PrivateChatDto>> getMessages(@RequestParam Long chatRoomId) {
+        return ResponseEntity.ok(chatService.getPrivateChatsByChatRoom(chatRoomId));
     }
 
 }
