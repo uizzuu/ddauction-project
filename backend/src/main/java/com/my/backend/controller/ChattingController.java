@@ -48,11 +48,19 @@ public class ChattingController {
             @RequestParam Long productId) {
 
         ChatRoomDto chatRoomDto = chatService.getOrCreateChatRoom(userId, targetUserId, productId);
-        return ResponseEntity.ok(chatService.getPrivateChatsByChatRoom(chatRoomDto.getChatRoomId()));
+        return ResponseEntity.ok(
+                chatService.getPrivateChatsByUsers(userId, targetUserId, productId)
+        );
     }
     @GetMapping("/private/messages")
-    public ResponseEntity<List<PrivateChatDto>> getMessages(@RequestParam Long chatRoomId) {
-        return ResponseEntity.ok(chatService.getPrivateChatsByChatRoom(chatRoomId));
+    public ResponseEntity<List<PrivateChatDto>> getMessages(
+            @RequestParam Long userId,
+            @RequestParam Long targetUserId,
+            @RequestParam Long productId) {
+
+        return ResponseEntity.ok(
+                chatService.getPrivateChatsByUsers(userId, targetUserId, productId)
+        );
     }
 
 }

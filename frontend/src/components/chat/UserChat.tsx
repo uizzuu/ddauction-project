@@ -11,6 +11,8 @@ export default function UserChat({ user }: UserChatProps) {
   const state =
     (location.state as { sellerId?: number; productId?: number }) || undefined;
 
+
+
   const [messages, setMessages] = useState<(PrivateChat | PublicChat)[]>([]);
   const [input, setInput] = useState("");
   const [users, setUsers] = useState<User[]>([]);
@@ -65,41 +67,27 @@ export default function UserChat({ user }: UserChatProps) {
     if (!user || !selectedUser || !selectedProductId) return;
 
     const loadPrivateMessages = async () => {
+      console.log("[DEBUG] 개인채팅 fetch 시작", { user, selectedUser, selectedProductId });
       try {
-        // ✅ ChatRoomDto 단일 객체 반환됨
-        const roomRes = await fetch(
-          `${backendHost}/api/chats/private/room?userId=${user.userId}&targetUserId=${selectedUser.userId}&productId=${selectedProductId}`,
-          { credentials: "include" }
-        );
-
-        if (!roomRes.ok) throw new Error("채팅방 조회 실패");
-
-        const roomData = await roomRes.json();
-
-        // --------------------------
-        // ✅ 단일 객체에서 chatRoomId 가져옴 (수정됨)
-        // --------------------------
-        const roomId = roomData.chatRoomId; // ✔ 수정됨
-
-        if (!roomId) {
-          setChatRoomId(null);
-          setMessages([]);
-          return;
-        }
-
-        setChatRoomId(roomId); // ✔ 채팅방 ID 저장
-
-        // --------------------------
-        // 2단계: 이제 해당 방의 메시지 불러오기 (신규 추가됨)
-        // --------------------------
+        // ✅ 이제 userId, targetUserId, productId로 직접 조회
         const msgRes = await fetch(
-          `${backendHost}/api/chats/private/messages?chatRoomId=${roomId}`, // ✔ 새로운 엔드포인트 필요
+          `${backendHost}/api/chats/private/messages?userId=${user.userId}&targetUserId=${selectedUser.userId}&productId=${selectedProductId}`,
           { credentials: "include" }
         );
+
+        console.log("[DEBUG] 메시지 fetch 상태", msgRes.status);
+
+        if (!msgRes.ok) throw new Error("메시지 조회 실패");
 
         const msgData = await msgRes.json();
+        console.log("[DEBUG] 메시지 데이터", msgData);
 
-        setMessages(msgData); // ✔ 메시지 세팅
+        setMessages(msgData);
+
+        // chatRoomId 설정 (첫 번째 메시지가 있으면)
+        if (msgData.length > 0 && msgData[0].chatRoomId) {
+          setChatRoomId(msgData[0].chatRoomId);
+        }
 
       } catch (e) {
         console.error("1:1 채팅 내역 불러오기 실패", e);
@@ -121,8 +109,8 @@ export default function UserChat({ user }: UserChatProps) {
     const host = isLocal ? "localhost:8080" : window.location.host;
 
     const url = selectedUser
-  ? `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}`
-  : `${protocol}://${host}/ws/public-chat?userId=${user.userId}`;
+      ? `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}`
+      : `${protocol}://${host}/ws/public-chat?userId=${user.userId}`;
 
     console.log("[WebSocket] 연결 시도 URL:", url); // 🔹 연결 URL 확인
 

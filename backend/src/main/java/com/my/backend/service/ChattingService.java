@@ -17,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,15 +41,18 @@ public class ChattingService {
         Users seller = usersRepository.findById(targetUserId)
                 .orElseThrow(() -> new RuntimeException("Target user not found"));
 
-        Optional<Product> productOpt = productRepository.findById(productId);
-        if (productOpt.isEmpty()) {
-            log.warn("개인 채팅 생성 실패 - 존재하지 않는 productId: {}", productId);
-            throw new RuntimeException("상품 정보를 찾을 수 없습니다.");
-        }
-        Product product = productOpt.get();
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("상품 정보를 찾을 수 없습니다."));
 
+        // 기존 방향
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository
                 .findBySellerUserIdAndSenderUserIdAndProductProductId(targetUserId, userId, productId);
+
+        // 없으면 반대 방향 확인
+        if (optionalChatRoom.isEmpty()) {
+            optionalChatRoom = chatRoomRepository
+                    .findBySenderUserIdAndSellerUserIdAndProductProductId(targetUserId, userId, productId); // ✔ 수정
+        }
 
         ChatRoom chatRoom = optionalChatRoom.orElseGet(() -> {
             ChatRoom newRoom = ChatRoom.builder()
@@ -65,7 +70,33 @@ public class ChattingService {
     }
 
     // ===================== 개인 채팅 조회 =====================
+    public List<PrivateChatDto> getPrivateChatsByUsers(Long userId, Long targetUserId, Long productId) {
 
+        // 양방향 채팅방 모두 찾기
+        Optional<ChatRoom> room1 = chatRoomRepository
+                .findBySellerUserIdAndSenderUserIdAndProductProductId(targetUserId, userId, productId);
+
+        Optional<ChatRoom> room2 = chatRoomRepository
+                .findBySellerUserIdAndSenderUserIdAndProductProductId(userId, targetUserId, productId);
+
+        List<PrivateChat> allMessages = new ArrayList<>();
+
+        // 방향1 메시지
+        room1.ifPresent(room ->
+                allMessages.addAll(privateChatRepository.findByChatRoomIdOrderByCreatedAtAsc(room.getId()))
+        );
+
+        // 방향2 메시지
+        room2.ifPresent(room ->
+                allMessages.addAll(privateChatRepository.findByChatRoomIdOrderByCreatedAtAsc(room.getId()))
+        );
+
+        // 시간순 정렬 후 반환
+        return allMessages.stream()
+                .sorted(Comparator.comparing(PrivateChat::getCreatedAt))
+                .map(PrivateChatDto::fromEntity)
+                .collect(Collectors.toList());
+    }
 
     // ===================== 공개 채팅 저장 =====================
     public PublicChatDto savePublicChat(Long userId, PublicChatDto dto) {
@@ -101,17 +132,19 @@ public class ChattingService {
         Users seller = usersRepository.findById(targetUserId)
                 .orElseThrow(() -> new RuntimeException("Target user not found"));
 
+        // 기존 방향
         Optional<ChatRoom> optionalChatRoom = chatRoomRepository
                 .findBySellerUserIdAndSenderUserIdAndProductProductId(targetUserId, userId, productId);
 
-        ChatRoom chatRoom = optionalChatRoom.orElseGet(() -> {
-            Optional<Product> productOpt = productRepository.findById(productId);
-            if (productOpt.isEmpty()) {
-                log.warn("채팅방 생성 실패 - 존재하지 않는 productId: {}", productId);
-                throw new RuntimeException("상품 정보를 찾을 수 없습니다.");
-            }
-            Product product = productOpt.get();
+        // 없으면 반대 방향 확인
+        if (optionalChatRoom.isEmpty()) {
+            optionalChatRoom = chatRoomRepository
+                    .findBySenderUserIdAndSellerUserIdAndProductProductId(targetUserId, userId, productId); // ✔ 수정
+        }
 
+        ChatRoom chatRoom = optionalChatRoom.orElseGet(() -> {
+            Product product = productRepository.findById(productId)
+                    .orElseThrow(() -> new RuntimeException("상품 정보를 찾을 수 없습니다."));
             ChatRoom newRoom = ChatRoom.builder()
                     .seller(seller)
                     .sender(sender)
@@ -126,12 +159,5 @@ public class ChattingService {
                 .senderId(chatRoom.getSender().getUserId())
                 .productId(chatRoom.getProduct() != null ? chatRoom.getProduct().getProductId() : null)
                 .build();
-    }
-
-    public List<PrivateChatDto> getPrivateChatsByChatRoom(Long chatRoomId) {
-        return privateChatRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId)
-                .stream()
-                .map(PrivateChatDto::fromEntity)
-                .collect(Collectors.toList());
     }
 }
