@@ -1,13 +1,31 @@
 // pages/VerifyPage.tsx
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import axios from "axios";
 
-// 백엔드 verify-email 호출 함수 (쿼리 파라미터 방식)
+// fetch 기반 verify-email 함수
 async function verifyEmail(email: string, code: string) {
-  return axios.post(
-    `/api/auth/verify-email?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`
+  const response = await fetch(
+    `/api/auth/verify-email?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
   );
+
+  if (!response.ok) {
+    // 서버에서 보낸 JSON 에러 메시지를 읽기
+    let errMsg = "인증 실패";
+    try {
+      const data = await response.json();
+      errMsg = data.message || errMsg;
+    } catch (_) {}
+
+    throw new Error(errMsg);
+  }
+
+  return response.json();
 }
 
 export default function VerifyPage() {
@@ -32,9 +50,7 @@ export default function VerifyPage() {
       })
       .catch((err: any) => {
         console.error(err);
-        const message =
-          err.response?.data?.message || err.message || "인증 실패";
-        alert("이메일 인증 실패: " + message);
+        alert("이메일 인증 실패: " + err.message);
         navigate("/signup");
       });
   }, [location, navigate]);

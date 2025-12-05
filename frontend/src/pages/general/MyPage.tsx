@@ -4,7 +4,7 @@ import type {
   User,
   Product, // Product 타입은 이미 productCategoryType을 포함한다고 가정
   Report,
-  Qna,
+  ProductQna,
   ProductForm,
   Inquiry,
   Review,
@@ -89,7 +89,7 @@ export default function MyPage({ user, setUser }: Props) {
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
   const [myLikes, setMyLikes] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
-  const [myQnas, setMyQnas] = useState<Qna[]>([]);
+  const [myQnas, setMyQnas] = useState<ProductQna[]>([]);
   // 🚨 categories 상태 제거 (types.ts 반영)
   const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
 
@@ -276,7 +276,7 @@ export default function MyPage({ user, setUser }: Props) {
     try {
       const res = await fetch(`${API_BASE_URL}/api/qna/user/${user.userId}`);
       if (res.ok) {
-        const data: Qna[] = await res.json();
+        const data: ProductQna[] = await res.json();
         setMyQnas(data);
       } else {
         alert("Q&A 조회 실패");
