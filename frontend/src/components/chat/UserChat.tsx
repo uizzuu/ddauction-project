@@ -115,14 +115,16 @@ export default function UserChat({ user }: UserChatProps) {
   // -----------------------------
   useEffect(() => {
     if (!user) return;
-    if (selectedUser && !selectedProductId) return;
+    // if (selectedUser && !selectedProductId) return;
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const host = isLocal ? "localhost:8080" : window.location.host;
 
     const url = selectedUser
-      ? `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}` // ← 여기에 productId 없어야 함
-      : `${protocol}://${host}/ws/chat?userId=${user.userId}`;
+  ? `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}`
+  : `${protocol}://${host}/ws/public-chat?userId=${user.userId}`;
+
+    console.log("[WebSocket] 연결 시도 URL:", url); // 🔹 연결 URL 확인
 
     ws.current?.close();
     ws.current = new WebSocket(url);
@@ -130,8 +132,10 @@ export default function UserChat({ user }: UserChatProps) {
     ws.current.onopen = () => console.log("WebSocket 연결 성공");
 
     ws.current.onmessage = (event) => {
+      console.log("[WebSocket] 수신 메시지:", event.data); // 🔹 수신 메시지
       try {
         const data: any = JSON.parse(event.data);
+        console.log("[WebSocket] 파싱된 데이터:", data); // 🔹 JSON 확인
 
         if (!data.user && data.nickName) {
           data.user = { userId: data.userId, nickName: data.nickName };
@@ -143,12 +147,11 @@ export default function UserChat({ user }: UserChatProps) {
           return;
         }
 
-        // ---------- PRIVATE ----------
+        // PRIVATE 메시지
         if (data.type === "PRIVATE") {
-
-          // chatRoomId 아직 없으면 → 방 번호 먼저 세팅
-          if (!chatRoomId && data.chatRoomId) {
-            setChatRoomId(data.chatRoomId);
+          if (!chatRoomId && data.chatRoomId) setChatRoomId(data.chatRoomId);
+          if (selectedUser && data.chatRoomId === chatRoomId) {
+            setMessages((prev) => [...prev, data]);
           }
 
           // 방 번호가 같으면 메시지 반영
@@ -215,6 +218,7 @@ export default function UserChat({ user }: UserChatProps) {
         <div
           className={!selectedUser ? "selected" : ""}
           onClick={() => {
+            ws.current?.close();
             setSelectedUser(null);
             setSelectedProductId(undefined);
             setChatRoomId(null);
@@ -229,6 +233,7 @@ export default function UserChat({ user }: UserChatProps) {
             key={u.userId}
             className={selectedUser?.userId === u.userId ? "selected" : ""}
             onClick={() => {
+              ws.current?.close();
               setSelectedUser(u);
               setSelectedProductId(state?.productId);
               setChatRoomId(null);
