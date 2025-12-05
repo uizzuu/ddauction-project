@@ -16,9 +16,6 @@ public class ChattingController {
 
     private final ChattingService chatService;
 
-    // ===================== 개인 채팅 조회 =====================
-
-
     // ===================== 공개 채팅 조회 =====================
     @GetMapping("/public/recent")
     public ResponseEntity<List<PublicChatDto>> getRecentPublicChats() {
@@ -52,6 +49,8 @@ public class ChattingController {
                 chatService.getPrivateChatsByUsers(userId, targetUserId, productId)
         );
     }
+
+    // ===================== 개인 채팅 조회 =====================
     @GetMapping("/private/messages")
     public ResponseEntity<List<PrivateChatDto>> getMessages(
             @RequestParam Long userId,
