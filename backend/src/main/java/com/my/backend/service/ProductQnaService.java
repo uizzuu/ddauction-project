@@ -1,6 +1,7 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.ProductQnaDto;
+import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.entity.ProductQna;
 import com.my.backend.entity.Users;
 import com.my.backend.enums.ProductType;
@@ -9,6 +10,8 @@ import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -71,7 +74,7 @@ public class ProductQnaService {
                 .toList();
     }
 
-    // 문의 등록
+    // 문의 등록 ⭐ 수정됨
     @Transactional
     public ProductQnaDto insertProductQna(ProductQnaDto productQnaDto) {
         if (productQnaDto.getProductType() == null) {
@@ -82,19 +85,33 @@ public class ProductQnaService {
             throw new IllegalArgumentException("상품 참조 ID는 필수입니다.");
         }
 
-        Users user = userRepository.findById(productQnaDto.getUserId())
-                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. id=" + productQnaDto.getUserId()));
+        // ⭐ JWT 토큰에서 현재 로그인한 사용자 ID 가져오기
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Long currentUserId = userDetails.getUserId();
+
+        Users user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다. id=" + currentUserId));
 
         ProductQna productQna = productQnaDto.toEntity(user);
         ProductQna saved = productQnaRepository.save(productQna);
         return ProductQnaDto.fromEntity(saved);
     }
 
-    // 문의 수정
+    // 문의 수정 ⭐ 수정됨
     @Transactional
     public ProductQnaDto updateProductQna(Long id, ProductQnaDto productQnaDto) {
         ProductQna productQna = productQnaRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("문의를 찾을 수 없습니다. id=" + id));
+
+        // ⭐ 권한 체크: 본인만 수정 가능
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Long currentUserId = userDetails.getUserId();
+
+        if (!productQna.getUser().getUserId().equals(currentUserId)) {
+            throw new IllegalStateException("본인이 작성한 질문만 수정할 수 있습니다.");
+        }
 
         productQna.setTitle(productQnaDto.getTitle());
         productQna.setContent(productQnaDto.getContent());
@@ -111,12 +128,22 @@ public class ProductQnaService {
         return ProductQnaDto.fromEntity(updated);
     }
 
-    // 문의 삭제
+    // 문의 삭제 ⭐ 수정됨
     @Transactional
     public void deleteProductQna(Long id) {
-        if (!productQnaRepository.existsById(id)) {
-            throw new EntityNotFoundException("문의를 찾을 수 없습니다. id=" + id);
+        ProductQna productQna = productQnaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("문의를 찾을 수 없습니다. id=" + id));
+
+        // ⭐ 권한 체크: 본인 또는 관리자만 삭제 가능
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        Long currentUserId = userDetails.getUserId();
+        String role = userDetails.getRole().toString();
+
+        if (!productQna.getUser().getUserId().equals(currentUserId) && !"ADMIN".equals(role)) {
+            throw new IllegalStateException("삭제 권한이 없습니다.");
         }
+
         productQnaRepository.deleteById(id);
     }
 }

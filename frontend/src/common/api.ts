@@ -513,7 +513,7 @@ export async function checkWinner(productId: number): Promise<{
 // QnA 목록 조회 (인증 불필요)
 export async function getQnaList(productId: number): Promise<TYPE.ProductQna[]> {
   const response = await fetch(
-    `${API_BASE_URL}${SPRING_API}/qna/product/${productId}`
+    `${API_BASE_URL}${SPRING_API}/product-qnas/product/${productId}`
   );
   if (!response.ok) return [];
   return response.json();
@@ -521,14 +521,17 @@ export async function getQnaList(productId: number): Promise<TYPE.ProductQna[]> 
 
 // QnA 질문 등록
 export async function createQna(data: {
-  productId: number;
+  refId: number;
+  productType: string;
   title: string;
-  content: string;  // question → content로 변경
+  content: string;
 }): Promise<void> {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
 
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/qna`, {
+  console.log("📤 QnA 등록 요청:", data);
+
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/product-qnas`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -539,6 +542,7 @@ export async function createQna(data: {
 
   if (!response.ok) {
     const msg = await response.text();
+    console.error("❌ QnA 등록 실패:", msg);
     throw new Error(msg || "질문 등록 실패");
   }
 }
@@ -546,12 +550,12 @@ export async function createQna(data: {
 // QnA 질문 수정
 export async function updateQna(
   qnaId: number,
-  data: { title: string; content: string }  // question → content로 변경
+  data: { title: string; content: string }
 ): Promise<void> {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
 
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/qna/${qnaId}`, {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/product-qnas/${qnaId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -560,7 +564,10 @@ export async function updateQna(
     body: JSON.stringify(data),
   });
 
-  if (!response.ok) throw new Error("질문 수정 실패");
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "질문 수정 실패");
+  }
 }
 
 // QnA 질문 삭제
@@ -568,38 +575,47 @@ export async function deleteQna(qnaId: number): Promise<void> {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
 
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/qna/${qnaId}`, {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/product-qnas/${qnaId}`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 
-  if (!response.ok) throw new Error("질문 삭제 실패");
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "질문 삭제 실패");
+  }
 }
 
 // QnA 답변 등록
 export async function createQnaAnswer(
   qnaId: number,
-  content: string  // answer → content로 변경
+  content: string
 ): Promise<void> {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
 
+  console.log("📤 답변 등록 요청:", { productQnaId: qnaId, content });
+
   const response = await fetch(
-    `${API_BASE_URL}${SPRING_API}/qna/${qnaId}/review`,
+    `${API_BASE_URL}${SPRING_API}/qna-reviews`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ content }),  // answer → content
+      body: JSON.stringify({
+        productQnaId: qnaId,
+        content,
+      }),
     }
   );
 
   if (!response.ok) {
     const msg = await response.text();
+    console.error("❌ 답변 등록 실패:", msg);
     throw new Error(msg || "답변 등록 실패");
   }
 }
@@ -607,24 +623,27 @@ export async function createQnaAnswer(
 // QnA 답변 수정
 export async function updateQnaAnswer(
   answerId: number,
-  content: string  // answer → content로 변경
+  content: string
 ): Promise<void> {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
 
   const response = await fetch(
-    `${API_BASE_URL}${SPRING_API}/qna/${answerId}/review`,
+    `${API_BASE_URL}${SPRING_API}/qna-reviews/${answerId}`,
     {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ content }),  // answer → content
+      body: JSON.stringify({ content }),
     }
   );
 
-  if (!response.ok) throw new Error("답변 수정 실패");
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "답변 수정 실패");
+  }
 }
 
 // QnA 답변 삭제
@@ -633,7 +652,7 @@ export async function deleteQnaAnswer(answerId: number): Promise<void> {
   if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
 
   const response = await fetch(
-    `${API_BASE_URL}${SPRING_API}/qna/${answerId}/review`,
+    `${API_BASE_URL}${SPRING_API}/qna-reviews/${answerId}`,
     {
       method: "DELETE",
       headers: {
@@ -642,7 +661,10 @@ export async function deleteQnaAnswer(answerId: number): Promise<void> {
     }
   );
 
-  if (!response.ok) throw new Error("답변 삭제 실패");
+  if (!response.ok) {
+    const msg = await response.text();
+    throw new Error(msg || "답변 삭제 실패");
+  }
 }
 
 // Product 타입 확장: 결제 금액 필드 추가

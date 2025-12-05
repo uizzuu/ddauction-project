@@ -56,22 +56,25 @@ export default function ProductQnA({
   const handleCreateQuestion = async () => {
     if (!user) return alert("로그인 후 질문을 등록할 수 있습니다.");
 
-    // 수정: 판매자 본인이 자기 상품에 질문하는 것 방지
     if (product && user.userId === product.sellerId) {
       return alert("본인 상품에는 질문을 작성할 수 없습니다.");
     }
 
+    if (!newQuestion.title.trim()) return alert("질문 제목을 입력해주세요.");
     if (!newQuestion.content.trim()) return alert("질문 내용을 입력해주세요.");
 
     try {
       await createQna({
-        productId,
+        refId: productId,
+        productType: product?.productType || "AUCTION",
         title: newQuestion.title,
         content: newQuestion.content,
       });
       setNewQuestion({ title: "", content: "" });
       fetchQnaList();
+      alert("질문이 등록되었습니다.");
     } catch (error) {
+      console.error("질문 등록 오류:", error);
       alert(error instanceof Error ? error.message : "질문 등록 중 오류 발생");
     }
   };
@@ -82,7 +85,9 @@ export default function ProductQnA({
     try {
       await deleteQna(qnaId);
       fetchQnaList();
+      alert("질문이 삭제되었습니다.");
     } catch (error) {
+      console.error("질문 삭제 오류:", error);
       alert(error instanceof Error ? error.message : "질문 삭제 실패");
     }
   };
@@ -90,13 +95,15 @@ export default function ProductQnA({
   // 질문 수정 저장
   const saveEditingQuestion = async (qnaId: number) => {
     if (!editingQuestion.title.trim() || !editingQuestion.content.trim())
-      return alert("내용을 입력해주세요.");
+      return alert("제목과 내용을 모두 입력해주세요.");
     try {
       await updateQna(qnaId, editingQuestion);
       setEditingQuestionId(null);
       setEditingQuestion({ title: "", content: "" });
       fetchQnaList();
+      alert("질문이 수정되었습니다.");
     } catch (error) {
+      console.error("질문 수정 오류:", error);
       alert(error instanceof Error ? error.message : "질문 수정 실패");
     }
   };
@@ -128,7 +135,9 @@ export default function ProductQnA({
       setEditingAnswerId(null);
       setEditingAnswerContent("");
       fetchQnaList();
+      alert("답변이 수정되었습니다.");
     } catch (error) {
+      console.error("답변 수정 오류:", error);
       alert(error instanceof Error ? error.message : "답변 수정 실패");
     }
   };
@@ -139,7 +148,9 @@ export default function ProductQnA({
     try {
       await deleteQnaAnswer(answerId);
       fetchQnaList();
+      alert("답변이 삭제되었습니다.");
     } catch (error) {
+      console.error("답변 삭제 오류:", error);
       alert(error instanceof Error ? error.message : "답변 삭제 실패");
     }
   };
@@ -152,7 +163,9 @@ export default function ProductQnA({
       await createQnaAnswer(qnaId, answer);
       setAnswers((prev) => ({ ...prev, [qnaId]: "" }));
       fetchQnaList();
+      alert("답변이 등록되었습니다.");
     } catch (error) {
+      console.error("답변 등록 오류:", error);
       alert(error instanceof Error ? error.message : "답변 등록 중 오류 발생");
     }
   };
