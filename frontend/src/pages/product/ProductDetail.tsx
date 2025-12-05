@@ -10,7 +10,7 @@ import AROverlayModal from "../../components/modal/AROverlayModal";
 import type {
   Product,
   User,
-  Qna,
+  ProductQna,
   Bid,
   EditProductForm,
   WinnerCheckResponse,
@@ -97,7 +97,7 @@ export default function ProductDetail({ user }: Props) {
   const [isBookMarked, setIsBookMarked] = useState(false);
   const [bookmarkCount, setBookmarkCount] = useState(0);
 
-  const [qnaList, setQnaList] = useState<Qna[]>([]);
+  const [qnaList, setQnaList] = useState<ProductQna[]>([]);
 
   const [editingProductId, setEditingProductId] = useState<number | null>(null);
   const [productForm, setProductForm] = useState<EditProductForm>({
