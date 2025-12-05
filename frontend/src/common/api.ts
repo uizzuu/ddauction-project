@@ -523,13 +523,20 @@ export async function getQnaList(productId: number): Promise<TYPE.ProductQna[]> 
 export async function createQna(data: {
   productId: number;
   title: string;
-  question: string;
-  boardName: string;
+  content: string;  // question → content로 변경
 }): Promise<void> {
-  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/qna`, {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/qna`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(data),
   });
+
   if (!response.ok) {
     const msg = await response.text();
     throw new Error(msg || "질문 등록 실패");
@@ -539,35 +546,58 @@ export async function createQna(data: {
 // QnA 질문 수정
 export async function updateQna(
   qnaId: number,
-  data: { title: string; question: string }
+  data: { title: string; content: string }  // question → content로 변경
 ): Promise<void> {
-  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/qna/${qnaId}`, {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/qna/${qnaId}`, {
     method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(data),
   });
+
   if (!response.ok) throw new Error("질문 수정 실패");
 }
 
 // QnA 질문 삭제
 export async function deleteQna(qnaId: number): Promise<void> {
-  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/qna/${qnaId}`, {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/qna/${qnaId}`, {
     method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
+
   if (!response.ok) throw new Error("질문 삭제 실패");
 }
 
 // QnA 답변 등록
 export async function createQnaAnswer(
   qnaId: number,
-  answer: string
+  content: string  // answer → content로 변경
 ): Promise<void> {
-  const response = await authFetch(
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+
+  const response = await fetch(
     `${API_BASE_URL}${SPRING_API}/qna/${qnaId}/review`,
     {
       method: "POST",
-      body: JSON.stringify({ answer }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),  // answer → content
     }
   );
+
   if (!response.ok) {
     const msg = await response.text();
     throw new Error(msg || "답변 등록 실패");
@@ -577,26 +607,41 @@ export async function createQnaAnswer(
 // QnA 답변 수정
 export async function updateQnaAnswer(
   answerId: number,
-  answer: string
+  content: string  // answer → content로 변경
 ): Promise<void> {
-  const response = await authFetch(
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+
+  const response = await fetch(
     `${API_BASE_URL}${SPRING_API}/qna/${answerId}/review`,
     {
       method: "PUT",
-      body: JSON.stringify({ answer }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),  // answer → content
     }
   );
+
   if (!response.ok) throw new Error("답변 수정 실패");
 }
 
 // QnA 답변 삭제
 export async function deleteQnaAnswer(answerId: number): Promise<void> {
-  const response = await authFetch(
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
+
+  const response = await fetch(
     `${API_BASE_URL}${SPRING_API}/qna/${answerId}/review`,
     {
       method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     }
   );
+
   if (!response.ok) throw new Error("답변 삭제 실패");
 }
 

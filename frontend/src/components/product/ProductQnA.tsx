@@ -27,13 +27,13 @@ export default function ProductQnA({
   qnaList,
   setQnaList,
 }: Props) {
-  const [newQuestion, setNewQuestion] = useState({ title: "", question: "" });
+  const [newQuestion, setNewQuestion] = useState({ title: "", content: "" });
   const [answers, setAnswers] = useState<{ [key: number]: string }>({});
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [editingQuestion, setEditingQuestion] = useState<{
     title: string;
-    question: string;
-  }>({ title: "", question: "" });
+    content: string;
+  }>({ title: "", content: "" });
   const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
   const [editingAnswerContent, setEditingAnswerContent] = useState("");
   const [openQnaIds, setOpenQnaIds] = useState<number[]>([]);
@@ -42,7 +42,8 @@ export default function ProductQnA({
     try {
       const data = await getQnaList(productId);
       setQnaList(data);
-    } catch {
+    } catch (error) {
+      console.error("QnA 목록 조회 실패:", error);
       setQnaList([]);
     }
   }, [productId, setQnaList]);
@@ -55,24 +56,20 @@ export default function ProductQnA({
   const handleCreateQuestion = async () => {
     if (!user) return alert("로그인 후 질문을 등록할 수 있습니다.");
 
-    if (
-      qnaList.some(
-        (q) => q.userId === user.userId && q.productQnaId === productId
-      )
-    ) {
-      return alert("본인 글에는 질문을 작성할 수 없습니다.");
+    // 수정: 판매자 본인이 자기 상품에 질문하는 것 방지
+    if (product && user.userId === product.sellerId) {
+      return alert("본인 상품에는 질문을 작성할 수 없습니다.");
     }
 
-    if (!newQuestion.question.trim()) return alert("질문 내용을 입력해주세요.");
+    if (!newQuestion.content.trim()) return alert("질문 내용을 입력해주세요.");
 
     try {
       await createQna({
         productId,
         title: newQuestion.title,
-        question: newQuestion.question,
-        boardName: "qna",
+        content: newQuestion.content,
       });
-      setNewQuestion({ title: "", question: "" });
+      setNewQuestion({ title: "", content: "" });
       fetchQnaList();
     } catch (error) {
       alert(error instanceof Error ? error.message : "질문 등록 중 오류 발생");
@@ -85,22 +82,22 @@ export default function ProductQnA({
     try {
       await deleteQna(qnaId);
       fetchQnaList();
-    } catch {
-      alert("질문 삭제 실패");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "질문 삭제 실패");
     }
   };
 
   // 질문 수정 저장
   const saveEditingQuestion = async (qnaId: number) => {
-    if (!editingQuestion.title.trim() || !editingQuestion.question.trim())
+    if (!editingQuestion.title.trim() || !editingQuestion.content.trim())
       return alert("내용을 입력해주세요.");
     try {
       await updateQna(qnaId, editingQuestion);
       setEditingQuestionId(null);
-      setEditingQuestion({ title: "", question: "" });
+      setEditingQuestion({ title: "", content: "" });
       fetchQnaList();
-    } catch {
-      alert("질문 수정 실패");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "질문 수정 실패");
     }
   };
 
@@ -131,8 +128,8 @@ export default function ProductQnA({
       setEditingAnswerId(null);
       setEditingAnswerContent("");
       fetchQnaList();
-    } catch {
-      alert("답변 수정 실패");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "답변 수정 실패");
     }
   };
 
@@ -142,8 +139,8 @@ export default function ProductQnA({
     try {
       await deleteQnaAnswer(answerId);
       fetchQnaList();
-    } catch {
-      alert("답변 삭제 실패");
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "답변 삭제 실패");
     }
   };
 
@@ -185,9 +182,9 @@ export default function ProductQnA({
             />
             <textarea
               placeholder="질문 내용"
-              value={newQuestion.question}
+              value={newQuestion.content}
               onChange={(e) =>
-                setNewQuestion({ ...newQuestion, question: e.target.value })
+                setNewQuestion({ ...newQuestion, content: e.target.value })
               }
               className="article-textarea article-review"
             />
@@ -217,8 +214,9 @@ export default function ProductQnA({
                     className="top-16 right-8 trans"
                   >
                     <span
-                      className={`custom-select-arrow ${openQnaIds.includes(q.productQnaId) ? "open" : ""
-                        }`}
+                      className={`custom-select-arrow ${
+                        openQnaIds.includes(q.productQnaId) ? "open" : ""
+                      }`}
                     />
                   </button>
                 </div>
@@ -241,11 +239,11 @@ export default function ProductQnA({
                           className="article-input article-review"
                         />
                         <textarea
-                          value={editingQuestion.question}
+                          value={editingQuestion.content}
                           onChange={(e) =>
                             setEditingQuestion({
                               ...editingQuestion,
-                              question: e.target.value,
+                              content: e.target.value,
                             })
                           }
                           className="article-textarea article-review"
@@ -279,8 +277,8 @@ export default function ProductQnA({
                               : "작성일 없음"}
                           </span>
                         </p>
-                        <p className="text-16 color-333 text-nowrap mb-1rem">
-                          {q.title}
+                        <p className="text-16 color-333 mb-1rem" style={{ whiteSpace: "pre-wrap" }}>
+                          {q.content}
                         </p>
 
                         {/* 질문 수정/삭제 버튼 */}
@@ -293,7 +291,7 @@ export default function ProductQnA({
                                 setEditingQuestionId(q.productQnaId);
                                 setEditingQuestion({
                                   title: q.title,
-                                  question: q.content,
+                                  content: q.content,
                                 });
                               }}
                               className="article-btn"
@@ -312,7 +310,7 @@ export default function ProductQnA({
                     )}
 
                     {/* 답변 목록 */}
-                    {q.answers && q.answers?.length > 0 && (
+                    {q.answers && q.answers.length > 0 && (
                       <div
                         style={{
                           marginTop: 8,
@@ -375,16 +373,17 @@ export default function ProductQnA({
                                     margin: 0,
                                   }}
                                 >
-                                  {product && a.qnaUserId === product.sellerId ? "판매자" : "관리자"}{" | "}
-                                  {a.createdAt
-                                    ? formatDateTime(a.createdAt)
-                                    : ""}
+                                  {product && a.qnaUserId === product.sellerId
+                                    ? "판매자"
+                                    : "관리자"}{" "}
+                                  |{" "}
+                                  {a.createdAt ? formatDateTime(a.createdAt) : ""}
                                 </p>
 
                                 {/* 수정/삭제 버튼 */}
                                 {user &&
                                   (user.role === "ADMIN" ||
-                                    user.userId === a.qnaReviewId) && (
+                                    user.userId === a.qnaUserId) && (
                                     <div
                                       style={{
                                         display: "flex",
