@@ -13,7 +13,6 @@ import UserChat from "./components/chat/UserChat";
 import VerifyPage from "./pages/VerifyPage";
 
 import {
-  HeaderMain,
   HeaderSub,
   Header,
   Main,
@@ -49,7 +48,7 @@ const VALID_PATHS = [
   "/oauth2/redirect",
   "/error",
   "/chat",
-   "/verify",
+  "/verify",
 ];
 
 // 동적 경로 패턴 (예: /products/123, /articles/456 등)
@@ -119,7 +118,7 @@ export default function App() {
   if (isInvalidPath) {
     return (
       <div style={{ minHeight: "100vh" }}>
-        <HeaderMain user={user} setUser={setUser} />
+        <Header user={user} setUser={setUser} />
         <HeaderSub />
         <ErrorPage />
       </div>
@@ -128,9 +127,12 @@ export default function App() {
 
   return (
     <div style={{ minHeight: "100vh" }}>
-      {showHeader && <HeaderMain user={user} setUser={setUser} />}
-      {showHeader && <HeaderSub />}
-      {showHeader && <Header />}
+      {showHeader && (
+        <>
+          <Header user={user} setUser={setUser} />
+          <HeaderSub></HeaderSub>
+        </>
+      )}
       <Routes>
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login setUser={setUser} />} />

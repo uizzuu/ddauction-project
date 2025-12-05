@@ -29,9 +29,9 @@ export default function HeaderSub() {
   };
 
   return (
-    <header className="header header-line header-sub">
-      <div className="header-content height-50 flex-box flex-between">
-        <nav className="nav" style={{ position: "relative" }}>
+    <header className="container">
+      <div className="flex justify-between">
+        <nav className="flex items-center gap-3" style={{ position: "relative" }}>
           <button
             ref={menuBtnRef}
             onClick={() => setIsModalOpen((prev) => !prev)}
@@ -68,7 +68,6 @@ export default function HeaderSub() {
           <NavLink to="/" className="nav-link">
             홈
           </NavLink>
-          <p className="test">1분경매</p>
           <NavLink to="/search" className="nav-link">
             통합검색
           </NavLink>
@@ -81,10 +80,10 @@ export default function HeaderSub() {
           <AIChatBot isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
         </nav>
 
-        <nav className="flex-box gap-16 flex-center">
+        <nav className="flex gap-3 ">
           <button
             onClick={() => handleProtectedNavigation("/register")}
-            className="nav-link after color-777 flex-box flex-center gap-8"
+            className="text-light"
           >
             <svg
               width="16"
@@ -92,6 +91,7 @@ export default function HeaderSub() {
               viewBox="0 0 16 18"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
+              className="mx-auto mb-1"
             >
               <path
                 fillRule="evenodd"
@@ -104,7 +104,7 @@ export default function HeaderSub() {
           </button>
           <button
             onClick={() => handleProtectedNavigation("/mypage")}
-            className="nav-link color-777 flex-box flex-center gap-6"
+            className="text-light"
           >
             <svg
               width="16"
@@ -112,6 +112,7 @@ export default function HeaderSub() {
               viewBox="0 0 17 17"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
+              className="mx-auto mb-1"
             >
               <path
                 d="M16.1542 16.147C15.6992 14.871 14.6942 13.744 13.2972 12.94C11.9002 12.136 10.1882 11.7 8.4272 11.7C6.6662 11.7 4.9542 12.136 3.5572 12.94C2.1602 13.744 1.1552 14.871 0.700195 16.147"

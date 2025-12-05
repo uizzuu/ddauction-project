@@ -1,17 +1,34 @@
-/*
-(ex) 모든 버튼에 적용할 공통 스타일
-버튼
-.btn-base {
-  @apply py-2 px-4 font-semibold rounded shadow transition duration-200 ease-in-out;
+@import "../css/base.css";
+
+.container {
+  @apply w-[1280px] mx-auto relative;
 }
-.btn-primary {
-  @apply btn-base text-white bg-blue-600 hover:bg-blue-700;
+
+.text-light {
+  @apply text-[14px] text-[var(--color-aaa)];
 }
-.btn-secondary {
-  @apply btn-base text-gray-800 bg-gray-200 hover:bg-gray-300;
+
+.icon-container {
+  @apply
+  inline-flex flex-col items-center gap-px p-px relative flex-[0_0_auto];
 }
-payment.tsx : 특정 페이지에만 쓰이는 경우 적어두기
-.btn-payment {
-  @apply btn-base text-gray-800 bg-gray-200 hover:bg-gray-300;
+
+.icon-img {
+  @apply
+  h-[24.5px] aspect-[0.95] relative
+  mt-[-0.75px] mb-[-0.75px] ml-[-0.75px] mr-[-0.75px];
 }
-*/
+
+.cart-badge-container {
+  @apply 
+  flex w-[18px] h-[18px] items-center justify-center 
+  rounded-full border text-center;
+  background-color: var(--color-alert-red);
+  border-color: var(--color-alert-red);
+}
+
+.cart-badge-count {
+  @apply 
+  font-medium text-[10px] leading-[7px] text-white;
+  trainsition: opacity 0.3s;
+}
