@@ -13,7 +13,7 @@ import UserChat from "./components/chat/UserChat";
 import VerifyPage from "./pages/VerifyPage";
 
 import {
-  HeaderSub,
+
   Header,
   Main,
   Login,
@@ -119,7 +119,7 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh" }}>
         <Header user={user} setUser={setUser} />
-        <HeaderSub />
+
         <ErrorPage />
       </div>
     );
@@ -130,7 +130,7 @@ export default function App() {
       {showHeader && (
         <>
           <Header user={user} setUser={setUser} />
-          <HeaderSub></HeaderSub>
+
         </>
       )}
       <Routes>

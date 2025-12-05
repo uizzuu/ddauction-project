@@ -8,6 +8,14 @@
   @apply text-[14px] text-[var(--color-aaa)];
 }
 
+.header-mobile-sticky {
+  @apply flex items-center justify-between px-4 py-3 border-b sticky top-0 z-50 bg-white;
+}
+
+.header-pc-sticky {
+  @apply flex items-center gap-8 py-1 relative sticky top-0 z-50 bg-white border-b;
+}
+
 .icon-container {
   @apply inline-flex flex-col items-center gap-px p-px relative flex-[0_0_auto];
 }
@@ -17,9 +25,23 @@
   mt-[-0.75px] mb-[-0.75px] ml-[-0.75px] mr-[-0.75px];
 }
 
+.header-icon-container {
+  @apply flex items-center gap-3 relative flex-shrink-0 ml-auto;
+}
+
+.header-icon-link {
+  @apply p-1 hover:opacity-70 transition-opacity;
+}
+
+.header-mobile-icon {
+  @apply p-1;
+}
+
 .cart-badge-container {
-  @apply flex w-[18px] h-[18px] items-center justify-center 
-  rounded-full border text-center;
+  @apply 
+  flex w-[18px] h-[18px] items-center justify-center 
+  rounded-full border text-center
+  absolute top-0 -right-[2px];
   background-color: var(--color-alert-red);
   border-color: var(--color-alert-red);
 }
@@ -66,6 +88,17 @@
   max-h-[400px] overflow-y-auto z-10 mt-0;
 }
 
+.autocomplete-item {
+  @apply py-3 px-4 cursor-pointer 
+  flex items-center gap-2 text-sm text-[#333] 
+  border-b border-[#f0f0f0] transition-colors
+  hover:bg-[#f5f5f5];
+}
+
+.autocomplete-item.selected {
+  @apply bg-[#f5f5f5];
+}
+
 .keyword-tabs {
   @apply flex border-b border-[#ddd] bg-gray-50;
 }
@@ -83,22 +116,30 @@
   @apply inline-block mr-1;
 }
 
-.autocomplete-item {
-  @apply py-3 px-4 cursor-pointer 
-  flex items-center gap-2 text-sm text-[#333] 
-  border-b border-[#f0f0f0] transition-colors
-  hover:bg-[#f5f5f5];
+.nav-tab-mobile {
+  @apply px-1 py-3 mr-4 text-sm font-bold border-b-2;
 }
 
-.autocomplete-item.selected {
-  @apply bg-[#f5f5f5];
+.nav-tab-mobile.active {
+  @apply text-black border-black;
 }
 
-.selected {
-  @apply bg-[#f5f5f5];
+.nav-tab-mobile.inactive {
+  @apply text-gray-500 border-transparent hover:text-gray-800;
 }
 
-/* 🆕 인기 검색어 순위 뱃지 */
+.nav-tab-pc {
+  @apply py-2 text-base border-b-2;
+}
+
+.nav-tab-pc.active {
+  @apply text-black border-black;
+}
+
+.nav-tab-pc.inactive {
+  @apply text-gray-500 border-transparent hover:text-black;
+}
+
 .ranking-badge {
   @apply inline-flex items-center justify-center 
   w-5 h-5 text-xs font-bold text-[#666] bg-[#f0f0f0] 
@@ -108,4 +149,8 @@
 .ranking-badge.top3 {
   @apply text-white bg-gradient-to-br 
   from-[#B17576] to-[#d89899];
+}
+
+.selected {
+  @apply bg-[#f5f5f5];
 }

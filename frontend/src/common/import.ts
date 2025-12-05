@@ -1,5 +1,5 @@
 // components
-import HeaderSub from "../components/layout/HeaderSub";
+
 import Header from "../components/layout/Header";
 import AuctionBidGraph from "../components/product/AuctionBidGraph";
 import { AuctionBidding } from "../components/product/AuctionBidding";
@@ -39,7 +39,7 @@ import ProductQnA from "../components/product/ProductQnA";
 import VerifyPage from "../pages/VerifyPage";
 
 export {
-  HeaderSub,
+
   Header,
   AuctionBidGraph,
   AuctionBidding,
