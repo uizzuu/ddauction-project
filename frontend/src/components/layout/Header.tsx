@@ -63,8 +63,6 @@ export default function Header({ user, setUser }: Props) {
         }
     };
 
-
-
     const handleLogout = async () => {
         try {
             await logout();
@@ -378,6 +376,25 @@ export default function Header({ user, setUser }: Props) {
                                 </button>
                             )}
 
+                            <button
+                                type="button"
+                                className={`dropdown-arrow ${showSuggestions ? "active" : ""}`}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowSuggestions(!showSuggestions);
+                                    if (!showSuggestions) {
+                                        inputRef.current?.focus();
+                                    }
+                                }}
+                                aria-label="검색 드롭다운"
+                            >
+                                <img
+                                    className="relative w-[9px] h-1.5 mt-[-0.50px] mb-[-0.50px] ml-[-0.50px] mr-[-0.50px]"
+                                    alt=""
+                                    src="https://c.animaapp.com/vpqlbV8X/img/vector.svg"
+                                />
+                            </button>
+
                             <div
                                 className="search-divider"
                                 aria-hidden="true"
@@ -479,7 +496,13 @@ export default function Header({ user, setUser }: Props) {
 
                                 {/* Footer Controls */}
                                 <div className="flex justify-between items-center px-4 py-3 bg-[#f9f9f9] border-t border-[#eee]">
-                                    <div className="flex items-center gap-2 text-xs text-[#777] cursor-pointer" onClick={() => setIsAutoSave(!isAutoSave)}>
+                                    <div
+                                        className="flex items-center gap-2 text-xs text-[#777] cursor-pointer"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsAutoSave(!isAutoSave);
+                                        }}
+                                    >
                                         <div className={`w-8 h-4 rounded-full relative transition-colors ${isAutoSave ? "bg-[#b17576]" : "bg-[#ddd]"}`}>
                                             <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${isAutoSave ? "left-4.5" : "left-0.5"}`} style={{ left: isAutoSave ? '18px' : '2px' }} />
                                         </div>
@@ -487,7 +510,10 @@ export default function Header({ user, setUser }: Props) {
                                     </div>
                                     <button
                                         className="text-xs text-[#777] hover:text-[#333]"
-                                        onClick={() => setShowSuggestions(false)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowSuggestions(false);
+                                        }}
                                     >
                                         닫기
                                     </button>

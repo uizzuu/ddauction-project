@@ -29,7 +29,7 @@ import Signup from "../pages/Signup";
 import ProductList from "../pages/product/ProductList";
 import ProductRegister from "../pages/product/ProductForm";
 import MyPage from "../pages/general/MyPage";
-import ProductDetail from "../pages/product/ProductDetail";
+import ProductDetail from "../pages/product/ProductDetailAuction";
 import ArticleList from "../pages/article/ArticleList";
 import AdminPage from '../pages/general/AdminPage';
 import UserQnaForm from "../components/modal/ReportModal";

@@ -165,17 +165,17 @@ export default function Main() {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-bold text-[#333]">카테고리별 상품 찾기</h2>
         </div>
-        <div className="grid grid-cols-9 gap-y-8 gap-x-4">
+        <div className="flex overflow-x-auto gap-4 scrollbar-hide pb-4">
           {(Object.keys(PRODUCT_CATEGORY_LABELS) as ProductCategoryType[]).map((cat) => (
             <div
               key={cat}
-              className="flex flex-col items-center gap-3 cursor-pointer group"
+              className="flex flex-col items-center gap-2 cursor-pointer group flex-shrink-0 w-[80px]"
               onClick={() => navigate(`/search?category=${cat}`)}
             >
               <div className="w-16 h-16 rounded-2xl bg-[#f8f9fa] flex items-center justify-center text-[#555] group-hover:bg-[#f0f0f0] group-hover:text-[#b17576] transition-all duration-300 shadow-sm border border-[#eee]">
                 {CATEGORY_ICONS[cat]}
               </div>
-              <span className="text-sm text-[#333] font-medium group-hover:text-[#b17576] transition-colors">
+              <span className="text-xs text-[#333] font-medium group-hover:text-[#b17576] transition-colors whitespace-nowrap">
                 {PRODUCT_CATEGORY_LABELS[cat]}
               </span>
             </div>
