@@ -558,7 +558,7 @@ export default function MyPage({ user, setUser }: Props) {
 
           <div
             style={{ marginTop: "20px" }}
-            className="flex-column gap-8 flex-left-a"
+            className="flex flex-col gap-2 items-start"
           >
             <h4 style={{ color: "#ddd", marginBottom: "10px" }}>메인 메뉴</h4>
             {[
@@ -592,8 +592,8 @@ export default function MyPage({ user, setUser }: Props) {
             }}
           >
             <h4 style={{ color: "#ddd", marginBottom: "10px" }}>기타 메뉴</h4>
-            <div className="flex-column gap-8 flex-left-a">
-              <div className="flex-column gap-8 flex-left-a">
+            <div className="flex flex-col gap-2 items-start">
+              <div className="flex gap-2 w-full mt-[10px]">
                 <button
                   className="text-16 color-ddd"
                   onClick={() => handleSectionChange("payments")}
@@ -621,7 +621,7 @@ export default function MyPage({ user, setUser }: Props) {
         </nav>
 
         {/* 2. 메인 컨텐츠 영역 (AdminPage.tsx와 동일한 스타일) */}
-        <main className="width-full p-20-30">
+        <main className="w-full px-[30px] py-5">
           <h1
             style={{
               marginBottom: "20px",

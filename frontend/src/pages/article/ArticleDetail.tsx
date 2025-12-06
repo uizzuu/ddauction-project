@@ -212,15 +212,15 @@ export default function ArticleDetail({ user }: Props) {
   return (
     <div className="container">
       {/* 글 영역 */}
-      <div className="flex-column gap-12">
+      <div className="flex flex-col gap-3">
         <h2>{article.title}</h2>
-        <div className="flex-box flex-between flex-top-a">
-          <div className="flex-box gap-4">
+        <div className="flex justify-between items-start">
+          <div className="flex gap-1">
             <strong>{article.nickName ?? "알 수 없음"}</strong>
             <p>{formatDateTime(article.createdAt)}</p>
           </div>
           {user?.userId === article.userId && (
-            <div className="flex-box gap-4">
+            <div className="flex gap-1">
               <button
                 onClick={() => navigate(`/articles/${article.articleId}/edit`)}
                 className="edit-btn"
@@ -241,11 +241,11 @@ export default function ArticleDetail({ user }: Props) {
       </div>
 
       {/* 댓글 영역 */}
-      <div className="flex-column gap-24 mt-20 top-line">
+      <div className="flex flex-col gap-6 mt-5 top-line">
         <p className="title-24">{comments.length}개의 댓글</p>
         {comments.length === 0 && <p>댓글이 없습니다.</p>}
 
-        <ul className="flex-column gap-16">
+        <ul className="flex flex-col gap-4">
           {comments.map((comment, index) => (
             <li
               key={comment.commentId}
@@ -253,10 +253,10 @@ export default function ArticleDetail({ user }: Props) {
                 if (comment.commentId != null)
                   commentRefs.current[comment.commentId] = el;
               }}
-              className="flex-column gap-4 comment-item"
+              className="flex flex-col gap-1 comment-item"
             >
-              <div className="flex-box flex-between flex-top-a">
-                <div className="flex-box gap-4">
+              <div className="flex justify-between items-start">
+                <div className="flex gap-1">
                   <strong
                     style={{ cursor: "pointer" }}
                     onClick={() => handleReplyClick(index)}
@@ -329,8 +329,8 @@ export default function ArticleDetail({ user }: Props) {
         )}
 
         {user ? (
-          <div className="flex-column gap-12 top-line">
-            <p className="title-18 mt-10">댓글쓰기</p>
+          <div className="flex flex-col gap-3 top-line">
+            <p className="title-18 mt-[10px]">댓글쓰기</p>
             <textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
@@ -339,7 +339,7 @@ export default function ArticleDetail({ user }: Props) {
               placeholder="댓글을 입력하세요. (예: @닉네임 으로 언급)"
               className="article-textarea article-review"
             />
-            <div className="width-full flex-column flex-left-a">
+            <div className="w-full flex flex-col items-start">
               <button onClick={handleCommentSubmit} className="article-btn">
                 댓글 등록
               </button>

@@ -1,10 +1,10 @@
 import React from "react";
 import type { Product, ProductForm } from "../../common/types";
-import { 
-    PRODUCT_CATEGORY_LABELS, 
-    CATEGORY_OPTIONS, 
+import {
+  PRODUCT_CATEGORY_LABELS,
+  CATEGORY_OPTIONS,
 } from "../../common/enums";
-import type {ProductCategoryType} from "../../common/enums";
+import type { ProductCategoryType } from "../../common/enums";
 
 
 
@@ -52,7 +52,7 @@ export default function MySellingProducts({
 }: Props) {
   return (
     <div style={{ marginBottom: "20px" }}>
-      <div className="title-24 mb-10">판매 중인 상품</div>
+      <div className="title-24 mb-2.5">판매 중인 상품</div>
       {sellingProducts.length === 0 ? (
         <p>판매 중인 상품이 없습니다.</p>
       ) : (
@@ -76,7 +76,7 @@ export default function MySellingProducts({
               >
                 <div style={{ display: "flex", gap: "15px" }}>
                   {/* 이미지 박스 */}
-                  <div className="bid-box width-200 height-200 overflow-hidden p-0">
+                  <div className="bid-box w-[200px] h-[200px] overflow-hidden p-0">
                     {product.imageUrl ? (
                       <img
                         src={product.imageUrl}
@@ -98,7 +98,7 @@ export default function MySellingProducts({
                       />
                     ) : (
                       <div
-                        className="no-image-txt width-fit"
+                        className="no-image-txt w-fit"
                         style={{
                           width: "200px",
                           height: "200px",
@@ -115,7 +115,7 @@ export default function MySellingProducts({
                   </div>
 
                   {/* 상품 정보 */}
-                  <div className="width-full">
+                  <div className="w-full">
                     <div style={{ fontWeight: "bold", fontSize: "18px" }}>
                       {product.title}
                     </div>
@@ -135,7 +135,7 @@ export default function MySellingProducts({
 
                   {/* 상품 수정 버튼 */}
                   <button
-                    className="search-btn bg-transparent height-fit"
+                    className="search-btn bg-transparent h-fit"
                     onClick={() => handleEditProduct(product)}
                   >
                     상품 수정
@@ -206,7 +206,7 @@ export default function MySellingProducts({
                         <option value="PAUSED">일시중지</option>
                       </select>
 
-                      <div className="flex-box gap-8 width-full mt-10">
+                      <div className="flex gap-2 w-full mt-2.5">
                         <button
                           className="search-btn"
                           onClick={handleSaveProduct}

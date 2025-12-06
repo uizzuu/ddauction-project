@@ -172,7 +172,7 @@ export default function ProductQnA({
 
   return (
     <div style={{ marginTop: 40 }}>
-      <h3 className="title-20 mb-10">상품 Q&A</h3>
+      <h3 className="title-20 mb-[10px]">상품 Q&A</h3>
       <div
         style={{
           backgroundColor: "#fff",
@@ -183,7 +183,7 @@ export default function ProductQnA({
       >
         {/* 질문 작성 */}
         {user && (
-          <div className="flex-column gap-8">
+          <div className="flex flex-col gap-2">
             <input
               type="text"
               placeholder="질문 제목"
@@ -210,36 +210,35 @@ export default function ProductQnA({
         )}
 
         {/* 질문 목록 */}
-        <div className="flex-column gap-8 mt-10 mb-10">
+        <div className="flex flex-col gap-2 mt-[10px] mb-[10px]">
           {qnaList.length === 0 ? (
             <p style={{ color: "#888" }}>아직 등록된 질문이 없습니다.</p>
           ) : (
             qnaList.map((q, index) => (
               <div key={q.productQnaId}>
                 {/* 질문 제목 + 토글 버튼 */}
-                {index !== 0 && <div className="top-line mb-10"></div>}
-                <div className="flex-box flex-center flex-between width-full">
-                  <p className="title-16 color-333 text-nowrap width-full">
+                {index !== 0 && <div className="top-line mb-[10px]"></div>}
+                <div className="flex justify-center justify-between w-full">
+                  <p className="title-16 color-333 whitespace-nowrap w-full">
                     {q.title}
                   </p>
                   <button
                     onClick={() => toggleQna(q.productQnaId)}
-                    className="top-16 right-8 trans"
+                    className="top-4 right-2 transition-all duration-300"
                   >
                     <span
-                      className={`custom-select-arrow ${
-                        openQnaIds.includes(q.productQnaId) ? "open" : ""
-                      }`}
+                      className={`custom-select-arrow ${openQnaIds.includes(q.productQnaId) ? "open" : ""
+                        }`}
                     />
                   </button>
                 </div>
 
                 {/* 토글 열렸을 때 전체 내용 */}
                 {openQnaIds.includes(q.productQnaId) && (
-                  <div className="flex-column gap-4" style={{ marginTop: 8 }}>
+                  <div className="flex flex-col gap-1" style={{ marginTop: 8 }}>
                     {/* 질문 수정 모드 */}
                     {editingQuestionId === q.productQnaId ? (
-                      <div className="flex-column gap-8">
+                      <div className="flex flex-col gap-2">
                         <input
                           type="text"
                           value={editingQuestion.title}
@@ -277,7 +276,7 @@ export default function ProductQnA({
                         </div>
                       </div>
                     ) : (
-                      <div className="flex-column gap-4">
+                      <div className="flex flex-col gap-1">
                         <p className="text-16 color-777 text-nowrap after-wrap">
                           <span className="after">
                             {q.userId === product?.sellerId
@@ -290,7 +289,7 @@ export default function ProductQnA({
                               : "작성일 없음"}
                           </span>
                         </p>
-                        <p className="text-16 color-333 mb-1rem" style={{ whiteSpace: "pre-wrap" }}>
+                        <p className="text-16 color-333 mb-4" style={{ whiteSpace: "pre-wrap" }}>
                           {q.content}
                         </p>
 
@@ -372,7 +371,7 @@ export default function ProductQnA({
                               <>
                                 {/* 답변 내용 */}
                                 <p
-                                  className="text-16 color-333 mb-1rem"
+                                  className="text-16 color-333 mb-4"
                                   style={{ whiteSpace: "pre-wrap" }}
                                 >
                                   {a.content}
@@ -435,7 +434,7 @@ export default function ProductQnA({
                     {/* 답변 입력 */}
                     {canAnswer() && (
                       <div
-                        className="flex-column gap-8"
+                        className="flex flex-col gap-2"
                         style={{ marginTop: 8 }}
                       >
                         <textarea

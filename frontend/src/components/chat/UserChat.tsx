@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import "../../css/UserChat.css";
 import type { UserChatProps, PrivateChat, PublicChat, ChatMessagePayload, User } from "../../common/types";
 
 // -----------------------------
@@ -200,11 +199,11 @@ export default function UserChat({ user }: UserChatProps) {
   // 7. 화면 렌더링
   // -----------------------------
   return (
-    <div className="user-chat-container">
+    <div className="flex gap-4 p-5 h-[calc(100vh-120px)] container mx-auto">
       {/* 유저 목록 */}
-      <div className="user-list">
+      <div className="w-[180px] border-r border-[#ccc] pr-4 flex flex-col gap-1">
         <div
-          className={!selectedUser ? "selected" : ""}
+          className={`p-2 cursor-pointer transition-colors hover:bg-gray-100 rounded ${!selectedUser ? "font-bold bg-gray-100" : ""}`}
           onClick={() => {
             ws.current?.close();
             setSelectedUser(null);
@@ -219,7 +218,7 @@ export default function UserChat({ user }: UserChatProps) {
         {users.map((u) => (
           <div
             key={u.userId}
-            className={selectedUser?.userId === u.userId ? "selected" : ""}
+            className={`p-2 cursor-pointer transition-colors hover:bg-gray-100 rounded ${selectedUser?.userId === u.userId ? "font-bold bg-gray-100" : ""}`}
             onClick={() => {
               ws.current?.close();
               setSelectedUser(u);
@@ -234,21 +233,21 @@ export default function UserChat({ user }: UserChatProps) {
       </div>
 
       {/* 메시지 영역 */}
-      <div className="chat-area">
-        <h1>{selectedUser ? `1:1 채팅 - ${selectedUser.nickName}` : "공개 채팅"}</h1>
+      <div className="flex-1 flex flex-col">
+        <h1 className="mb-3 text-xl font-bold border-b pb-2">{selectedUser ? `1:1 채팅 - ${selectedUser.nickName}` : "공개 채팅"}</h1>
 
-        <div className="chat-box">
-          <div className="chat-messages">
+        <div className="border border-[#ccc] p-3 w-full h-full flex flex-col rounded-lg shadow-sm bg-white">
+          <div className="flex-1 overflow-y-auto mb-3 p-2 bg-gray-50 rounded border border-[#eee]">
             {messages.map((msg, i) => (
               <div
                 key={i}
-                className="chat-message"
+                className="mb-2"
                 style={{ textAlign: msg.user?.userId === user?.userId ? "right" : "left" }}
               >
                 <b>{msg.user?.userId === user?.userId ? "나" : msg.user?.nickName}:</b>{" "}
                 {msg.content}
                 {msg.createdAt && (
-                  <span>
+                  <span className="text-[#888] ml-2 text-xs">
                     {new Date(msg.createdAt).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -260,14 +259,17 @@ export default function UserChat({ user }: UserChatProps) {
             <div ref={messagesEndRef} />
           </div>
 
-          <div className="chat-input">
+          <div className="flex gap-2">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              className="flex-1 p-2 border border-[#ddd] rounded focus:outline-none focus:border-[#b17576]"
             />
-            <button onClick={sendMessage}>전송</button>
+            <button onClick={sendMessage} className="px-4 py-2 bg-[#333] text-white rounded hover:bg-[#555] transition-colors">
+              전송
+            </button>
           </div>
         </div>
       </div>

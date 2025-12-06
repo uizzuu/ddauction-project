@@ -39,6 +39,128 @@
   font-display: swap;
 }
 
+/* App.css Legacy Utilities (Migrated) */
+
+/* Global Reset Overrides */
+* {
+  @apply m-0 p-0 box-border;
+}
+
+body {
+  @apply font-sans antialiased text-[#111] bg-white leading-[1.2];
+}
+
+th {
+  @apply text-left;
+}
+
+a {
+  @apply no-underline text-inherit transition-colors duration-200;
+}
+
+.container {
+  @apply max-w-[1280px] mx-auto py-8 min-h-[calc(100vh-120px)] box-border;
+}
+
+.box-sizing {
+  @apply box-border;
+}
+
+/* Colors */
+.color-main {
+  @apply text-[#b17576];
+}
+.color-fff {
+  @apply text-white;
+}
+.color-ddd {
+  @apply text-[#ddd];
+}
+.color-aaa {
+  @apply text-[#aaa];
+}
+.color-333 {
+  @apply text-[#333];
+}
+.color-777 {
+  @apply text-[#777];
+}
+
+.bg-ddd {
+  @apply bg-[#ddd];
+}
+.bg-aaa {
+  @apply bg-[#aaa];
+}
+.bg-333 {
+  @apply bg-[#333];
+}
+.bg-transparent {
+  background-color: transparent;
+}
+
+.filter-dark {
+  @apply absolute top-0 left-0 w-full h-full bg-black/40 pointer-events-none z-[1];
+}
+
+/* Text Styles */
+.text-center {
+  text-align: center;
+}
+.text-nowrap {
+  white-space: nowrap;
+}
+.text-ellipsis {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.title-16 {
+  @apply text-base font-semibold;
+}
+.title-18 {
+  @apply text-lg font-semibold;
+}
+.title-20 {
+  @apply text-xl font-semibold;
+}
+.title-24 {
+  @apply text-2xl font-bold;
+}
+.title-32 {
+  @apply text-[32px] font-bold;
+}
+.title-36 {
+  @apply text-4xl font-bold;
+}
+.title-56 {
+  @apply text-[56px] font-bold;
+}
+
+.text-16 {
+  @apply text-base font-normal;
+}
+.text-18 {
+  @apply text-lg font-normal;
+}
+.text-24 {
+  @apply text-2xl font-normal;
+}
+
+.error-message {
+  @apply text-[#b17576] text-sm mb-[10px] text-center;
+}
+
+.hover {
+  @apply transition-colors duration-200 cursor-pointer whitespace-nowrap;
+}
+.hover:hover {
+  @apply text-[#b17576];
+}
+
+/* Legacy Utilities Removed */
+
 @font-face {
   font-family: "Pretendard";
   src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/pretendard@1.0/Pretendard-SemiBold.woff2")
@@ -101,7 +223,7 @@ button {
 }
 
 :root {
-  --color-alert-red : #EE5B5B;
+  --color-alert-red: #ee5b5b;
   --color-111: #111;
   --color-333: #333;
   --color-666: #666;

@@ -14,7 +14,7 @@ export default function MyProfile({
   setEditing,
 }: Props) {
   return (
-    <div className="flex-column gap-8">
+    <div className="flex flex-col gap-2">
       <label className="label title-16">닉네임</label>
       <input
         name="nickName"
@@ -23,7 +23,7 @@ export default function MyProfile({
         onChange={handleChange}
         className="input"
       />
-      <label className="label title-16 mt-10">비밀번호</label>
+      <label className="label title-16 mt-2.5">비밀번호</label>
       <input
         name="password"
         placeholder="비밀번호"
@@ -32,7 +32,7 @@ export default function MyProfile({
         onChange={handleChange}
         className="input"
       />
-      <label className="label title-16 mt-10">전화번호</label>
+      <label className="label title-16 mt-2.5">전화번호</label>
       <input
         name="phone"
         placeholder="전화번호"
@@ -40,7 +40,7 @@ export default function MyProfile({
         onChange={handleChange}
         className="input"
       />
-      <div className="flex-box gap-8 width-full mt-10">
+      <div className="flex gap-2 w-full mt-2.5">
         <button className="search-btn" onClick={handleUpdate}>
           저장
         </button>

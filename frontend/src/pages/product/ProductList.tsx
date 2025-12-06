@@ -86,21 +86,21 @@ export default function ProductSearchPage() {
     : "";
 
   return (
-    <div className="container">
-      <p className="title-32 mb-1rem">
+    <div className="container mx-auto py-8 min-h-[calc(100vh-120px)]">
+      <p className="text-[32px] font-bold mb-4">
         {keyword || categoryCode
           ? `${keyword ? `${keyword} ` : ""}${categoryCode ? `${categoryName || "카테고리"} ` : ""}검색`
           : "전체 검색"}
       </p>
 
-      <div className="flex-box flex-between" style={{ marginBottom: "2rem" }}>
-        <form onSubmit={handleSearch} className="search-form" style={{ marginBottom: 0 }}>
+      <div className="flex justify-between mb-8">
+        <form onSubmit={handleSearch} className="w-[800px] flex gap-2 mb-0">
           <input
             type="text"
             placeholder="상품 이름 검색"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            className="search-input"
+            className="w-full p-3 bg-white border border-[#ddd] rounded-xl text-[#aaa] text-sm font-normal whitespace-nowrap cursor-pointer focus:outline-none focus:text-[#b17576] focus:border-[#b17576]"
           />
           <SelectStyle
             value={categoryCode}
@@ -110,7 +110,7 @@ export default function ProductSearchPage() {
             }}
             options={CATEGORY_OPTIONS}
             placeholder="전체 카테고리"
-            className="min135"
+            className="min-w-[135px]"
           />
           <SelectStyle
             value={sortOption}
@@ -124,30 +124,30 @@ export default function ProductSearchPage() {
               { value: "popularity", label: "인기순" },
             ]}
             placeholder="정렬"
-            className="min118"
+            className="min-w-[118px]"
           />
-          <button type="submit" className="search-btn">
+          <button type="submit" className="w-fit p-3 bg-white border border-[#ddd] rounded-xl text-[#aaa] text-sm font-normal whitespace-nowrap cursor-pointer hover:text-[#b17576] hover:border-[#b17576]">
             검색
           </button>
         </form>
-        <NavLink to="/register" className="search-btn">
+        <NavLink to="/register" className="w-fit p-3 bg-white border border-[#ddd] rounded-xl text-[#aaa] text-sm font-normal whitespace-nowrap cursor-pointer hover:text-[#b17576] hover:border-[#b17576]">
           상품등록
         </NavLink>
       </div>
 
-      <div className="flex-box gap-36">
-        <div className="category-sidebar flex-column gap-8">
-          <div className="category-checkbox-group flex-column gap-4">
-            <p className="title-24 mb-1rem">필터</p>
-            <label className="category-label flex-box gap-4">
+      <div className="flex gap-9">
+        <div className="w-[200px] flex flex-col gap-2 shrink-0">
+          <div className="flex flex-col gap-1 border-b border-[#eee] pb-4 mb-4">
+            <p className="text-2xl font-bold mb-4">필터</p>
+            <label className="flex items-center gap-1 cursor-pointer">
               <input type="checkbox" checked={activeOnly} onChange={handleActiveOnlyChange} />
               <p>거래가능만 보기</p>
             </label>
           </div>
-          <div className="category-checkbox-group flex-column gap-4">
-            <p className="title-20 mb-1rem">카테고리</p>
+          <div className="flex flex-col gap-1">
+            <p className="text-xl font-semibold mb-4">카테고리</p>
             {CATEGORY_OPTIONS.map((c) => (
-              <label key={c.value} className="category-label flex-box gap-4">
+              <label key={c.value} className="flex items-center gap-1 cursor-pointer hover:bg-gray-50 p-1 rounded transition-colors">
                 <input
                   type="checkbox"
                   checked={categoryCode === c.value}
@@ -159,48 +159,48 @@ export default function ProductSearchPage() {
           </div>
         </div>
 
-        <div className="product-area">
+        <div className="w-full">
           {loading ? (
-            <p className="no-content-text">불러오는 중...</p>
+            <p className="text-[#aaa] text-lg text-center py-10">불러오는 중...</p>
           ) : products.length > 0 ? (
-            <div className="search-results-grid">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5">
               {products.map((p) => (
                 <div
                   key={p.productId}
-                  className="product-card"
-                  style={{ cursor: "pointer" }}
+                  className="bg-white rounded-xl border border-[#ddd] overflow-hidden transition-all duration-300 hover:shadow-md cursor-pointer"
                   onClick={() => navigate(`/products/${p.productId}`)}
                 >
-                  <div className="product-image height-220">
+                  <div className="w-full bg-[#eee] overflow-hidden relative h-[220px]">
                     {p.images && p.images.length > 0 ? (
                       <img
                         src={p.images[0].imagePath}
                         alt={p.title}
+                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                         onError={(e) => {
                           const parent = e.currentTarget.parentElement;
-                          if (parent) parent.innerHTML = '<div class="no-image-txt">이미지 없음</div>';
+                          if (parent) parent.innerHTML = '<div class="flex justify-center items-center w-full h-full text-[#666] text-sm">이미지 없음</div>';
                         }}
                       />
                     ) : (
-                      <div className="no-image-txt">이미지 없음</div>
+                      <div className="flex justify-center items-center w-full h-full text-[#666] text-sm">이미지 없음</div>
                     )}
                   </div>
-                  <div className="product-info flex-column gap-4">
-                    <h3 className="title-20 mb-4 text-nowrap color-333 text-ellipsis">{p.title}</h3>
+                  <div className="p-5 flex flex-col gap-1 leading-[1.3]">
+                    <h3 className="text-xl font-semibold mb-1 whitespace-nowrap text-[#333] truncate">{p.title}</h3>
                     <div>
-                      <div className="flex-box gap-8">
-                        <p className="text-16 color-777 text-nowrap">경매 등록가</p>
-                        <p className="title-18 color-333 text-nowrap">{formatPrice(p.startingPrice)}</p>
+                      <div className="flex gap-2">
+                        <p className="text-base text-[#777] whitespace-nowrap">경매 등록가</p>
+                        <p className="text-lg font-semibold text-[#333] whitespace-nowrap">{formatPrice(p.startingPrice)}</p>
                       </div>
                       {p.auctionEndTime && (
                         <>
-                          <div className="flex-box gap-8">
-                            <p className="text-16 color-777 text-nowrap">남은시간</p>
-                            <p className="text-16 color-777 text-nowrap">
-                              <span className="title-18 color-333 text-nowrap">{formatDate(p.auctionEndTime)}</span>
+                          <div className="flex gap-2">
+                            <p className="text-base text-[#777] whitespace-nowrap">남은시간</p>
+                            <p className="text-base text-[#777] whitespace-nowrap">
+                              <span className="text-lg font-semibold text-[#333] whitespace-nowrap">{formatDate(p.auctionEndTime)}</span>
                             </p>
                           </div>
-                          <p className="text-16 color-777 text-nowrap">({formatDateTime(p.auctionEndTime)})</p>
+                          <p className="text-base text-[#777] whitespace-nowrap">({formatDateTime(p.auctionEndTime)})</p>
                         </>
                       )}
                     </div>
@@ -209,7 +209,7 @@ export default function ProductSearchPage() {
               ))}
             </div>
           ) : (
-            <p className="no-content-text">검색 결과가 없습니다.</p>
+            <p className="text-[#aaa] text-lg text-center py-10">검색 결과가 없습니다.</p>
           )}
         </div>
       </div>

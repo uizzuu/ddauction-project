@@ -74,7 +74,7 @@ export const AuctionBidding = ({
     currentHighestBid > 0 ? `${currentHighestBid.toLocaleString()}` : "0";
 
   return (
-    <div style={{ width: "260px", flexShrink: 0 }} className="height-450">
+    <div style={{ width: "260px", flexShrink: 0 }} className="h-[450px]">
       <div
         style={{
           backgroundColor: "#fff",
@@ -91,13 +91,13 @@ export const AuctionBidding = ({
         {/* 입찰 리스트 */}
         <div
           ref={scrollRef}
-          className="mb-20 flex-column gap-8 max-height-350 overflow-y-auto bid-scroll"
+          className="mb-5 flex flex-col gap-2 max-h-[350px] overflow-y-auto bid-scroll"
         >
           {mergedBids.length > 0 ? (
             mergedBids.map((b, i) => (
               <div key={b.bidId} className="bid-box">
                 <p className="text-16">{i + 1}번 입찰</p>
-                <div className="flex-box gap-4 flex-center-a">
+                <div className="flex gap-1 items-center">
                   <p className="title-20">{b.bidPrice.toLocaleString()}</p>
                   <p className="title-18">원</p>
                 </div>
@@ -109,7 +109,7 @@ export const AuctionBidding = ({
         </div>
 
         {/* 입찰 입력 */}
-        <div className="max-height-3rem flex-box gap-4">
+        <div className="max-h-[3rem] flex gap-1">
           <input
             type="text"
             value={bidValue ? Number(bidValue).toLocaleString() : ""}
@@ -122,11 +122,11 @@ export const AuctionBidding = ({
           />
 
           {/* 금액 조절 버튼 */}
-          <div className="flex-column search-btn flex-center border-hover-none">
+          <div className="flex flex-col search-btn justify-center items-center border-hover-none">
             <button
               type="button"
               onClick={() => setBidValue(String(Number(bidValue || 0) + 1000))}
-              className="color-ddd width-fit bg-transparent mb--4 hover"
+              className="text-[#ddd] w-fit bg-transparent -mb-1 hover"
             >
               <ChevronUp size={20} />
             </button>
@@ -135,7 +135,7 @@ export const AuctionBidding = ({
               onClick={() =>
                 setBidValue(String(Math.max(Number(bidValue || 0) - 1000, 0)))
               }
-              className="color-ddd width-fit bg-transparent hover"
+              className="text-[#ddd] w-fit bg-transparent hover"
             >
               <ChevronDown size={20} />
             </button>

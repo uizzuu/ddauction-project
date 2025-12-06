@@ -58,7 +58,7 @@ export default function Login({ setUser }: Props) {
       <div className="auth-box">
         <h2
           onClick={() => navigate("/")}
-          className="width-fit margin-auto svg-wrap mb-48 height-40"
+          className="w-fit mx-auto svg-wrap mb-12 h-10"
         >
           <svg
             viewBox="0 0 127 36"
@@ -125,10 +125,10 @@ export default function Login({ setUser }: Props) {
         </form>
 
         {/* 소셜 로그인 버튼 */}
-        <div className="social-login flex-box gap-12 flex-center mt-20">
+        <div className="social-login flex gap-3 justify-center items-center mt-5">
           <button
             onClick={() => handleSocialLogin("google")}
-            className="btn-social flex-box flex-center google"
+            className="btn-social flex justify-center items-center google"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -157,7 +157,7 @@ export default function Login({ setUser }: Props) {
           </button>
           <button
             onClick={() => handleSocialLogin("naver")}
-            className="btn-social flex-box flex-center naver"
+            className="btn-social flex justify-center items-center naver"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.1 17.5">
               <defs>
@@ -175,7 +175,7 @@ export default function Login({ setUser }: Props) {
           </button>
           <button
             onClick={() => handleSocialLogin("kakao")}
-            className="btn-social flex-box flex-center kakao"
+            className="btn-social flex justify-center items-center kakao"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

@@ -4,6 +4,31 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Product } from "../../common/types";
 import { formatDateTime, formatPrice, formatDate } from "../../common/util";
 import { fetchLatestProducts, fetchBannerProducts } from "../../common/api";
+import {
+  Monitor, Refrigerator, Armchair, Utensils, Sandwich, Baby, Book, Pencil,
+  Shirt, Watch, Sparkles, Dumbbell, Gamepad2, Ticket, Dog, Leaf, MoreHorizontal
+} from "lucide-react";
+import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../../common/enums";
+
+const CATEGORY_ICONS: Record<ProductCategoryType, React.ReactNode> = {
+  ELECTRONICS: <Monitor size={28} />,
+  APPLIANCES: <Refrigerator size={28} />,
+  FURNITURE_INTERIOR: <Armchair size={28} />,
+  KITCHENWARE: <Utensils size={28} />,
+  FOODS: <Sandwich size={28} />,
+  KIDS: <Baby size={28} />,
+  BOOKS: <Book size={28} />,
+  STATIONERY: <Pencil size={28} />,
+  CLOTHING: <Shirt size={28} />,
+  ACCESSORIES: <Watch size={28} />,
+  BEAUTY: <Sparkles size={28} />,
+  SPORTS: <Dumbbell size={28} />,
+  ENTERTAINMENT: <Gamepad2 size={28} />,
+  TICKETS: <Ticket size={28} />,
+  PET: <Dog size={28} />,
+  PLANTS: <Leaf size={28} />,
+  ETC: <MoreHorizontal size={28} />
+};
 
 export default function Main() {
   const navigate = useNavigate();
@@ -52,23 +77,23 @@ export default function Main() {
   }, [banners.length]);
 
   return (
-    <div className="container">
+    <div className="container mx-auto py-8 min-h-[calc(100vh-120px)]">
       {/* 메인 배너 */}
-      <div className="position-rl width-full height-500 overflow-hidden radius-32">
+      <div className="relative w-full h-[500px] overflow-hidden rounded-[32px]">
         {banners.length === 0 ? (
           <>
-            <div className="no-image-txt bg-333">이미지 없음</div>
-            <p className="color-fff title-36 position-ab bottom-2rem left-2rem z-10">
+            <div className="flex justify-center items-center w-full h-full bg-[#333] text-[#666] text-sm">이미지 없음</div>
+            <p className="absolute bottom-8 left-8 text-white text-[36px] font-bold z-10">
               배너 텍스트
             </p>
           </>
         ) : (
           <>
-            <div className="width-full height-full position-rl">
+            <div className="relative w-full h-full">
               {banners.map((b, i) => (
                 <div
                   key={i}
-                  className="banner-slide position-ab width-full height-500"
+                  className="absolute top-0 left-0 w-full h-[500px] z-0"
                   onClick={() =>
                     b.product && navigate(`/products/${b.product.productId}`)
                   }
@@ -83,7 +108,7 @@ export default function Main() {
                       <img
                         src={b.image}
                         alt={`배너 ${i + 1}`}
-                        className="width-full height-full object-cover"
+                        className="w-full h-full object-cover"
                         onError={() =>
                           setImageFailed((prev) => {
                             const copy = [...prev];
@@ -92,12 +117,12 @@ export default function Main() {
                           })
                         }
                       />
-                      <div className="filter-dark"></div>
+                      <div className="absolute inset-0 bg-black/40 z-10 pointer-events-none"></div>
                     </>
                   ) : (
-                    <div className="no-image-txt bg-333">이미지 없음</div>
+                    <div className="flex justify-center items-center w-full h-full bg-[#333] text-[#666] text-sm">이미지 없음</div>
                   )}
-                  <p className="color-fff title-36 position-ab bottom-2rem left-2rem z-10">
+                  <p className="absolute bottom-8 left-8 text-white text-[36px] font-bold z-10">
                     {b.text}
                   </p>
                 </div>
@@ -106,13 +131,13 @@ export default function Main() {
 
             <button
               onClick={handlePrev}
-              className="position-ab left-16 top-half color-fff trans bg-transparent z-20"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-transparent transition-all duration-300 z-20 hover:text-[#b17576]"
             >
               <ChevronLeft size={32} />
             </button>
             <button
               onClick={handleNext}
-              className="position-ab right-16 top-half color-fff trans bg-transparent z-20"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-transparent transition-all duration-300 z-20 hover:text-[#b17576]"
             >
               <ChevronRight size={32} />
             </button>
@@ -121,12 +146,12 @@ export default function Main() {
       </div>
 
       {/* 하단 인디케이터 */}
-      <div className="mt-10 mb-60 width-full flex-box flex-center gap-4 z-20">
+      <div className="mt-2.5 mb-[60px] w-full flex justify-center items-center gap-1 z-20">
         {banners.length > 0 ? (
           banners.map((_, i) => (
             <div
               key={i}
-              className={`width-8 height-8 radius-full transition-all ${i === current ? "bg-aaa" : "bg-ddd"
+              className={`w-2 h-2 rounded-full transition-all ${i === current ? "bg-[#aaa]" : "bg-[#ddd]"
                 }`}
             />
           ))
@@ -135,75 +160,98 @@ export default function Main() {
         )}
       </div>
 
+      {/* 카테고리 네비게이션 (아이콘) */}
+      <div className="mb-12">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-bold text-[#333]">카테고리별 상품 찾기</h2>
+        </div>
+        <div className="grid grid-cols-9 gap-y-8 gap-x-4">
+          {(Object.keys(PRODUCT_CATEGORY_LABELS) as ProductCategoryType[]).map((cat) => (
+            <div
+              key={cat}
+              className="flex flex-col items-center gap-3 cursor-pointer group"
+              onClick={() => navigate(`/search?category=${cat}`)}
+            >
+              <div className="w-16 h-16 rounded-2xl bg-[#f8f9fa] flex items-center justify-center text-[#555] group-hover:bg-[#f0f0f0] group-hover:text-[#b17576] transition-all duration-300 shadow-sm border border-[#eee]">
+                {CATEGORY_ICONS[cat]}
+              </div>
+              <span className="text-sm text-[#333] font-medium group-hover:text-[#b17576] transition-colors">
+                {PRODUCT_CATEGORY_LABELS[cat]}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* 신상 상품 영역 */}
-      <div className="product-area">
-        <div className="flex-box flex-between flex-end mb-20">
+      <div className="w-full">
+        <div className="flex justify-between items-end mb-5">
           <div>
-            <p className="title-24 mb-4">지금 올라온 따끈따끈 신상</p>
-            <p className="title-18">매일 업데이트되는 상품들을 만나보세요🔥</p>
+            <p className="text-2xl font-bold mb-1">지금 올라온 따끈따끈 신상</p>
+            <p className="text-lg font-semibold">매일 업데이트되는 상품들을 만나보세요🔥</p>
           </div>
           <p
-            className="title-18 color-aaa hover"
+            className="text-lg font-semibold text-[#aaa] cursor-pointer hover:text-[#b17576] transition-colors"
             onClick={() => navigate("/search")}
           >
             더보기
           </p>
         </div>
         {loading ? (
-          <p className="no-content-text">불러오는 중...</p>
+          <p className="text-[#aaa] text-lg text-center py-10">불러오는 중...</p>
         ) : products.length > 0 ? (
-          <div className="main-grid">
+          <div className="grid grid-cols-4 gap-6">
             {products.map((p) => (
               <div
                 key={p.productId}
-                className="product-card"
-                style={{ cursor: "pointer" }}
+                className="flex flex-col gap-4 group cursor-pointer"
                 onClick={() => navigate(`/products/${p.productId}`)}
               >
-                <div className="product-image height-220">
+                <div className="w-full bg-[#eee] overflow-hidden relative h-[220px] rounded-2xl">
                   {p.images && p.images.length > 0 && p.images[0]?.imagePath ? (
                     <img
                       src={p.images[0].imagePath}
                       alt={p.title}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                       onError={(e) => {
                         // 이미지 깨지면 no-image div로 대체
                         const parent = e.currentTarget.parentElement;
                         if (parent) {
                           parent.innerHTML =
-                            '<div class="no-image-txt">이미지 없음</div>';
+                            '<div class="flex justify-center items-center w-full h-full text-[#666] text-sm">이미지 없음</div>';
                         }
                       }}
                     />
                   ) : (
-                    <div className="no-image-txt">이미지 없음</div>
+                    <div className="flex justify-center items-center w-full h-full text-[#666] text-sm">이미지 없음</div>
                   )}
                 </div>
-                <div className="product-info flex-column gap-4">
-                  <h3 className="title-20 mb-4 text-nowrap color-333 text-ellipsis">
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-xl font-semibold mb-1 whitespace-nowrap text-[#333] truncate">
                     {p.title}
                   </h3>
                   <div>
-                    <div className="flex-box gap-8">
-                      <p className="text-16 color-777 text-nowrap">
+                    <div className="flex gap-2">
+                      <p className="text-base text-[#777] whitespace-nowrap">
                         경매 등록가
                       </p>
-                      <p className="title-18 color-333 text-nowrap">
+                      <p className="text-lg font-semibold text-[#333] whitespace-nowrap">
                         {formatPrice(p.startingPrice)}
                       </p>
                     </div>
                     {p.auctionEndTime && (
                       <>
-                        <div className="flex-box gap-8">
-                          <p className="text-16 color-777 text-nowrap">
+                        <div className="flex gap-2">
+                          <p className="text-base text-[#777] whitespace-nowrap">
                             남은시간
                           </p>
-                          <p className="text-16 color-777 text-nowrap">
-                            <span className="title-18 color-333 text-nowrap">
+                          <p className="text-base text-[#777] whitespace-nowrap">
+                            <span className="text-lg font-semibold text-[#333] whitespace-nowrap">
                               {formatDate(p.auctionEndTime)}
                             </span>
                           </p>
                         </div>
-                        <p className="text-16 color-777 text-nowrap">
+                        <p className="text-base text-[#777] whitespace-nowrap">
                           ({formatDateTime(p.auctionEndTime)})
                         </p>
                       </>
@@ -214,7 +262,7 @@ export default function Main() {
             ))}
           </div>
         ) : (
-          <p className="no-content-text">검색 결과가 없습니다.</p>
+          <p className="text-[#aaa] text-lg text-center py-10">검색 결과가 없습니다.</p>
         )}
       </div>
     </div>

@@ -40,13 +40,12 @@ export default function Header({ user, setUser }: Props) {
         return () => window.removeEventListener("scroll", handleScroll);
     }, [lastScrollY]);
 
-    // 인기 검색어 state
-    const [popularKeywords, setPopularKeywords] = useState<string[]>([]);
-    // 실시간 검색어 (WebSocket)
-    const { rankings, isConnected } = RealTimeSearch();
+    // 실시간 검색어 & 최근 검색어
+    const [popularKeywords, setPopularKeywords] = useState<string[]>([]); // API 인기 검색어
+    const { rankings, isConnected } = RealTimeSearch(); // WebSocket 실시간
+    const [recentKeywords, setRecentKeywords] = useState<string[]>([]); // 로컬스토리지 최근검색어
+    const [isAutoSave, setIsAutoSave] = useState(true); // 자동저장 여부
 
-    // 어떤 탭을 보여줄지
-    const [keywordTab, setKeywordTab] = useState<"popular" | "realtime">("popular");
     const [isShowingPopular, setIsShowingPopular] = useState(false);
     const searchRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -141,9 +140,7 @@ export default function Header({ user, setUser }: Props) {
         if (value.trim() === "") {
             setSuggestions([]);
             setIsShowingPopular(true);
-            const hasData = (keywordTab === "popular" && popularKeywords.length > 0) ||
-                (keywordTab === "realtime" && rankings.length > 0);
-            setShowSuggestions(hasData);
+            setShowSuggestions(true);
             return;
         }
 
@@ -160,12 +157,10 @@ export default function Header({ user, setUser }: Props) {
         e.preventDefault();
 
         let keyword = searchKeyword;
-        const displayList = isShowingPopular
-            ? (keywordTab === "popular" ? popularKeywords : rankings.map(r => r.keyword))
-            : suggestions;
+        const currentDisplayList = isShowingPopular ? popularKeywords : suggestions;
 
-        if (selectedIndex >= 0 && selectedIndex < displayList.length) {
-            keyword = displayList[selectedIndex];
+        if (selectedIndex >= 0 && selectedIndex < currentDisplayList.length) {
+            keyword = currentDisplayList[selectedIndex];
         }
 
         const trimmed = keyword.trim();
@@ -174,10 +169,10 @@ export default function Header({ user, setUser }: Props) {
         if (trimmed !== "") {
             query.append("keyword", trimmed);
 
-            // 🆕 검색 로그 저장
-            saveSearchLog(trimmed).catch(err =>
-                console.error("검색 로그 저장 실패:", err)
-            );
+            // 🆕 검색 로그 저장 (API)
+            saveSearchLog(trimmed).catch(err => console.error("검색 로그 저장 실패:", err));
+            // 로컬 저장
+            saveRecentKeyword(trimmed);
         }
 
         const params = new URLSearchParams(location.search);
@@ -196,9 +191,8 @@ export default function Header({ user, setUser }: Props) {
         query.append("keyword", suggestion);
 
         // 🆕 검색 로그 저장
-        saveSearchLog(suggestion).catch(err =>
-            console.error("검색 로그 저장 실패:", err)
-        );
+        saveSearchLog(suggestion).catch(err => console.error("검색 로그 저장 실패:", err));
+        saveRecentKeyword(suggestion);
 
         const params = new URLSearchParams(location.search);
         const currentCategory = params.get("category");
@@ -213,9 +207,7 @@ export default function Header({ user, setUser }: Props) {
 
     // 키보드 네비게이션
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        const displayList = isShowingPopular
-            ? (keywordTab === "popular" ? popularKeywords : rankings.map(r => r.keyword))
-            : suggestions;
+        const currentDisplayList = isShowingPopular ? popularKeywords : suggestions;
 
         // 드롭다운이 안 보이면 키보드 네비게이션 비활성화
         if (!showSuggestions) return;
@@ -223,23 +215,23 @@ export default function Header({ user, setUser }: Props) {
         switch (e.key) {
             case "ArrowDown":
                 e.preventDefault();
-                if (displayList.length > 0) {
+                if (currentDisplayList.length > 0) {
                     setSelectedIndex(prev =>
-                        prev < displayList.length - 1 ? prev + 1 : prev
+                        prev < currentDisplayList.length - 1 ? prev + 1 : prev
                     );
                 }
                 break;
             case "ArrowUp":
                 e.preventDefault();
-                if (displayList.length > 0) {
+                if (currentDisplayList.length > 0) {
                     setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
                 }
                 break;
             case "Enter":
                 // 키보드로 선택한 항목이 있으면 input에 입력만 하고 검색 안 함
-                if (selectedIndex >= 0 && displayList.length > 0) {
+                if (selectedIndex >= 0 && currentDisplayList.length > 0) {
                     e.preventDefault();
-                    setSearchKeyword(displayList[selectedIndex]);
+                    setSearchKeyword(currentDisplayList[selectedIndex]);
                     setShowSuggestions(false);
                     setSelectedIndex(-1);
                 }
@@ -252,65 +244,71 @@ export default function Header({ user, setUser }: Props) {
         }
     };
 
+    // 최근 검색어 로드
+    useEffect(() => {
+        const saved = localStorage.getItem("recent_searches");
+        if (saved) {
+            setRecentKeywords(JSON.parse(saved));
+        }
+    }, []);
+
+    // 최근 검색어 저장
+    const saveRecentKeyword = (keyword: string) => {
+        if (!isAutoSave || !keyword.trim()) return;
+
+        const newKeywords = [keyword, ...recentKeywords.filter(k => k !== keyword)].slice(0, 10);
+        setRecentKeywords(newKeywords);
+        localStorage.setItem("recent_searches", JSON.stringify(newKeywords));
+    };
+
+    // 최근 검색어 삭제
+    const removeRecentKeyword = (keyword: string) => {
+        const newKeywords = recentKeywords.filter(k => k !== keyword);
+        setRecentKeywords(newKeywords);
+        localStorage.setItem("recent_searches", JSON.stringify(newKeywords));
+    };
+
     // 검색창 포커스 시
     const handleInputFocus = () => {
         if (searchKeyword.trim() === "") {
-            setIsShowingPopular(true);
-
-            // 현재 탭에 데이터가 없으면 다른 탭으로 전환
-            if (keywordTab === "realtime" && rankings.length === 0 && popularKeywords.length > 0) {
-                setKeywordTab("popular");
-                setShowSuggestions(true);
-            } else if (keywordTab === "popular" && popularKeywords.length === 0 && rankings.length > 0) {
-                setKeywordTab("realtime");
-                setShowSuggestions(true);
-            } else {
-                const hasData = (keywordTab === "popular" && popularKeywords.length > 0) ||
-                    (keywordTab === "realtime" && rankings.length > 0);
-                setShowSuggestions(hasData);
-            }
+            setShowSuggestions(true);
         }
     };
-
-    // 표시할 목록 결정
-    const displayList = isShowingPopular
-        ? (keywordTab === "popular" ? popularKeywords : rankings.map(r => r.keyword))
-        : suggestions;
 
     return (
         <div className={`sticky top-0 z-50 bg-white transition-shadow duration-300 ${isSticky ? "shadow-sm" : ""}`}>
             {/* 상단 네비 */}
             <div
-                className={`container flex w-full justify-end overflow-hidden transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0" : "max-h-[40px] opacity-100 pt-2"}`}
+                className={`w-full max-w-[1280px] mx-auto flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0" : "max-h-[40px] opacity-100 pt-2"}`}
             >
-                <nav className="flex gap-4 text-light">
+                <nav className="flex gap-4 text-sm text-[#aaa]">
                     {user ? (
                         <>
                             <span>{user.nickName} 님</span>
                             {user.role === "ADMIN" && (
-                                <NavLink to="/admin" className="top-nav-link">
+                                <NavLink to="/admin" className="hover:text-[#666] transition-colors">
                                     관리자 페이지
                                 </NavLink>
                             )}
-                            <NavLink to="/mypage/qna/new" className="top-nav-link">
+                            <NavLink to="/mypage/qna/new" className="hover:text-[#666] transition-colors">
                                 1:1 문의
                             </NavLink>
-                            <button onClick={handleLogout} className="top-nav-link">
+                            <button onClick={handleLogout} className="hover:text-[#666] transition-colors">
                                 로그아웃
                             </button>
                         </>
                     ) : (
                         <>
-                            <NavLink to="/login" className="top-nav-link">
+                            <NavLink to="/login" className="hover:text-[#666] transition-colors">
                                 로그인
                             </NavLink>
-                            <NavLink to="/signup" className="top-nav-link">
+                            <NavLink to="/signup" className="hover:text-[#666] transition-colors">
                                 회원가입
                             </NavLink>
                             <NavLink
                                 to="/mypage/qna/new"
                                 onClick={(e) => handleProtectedNavigation(e, "/mypage/qna/new")}
-                                className="top-nav-link"
+                                className="hover:text-[#666] transition-colors"
                             >
                                 1:1 문의
                             </NavLink>
@@ -320,7 +318,7 @@ export default function Header({ user, setUser }: Props) {
             </div>
             {/* 메인헤더 */}
             <div className="w-full bg-white py-2">
-                <div className="container flex gap-3 items-center mx-auto border-none ">
+                <div className="w-full max-w-[1280px] mx-auto flex gap-3 items-center">
                     {/* 로고 */}
                     <a
                         href="/"
@@ -336,7 +334,7 @@ export default function Header({ user, setUser }: Props) {
 
                     {/* 검색바 */}
                     <div
-                        className={`search-container ${showSuggestions && displayList.length > 0 ? "active" : ""}`}
+                        className={`search-container ${showSuggestions ? "active" : ""}`}
                         ref={searchRef}
                         onClick={() => inputRef.current?.focus()}
                     >
@@ -357,7 +355,7 @@ export default function Header({ user, setUser }: Props) {
                                 onKeyDown={handleKeyDown}
                                 onFocus={handleInputFocus}
                                 autoComplete="off"
-                                className="search-input w-full border-none outline-none bg-transparent h-full ring-0"
+                                className="w-full border-none outline-none bg-transparent h-full ring-0 text-sm text-[#333] placeholder-[#aaa]"
                                 aria-label="검색어 입력"
                                 ref={inputRef}
                             />
@@ -369,9 +367,6 @@ export default function Header({ user, setUser }: Props) {
                                         setSearchKeyword("");
                                         setSuggestions([]);
                                         setIsShowingPopular(true);
-                                        const hasData = (keywordTab === "popular" && popularKeywords.length > 0) ||
-                                            (keywordTab === "realtime" && rankings.length > 0);
-                                        setShowSuggestions(hasData);
                                         inputRef.current?.focus();
                                     }}
                                     className="text-gray-400 hover:text-gray-600 p-1"
@@ -382,18 +377,6 @@ export default function Header({ user, setUser }: Props) {
                                     </svg>
                                 </button>
                             )}
-
-                            <button
-                                type="button"
-                                className={`dropdown-arrow ${showSuggestions ? "active" : ""}`}
-                                aria-label="검색 드롭다운"
-                            >
-                                <img
-                                    className="relative w-[9px] h-1.5 mt-[-0.50px] mb-[-0.50px] ml-[-0.50px] mr-[-0.50px]"
-                                    alt=""
-                                    src="https://c.animaapp.com/vpqlbV8X/img/vector.svg"
-                                />
-                            </button>
 
                             <div
                                 className="search-divider"
@@ -409,71 +392,117 @@ export default function Header({ user, setUser }: Props) {
                             </button>
                         </form>
 
-                        {/* 자동완성 드롭다운 */}
-                        {showSuggestions && displayList.length > 0 && (
+                        {/* Dropdown */}
+                        {showSuggestions && (
                             <div className="autocomplete-dropdown">
-                                {isShowingPopular && (
-                                    <div className="keyword-tabs">
-                                        <button
-                                            className={`tab ${keywordTab === "realtime" ? "active" : ""}`}
-                                            onClick={() => {
-                                                setKeywordTab("realtime");
-                                                setSelectedIndex(-1);
-                                                setShowSuggestions(rankings.length > 0);
-                                            }}
-                                        >
-                                            <span className="tab-icon">🔥</span>
-                                            실시간 검색어
-                                            {keywordTab === "realtime" && !isConnected && (
-                                                <span className="connection-status"> (연결 중...)</span>
-                                            )}
-                                        </button>
-                                        <button
-                                            className={`tab ${keywordTab === "popular" ? "active" : ""}`}
-                                            onClick={() => {
-                                                setKeywordTab("popular");
-                                                setSelectedIndex(-1);
-                                                setShowSuggestions(popularKeywords.length > 0);
-                                            }}
-                                        >
-                                            <span className="tab-icon">⭐</span>
-                                            인기 검색어
-                                        </button>
-                                    </div>
-                                )}
-
-                                {displayList.length > 0 ? (
-                                    displayList.map((item, index) => (
+                                {searchKeyword ? (
+                                    /* 1. 자동완성 목록 (검색어 있을 때) */
+                                    suggestions.length > 0 && suggestions.map((item, index) => (
                                         <div
                                             key={index}
-                                            className={`py-3 px-4 cursor-pointer flex items-center gap-2 text-sm text-[#333] transition-colors border-b border-[#f0f0f0] 
-                                                    ${selectedIndex === index ? "selected" : "hover:bg-[#f5f5f5]"} 
-                                                    ${index === displayList.length - 1 ? "border-b-0" : ""}`}
+                                            className={`autocomplete-item ${selectedIndex === index ? "selected" : ""}`}
                                             onClick={() => handleSuggestionClick(item)}
                                             onMouseEnter={() => setSelectedIndex(index)}
                                         >
-                                            {isShowingPopular ? (
-                                                <span className={`ranking-badge ${index < 3 ? "top3" : ""}`}>
-                                                    {index + 1}
-                                                </span>
-                                            ) : (
-                                                <span className="text-base opacity-60">🔍</span>
+                                            <span className="text-base opacity-60">🔍</span>
+                                            {item.split(new RegExp(`(${searchKeyword})`, "gi")).map((part, i) =>
+                                                part.toLowerCase() === searchKeyword.toLowerCase() ? (
+                                                    <span key={i} className="text-[#b17576] font-bold">{part}</span>
+                                                ) : (
+                                                    part
+                                                )
                                             )}
-                                            {item}
                                         </div>
                                     ))
-                                ) : null}
+                                ) : (
+                                    /* 2. 최근 검색어 + 인기 검색어 (검색어 없을 때) */
+                                    <div className="p-5">
+                                        {/* 최근 검색어 */}
+                                        <div className="mb-6">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h3 className="text-sm font-bold text-[#333]">최근 검색어</h3>
+                                                {recentKeywords.length > 0 && (
+                                                    <button
+                                                        onClick={() => {
+                                                            setRecentKeywords([]);
+                                                            localStorage.removeItem("recent_searches");
+                                                        }}
+                                                        className="text-xs text-[#999] hover:text-[#666] underline"
+                                                    >
+                                                        전체삭제
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {recentKeywords.length > 0 ? (
+                                                <div className="flex flex-wrap gap-2">
+                                                    {recentKeywords.map((keyword, index) => (
+                                                        <div key={index} className="px-3 py-1.5 bg-white border border-[#ddd] rounded-full flex items-center gap-2 text-sm text-[#555] cursor-pointer hover:bg-[#f5f5f5]">
+                                                            <span onClick={() => handleSuggestionClick(keyword)}>{keyword}</span>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    removeRecentKeyword(keyword);
+                                                                }}
+                                                                className="text-[#bbb] hover:text-[#999]"
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-[#aaa] py-2">최근 검색 내역이 없습니다.</p>
+                                            )}
+                                        </div>
+
+                                        {/* 인기 검색어 */}
+                                        <div>
+                                            <h3 className="text-sm font-bold text-[#333] mb-3">인기 검색어</h3>
+                                            <div className="grid grid-cols-2 gap-x-4 gap-y-3">
+                                                {popularKeywords.map((keyword, index) => (
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center gap-3 cursor-pointer hover:bg-[#fafafa] p-1 rounded"
+                                                        onClick={() => handleSuggestionClick(keyword)}
+                                                    >
+                                                        <span className={`w-5 font-bold ${index < 3 ? "text-[#b17576]" : "text-[#333]"}`}>
+                                                            {index + 1}
+                                                        </span>
+                                                        <span className="text-sm text-[#333] truncate">{keyword}</span>
+                                                        {/* 등락폭은 API 데이터 부재로 생략, 추후 추가 가능 */}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Footer Controls */}
+                                <div className="flex justify-between items-center px-4 py-3 bg-[#f9f9f9] border-t border-[#eee]">
+                                    <div className="flex items-center gap-2 text-xs text-[#777] cursor-pointer" onClick={() => setIsAutoSave(!isAutoSave)}>
+                                        <div className={`w-8 h-4 rounded-full relative transition-colors ${isAutoSave ? "bg-[#b17576]" : "bg-[#ddd]"}`}>
+                                            <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${isAutoSave ? "left-4.5" : "left-0.5"}`} style={{ left: isAutoSave ? '18px' : '2px' }} />
+                                        </div>
+                                        자동저장 {isAutoSave ? "끄기" : "켜기"}
+                                    </div>
+                                    <button
+                                        className="text-xs text-[#777] hover:text-[#333]"
+                                        onClick={() => setShowSuggestions(false)}
+                                    >
+                                        닫기
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
 
                     {/* 아이콘 */}
                     <nav
-                        className="header-icon-container"
+                        className="flex items-center gap-3 relative flex-shrink-0 ml-auto"
                         aria-label="주요 메뉴"
                     >
                         <button
-                            className="header-icon-link"
+                            className="p-1 hover:opacity-70 transition-opacity"
                             aria-label="알림"
                         >
                             <img
@@ -484,7 +513,7 @@ export default function Header({ user, setUser }: Props) {
                         </button>
 
                         <button
-                            className="header-icon-link"
+                            className="p-1 hover:opacity-70 transition-opacity"
                             aria-label="찜하기"
                         >
                             <img
@@ -498,7 +527,7 @@ export default function Header({ user, setUser }: Props) {
                             to="/mypage"
                             onClick={(e) => handleProtectedNavigation(e, "/mypage")}
                             aria-label="마이페이지"
-                            className="header-icon-link"
+                            className="p-1 hover:opacity-70 transition-opacity"
                         >
                             <img
                                 className="w-6 h-6"
@@ -510,7 +539,7 @@ export default function Header({ user, setUser }: Props) {
                         <NavLink
                             to="/cart"
                             onClick={(e) => handleProtectedNavigation(e, "/cart")}
-                            className="header-icon-link relative"
+                            className="p-1 hover:opacity-70 transition-opacity relative"
                             aria-label={`장바구니 ${cartItemCount}개 상품`}
                         >
                             <img
@@ -532,7 +561,7 @@ export default function Header({ user, setUser }: Props) {
             <div
                 className={`hidden md:block w-full bg-white overflow-hidden transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0 border-none" : "max-h-[60px] opacity-100 border-b"}`}
             >
-                <div className="container mx-auto">
+                <div className="w-full max-w-[1280px] mx-auto">
                     <nav className="flex gap-6" aria-label="카테고리">
                         <NavLink
                             to="/"
@@ -546,24 +575,6 @@ export default function Header({ user, setUser }: Props) {
                         >
                             상품검색
                         </NavLink>
-                        {/* <NavLink
-                                    to="/ranking"
-                                    className={({ isActive }) => `nav-tab-pc ${isActive ? "active" : "inactive"}`}
-                                >
-                                    랭킹
-                                </NavLink>
-                                <NavLink
-                                    to="/sale"
-                                    className={({ isActive }) => `nav-tab-pc ${isActive ? "active" : "inactive"}`}
-                                >
-                                    세일
-                                </NavLink>
-                                <NavLink
-                                    to="/event"
-                                    className={({ isActive }) => `nav-tab-pc ${isActive ? "active" : "inactive"}`}
-                                >
-                                    이벤트
-                                </NavLink> */}
                         <NavLink
                             to="/register"
                             onClick={(e) => handleProtectedNavigation(e, "/register")}

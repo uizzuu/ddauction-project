@@ -54,12 +54,12 @@ export default function CategoryModal({
   return createPortal(
     <div
       ref={modalRef}
-      className="modal-content"
+      className="absolute z-[1000] w-full max-w-[180px] bg-white rounded-2xl overflow-hidden overflow-y-auto shadow-[0_4px_16px_rgba(175,175,175,0.2)]"
       style={{ top: position.top, left: position.left }}
     >
       {/* 전체 카테고리 클릭 시 전체 검색으로 이동 */}
       <p
-        className="category-btn all-category"
+        className="block w-full text-left cursor-pointer transition-colors text-[13px] font-medium bg-[#b17576] text-white py-3 px-6 hover:bg-[#8c5d5e]"
         onClick={() => {
           navigate("/search");
           onClose();
@@ -67,11 +67,11 @@ export default function CategoryModal({
       >
         전체 카테고리
       </p>
-      <ul className="category-list">
+      <ul className="list-none py-4 m-0 flex flex-col gap-3">
         {categories.map((cat) => (
           <li key={cat.value}>
             <button
-              className="category-btn"
+              className="block w-full text-left px-6 py-0 cursor-pointer transition-colors text-[13px] font-medium hover:text-[#b17576]"
               onClick={() => {
                 onSelectCategory(cat);
                 navigate(`/search?category=${cat.value}`);

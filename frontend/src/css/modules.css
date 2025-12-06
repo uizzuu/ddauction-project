@@ -1,22 +1,6 @@
 @import "../css/base.css";
 
-.container {
-  @apply w-[1280px] mx-auto relative;
-}
-
-.text-light {
-  @apply text-[14px] text-[var(--color-aaa)];
-}
-
-.top-nav-link {
-  @apply hover:text-[#666] transition-colors;
-}
-
 /* Header.tsx */
-
-.sticky-header {
-  @apply sticky top-0 z-50;
-}
 
 .search-container {
   @apply w-[450px] h-10 border border-[#111111] rounded-[0.4rem] relative z-20 bg-white box-border;
@@ -49,13 +33,6 @@
 
 .nav-tab.inactive {
   @apply text-gray-500 border-transparent hover:text-black;
-}
-.header-icon-container {
-  @apply flex items-center gap-3 relative flex-shrink-0 ml-auto;
-}
-
-.header-icon-link {
-  @apply p-1 hover:opacity-70 transition-opacity;
 }
 
 .cart-badge-container {
@@ -95,6 +72,567 @@
 
 .autocomplete-item.selected {
   @apply bg-[#f5f5f5];
+}
+
+/* Auth.css (Migrated) */
+.auth-container {
+  @apply min-h-screen flex justify-center items-center bg-[#9e9e9e];
+}
+
+.auth-box {
+  @apply min-h-screen bg-white w-full px-[100px] py-[120px] pb-[80px];
+  width: fit-content;
+}
+
+@media (max-width: 480px) {
+  .auth-box {
+    @apply px-5 py-[30px];
+  }
+}
+
+.auth-links {
+  @apply flex justify-center items-end gap-[10px] mt-[25px];
+}
+
+.auth-link-btn {
+  @apply bg-transparent border-none text-[var(--color-aaa)] cursor-pointer text-sm transition-colors flex items-center hover:text-[#b17576];
+}
+
+.auth-link-btn::after {
+  content: "";
+  @apply inline-block ml-[10px] h-[14px] w-[1px] bg-[#ddd];
+}
+
+.auth-link-btn:last-of-type::after {
+  content: none;
+}
+
+.social-login {
+  @apply w-full;
+}
+
+/* Article.css */
+.article-form {
+  @apply w-full mb-4 text-[#333];
+}
+
+.article-input,
+.article-btn,
+.article-textarea {
+  @apply w-full py-[12px] px-[16px] bg-white border border-[#ddd] rounded-xl text-[#aaa] text-base font-normal whitespace-nowrap;
+}
+
+.article-input,
+.article-textarea {
+  @apply mt-2;
+}
+
+.article-textarea {
+  @apply whitespace-pre-wrap h-[240px] resize-none;
+}
+
+.article-label {
+  @apply text-base font-medium ml-1;
+}
+
+.article-input:focus,
+.article-btn:focus,
+.article-textarea:focus,
+.article-input:active,
+.article-btn:active,
+.article-textarea:active {
+  @apply outline-none;
+}
+
+.article-textarea.article-review:focus {
+  @apply outline-none;
+}
+
+.btn-wrap {
+  @apply w-full flex flex-col items-start;
+}
+
+.article-btn {
+  @apply w-fit text-sm;
+}
+
+.edit-btn {
+  @apply w-fit h-fit py-1 px-2 bg-white border border-[#ddd] rounded-lg text-[#aaa] text-sm font-normal whitespace-nowrap;
+}
+
+.article-input:focus,
+.article-textarea:focus {
+  @apply text-[#333] border-[#ddd];
+}
+
+.article-btn:active {
+  @apply text-[#b17576] border-[#b17576];
+}
+
+.article-form.article-review {
+  @apply mt-6 gap-[10px];
+}
+
+.article-textarea.article-review {
+  @apply h-[100px] m-0;
+}
+
+.article-txt {
+  @apply text-[#aaa];
+}
+
+.article-content {
+  @apply my-[1rem] mx-0 mb-[2rem] whitespace-pre-wrap leading-[1.3];
+}
+
+.article-textarea.article-review-li {
+  @apply h-fit;
+}
+
+/* AdminPage.css (Migrated) */
+.admin-container {
+  @apply flex min-h-screen font-sans;
+}
+
+.admin-sidebar {
+  @apply w-[250px] bg-[#2d2d2d] text-white p-5;
+}
+
+.admin-sidebar h2 {
+  @apply text-2xl mb-[30px];
+}
+
+.admin-sidebar ul {
+  @apply list-none p-0;
+}
+
+.admin-sidebar li {
+  @apply mb-[15px];
+}
+
+.admin-sidebar button {
+  @apply w-full bg-none border-none text-white text-base text-left cursor-pointer;
+}
+
+.admin-sidebar button:hover {
+  @apply underline;
+}
+
+.admin-main {
+  @apply flex-1 p-5 bg-[#f2f2f2];
+}
+
+.admin-section {
+  @apply bg-white p-5 rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.1)] mb-5;
+}
+
+.admin-table {
+  @apply w-full border-collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  @apply border border-[#ccc] p-[10px] text-center;
+}
+
+.admin-table th {
+  @apply bg-[#e0e0e0];
+}
+
+.admin-table tr:nth-child(even) {
+  @apply bg-[#f9f9f9];
+}
+
+.admin-table button {
+  @apply py-[5px] px-[10px] cursor-pointer border-none rounded;
+}
+
+.ban-btn {
+  @apply bg-[#ff4d4f] text-white;
+}
+
+.ban-btn:hover {
+  @apply bg-[#d9363e];
+}
+
+.banned-text {
+  @apply text-gray-500;
+}
+
+.delete-btn {
+  @apply bg-[#f5a623] text-white;
+}
+
+.delete-btn:hover {
+  @apply bg-[#d48806];
+}
+
+.process-btn {
+  @apply bg-[#1890ff] text-white;
+}
+
+/* App.css Components (Migrated) */
+
+/* Form Components */
+.form-group {
+  @apply flex flex-col gap-[15px] mb-5;
+}
+
+.input,
+.textarea,
+.select {
+  @apply w-full p-4 bg-white border border-[#ddd] rounded-xl text-[#aaa] text-base font-normal box-border resize-none transition-colors duration-200;
+}
+
+.input:disabled,
+.textarea:disabled,
+.select:disabled {
+  @apply bg-[#f0f0f0] text-[#999] cursor-not-allowed;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  @apply outline-none text-[#b17576] border-[#b17576];
+}
+
+.input::placeholder,
+.textarea::placeholder {
+  @apply text-[#ddd];
+}
+
+.form-group.register {
+  @apply w-full;
+}
+
+.label {
+  @apply text-[#777] text-base font-medium mb-[-4px];
+}
+
+.textarea {
+  @apply max-h-20 resize-y;
+  font: inherit;
+}
+
+.select {
+  @apply cursor-pointer;
+}
+
+.checkbox-group {
+  @apply flex items-center;
+}
+
+.checkbox-label {
+  @apply flex items-center gap-[10px] text-[#333] text-[15px] cursor-pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  @apply w-[18px] h-[18px] cursor-pointer;
+}
+
+.register-links {
+  @apply flex justify-center mt-5;
+}
+
+.link-button {
+  @apply bg-none border-none text-[#999] cursor-pointer text-sm transition-colors duration-200;
+}
+
+.link-button:hover {
+  @apply text-white;
+}
+
+/* Search & Social */
+.search-form {
+  @apply w-[800px] flex gap-2 mb-4;
+}
+
+.btn-social {
+  @apply w-11 h-11 p-2 box-border border border-[#eee] rounded-full overflow-hidden;
+}
+
+.btn-social svg {
+  @apply block w-full h-full;
+}
+
+.btn-social.naver svg {
+  @apply w-[70%] h-[70%];
+}
+
+.google {
+  @apply border-[#eee];
+}
+
+.naver {
+  @apply border-[#2db400] bg-[#2db400];
+}
+
+.kakao {
+  @apply border-[#fee500] bg-[#fee500];
+}
+
+.search-input,
+.search-btn {
+  @apply w-full p-3 px-4 bg-white border border-[#ddd] rounded-xl text-[#aaa] text-sm font-normal whitespace-nowrap cursor-pointer;
+}
+
+.search-btn {
+  @apply w-fit appearance-none;
+}
+
+.search-input:focus,
+.search-select:focus {
+  @apply outline-none text-[#b17576] border-[#b17576];
+}
+
+.search-btn:active,
+.search-btn:hover {
+  @apply text-[#b17576] border-[#b17576];
+}
+
+.border-hover-none:hover {
+  @apply border-[#ddd];
+}
+
+.no-content-text {
+  @apply text-[#aaa] text-lg;
+}
+
+.category-checkbox-group {
+  @apply whitespace-nowrap;
+}
+
+.category-checkbox-group::after {
+  content: "";
+  @apply block w-full h-px bg-[#eee] my-4;
+}
+
+.category-checkbox-group:last-of-type::after {
+  content: none;
+}
+
+.category-label {
+  @apply items-center;
+}
+
+/* Buttons */
+button {
+  @apply cursor-pointer border-none outline-none transition-all duration-200 bg-transparent;
+  font: inherit;
+}
+
+button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.btn-primary,
+.btn-outline {
+  @apply py-[18px] px-[48px] text-lg font-bold rounded-lg cursor-pointer transition-all duration-300 border-2 border-white;
+}
+
+.btn-primary {
+  @apply bg-white border border-[#b17576] text-[#b17576];
+}
+
+.btn-primary:hover {
+  @apply bg-[#b17576] border-[#b17576] text-white -translate-y-[2px] shadow-[0_8px_20px_rgba(170,134,134,0.3)];
+}
+
+.btn-outline {
+  @apply bg-transparent text-white;
+}
+
+.btn-outline:hover {
+  @apply bg-white text-[#111] -translate-y-[2px] shadow-[0_8px_20px_rgba(255,255,255,0.2)];
+}
+
+.btn-lg {
+  @apply min-w-[200px];
+}
+
+.btn-submit {
+  @apply w-full p-4 border border-[#b17576] text-[#b17576] rounded-xl text-base font-bold cursor-pointer transition-all duration-200 mt-[10px];
+}
+
+.btn-submit:hover {
+  @apply bg-[#b17576] text-[#eee];
+}
+
+/* SelectStyle */
+.custom-select-box {
+  @apply inline-block text-[#333] z-10 relative;
+}
+
+.min135 {
+  @apply min-w-[135px];
+}
+
+.min118 {
+  @apply min-w-[118px] shrink-0;
+}
+
+.custom-select-button {
+  @apply w-full p-3 px-4 border border-[#ddd] rounded-xl bg-white flex justify-between items-center cursor-pointer text-sm font-normal;
+}
+
+.custom-select-button.open {
+  @apply border-[#b17576];
+}
+
+.custom-select-label {
+  @apply text-[#aaa] whitespace-nowrap overflow-hidden text-ellipsis;
+}
+
+.custom-select-label.selected {
+  @apply text-[#b17576];
+}
+
+.custom-select-arrow {
+  @apply inline-block w-0 h-0 ml-2 align-middle border-l-[6px] border-r-[6px] border-l-transparent border-r-transparent border-t-[6px] border-t-[#ccc] transition-transform duration-200 ease-linear;
+}
+
+.custom-select-arrow.open {
+  @apply rotate-180 border-t-[#b17576];
+}
+
+.custom-select-options {
+  @apply absolute left-0 top-[calc(100%+4px)] w-full max-h-[400px] overflow-y-auto border border-[#ddd] rounded-xl bg-white shadow-[0_4px_8px_rgba(0,0,0,0.1)] p-0 m-0 list-none z-[100] text-sm;
+}
+
+.custom-select-option {
+  @apply p-[10px] px-4 cursor-pointer whitespace-nowrap;
+}
+
+.custom-select-option:hover {
+  @apply bg-[#f8f4f4];
+}
+
+.custom-select-option.selected {
+  @apply bg-[#f3e9e9] font-semibold;
+}
+
+.custom-select-option.placeholder {
+  @apply text-[#aaa];
+}
+
+.register-category .custom-select-options {
+  @apply max-h-[160px];
+}
+
+/* Bid Box */
+.bid-box {
+  @apply w-full p-3 px-4 bg-white border border-[#ddd] rounded-xl whitespace-nowrap;
+}
+
+.bid-box:last-of-type {
+  @apply bg-[#eee];
+}
+
+/* Product & Banner & Spinner */
+.product-image {
+  @apply w-full bg-[#eee] overflow-hidden relative;
+}
+
+.product-image img,
+.bid-box img {
+  @apply w-full h-full object-cover;
+}
+
+.product-detail-image {
+  @apply w-[400px] h-[400px] rounded-2xl;
+}
+
+.product-detail-image .slick-slider,
+.product-detail-image .slick-list,
+.product-detail-image .slick-track,
+.product-detail-image .slick-slide,
+.product-detail-image .slick-slide > div {
+  @apply h-full !important;
+}
+
+.product-detail-image .slick-slide > div > div {
+  @apply block h-full !important;
+}
+
+.product-detail-image img {
+  @apply w-full h-full object-cover block rounded-2xl !important;
+}
+
+.no-image-txt {
+  @apply w-full h-full flex justify-center items-center text-[#666] text-sm;
+}
+
+.banner-slide {
+  @apply flex-[0_0_100%] relative h-full;
+}
+
+.object-cover {
+  object-fit: cover;
+}
+
+.react-datepicker-popper {
+  @apply z-[500];
+}
+
+/* Spinner */
+.spinner {
+  @apply border-[3px] border-[#f3f3f3] border-t-[#333] rounded-full w-10 h-10 m-[50px_auto] animate-spin;
+}
+
+.highlight-flash {
+  @apply bg-[#f0f8ff] transition-colors duration-[1500ms];
+  animation: highlightFade 3s forwards;
+}
+
+@keyframes highlightFade {
+  0% {
+    @apply bg-[#f0f8ff];
+  }
+  100% {
+    @apply bg-transparent;
+  }
+}
+
+.after::after {
+  content: "";
+  @apply inline-block ml-[10px] h-[14px] w-[1px] bg-[#ddd];
+}
+
+.after:last-of-type::after {
+  content: none;
+}
+
+.nav-link.after::after {
+  @apply ml-4;
+}
+
+.slick-prev,
+.slick-next {
+  @apply z-[2] w-[30px] h-[30px];
+}
+
+.slick-dots {
+  @apply bottom-[10px] z-[2];
+}
+
+/* slider arrows */
+.slick-prev,
+.slick-next {
+  @apply w-10 h-10 z-[2] bg-black/50 rounded-full flex justify-center items-center !important;
+}
+
+.slick-prev:before,
+.slick-next:before {
+  font-size: 24px;
+  color: #fff;
+  opacity: 1;
+}
+
+.slick-prev {
+  left: 10px;
+}
+.slick-next {
+  right: 10px;
 }
 
 .keyword-tabs {

@@ -517,7 +517,7 @@ export default function ProductDetail({ user }: Props) {
 
   return (
     <div className="container">
-      <div className="flex-box gap-40">
+      <div className="flex gap-10">
         <div className="product-image product-detail-image">
           {product.images?.length ? (
             <Slider
@@ -585,8 +585,8 @@ export default function ProductDetail({ user }: Props) {
             {product.title}
           </h2>
 
-          <div className="flex-box flex-between flex-top-a">
-            <div className="flex-box gap-4">
+          <div className="flex justify-between items-start">
+            <div className="flex gap-1">
               <button
                 onClick={handleToggleBookmark}
                 style={{
@@ -599,7 +599,7 @@ export default function ProductDetail({ user }: Props) {
                   fontSize: "0.8rem",
                 }}
               >
-                <div className="flex-box gap-4 flex-center">
+                <div className="flex gap-1 justify-center items-center">
                   <svg
                     width="12"
                     height="11"
@@ -632,7 +632,7 @@ export default function ProductDetail({ user }: Props) {
               </button>
             </div>
             {user?.userId === product.sellerId && (
-              <div className="flex-box gap-4">
+              <div className="flex gap-1">
                 {!editingProductId ? (
                   <>
                     <button onClick={handleEditProduct} className="edit-btn">
@@ -685,7 +685,7 @@ export default function ProductDetail({ user }: Props) {
               }
 
               return (
-                <div className="position-ab z-20 right-0">
+                <div className="absolute z-20 right-0">
                   <button
                     onClick={() => navigate(`/payment?productId=${productId}`)}
                     style={{
