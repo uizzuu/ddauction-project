@@ -798,6 +798,7 @@ export default function ProductDetail({ user }: Props) {
                   timeIntervals={5}
                   dateFormat="yyyy-MM-dd HH:mm"
                   minDate={originalEndDate}
+                  popperClassName="z-[500]"
                   minTime={
                     productForm.auctionEndTime &&
                       new Date(productForm.auctionEndTime).toDateString() ===
@@ -884,7 +885,7 @@ export default function ProductDetail({ user }: Props) {
         <button
           onClick={() => {
             console.log("productId:", product.productId);
-            navigate("/chat", {
+            navigate("/user-chat", {
               state: { sellerId: product.sellerId, productId: product.productId },
             });
           }}

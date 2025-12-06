@@ -249,27 +249,28 @@ export default function AdminPage() {
 
   return (
     <div className="container p-0">
-      <div className="admin-container">
-        <aside className="admin-sidebar">
-          <h2>관리자 페이지</h2>
-          <ul>
-            <li>
-              <button onClick={() => setSection("user")}>회원 관리</button>
+      <div className="flex min-h-screen font-sans">
+        <aside className="w-[250px] bg-[#2d2d2d] text-white p-5">
+          <h2 className="text-2xl mb-[30px]">관리자 페이지</h2>
+          <ul className="list-none p-0">
+            <li className="mb-[15px]">
+              <button onClick={() => setSection("user")} className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline">회원 관리</button>
             </li>
-            <li>
-              <button onClick={() => setSection("product")}>상품 관리</button>
+            <li className="mb-[15px]">
+              <button onClick={() => setSection("product")} className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline">상품 관리</button>
             </li>
-            <li>
-              <button onClick={() => setSection("report")}>신고 관리</button>
+            <li className="mb-[15px]">
+              <button onClick={() => setSection("report")} className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline">신고 관리</button>
             </li>
-            <li>
-              <button onClick={() => setSection("stats")}>통계</button>
+            <li className="mb-[15px]">
+              <button onClick={() => setSection("stats")} className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline">통계</button>
             </li>
-            <li>
+            <li className="mb-[15px]">
               <button
                 onClick={() => {
                   setSection("inquiry");
                 }}
+                className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline"
               >
                 1:1 문의 관리
               </button>
@@ -277,7 +278,7 @@ export default function AdminPage() {
           </ul>
         </aside>
 
-        <main className="admin-main">
+        <main className="flex-1 p-5 bg-[#f2f2f2]">
           {/* 회원 관리 컴포넌트 */}
           {section === "user" && (
             <UserManage

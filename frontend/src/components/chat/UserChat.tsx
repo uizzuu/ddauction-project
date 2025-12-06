@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import type { UserChatProps, PrivateChat, PublicChat, ChatMessagePayload, User } from "../../common/types";
+import type { UserChatProps, PrivateChat, ChatMessagePayload, User } from "../../common/types";
+
 
 // -----------------------------
 // UserChat 컴포넌트
@@ -12,7 +13,7 @@ export default function UserChat({ user }: UserChatProps) {
 
 
 
-  const [messages, setMessages] = useState<(PrivateChat | PublicChat)[]>([]);
+  const [messages, setMessages] = useState<PrivateChat[]>([]);
   const [input, setInput] = useState("");
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -46,18 +47,6 @@ export default function UserChat({ user }: UserChatProps) {
       })
       .catch((err) => console.error("유저 목록 로딩 실패", err));
   }, [user, state]);
-
-  // -----------------------------
-  // 2. 공개 채팅 초기 메시지
-  // -----------------------------
-  useEffect(() => {
-    if (!user || selectedUser) return;
-
-    fetch(`${backendHost}/api/chats/public/recent`, { credentials: "include" })
-      .then((res) => res.json())
-      .then((data: PublicChat[]) => setMessages(data))
-      .catch((err) => console.error("공개 채팅 불러오기 실패", err));
-  }, [user, selectedUser]);
 
   // -----------------------------
   // 3. 개인채팅 초기 메시지
@@ -102,14 +91,12 @@ export default function UserChat({ user }: UserChatProps) {
   // -----------------------------
   useEffect(() => {
     if (!user) return;
-    // if (selectedUser && !selectedProductId) return;
+    if (!selectedUser) return;
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const host = isLocal ? "localhost:8080" : window.location.host;
 
-    const url = selectedUser
-      ? `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}`
-      : `${protocol}://${host}/ws/public-chat?userId=${user.userId}`;
+    const url = `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}`;
 
     console.log("[WebSocket] 연결 시도 URL:", url); // 🔹 연결 URL 확인
 
@@ -126,12 +113,6 @@ export default function UserChat({ user }: UserChatProps) {
 
         if (!data.user && data.nickName) {
           data.user = { userId: data.userId, nickName: data.nickName };
-        }
-
-        // ---------- PUBLIC ----------
-        if (!selectedUser && data.type === "PUBLIC") {
-          setMessages((prev) => [...prev, data]);
-          return;
         }
 
         // PRIVATE 메시지
@@ -158,7 +139,7 @@ export default function UserChat({ user }: UserChatProps) {
     ws.current.onerror = (err) => console.error("웹소켓 에러:", err);
 
     return () => ws.current?.close();
-  }, [user, selectedUser, selectedProductId, isLocal]);
+  }, [user, selectedUser, selectedProductId, isLocal, chatRoomId]);
 
   // -----------------------------
   // 5. 자동 스크롤
@@ -171,24 +152,22 @@ export default function UserChat({ user }: UserChatProps) {
   // 6. 메시지 전송
   // -----------------------------
   const sendMessage = () => {
-    if (!input.trim() || !user || !ws.current) return;
+    if (!input.trim() || !user || !ws.current || !selectedUser) return;
     if (ws.current.readyState !== WebSocket.OPEN) return;
 
-    const isPrivate = !!selectedUser;
-
-    if (isPrivate && !selectedProductId) {
+    if (!selectedProductId) {
       alert("상품을 선택해야 개인채팅이 가능합니다.");
       return;
     }
 
     const payload: ChatMessagePayload = {
-      type: isPrivate ? "PRIVATE" : "PUBLIC",
+      type: "PRIVATE",
       userId: user.userId,
       content: input,
       nickName: user.nickName,
-      ...(isPrivate
-        ? { targetUserId: selectedUser?.userId, productId: selectedProductId, chatRoomId: chatRoomId || undefined }
-        : {}),
+      targetUserId: selectedUser.userId,
+      productId: selectedProductId,
+      chatRoomId: chatRoomId || undefined,
     };
 
     ws.current.send(JSON.stringify(payload));
@@ -199,21 +178,10 @@ export default function UserChat({ user }: UserChatProps) {
   // 7. 화면 렌더링
   // -----------------------------
   return (
-    <div className="flex gap-4 p-5 h-[calc(100vh-120px)] container mx-auto">
+    <div className="flex gap-4 p-5 h-[calc(100vh-120px)] max-w-[1280px] mx-auto">
       {/* 유저 목록 */}
       <div className="w-[180px] border-r border-[#ccc] pr-4 flex flex-col gap-1">
-        <div
-          className={`p-2 cursor-pointer transition-colors hover:bg-gray-100 rounded ${!selectedUser ? "font-bold bg-gray-100" : ""}`}
-          onClick={() => {
-            ws.current?.close();
-            setSelectedUser(null);
-            setSelectedProductId(undefined);
-            setChatRoomId(null);
-            setMessages([]);
-          }}
-        >
-          공개 채팅
-        </div>
+
 
         {users.map((u) => (
           <div
@@ -233,46 +201,65 @@ export default function UserChat({ user }: UserChatProps) {
       </div>
 
       {/* 메시지 영역 */}
-      <div className="flex-1 flex flex-col">
-        <h1 className="mb-3 text-xl font-bold border-b pb-2">{selectedUser ? `1:1 채팅 - ${selectedUser.nickName}` : "공개 채팅"}</h1>
+      {!selectedUser ? (
+        <div className="flex-1 flex items-center justify-center text-gray-500">
+          채팅 상대를 선택해주세요.
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col">
+          <h1 className="mb-3 text-xl font-bold border-b pb-2">
+            1:1 채팅 - {selectedUser.nickName}
+          </h1>
 
-        <div className="border border-[#ccc] p-3 w-full h-full flex flex-col rounded-lg shadow-sm bg-white">
-          <div className="flex-1 overflow-y-auto mb-3 p-2 bg-gray-50 rounded border border-[#eee]">
-            {messages.map((msg, i) => (
-              <div
-                key={i}
-                className="mb-2"
-                style={{ textAlign: msg.user?.userId === user?.userId ? "right" : "left" }}
+          <div className="border border-[#ccc] p-3 w-full h-full flex flex-col rounded-lg shadow-sm bg-white">
+            <div className="flex-1 overflow-y-auto mb-3 p-2 bg-gray-50 rounded border border-[#eee]">
+              {messages.map((msg, i) => (
+                <div
+                  key={i}
+                  className="mb-2"
+                  style={{
+                    textAlign: msg.user?.userId === user?.userId ? "right" : "left",
+                  }}
+                >
+                  <b>
+                    {msg.user?.userId === user?.userId
+                      ? "나"
+                      : msg.user?.nickName}
+                    :
+                  </b>{" "}
+                  {msg.content}
+                  {msg.createdAt && (
+                    <span className="text-[#888] ml-2 text-xs">
+                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  )}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                className="flex-1 p-2 border border-[#ddd] rounded focus:outline-none focus:border-[#b17576]"
+                placeholder="메시지를 입력하세요..."
+              />
+              <button
+                onClick={sendMessage}
+                className="px-4 py-2 bg-[#333] text-white rounded hover:bg-[#555] transition-colors"
               >
-                <b>{msg.user?.userId === user?.userId ? "나" : msg.user?.nickName}:</b>{" "}
-                {msg.content}
-                {msg.createdAt && (
-                  <span className="text-[#888] ml-2 text-xs">
-                    {new Date(msg.createdAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                )}
-              </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-              className="flex-1 p-2 border border-[#ddd] rounded focus:outline-none focus:border-[#b17576]"
-            />
-            <button onClick={sendMessage} className="px-4 py-2 bg-[#333] text-white rounded hover:bg-[#555] transition-colors">
-              전송
-            </button>
+                전송
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

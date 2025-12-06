@@ -10,7 +10,7 @@ export default function ReportManage({
   handleUpdateReportStatus,
 }: Props) {
   return (
-    <div className="admin-section">
+    <div className="bg-white p-5 rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.1)] mb-5">
       <h3>신고 관리</h3>
       <table className="admin-table">
         <thead>

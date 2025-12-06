@@ -58,6 +58,31 @@ export const formatDate = (dateString: string) => {
   return "곧 종료";
 };
 
+// 방금 전 / X분 전 / X시간 전 / X일 전 (과거 기준)
+export const formatTimeAgo = (dateString: string | undefined) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+
+  if (diff < 60 * 1000) return "방금 전";
+
+  const minutes = Math.floor(diff / (1000 * 60));
+  if (minutes < 60) return `${minutes}분 전`;
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  if (hours < 24) return `${hours}시간 전`;
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  if (days < 7) return `${days}일 전`;
+
+  // 7일 이상이면 날짜 표시 (yyyy-MM-dd)
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 // 문자열을 한국 시간(+09:00) 기준으로 Date 변환
 export const parseWithTZ = (s: string) => {
   if (!s) return new Date(0);

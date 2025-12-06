@@ -2,18 +2,7 @@ import "./common/import.css";
 import { useState, useEffect } from "react"; // 🔹 useEffect 추가
 import { Routes, Route, useLocation } from "react-router-dom";
 import { jwtDecode } from "jwt-decode"; // 🔹 JWT decode 라이브러리 추가
-import ArticleForm from "./pages/article/ArticleForm";
-import ArticleDetail from "./pages/article/ArticleDetail";
-import SearchPage from "./pages/product/ProductList";
-import UserQnaForm from "./components/modal/ReportModal";
-import PaymentPage from "./pages/payment/PaymentPage";
-import FindEmail from "./pages/FindEmail";
-import FindPassword from "./pages/FindPassword";
-import UserChat from "./components/chat/UserChat";
-import VerifyPage from "./pages/VerifyPage";
-
 import {
-
   Header,
   Main,
   Login,
@@ -26,6 +15,17 @@ import {
   AdminPage,
   ErrorPage,
   OAuth2Redirect,
+  FloatingWidgets,
+  VerifyPage,
+  ArticleForm,
+  ArticleDetail,
+  SearchPage,
+  UserQnaForm,
+  PaymentPage,
+  FindEmail,
+  FindPassword,
+  UserChat,
+  PublicChat,
 } from "./common/import";
 import type { User } from "./common/types";
 
@@ -47,7 +47,8 @@ const VALID_PATHS = [
   "/find-password",
   "/oauth2/redirect",
   "/error",
-  "/chat",
+  "/public-chat",
+  "/user-chat",
   "/verify",
 ];
 
@@ -203,7 +204,17 @@ export default function App() {
         <Route path="*" element={<ErrorPage />} />
         {/* 채팅 */}
         <Route
-          path="/chat"
+          path="/public-chat"
+          element={
+            user ? (
+              <PublicChat user={user} />
+            ) : (
+              <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>
+            )
+          }
+        />
+        <Route
+          path="/user-chat"
           element={
             user ? (
               <UserChat user={user} />
@@ -215,6 +226,7 @@ export default function App() {
 
         <Route path="/verify" element={<VerifyPage />} /> {/* 이메일 인증용 */}
       </Routes>
+      <FloatingWidgets />
     </div>
   );
 }

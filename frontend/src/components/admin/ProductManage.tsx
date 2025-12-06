@@ -45,7 +45,7 @@ export default function ProductManage({
   };
 
   return (
-    <div className="admin-section">
+    <div className="bg-white p-5 rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.1)] mb-5">
       <h3>상품 관리</h3>
       {/* --- 상품 필터 UI --- */}
       <div style={{ marginBottom: "1rem" }}>
@@ -168,7 +168,7 @@ export default function ProductManage({
                       수정
                     </button>
                     <button
-                      className="delete-btn"
+                      className="bg-[#f5a623] text-white hover:bg-[#d48806] py-[5px] px-[10px] cursor-pointer border-none rounded"
                       onClick={() => handleDeleteProduct(p.productId)}
                     >
                       삭제

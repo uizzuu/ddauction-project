@@ -26,23 +26,20 @@ export default function Header({ user, setUser }: Props) {
     useEffect(() => {
         const handleScroll = () => {
             const currentScrollY = window.scrollY;
-
             // 스크롤 방향 감지 (10px 이상 차이날 때만)
             if (Math.abs(currentScrollY - lastScrollY) > 5) {
                 setIsScrollDown(currentScrollY > lastScrollY && currentScrollY > 100);
                 setLastScrollY(currentScrollY);
             }
-
             setIsSticky(currentScrollY > 10);
         };
-
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, [lastScrollY]);
 
     // 실시간 검색어 & 최근 검색어
     const [popularKeywords, setPopularKeywords] = useState<string[]>([]); // API 인기 검색어
-    const { rankings, isConnected } = RealTimeSearch(); // WebSocket 실시간
+    const { rankings } = RealTimeSearch(); // WebSocket 실시간
     const [recentKeywords, setRecentKeywords] = useState<string[]>([]); // 로컬스토리지 최근검색어
     const [isAutoSave, setIsAutoSave] = useState(true); // 자동저장 여부
 
@@ -84,6 +81,13 @@ export default function Header({ user, setUser }: Props) {
     useEffect(() => {
         handleFetchPopularKeywords();
     }, []);
+
+    // 🆕 실시간 순위 반영 (WebSocket)
+    useEffect(() => {
+        if (rankings.length > 0) {
+            setPopularKeywords(rankings.map(item => item.keyword));
+        }
+    }, [rankings]);
 
     // 외부 클릭 시 드롭다운 닫기
     useEffect(() => {
@@ -378,7 +382,7 @@ export default function Header({ user, setUser }: Props) {
 
                             <button
                                 type="button"
-                                className={`dropdown-arrow ${showSuggestions ? "active" : ""}`}
+                                className={`inline-flex flex-col items-start gap-2.5 p-[0.5px] relative flex-[0_0_auto] transition-opacity duration-300 ${showSuggestions ? "rotate-180" : "rotate-0"}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setShowSuggestions(!showSuggestions);
@@ -396,7 +400,7 @@ export default function Header({ user, setUser }: Props) {
                             </button>
 
                             <div
-                                className="search-divider"
+                                className="w-[1px] h-[14px] bg-[#ddd] mx-1"
                                 aria-hidden="true"
                             />
 
@@ -576,7 +580,7 @@ export default function Header({ user, setUser }: Props) {
 
                             {cartItemCount > 0 && (
                                 <div className="cart-badge-container">
-                                    <div className="cart-badge-count">{cartItemCount}</div>
+                                    <div className="font-medium text-[10px] leading-[7px] text-white transition-opacity duration-300">{cartItemCount}</div>
                                 </div>
                             )}
                         </NavLink>
@@ -615,11 +619,18 @@ export default function Header({ user, setUser }: Props) {
                             커뮤니티
                         </NavLink>
                         <NavLink
-                            to="/chat"
-                            onClick={(e) => handleProtectedNavigation(e, "/chat")}
+                            to="/public-chat"
+                            onClick={(e) => handleProtectedNavigation(e, "/public-chat")}
                             className={({ isActive }) => `nav-tab ${isActive ? "active" : "inactive"}`}
                         >
-                            챗봇문의
+                            공개채팅
+                        </NavLink>
+                        <NavLink
+                            to="/user-chat"
+                            onClick={(e) => handleProtectedNavigation(e, "/user-chat")}
+                            className={({ isActive }) => `nav-tab ${isActive ? "active" : "inactive"}`}
+                        >
+                            일대일채팅
                         </NavLink>
                     </nav>
                 </div>

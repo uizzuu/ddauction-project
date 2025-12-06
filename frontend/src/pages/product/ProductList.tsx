@@ -1,26 +1,27 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { fetchFilteredProducts } from "../../common/api";
 import type { Product } from "../../common/types";
-import SelectStyle from "../../components/ui/form/SelectStyle";
-import {
-  formatPrice,
-  formatDate,
-  parseWithTZ
-} from "../../common/util";
+import { parseWithTZ } from "../../common/util";
 import type { SortOption } from "../../common/util";
+import ProductCard from "../../components/ui/ProductCard";
+import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../../common/enums";
+import { SlidersHorizontal, ArrowUpDown } from "lucide-react";
 
 export default function ProductSearchPage() {
-  const navigate = useNavigate();
   const location = useLocation();
+  const navigate = useNavigate();
 
+  // State
   const [keyword, setKeyword] = useState("");
   const [categoryCode, setCategoryCode] = useState<string | "">("");
   const [activeOnly, setActiveOnly] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortOption, setSortOption] = useState<SortOption>("latest");
+  const [isSortOpen, setIsSortOpen] = useState(false);
 
+  // Fetch logic
   const fetchProducts = async (
     kw: string = "",
     catCode: string | "" = "",
@@ -32,16 +33,17 @@ export default function ProductSearchPage() {
       let data: Product[] = await fetchFilteredProducts({
         keyword: kw,
         category: catCode,
-        productStatus: active ? "ACTIVE" : undefined, // "ACTIVE" 상태만 필터링
+        productStatus: active ? "ACTIVE" : undefined,
         sort: sort,
       });
-      // 거래 가능만 보기 필터
+
+      // 거래 가능만 보기 필터 (클라이언트 사이드 추가 필터링)
       if (active) {
         const now = new Date();
         data = data.filter(
           (p) =>
             p.productStatus === "ACTIVE" &&
-            parseWithTZ(p.auctionEndTime).getTime() > now.getTime()
+            (p.productType !== "AUCTION" || parseWithTZ(p.auctionEndTime).getTime() > now.getTime())
         );
       }
       setProducts(data);
@@ -61,116 +63,154 @@ export default function ProductSearchPage() {
     setKeyword(kw);
     setCategoryCode(catCode);
 
+    // activeOnly와 sortOption은 로컬 스테이트로 관리 (초기화시 리셋 안함)
     fetchProducts(kw, catCode, activeOnly, sortOption);
   }, [location.search, activeOnly, sortOption]);
 
-  const handleActiveOnlyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setActiveOnly(e.target.checked);
+  const handleCategoryClick = (cat: string) => {
+    const params = new URLSearchParams(location.search);
+    if (categoryCode === cat) {
+      // Toggle off
+      params.delete("category");
+      setCategoryCode("");
+    } else {
+      params.set("category", cat);
+      setCategoryCode(cat);
+    }
+    // keyword 유지
+    navigate(`/search?${params.toString()}`);
+  };
+
+  const clearFilters = () => {
+    setActiveOnly(false);
+    navigate("/search");
   };
 
   return (
-    <div className="container mx-auto py-8 min-h-[calc(100vh-120px)]">
-      {/* Top Bar: Total Count + Filters */}
-      <div className="flex justify-between items-center mb-6">
-        <p className="text-sm font-bold text-[#333]">
-          <span className="text-[#333]">{products.length.toLocaleString()}</span> 개
-        </p>
+    <div className="container mx-auto px-4 md:px-0 py-8 min-h-[calc(100vh-120px)] max-w-[1280px]">
 
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 cursor-pointer text-sm text-[#555] hover:text-[#b17576]">
-            <input
-              type="checkbox"
-              checked={activeOnly}
-              onChange={handleActiveOnlyChange}
-              className="accent-[#b17576]"
-            />
-            <span>거래가능만 보기</span>
-          </label>
+      {/* Page Title (Optional) */}
+      <div className="flex flex-col md:flex-row gap-10">
 
-          <SelectStyle
-            value={sortOption}
-            onChange={(val) => setSortOption(val as SortOption)}
-            options={[
-              { value: "latest", label: "최신순" },
-              { value: "oldest", label: "오래된순" },
-              { value: "priceAsc", label: "가격 낮은순" },
-              { value: "priceDesc", label: "가격 높은순" },
-              { value: "timeLeft", label: "남은 시간순" },
-              { value: "popularity", label: "인기순" },
-            ]}
-            placeholder="정렬"
-            className="w-[120px]"
-          />
-        </div>
-      </div>
+        {/* Left Sidebar (Filters) */}
+        <aside className="w-full md:w-[220px] shrink-0">
 
-      <div className="w-full">
-        {loading ? (
-          <p className="text-[#aaa] text-lg text-center py-10">불러오는 중...</p>
-        ) : products.length > 0 ? (
-          <div className="grid grid-cols-4 gap-x-6 gap-y-10">
-            {products.map((p) => (
+          {/* Status Filter */}
+          <div className="filter-group">
+            <h3 className="filter-header">필터</h3>
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-[#333] hover:opacity-70 transition-opacity">
+              <input
+                type="checkbox"
+                checked={activeOnly}
+                onChange={(e) => setActiveOnly(e.target.checked)}
+                className="w-4 h-4 accent-black"
+              />
+              <span>거래 가능만 보기</span>
+            </label>
+          </div>
+
+          {/* Category Filter */}
+          <div className="filter-group">
+            <h3 className="filter-header">카테고리</h3>
+            <div className="flex flex-col gap-2">
               <div
-                key={p.productId}
-                className="flex flex-col gap-3 group cursor-pointer"
-                onClick={() => navigate(`/products/${p.productId}`)}
+                onClick={() => {
+                  const params = new URLSearchParams(location.search);
+                  params.delete("category");
+                  navigate(`/search?${params.toString()}`);
+                }}
+                className={`filter-option ${!categoryCode ? "active" : ""}`}
               >
-                <div className="w-full bg-[#f4f4f4] overflow-hidden relative aspect-square rounded-lg border border-[#eee]">
-                  {p.images && p.images.length > 0 ? (
-                    <img
-                      src={p.images[0].imagePath}
-                      alt={p.title}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        const parent = e.currentTarget.parentElement;
-                        if (parent) parent.innerHTML = '<div class="flex justify-center items-center w-full h-full text-[#aaa] text-xs">이미지 없음</div>';
-                      }}
-                    />
-                  ) : (
-                    <div className="flex justify-center items-center w-full h-full text-[#aaa] text-xs">이미지 없음</div>
-                  )}
-                  {/* Status Badge */}
-                  {p.productStatus !== "ACTIVE" && (
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-lg">
-                      {p.productStatus === "SOLD_OUT" ? "판매완료" : "거래종료"}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  {/* Brand/Seller Info (Mockup based on header) */}
-                  <span className="text-[11px] text-[#999] font-medium truncate">
-                    {p.sellerNickName || "판매자"}
-                  </span>
-
-                  <h3 className="text-sm font-normal text-[#333] truncate leading-tight">
-                    {p.title}
-                  </h3>
-
-                  <div className="mt-1">
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-base font-bold text-[#333]">{formatPrice(p.startingPrice)}</span>
-                      {/* If we had original price logic, we'd add strikethrough here */}
-                    </div>
-
-                    {p.auctionEndTime && (
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-[11px] text-[#b17576] font-medium bg-[#fff0f0] px-1.5 py-0.5 rounded">
-                          {formatDate(p.auctionEndTime)} 남음
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                모든 카테고리
               </div>
-            ))}
+              {(Object.keys(PRODUCT_CATEGORY_LABELS) as ProductCategoryType[]).map((cat) => (
+                <div
+                  key={cat}
+                  onClick={() => handleCategoryClick(cat)}
+                  className={`filter-option ${categoryCode === cat ? "active" : ""}`}
+                >
+                  <span>{PRODUCT_CATEGORY_LABELS[cat]}</span>
+                  {categoryCode === cat && <span className="text-xs">✓</span>}
+                </div>
+              ))}
+            </div>
           </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-20 text-[#aaa]">
-            <p className="text-lg mb-2">검색 결과가 없습니다.</p>
-            <p className="text-sm">다른 키워드로 검색해보세요.</p>
+        </aside>
+
+        {/* Right Content */}
+        <div className="flex-1">
+
+          <div className="flex justify-between items-center mb-4 sticky top-14 bg-white z-10 py-2">
+            <span className="text-sm text-[#555]">
+              상품 <span className="font-bold text-[#111]">{products.length}</span>개
+            </span>
+
+            {/* Minimal Sort Dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsSortOpen(!isSortOpen)}
+                onBlur={() => setTimeout(() => setIsSortOpen(false), 200)} // delay to allow click
+                className="sort-btn"
+              >
+                <ArrowUpDown size={14} />
+                <span>
+                  {sortOption === "latest" ? "최신순" :
+                    sortOption === "priceAsc" ? "가격 낮은순" :
+                      sortOption === "priceDesc" ? "가격 높은순" :
+                        sortOption === "popularity" ? "인기순" : "정렬"}
+                </span>
+              </button>
+
+              {/* Dropdown Menu */}
+              {isSortOpen && (
+                <div className="sort-dropdown">
+                  {[
+                    { value: "latest", label: "최신순" },
+                    { value: "priceAsc", label: "가격 낮은순" },
+                    { value: "priceDesc", label: "가격 높은순" },
+                    { value: "popularity", label: "인기순" },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      className={`sort-item ${sortOption === opt.value ? "active" : ""}`}
+                      onClick={() => {
+                        setSortOption(opt.value as SortOption);
+                        setIsSortOpen(false);
+                      }}
+                      onMouseDown={(e) => e.preventDefault()} // Prevent blur so click works
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Product Grid */}
+          <div className="w-full">
+            {loading ? (
+              <div className="text-[#aaa] text-sm text-center py-20">검색중...</div>
+            ) : products.length > 0 ? (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
+                {products.map((p) => (
+                  <ProductCard key={p.productId} product={p} />
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-[#aaa] border-t border-[#eee] w-full">
+                <p className="text-lg mb-2 text-[#333] font-medium">검색 결과가 없습니다.</p>
+                <p className="text-sm text-[#888] mb-6">다른 키워드나 필터를 변경해보세요.</p>
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-2 border border-[#ddd] rounded-full text-sm hover:bg-[#f9f9f9] transition-colors"
+                >
+                  필터 초기화
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

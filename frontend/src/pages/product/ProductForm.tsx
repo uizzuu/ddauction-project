@@ -6,7 +6,7 @@ import type { User, ProductForm } from "../../common/types";
 import { CATEGORY_OPTIONS } from "../../common/enums";
 import type { ProductCategoryType } from "../../common/enums";
 import { generateAiDescription, registerProductWithImages } from "../../common/api";
-import SelectStyle from "../../components/ui/form/SelectStyle";
+import SelectStyle from "../../components/ui/SelectStyle";
 import { formatDateTime } from "../../common/util";
 
 type Props = {
@@ -161,7 +161,7 @@ export default function ProductRegister({ user }: Props) {
         <h2 className="title-32 mb-30 text-center">물품 등록</h2>
 
         <div className="form-group register">
-          <label className="label">제목 *</label>
+          <label className="text-[#777] text-base font-medium mb-[-4px]">제목 *</label>
           <input
             type="text"
             placeholder="상품 제목"
@@ -178,7 +178,7 @@ export default function ProductRegister({ user }: Props) {
             disabled={uploading}
           />
 
-          <label className="label">상세 설명 *</label>
+          <label className="text-[#777] text-base font-medium mb-[-4px]">상세 설명 *</label>
           <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
             <button
               type="button"
@@ -235,7 +235,7 @@ export default function ProductRegister({ user }: Props) {
             disabled={uploading}
           />
 
-          <label className="label">시작 가격 (원) *</label>
+          <label className="text-[#777] text-base font-medium mb-[-4px]">시작 가격 (원) *</label>
           <input
             type="text"
             placeholder="예: 10000"
@@ -255,7 +255,7 @@ export default function ProductRegister({ user }: Props) {
             disabled={uploading}
           />
 
-          <label className="label">상품 이미지 * (최소 1개)</label>
+          <label className="text-[#777] text-base font-medium mb-[-4px]">상품 이미지 * (최소 1개)</label>
           <input
             type="file"
             multiple
@@ -292,7 +292,7 @@ export default function ProductRegister({ user }: Props) {
           </div>
 
           <>
-            <label className="label">경매 종료 시간 *</label>
+            <label className="text-[#777] text-base font-medium mb-[-4px]">경매 종료 시간 *</label>
             <ReactDatePicker
               selected={auctionEndDate}
               onChange={handleDateChange}
@@ -305,10 +305,11 @@ export default function ProductRegister({ user }: Props) {
               placeholderText="날짜와 시간을 선택하세요"
               className="input"
               disabled={uploading}
+              popperClassName="z-[500]"
             />
           </>
 
-          <label className="label">카테고리 *</label>
+          <label className="text-[#777] text-base font-medium mb-[-4px]">카테고리 *</label>
           <SelectStyle
             value={form.productCategoryType ?? ""}
             onChange={(val) =>
@@ -333,10 +334,10 @@ export default function ProductRegister({ user }: Props) {
           {uploading ? "업로드 중..." : "등록하기"}
         </button>
 
-        <div className="register-links">
+        <div className="flex justify-center mt-5">
           <button
             onClick={() => navigate("/")}
-            className="link-button"
+            className="bg-transparent border-none text-[#999] cursor-pointer text-sm transition-colors duration-200 hover:text-white"
             disabled={uploading}
           >
             취소

@@ -92,12 +92,12 @@ export default function ArticleForm({ userId }: Props) {
 
   return (
     <div className="container">
-      <form onSubmit={handleSubmit} className="flex-column article-form gap-24">
+      <form onSubmit={handleSubmit} className="flex-column w-full mb-4 text-[#333] gap-24">
         <input type="hidden" name="boardId" value={form.boardId} />
         <input type="hidden" name="userId" value={userId ?? ""} />
 
         <div>
-          <label htmlFor="title" className="article-label">
+          <label htmlFor="title" className="text-base font-medium ml-1">
             제목
           </label>
           <input
@@ -112,7 +112,7 @@ export default function ArticleForm({ userId }: Props) {
         </div>
 
         <div>
-          <label htmlFor="content" className="article-label">
+          <label htmlFor="content" className="text-base font-medium ml-1">
             내용
           </label>
           <textarea
@@ -126,8 +126,8 @@ export default function ArticleForm({ userId }: Props) {
           />
         </div>
 
-        <div className="btn-wrap">
-          <button type="submit" className="article-btn">
+        <div className="w-full flex flex-col items-start">
+          <button type="submit" className="w-fit text-sm py-[12px] px-[16px] bg-white border border-[#ddd] rounded-xl text-[#aaa] font-normal whitespace-nowrap active:text-[#b17576] active:border-[#b17576] outline-none">
             {id ? "수정하기" : "등록하기"}
           </button>
         </div>

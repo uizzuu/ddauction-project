@@ -19,10 +19,6 @@
   @apply border-b-0;
 }
 
-.search-divider {
-  @apply w-[1px] h-[14px] bg-[#ddd] mx-1;
-}
-
 .nav-tab {
   @apply py-1 text-base border-b-2;
 }
@@ -33,28 +29,6 @@
 
 .nav-tab.inactive {
   @apply text-gray-500 border-transparent hover:text-black;
-}
-
-.cart-badge-container {
-  @apply flex w-[18px] h-[18px] items-center justify-center 
-  rounded-full border text-center 
-  absolute top-0 -right-[2px]
-  bg-[var(--color-alert-red)] border-[var(--color-alert-red)];
-}
-
-.cart-badge-count {
-  @apply font-medium text-[10px] leading-[7px] text-white 
-  transition-opacity duration-300;
-}
-
-.dropdown-arrow {
-  @apply inline-flex flex-col items-start gap-2.5 
-  p-[0.5px] relative flex-[0_0_auto] rotate-0 
-  transition-opacity duration-300;
-}
-
-.dropdown-arrow.active {
-  @apply rotate-180;
 }
 
 .autocomplete-dropdown {
@@ -72,6 +46,11 @@
 
 .autocomplete-item.selected {
   @apply bg-[#f5f5f5];
+}
+
+.category {
+  @apply flex flex-col items-center gap-2 cursor-pointer
+  w-fit;
 }
 
 /* Auth.css (Migrated) */
@@ -107,17 +86,8 @@
   content: none;
 }
 
-.social-login {
-  @apply w-full;
-}
-
 /* Article.css */
-.article-form {
-  @apply w-full mb-4 text-[#333];
-}
-
 .article-input,
-.article-btn,
 .article-textarea {
   @apply w-full py-[12px] px-[16px] bg-white border border-[#ddd] rounded-xl text-[#aaa] text-base font-normal whitespace-nowrap;
 }
@@ -131,29 +101,15 @@
   @apply whitespace-pre-wrap h-[240px] resize-none;
 }
 
-.article-label {
-  @apply text-base font-medium ml-1;
-}
-
 .article-input:focus,
-.article-btn:focus,
 .article-textarea:focus,
 .article-input:active,
-.article-btn:active,
 .article-textarea:active {
   @apply outline-none;
 }
 
 .article-textarea.article-review:focus {
   @apply outline-none;
-}
-
-.btn-wrap {
-  @apply w-full flex flex-col items-start;
-}
-
-.article-btn {
-  @apply w-fit text-sm;
 }
 
 .edit-btn {
@@ -163,10 +119,6 @@
 .article-input:focus,
 .article-textarea:focus {
   @apply text-[#333] border-[#ddd];
-}
-
-.article-btn:active {
-  @apply text-[#b17576] border-[#b17576];
 }
 
 .article-form.article-review {
@@ -190,42 +142,7 @@
 }
 
 /* AdminPage.css (Migrated) */
-.admin-container {
-  @apply flex min-h-screen font-sans;
-}
-
-.admin-sidebar {
-  @apply w-[250px] bg-[#2d2d2d] text-white p-5;
-}
-
-.admin-sidebar h2 {
-  @apply text-2xl mb-[30px];
-}
-
-.admin-sidebar ul {
-  @apply list-none p-0;
-}
-
-.admin-sidebar li {
-  @apply mb-[15px];
-}
-
-.admin-sidebar button {
-  @apply w-full bg-none border-none text-white text-base text-left cursor-pointer;
-}
-
-.admin-sidebar button:hover {
-  @apply underline;
-}
-
-.admin-main {
-  @apply flex-1 p-5 bg-[#f2f2f2];
-}
-
-.admin-section {
-  @apply bg-white p-5 rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.1)] mb-5;
-}
-
+/* Admin styles inlined to AdminPage.tsx and components */
 .admin-table {
   @apply w-full border-collapse;
 }
@@ -247,28 +164,8 @@
   @apply py-[5px] px-[10px] cursor-pointer border-none rounded;
 }
 
-.ban-btn {
-  @apply bg-[#ff4d4f] text-white;
-}
-
-.ban-btn:hover {
-  @apply bg-[#d9363e];
-}
-
 .banned-text {
   @apply text-gray-500;
-}
-
-.delete-btn {
-  @apply bg-[#f5a623] text-white;
-}
-
-.delete-btn:hover {
-  @apply bg-[#d48806];
-}
-
-.process-btn {
-  @apply bg-[#1890ff] text-white;
 }
 
 /* App.css Components (Migrated) */
@@ -318,58 +215,14 @@
   @apply cursor-pointer;
 }
 
-.checkbox-group {
-  @apply flex items-center;
-}
-
-.checkbox-label {
-  @apply flex items-center gap-[10px] text-[#333] text-[15px] cursor-pointer;
-}
-
-.checkbox-label input[type="checkbox"] {
-  @apply w-[18px] h-[18px] cursor-pointer;
-}
-
-.register-links {
-  @apply flex justify-center mt-5;
-}
-
-.link-button {
-  @apply bg-none border-none text-[#999] cursor-pointer text-sm transition-colors duration-200;
-}
-
-.link-button:hover {
-  @apply text-white;
-}
+/* removed .checkbox-group/label */
 
 /* Search & Social */
 .search-form {
   @apply w-[800px] flex gap-2 mb-4;
 }
 
-.btn-social {
-  @apply w-11 h-11 p-2 box-border border border-[#eee] rounded-full overflow-hidden;
-}
-
-.btn-social svg {
-  @apply block w-full h-full;
-}
-
-.btn-social.naver svg {
-  @apply w-[70%] h-[70%];
-}
-
-.google {
-  @apply border-[#eee];
-}
-
-.naver {
-  @apply border-[#2db400] bg-[#2db400];
-}
-
-.kakao {
-  @apply border-[#fee500] bg-[#fee500];
-}
+/* Inlined social buttons */
 
 .search-input,
 .search-btn {
@@ -392,27 +245,6 @@
 
 .border-hover-none:hover {
   @apply border-[#ddd];
-}
-
-.no-content-text {
-  @apply text-[#aaa] text-lg;
-}
-
-.category-checkbox-group {
-  @apply whitespace-nowrap;
-}
-
-.category-checkbox-group::after {
-  content: "";
-  @apply block w-full h-px bg-[#eee] my-4;
-}
-
-.category-checkbox-group:last-of-type::after {
-  content: none;
-}
-
-.category-label {
-  @apply items-center;
 }
 
 /* Buttons */
@@ -461,14 +293,6 @@ button:disabled {
 /* SelectStyle */
 .custom-select-box {
   @apply inline-block text-[#333] z-10 relative;
-}
-
-.min135 {
-  @apply min-w-[135px];
-}
-
-.min118 {
-  @apply min-w-[118px] shrink-0;
 }
 
 .custom-select-button {
@@ -562,18 +386,6 @@ button:disabled {
   @apply w-full h-full flex justify-center items-center text-[#666] text-sm;
 }
 
-.banner-slide {
-  @apply flex-[0_0_100%] relative h-full;
-}
-
-.object-cover {
-  object-fit: cover;
-}
-
-.react-datepicker-popper {
-  @apply z-[500];
-}
-
 /* Spinner */
 .spinner {
   @apply border-[3px] border-[#f3f3f3] border-t-[#333] rounded-full w-10 h-10 m-[50px_auto] animate-spin;
@@ -648,21 +460,75 @@ button:disabled {
   @apply text-black bg-white border-b-2 border-[#B17576];
 }
 
-.tab-icon {
-  @apply inline-block mr-1;
+/* KREAM UI Common */
+.kream-section-header {
+  @apply flex justify-between items-end mb-6;
 }
 
-.ranking-badge {
-  @apply inline-flex items-center justify-center 
-  w-5 h-5 text-xs font-bold text-[#666] bg-[#f0f0f0] 
-  rounded flex-shrink-0;
+.kream-section-title {
+  @apply text-3xl font-bold text-[#111] mb-2;
 }
 
-.ranking-badge.top3 {
-  @apply text-white bg-gradient-to-br 
-  from-[#B17576] to-[#d89899];
+/* MainPage KREAM Styles */
+.banner-control-btn {
+  @apply absolute top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm text-white transition-all z-20;
 }
 
-.selected {
-  @apply bg-[#f5f5f5];
+.banner-indicator {
+  @apply absolute bottom-8 right-8 bg-black/40 backdrop-blur-md px-4 py-1 rounded-full text-white text-xs font-medium z-20 tracking-widest;
+}
+
+.category-shortcut {
+  @apply flex flex-col items-center gap-2 min-w-[72px] cursor-pointer transition-colors;
+  /* 'group' class must be added in HTML/JSX, not via @apply */
+}
+
+.category-shortcut-icon {
+  @apply w-[72px] h-[72px] rounded-[18px] bg-[#f4f4f4] flex items-center justify-center text-[#333] transition-colors;
+}
+
+/* Hover effects using standard CSS nesting for reliability */
+.category-shortcut:hover .category-shortcut-icon {
+  @apply bg-[#f0f0f0];
+}
+
+.category-shortcut-label {
+  @apply text-[12px] text-[#333] font-medium text-center whitespace-nowrap;
+}
+
+.category-shortcut:hover .category-shortcut-label {
+  @apply font-semibold;
+}
+
+/* ProductList KREAM Styles */
+.filter-group {
+  @apply mb-8 border-b border-[#eee] pb-6;
+}
+
+.filter-header {
+  @apply font-bold text-sm text-[#111] mb-4;
+}
+
+.filter-option {
+  @apply text-sm cursor-pointer flex justify-between items-center text-[#888] hover:text-[#555] transition-colors;
+}
+
+.filter-option.active {
+  @apply font-bold text-[#111];
+}
+
+.sort-btn {
+  @apply flex items-center gap-1 text-sm text-[#333] cursor-pointer font-medium hover:text-[#888] focus:outline-none;
+}
+
+.sort-dropdown {
+  @apply absolute right-0 top-full mt-2 w-[120px] bg-white border border-[#eee] shadow-lg rounded-md z-20 overflow-hidden py-1;
+}
+
+.sort-item {
+  @apply w-full text-left px-4 py-2 text-xs hover:bg-[#f9f9f9] transition-colors text-[#555];
+}
+
+.sort-item.active {
+  @apply font-bold text-black;
 }

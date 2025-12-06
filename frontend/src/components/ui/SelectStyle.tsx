@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import type { SelectStyleProps } from "../../../common/types";
+import type { SelectStyleProps } from "../../common/types";
 
 export default function SelectStyle({
   value,
@@ -56,9 +56,8 @@ export default function SelectStyle({
           {options.map((opt) => (
             <li
               key={opt.value}
-              className={`custom-select-option ${
-                opt.value === value ? "selected" : ""
-              }`}
+              className={`custom-select-option ${opt.value === value ? "selected" : ""
+                }`}
               onClick={() => handleSelect(opt.value)}
             >
               {opt.label}

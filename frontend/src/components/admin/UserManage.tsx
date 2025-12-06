@@ -39,7 +39,7 @@ export default function UserManage({
   fetchUsers,
 }: Props) {
   return (
-    <div className="admin-section">
+    <div className="bg-white p-5 rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.1)] mb-5">
       <h3>회원 관리</h3>
 
       {/* --- 회원 필터 UI (AdminPage에서 이동) --- */}

@@ -125,10 +125,10 @@ export default function Login({ setUser }: Props) {
         </form>
 
         {/* 소셜 로그인 버튼 */}
-        <div className="social-login flex gap-3 justify-center items-center mt-5">
+        <div className="w-full flex gap-3 justify-center items-center mt-5">
           <button
             onClick={() => handleSocialLogin("google")}
-            className="btn-social flex justify-center items-center google"
+            className="w-11 h-11 p-2 box-border border border-[#eee] rounded-full overflow-hidden flex justify-center items-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -157,7 +157,7 @@ export default function Login({ setUser }: Props) {
           </button>
           <button
             onClick={() => handleSocialLogin("naver")}
-            className="btn-social flex justify-center items-center naver"
+            className="w-11 h-11 p-2 box-border border rounded-full overflow-hidden flex justify-center items-center border-[#2db400] bg-[#2db400]"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.1 17.5">
               <defs>
@@ -175,7 +175,7 @@ export default function Login({ setUser }: Props) {
           </button>
           <button
             onClick={() => handleSocialLogin("kakao")}
-            className="btn-social flex justify-center items-center kakao"
+            className="w-11 h-11 p-2 box-border border rounded-full overflow-hidden flex justify-center items-center border-[#fee500] bg-[#fee500]"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
