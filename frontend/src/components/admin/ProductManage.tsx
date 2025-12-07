@@ -1,5 +1,7 @@
 import type { Product, EditProductForm } from "../../common/types";
 import { PRODUCT_STATUS, CATEGORY_OPTIONS, PRODUCT_CATEGORIES, type ProductCategoryType } from "../../common/enums";
+import { Search } from "lucide-react";
+import CustomSelect from "../common/CustomSelect";
 
 type Props = {
   products: Product[];
@@ -45,141 +47,179 @@ export default function ProductManage({
   };
 
   return (
-    <div className="bg-white p-5 rounded-lg shadow-[0_0_8px_rgba(0,0,0,0.1)] mb-5">
-      <h3>상품 관리</h3>
-      {/* --- 상품 필터 UI --- */}
-      <div style={{ marginBottom: "1rem" }}>
-        <input
-          placeholder="상품명 검색"
-          value={filterKeyword}
-          onChange={(e) => setFilterKeyword(e.target.value)}
-        />
-        <select
-          value={filterCategory ?? ""}
-          onChange={(e) =>
-            setFilterCategory((e.target.value || null) as ProductCategoryType | null)
-          }
+    <div>
+      <h2 className="text-xl font-bold text-[#111] mb-6">상품 관리</h2>
+
+      {/* Filter Section */}
+      <div className="mb-6 flex gap-3 items-end">
+        <div className="flex-1">
+          <label className="block text-sm font-medium text-[#666] mb-1.5">상품명 검색</label>
+          <div className="relative">
+            <input
+              placeholder="상품명을 입력하세요"
+              value={filterKeyword}
+              onChange={(e) => setFilterKeyword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && fetchProducts()}
+              className="w-full px-3 py-2 pr-10 border border-[#ddd] rounded-lg bg-white text-[#111] text-sm focus:outline-none focus:ring-1 focus:ring-[#111] focus:border-[#111]"
+            />
+            <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#999]" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-[#666] mb-1.5">카테고리</label>
+          <CustomSelect
+            value={filterCategory ?? ""}
+            onChange={(value) =>
+              setFilterCategory((value || null) as ProductCategoryType | null)
+            }
+            options={[
+              { value: "", label: "전체 카테고리" },
+              ...CATEGORY_OPTIONS,
+            ]}
+          />
+        </div>
+        <button
+          onClick={fetchProducts}
+          className="px-6 py-2 bg-[#111] text-white rounded-lg text-sm font-medium hover:bg-[#333] transition-colors"
         >
-          <option value="">전체 카테고리</option>
-          {CATEGORY_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <button onClick={fetchProducts}>검색</button>
+          검색
+        </button>
       </div>
 
-      <table className="admin-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>상품명</th>
-            <th>카테고리</th>
-            <th>가격</th>
-            <th>상태</th>
-            <th>액션</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map((p) => (
-            <tr key={p.productId}>
-              <td>{p.productId}</td>
-              <td>
-                {editingProductId === p.productId ? (
-                  <input
-                    value={editProductForm.title ?? ""}
-                    onChange={(e) =>
-                      setEditProductForm({
-                        ...editProductForm,
-                        title: e.target.value,
-                      })
-                    }
-                  />
-                ) : (
-                  p.title
-                )}
-              </td>
-              <td>
-                {editingProductId === p.productId ? (
-                  <select
-                    value={editProductForm.productCategoryType ?? ""}
-                    onChange={(e) =>
-                      setEditProductForm({
-                        ...editProductForm,
-                        productCategoryType: (e.target.value || null) as ProductCategoryType | null,
-                      })
-                    }
-                  >
-                    <option value="">카테고리 선택</option>
-                    {CATEGORY_OPTIONS.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  p.productCategoryType
-                    ? PRODUCT_CATEGORIES[p.productCategoryType]
-                    : "-"
-                )}
-              </td>
-              <td>
-                {editingProductId === p.productId ? (
-                  <input
-                    type="number"
-                    value={editProductForm.startingPrice ?? 0}
-                    onChange={(e) =>
-                      setEditProductForm({
-                        ...editProductForm,
-                        startingPrice: e.target.value,
-                      })
-                    }
-                  />
-                ) : (
-                  p.startingPrice ?? 0
-                )}
-              </td>
-              <td>
-                {editingProductId === p.productId ? (
-                  <select
-                    value={editProductForm.productStatus ?? PRODUCT_STATUS[0]}
-                    onChange={(e) => handleProductStatusChange(e.target.value)}
-                  >
-                    <option value="ACTIVE">판매중</option>
-                    <option value="SOLD">판매완료</option>
-                    <option value="CLOSED">비활성</option>
-                  </select>
-                ) : (
-                  p.productStatus ?? "-"
-                )}
-              </td>
-              <td>
-                {editingProductId === p.productId ? (
-                  <>
-                    <button onClick={() => handleSaveProductClick(p.productId)}>
-                      저장
-                    </button>
-                    <button onClick={handleCancelProductClick}>취소</button>
-                  </>
-                ) : (
-                  <>
-                    <button onClick={() => handleEditProductClick(p)}>
-                      수정
-                    </button>
-                    <button
-                      className="bg-[#f5a623] text-white hover:bg-[#d48806] py-[5px] px-[10px] cursor-pointer border-none rounded"
-                      onClick={() => handleDeleteProduct(p.productId)}
-                    >
-                      삭제
-                    </button>
-                  </>
-                )}
-              </td>
+      {/* Table */}
+      <div className="border border-[#eee] rounded-lg overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="bg-[#f9f9f9] border-b-2 border-[#eee]">
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">ID</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">상품명</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">카테고리</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">가격</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">상태</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">관리</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="bg-white divide-y divide-[#eee]">
+            {products.map((p) => (
+              <tr key={p.productId} className="hover:bg-[#f9f9f9] transition-colors">
+                <td className="px-4 py-3 text-sm text-[#111]">{p.productId}</td>
+                <td className="px-4 py-3 text-sm">
+                  {editingProductId === p.productId ? (
+                    <input
+                      value={editProductForm.title ?? ""}
+                      onChange={(e) =>
+                        setEditProductForm({
+                          ...editProductForm,
+                          title: e.target.value,
+                        })
+                      }
+                      className="px-2 py-1 border border-[#ddd] rounded text-sm w-full focus:outline-none focus:ring-1 focus:ring-[#111]"
+                    />
+                  ) : (
+                    <span className="text-[#111]">{p.title}</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  {editingProductId === p.productId ? (
+                    <CustomSelect
+                      value={editProductForm.productCategoryType ?? ""}
+                      onChange={(value) =>
+                        setEditProductForm({
+                          ...editProductForm,
+                          productCategoryType: (value || null) as ProductCategoryType | null,
+                        })
+                      }
+                      options={[
+                        { value: "", label: "카테고리 선택" },
+                        ...CATEGORY_OPTIONS,
+                      ]}
+                      className="w-full"
+                    />
+                  ) : (
+                    <span className="text-[#666]">
+                      {p.productCategoryType
+                        ? PRODUCT_CATEGORIES[p.productCategoryType]
+                        : "-"}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  {editingProductId === p.productId ? (
+                    <input
+                      type="number"
+                      value={editProductForm.startingPrice ?? 0}
+                      onChange={(e) =>
+                        setEditProductForm({
+                          ...editProductForm,
+                          startingPrice: e.target.value,
+                        })
+                      }
+                      className="px-2 py-1 border border-[#ddd] rounded text-sm w-24 focus:outline-none focus:ring-1 focus:ring-[#111]"
+                    />
+                  ) : (
+                    <span className="text-[#111]">{p.startingPrice?.toLocaleString()}원</span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  {editingProductId === p.productId ? (
+                    <CustomSelect
+                      value={editProductForm.productStatus ?? PRODUCT_STATUS[0]}
+                      onChange={(value) => handleProductStatusChange(value)}
+                      options={[
+                        { value: "ACTIVE", label: "판매중" },
+                        { value: "SOLD", label: "판매완료" },
+                        { value: "CLOSED", label: "비활성" },
+                      ]}
+                      className="w-full"
+                    />
+                  ) : (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.productStatus === "ACTIVE" ? "bg-green-50 text-green-700" :
+                      p.productStatus === "SOLD" ? "bg-gray-100 text-gray-700" :
+                        "bg-red-50 text-red-700"
+                      }`}>
+                      {p.productStatus === "ACTIVE" ? "판매중" :
+                        p.productStatus === "SOLD" ? "판매완료" : "비활성"}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-sm">
+                  {editingProductId === p.productId ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleSaveProductClick(p.productId)}
+                        className="px-3 py-1 bg-[#111] text-white rounded text-xs font-medium hover:bg-[#333] transition-colors"
+                      >
+                        저장
+                      </button>
+                      <button
+                        onClick={handleCancelProductClick}
+                        className="px-3 py-1 bg-white border border-[#ddd] text-[#666] rounded text-xs font-medium hover:bg-[#f9f9f9] transition-colors"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditProductClick(p)}
+                        className="px-3 py-1 bg-white border border-[#ddd] text-[#666] rounded text-xs font-medium hover:bg-[#f9f9f9] transition-colors"
+                      >
+                        수정
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProduct(p.productId)}
+                        className="px-3 py-1 bg-[#666] text-white rounded text-xs font-medium hover:bg-[#888] transition-colors"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

@@ -83,7 +83,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                         )}
                         {user?.userId === product.sellerId && editingProductId && (
                             <div className="flex gap-2">
-                                <button onClick={handleSaveProduct} className="text-sm bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700">저장</button>
+                                <button onClick={handleSaveProduct} className="text-sm bg-[#333] text-white px-3 py-1 rounded-md hover:bg-blue-700">저장</button>
                                 <button onClick={handleCancelProductEdit} className="text-sm bg-gray-200 text-gray-600 px-3 py-1 rounded-md hover:bg-gray-300">취소</button>
                             </div>
                         )}

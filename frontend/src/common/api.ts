@@ -1086,27 +1086,27 @@ export async function fetchBannerProducts(): Promise<
     }
 
     const topData: TYPE.Product[] = await topRes.json();
-    const latestData: TYPE.Product = await latestRes.json();
-    const endingData: TYPE.Product = await endingRes.json();
+    const latestData: TYPE.Product[] = await latestRes.json();
+    const endingData: TYPE.Product[] = await endingRes.json();
 
     return [
       {
         id: 1,
         image: topData[0]?.images?.[0]?.imagePath,
-        text: "지금 가장 인기 있는 경매 상품 🔥",
+        text: "실시간 인기 급상승 경매 🔥",
         product: topData[0],
       },
       {
         id: 2,
-        image: latestData?.images?.[0]?.imagePath,
+        image: latestData?.[0]?.images?.[0]?.imagePath,
         text: "오늘의 추천! 신규 등록 상품 🎉",
-        product: latestData,
+        product: latestData?.[0],
       },
       {
         id: 3,
-        image: endingData?.images?.[0]?.imagePath,
+        image: endingData?.[0]?.images?.[0]?.imagePath,
         text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
-        product: endingData,
+        product: endingData?.[0],
       },
     ];
   } catch (err) {
@@ -1138,13 +1138,17 @@ export async function fetchMyLikes(token: string): Promise<TYPE.Product[]> {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store"
   });
-  if (!res.ok) throw new Error("찜 상품 조회 실패");
+  if (!res.ok) {
+    const error: any = new Error(`찜 상품 조회 실패 (${res.status})`);
+    error.status = res.status;
+    throw error;
+  }
   const data: Partial<TYPE.Product>[] = await res.json();
   return data.map(normalizeProduct);
 }
 
 // 신고 내역
-export async function fetchReports(token: string): Promise<Report[]> {
+export async function fetchReports(token: string): Promise<TYPE.Report[]> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/reports/mypage`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -1194,8 +1198,7 @@ export async function fetchMyReviews(userId: number): Promise<{ reviews: TYPE.Re
 // 리뷰 등록
 export async function submitReview(
   targetUserId: number,
-  rating: number,
-  comments: string,
+  data: { rating: number; comments: string },
   token: string
 ): Promise<void> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/reviews/${targetUserId}`, {
@@ -1204,7 +1207,7 @@ export async function submitReview(
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ rating, comments }),
+    body: JSON.stringify(data),
   });
 
   if (!res.ok) {
@@ -1420,5 +1423,60 @@ export async function searchPrivateChats(keyword: string): Promise<TYPE.PrivateC
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("개인 채팅 검색 실패");
+  return res.json();
+}
+// ===================== MyPage API Functions =====================
+
+export async function fetchCurrentUser(token: string): Promise<TYPE.User> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/auth/me`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) {
+    const error: any = new Error(`유저 정보 불러오기 실패 (${res.status})`);
+    error.status = res.status;
+    throw error;
+  }
+  return res.json();
+}
+
+export async function updateUserProfile(userId: number, data: { nickName: string; password: string; phone: string }): Promise<TYPE.User> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error("정보 수정 실패: " + errorText);
+  }
+  return res.json();
+}
+
+export async function fetchUserQnas(userId: number): Promise<TYPE.ProductQna[]> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/qna/user/${userId}`);
+  if (!res.ok) throw new Error("Q&A 조회 실패");
+  return res.json();
+}
+
+export async function fetchUserInquiries(token: string): Promise<any[]> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/inquiry/user`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) throw new Error("문의 내역 조회 실패");
+  return res.json();
+}
+
+export async function fetchUserReviews(userId: number): Promise<TYPE.Review[]> {
+  const res = await fetch(`${API_BASE_URL}/reviews/user/${userId}`);
+  if (!res.ok) throw new Error("리뷰 조회 실패");
+  return res.json();
+}
+
+export async function fetchAverageRating(userId: number): Promise<{ averageRating: number }> {
+  const res = await fetch(`${API_BASE_URL}/reviews/user/${userId}/average`);
+  if (!res.ok) throw new Error("평균 평점 조회 실패");
   return res.json();
 }

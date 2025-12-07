@@ -158,7 +158,7 @@ export default function Main() {
   return (
     <div className="w-full bg-white pb-20">
       {/* 1. Banner Section (Fixed Size, Rounded) */}
-      <div className="w-full mb-10 mt-6">
+      <div className="w-full mb-10 mt-10">
         <div className="w-full max-w-[1280px] mx-auto h-[400px] relative group rounded-[12px] overflow-hidden bg-[#f4f4f4]">
           {banners.length > 0 ? (
             <>
@@ -166,30 +166,24 @@ export default function Main() {
                 {banners.map((b, i) => (
                   <div key={i} className="h-[400px] outline-none">
                     <div
-                      className="w-full h-full cursor-pointer relative"
+                      className="w-full h-full cursor-pointer relative bg-[#333]"
                       onClick={() => b.product && navigate(`/products/${b.product.productId}`)}
                     >
-                      {b.image ? (
-                        <>
-                          <img
-                            src={b.image}
-                            alt={b.text}
-                            className="w-full h-full object-cover"
-                          />
-                          {/* Banner Text Overlay */}
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                          <div className="absolute bottom-12 left-10 text-white z-10 text-left">
-                            <h3 className="text-3xl font-bold drop-shadow-md mb-2">{b.text}</h3>
-                            <p className="text-sm font-light opacity-90 tracking-wider">
-                              {b.product ? "지금 바로 구경하기 →" : "자세히 보기 →"}
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="w-full h-full bg-[#333] flex items-center justify-center text-white">
-                          <span className="text-2xl font-bold">{b.text || "배너"}</span>
-                        </div>
+                      {b.image && (
+                        <img
+                          src={b.image}
+                          alt={b.text}
+                          className="w-full h-full object-cover"
+                        />
                       )}
+                      {/* Banner Text Overlay (Always visible) */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute bottom-12 left-10 text-white z-10 text-left">
+                        <h3 className="text-3xl font-bold drop-shadow-md mb-2">{b.text}</h3>
+                        <p className="text-sm font-light opacity-90 tracking-wider">
+                          {b.product ? "지금 바로 구경하기 →" : "자세히 보기 →"}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -208,27 +202,27 @@ export default function Main() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 md:px-0">
+      <div className="container mx-auto md:px-0 mt-0">
 
         {/* 2. Category Shortcuts (Slider) */}
-        <section className="mb-20 relative group w-fit mx-auto max-w-full">
+        <section className="mb-20 relative w-fit mx-auto max-w-full">
           <CategoryPrevArrow onClick={() => scroll("left")} visible={showLeftArrow} />
 
           <div
             ref={scrollRef}
             onScroll={checkScroll}
-            className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth px-1"
+            className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth"
           >
             {(Object.keys(PRODUCT_CATEGORIES) as ProductCategoryType[]).map((cat) => (
               <div
                 key={cat}
-                className="category flex flex-col items-center gap-2 cursor-pointer w-[80px] flex-shrink-0 group"
+                className="category flex flex-col items-center gap-2 cursor-pointer w-[80px] flex-shrink-0 group/cat"
                 onClick={() => navigate(`/search?category=${cat}`)}
               >
-                <div className="w-[80px] h-[80px] rounded-[20px] bg-[#f8f9fa] flex items-center justify-center text-[#333] transition-all duration-300 ease-out group-hover:bg-white group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] group-hover:-translate-y-2 group-hover:text-black border border-transparent group-hover:border-[#eee]">
+                <div className="w-[80px] h-[80px] rounded-[12px] bg-[#f8f9fa] flex items-center justify-center text-[#333] transition-all duration-300 ease-out group-hover/cat:bg-white group-hover/cat:shadow-[0_8px_20px_rgba(0,0,0,0.08)] group-hover/cat:-translate-y-[2px] group-hover/cat:text-black border border-transparent group-hover/cat:border-[#eee]">
                   {CATEGORY_ICONS[cat]}
                 </div>
-                <span className="text-[14px] text-[#333] font-medium text-center whitespace-nowrap group-hover:font-semibold">
+                <span className="text-[14px] text-[#333] font-medium text-center whitespace-nowrap group-hover/cat:font-semibold">
                   {PRODUCT_CATEGORIES[cat]}
                 </span>
               </div>

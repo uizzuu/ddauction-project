@@ -599,8 +599,8 @@ export default function Header({ user, setUser }: Props) {
                         </div>
 
                         <NavLink
-                            to="/mypage?tab=likes"
-                            onClick={(e) => handleProtectedNavigation(e, "/mypage?tab=likes")}
+                            to="/wishlist"
+                            onClick={(e) => handleProtectedNavigation(e, "/wishlist")}
                             className="p-1 hover:opacity-70 transition-opacity"
                             aria-label="찜하기"
                         >

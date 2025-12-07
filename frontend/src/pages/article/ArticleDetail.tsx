@@ -267,7 +267,7 @@ export default function ArticleDetail({ user }: Props) {
         <span
           key={i}
           onClick={() => handleMentionClick(part)}
-          className="text-blue-600 cursor-pointer font-medium hover:underline"
+          className="text-[#333] cursor-pointer font-medium hover:underline"
         >
           {part}
         </span>
@@ -280,7 +280,7 @@ export default function ArticleDetail({ user }: Props) {
   const getArticleTypeBadge = (type: ArticleType) => {
     const badges = {
       [ArticleType.NOTICE]: { label: "공지", bg: "bg-red-100", text: "text-red-600" },
-      [ArticleType.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-blue-600" },
+      [ArticleType.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-[#333]" },
       [ArticleType.COMMUNITY]: { label: "자유", bg: "bg-gray-100", text: "text-gray-600" }
     };
     const badge = badges[type] || badges[ArticleType.COMMUNITY];
@@ -415,7 +415,7 @@ export default function ArticleDetail({ user }: Props) {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleReplyClick(index)}
-                      className="text-sm font-bold text-[#333] hover:text-blue-600 transition-colors"
+                      className="text-sm font-bold text-[#333] hover:text-[#333] transition-colors"
                     >
                       #{index + 1} {comment.nickName ?? "알 수 없음"}
                     </button>
@@ -517,7 +517,7 @@ export default function ArticleDetail({ user }: Props) {
         ) : (
           <div className="mt-6 pt-6 border-t border-gray-200 text-center">
             <p className="text-gray-500 text-sm">
-              댓글을 작성하려면 <NavLink to="/login" className="text-blue-600 hover:underline font-medium">로그인</NavLink>하세요.
+              댓글을 작성하려면 <NavLink to="/login" className="text-[#333] hover:underline font-medium">로그인</NavLink>하세요.
             </p>
           </div>
         )}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { ProductCategoryType } from "../../common/enums";
 import type {
   User,
@@ -14,12 +14,20 @@ import {
   ReportManage,
   AdminDashboard,
   InquiryManagement,
-} from "../../common/import"
+} from "../../common/import";
+import PublicChat from "../../components/chat/PublicChat";
+import UserChat from "../../components/chat/UserChat";
+import { Users, Package, AlertCircle, BarChart3, MessageSquare, MessagesSquare } from "lucide-react";
 
-export default function AdminPage() {
-  const [section, setSection] = useState<
-    "user" | "product" | "report" | "stats" | "inquiry"
-  >("user");
+type TabId = "user" | "product" | "report" | "stats" | "inquiry" | "publicChat" | "privateChat";
+
+
+export default function AdminPage({ user }: { user: User }) {
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabId>("user");
+  const tabRefs = useRef<{ [key in TabId]?: HTMLButtonElement }>({});
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+
   const [users, setUsers] = useState<User[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
@@ -64,6 +72,17 @@ export default function AdminPage() {
     password: "",
     phone: "",
   });
+
+  // Update indicator position when tab changes
+  useEffect(() => {
+    const currentTab = tabRefs.current[activeTab];
+    if (currentTab) {
+      setIndicatorStyle({
+        left: currentTab.offsetLeft,
+        width: currentTab.offsetWidth,
+      });
+    }
+  }, [activeTab]);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -229,13 +248,13 @@ export default function AdminPage() {
   // ===================================
 
   useEffect(() => {
-    if (section === "user") fetchUsers();
-    else if (section === "product") fetchProducts();
-    else if (section === "report") fetchReports();
-    else if (section === "stats") fetchStats();
-    else if (section === "inquiry") fetchInquiries();
+    if (activeTab === "user") fetchUsers();
+    else if (activeTab === "product") fetchProducts();
+    else if (activeTab === "report") fetchReports();
+    else if (activeTab === "stats") fetchStats();
+    else if (activeTab === "inquiry") fetchInquiries();
   }, [
-    section,
+    activeTab,
     fetchUsers,
     fetchProducts,
     fetchReports,
@@ -247,40 +266,59 @@ export default function AdminPage() {
   // 렌더링
   // ===================================
 
-  return (
-    <div className="container p-0">
-      <div className="flex min-h-screen font-sans">
-        <aside className="w-[250px] bg-[#2d2d2d] text-white p-5">
-          <h2 className="text-2xl mb-[30px]">관리자 페이지</h2>
-          <ul className="list-none p-0">
-            <li className="mb-[15px]">
-              <button onClick={() => setSection("user")} className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline">회원 관리</button>
-            </li>
-            <li className="mb-[15px]">
-              <button onClick={() => setSection("product")} className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline">상품 관리</button>
-            </li>
-            <li className="mb-[15px]">
-              <button onClick={() => setSection("report")} className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline">신고 관리</button>
-            </li>
-            <li className="mb-[15px]">
-              <button onClick={() => setSection("stats")} className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline">통계</button>
-            </li>
-            <li className="mb-[15px]">
-              <button
-                onClick={() => {
-                  setSection("inquiry");
-                }}
-                className="w-full bg-none border-none text-white text-base text-left cursor-pointer hover:underline"
-              >
-                1:1 문의 관리
-              </button>
-            </li>
-          </ul>
-        </aside>
+  const tabs = [
+    { id: "user" as TabId, label: "회원 관리", icon: Users },
+    { id: "product" as TabId, label: "상품 관리", icon: Package },
+    { id: "report" as TabId, label: "신고 관리", icon: AlertCircle },
+    { id: "stats" as TabId, label: "통계", icon: BarChart3 },
+    { id: "inquiry" as TabId, label: "1:1 문의", icon: MessageSquare },
+    { id: "publicChat" as TabId, label: "공개 채팅", icon: MessagesSquare },
+    { id: "privateChat" as TabId, label: "1:1 채팅", icon: MessageSquare },
+  ];
 
-        <main className="flex-1 p-5 bg-[#f2f2f2]">
+  return (
+    <div className="min-h-screen">
+      <div className="max-w-[1280px] mx-auto">
+        {/* Header */}
+        <div className="py-8">
+          <h1 className="text-2xl font-bold text-[#111]">관리자 페이지</h1>
+          <p className="text-sm text-[#666] mt-1">시스템 관리 및 모니터링</p>
+        </div>
+
+        {/* Tabbed Navigation */}
+        <div className="bg-white rounded-t-xl border-b border-[#eee] sticky top-14 z-10 shadow-sm">
+          <div className="flex relative">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  ref={(el) => {
+                    if (el) tabRefs.current[tab.id] = el;
+                  }}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 px-6 py-4 text-sm font-medium transition-colors relative flex items-center justify-center gap-2 ${activeTab === tab.id
+                    ? "text-[#111]"
+                    : "text-[#666] hover:text-[#111]"
+                    }`}
+                >
+                  <Icon size={18} />
+                  {tab.label}
+                </button>
+              );
+            })}
+            {/* Animated underline */}
+            <div
+              className="absolute bottom-0 h-0.5 bg-[#111] transition-all duration-300 ease-out"
+              style={{ left: `${indicatorStyle.left}px`, width: `${indicatorStyle.width}px` }}
+            />
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="bg-white rounded-b-xl py-4 px-1">
           {/* 회원 관리 컴포넌트 */}
-          {section === "user" && (
+          {activeTab === "user" && (
             <UserManage
               users={users}
               editingUserId={editingUserId}
@@ -299,7 +337,7 @@ export default function AdminPage() {
           )}
 
           {/* 상품 관리 컴포넌트 */}
-          {section === "product" && (
+          {activeTab === "product" && (
             <ProductManage
               products={products}
               editingProductId={editingProductId}
@@ -318,7 +356,7 @@ export default function AdminPage() {
           )}
 
           {/* 신고 관리 컴포넌트 */}
-          {section === "report" && (
+          {activeTab === "report" && (
             <ReportManage
               reports={reports}
               handleUpdateReportStatus={handleUpdateReportStatus}
@@ -326,17 +364,23 @@ export default function AdminPage() {
           )}
 
           {/* 통계 컴포넌트 */}
-          {section === "stats" && <AdminDashboard stats={stats} />}
+          {activeTab === "stats" && <AdminDashboard stats={stats} />}
 
           {/* 1:1 문의 관리 컴포넌트 */}
-          {section === "inquiry" && (
+          {activeTab === "inquiry" && (
             <InquiryManagement
               inquiries={inquiries}
               setInquiries={setInquiries}
               handleSaveInquiryAnswer={handleSaveInquiryAnswer}
             />
           )}
-        </main>
+
+          {/* 공개 채팅 컴포넌트 */}
+          {activeTab === "publicChat" && user && <div className="-mt-[20px]"><PublicChat user={user} /></div>}
+
+          {/* 1:1 채팅 컴포넌트 */}
+          {activeTab === "privateChat" && user && <div className="-mt-[20px]"><UserChat user={user} /></div>}
+        </div>
       </div>
     </div>
   );

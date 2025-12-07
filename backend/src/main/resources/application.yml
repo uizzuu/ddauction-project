@@ -46,6 +46,8 @@ spring:
       max-request-size: 50MB
 jwt:
   secret: ${JWT_SECRET:vmfhaltmskdlstkfkdgodyroqkfwkdbalroqkfwkdbalaaaaaaaaaaaaaaaabbbbbPLAINTEXT}
+  access-token-expiration: 86400000 # 24시간 (24 * 60 * 60 * 1000)
+  refresh-token-expiration: 604800000 # 7일 (7 * 24 * 60 * 60 * 1000)
 server:
   port: 8080
   forward-headers-strategy: framework
@@ -71,8 +73,8 @@ rag:
   api:
     url: ${RAG_API_URL:http://localhost:8000}
     timeout:
-      connect: 15000  # 연결 타임아웃 (ms) - 15초
-      read: 60000     # 읽기 타임아웃 (ms) - 60초
+      connect: 15000 # 연결 타임아웃 (ms) - 15초
+      read: 60000 # 읽기 타임아웃 (ms) - 60초
 
 # ===================================
 # 로컬 환경
@@ -102,10 +104,10 @@ spring:
   jackson:
     time-zone: Asia/Seoul
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}      # 기본값: Gmail
+    host: ${MAIL_HOST:smtp.gmail.com} # 기본값: Gmail
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME}            # Gmail 주소
-    password: ${MAIL_PASSWORD}            # 앱 비밀번호
+    username: ${MAIL_USERNAME} # Gmail 주소
+    password: ${MAIL_PASSWORD} # 앱 비밀번호
     properties:
       mail:
         smtp:
@@ -168,10 +170,10 @@ spring:
   jackson:
     time-zone: Asia/Seoul
   mail:
-    host: ${MAIL_HOST:smtp.gmail.com}      # 기본값: Gmail
+    host: ${MAIL_HOST:smtp.gmail.com} # 기본값: Gmail
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME}            # Gmail 주소
-    password: ${MAIL_PASSWORD}            # 앱 비밀번호
+    username: ${MAIL_USERNAME} # Gmail 주소
+    password: ${MAIL_PASSWORD} # 앱 비밀번호
     properties:
       mail:
         smtp:
@@ -208,5 +210,5 @@ rag:
   api:
     url: ${CHATBOT_URL:http://chatbot:8000}
     timeout:
-      connect: 20000  # 프로덕션에서는 더 여유있게
+      connect: 20000 # 프로덕션에서는 더 여유있게
       read: 90000

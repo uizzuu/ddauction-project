@@ -24,7 +24,7 @@ export default function ArticleList({ user }: Props) {
   const getArticleTypeBadge = (type: ArticleType) => {
     const badges = {
       [ArticleType.NOTICE]: { label: "공지", bg: "bg-red-100", text: "text-red-600" },
-      [ArticleType.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-blue-600" },
+      [ArticleType.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-[#333]" },
       [ArticleType.COMMUNITY]: { label: "자유", bg: "bg-gray-100", text: "text-gray-600" }
     };
     const badge = badges[type] || badges[ArticleType.COMMUNITY];

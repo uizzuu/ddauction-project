@@ -1,5 +1,14 @@
 package com.my.backend.service;
 
+import java.time.LocalDateTime;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.my.backend.dto.auth.LoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.dto.auth.TokenResponse;
@@ -11,16 +20,9 @@ import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.repository.AddressRepository;
 import com.my.backend.repository.EmailVerificationRepository;
 import com.my.backend.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -220,7 +222,7 @@ public class AuthService {
                     user.getEmail(),
                     user.getRole(),
                     user.getNickName(),
-                    3600000L
+                    24 * 60 * 60 * 1000L  // 24시간
             );
             TokenResponse tokenResponse = new TokenResponse(token, null);
             log.info("로그인 성공: {}", request.getEmail());
@@ -248,7 +250,7 @@ public class AuthService {
                     user.getEmail(),
                     user.getRole(),
                     user.getNickName(),
-                    3600000L
+                    24 * 60 * 60 * 1000L  // 24시간
             );
             String newRefreshToken = jwtUtil.createJwt(
                     user.getUserId(),

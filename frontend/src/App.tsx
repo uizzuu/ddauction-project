@@ -28,6 +28,7 @@ import {
   PublicChat,
   CartPage,
   RankPage,
+  WishlistPage,
 } from "./common/import";
 import type { User } from "./common/types";
 
@@ -48,6 +49,7 @@ const VALID_PATHS = [
   "/find-email",
   "/find-password",
   "/oauth2/redirect",
+  "/wishlist",
   "/error",
   "/public-chat",
   "/user-chat",
@@ -171,7 +173,7 @@ export default function App() {
           path="/admin"
           element={
             user?.role === "ADMIN" ? (
-              <AdminPage />
+              <AdminPage user={user!} />
             ) : (
               <div style={{ padding: "20px" }}>
                 접근 권한이 없습니다. 관리자만 접근 가능합니다.
@@ -203,6 +205,7 @@ export default function App() {
         <Route path="/find-email" element={<FindEmail />} />
         <Route path="/find-password" element={<FindPassword />} />
         <Route path="/cart" element={user ? <CartPage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
+        <Route path="/wishlist" element={user ? <WishlistPage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
         <Route path="/rank" element={<RankPage />} />
 
         {/* 에러 페이지 - 마지막에 정의 (와일드카드는 마지막!) */}

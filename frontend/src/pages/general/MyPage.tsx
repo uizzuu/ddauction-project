@@ -1,732 +1,659 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import type {
-  User,
-  Product, // Product 타입은 이미 productCategoryType을 포함한다고 가정
-  Report,
-  ProductQna,
-  ProductForm,
-  Inquiry,
-  Review,
-} from "../../common/types";
-import {
-  PRODUCT_STATUS,
-  PRODUCT_CATEGORIES, // common/enums에서 import
-} from "../../common/enums";
-import type { ProductCategoryType, ProductType } from "../../common/enums";
-import { API_BASE_URL } from "../../common/api";
-import {
-  MyProfile,
-  MySellingProducts,
-  MyLikes,
-  MyReports,
-  MyProductQna,
-  MyInquiries,
-  MyStoreProfile,
-  MyPaymentHistory,
-} from "../../common/import"
-import { normalizeProduct } from "../../common/util";
+import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { User as UserIcon, Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText } from "lucide-react";
+import type { User, Product, Report, ProductQna, Inquiry, Review } from "../../common/types";
+import * as API from "../../common/api";
+import ProductCard from "../../components/ui/ProductCard";
 
-
-type MypageSection =
-  | "info"
-  | "selling"
-  | "likes"
-  | "reports"
-  | "qnas"
-  | "inquiries"
-  | "reviews"
-  | "payments"
-  | "purchases"
-  | "bids"
-  | "withdrawal";
+type TabId = "selling" | "buying" | "community" | "settings";
 
 type Props = {
   user: User | null;
   setUser: (user: User | null) => void;
 };
 
-// 상품 수정 시 ProductStatus를 추가하여 상태 관리
-type EditProductState = ProductForm & {
-  productStatus: string;
-};
-
-
 export default function MyPage({ user, setUser }: Props) {
-  // 섹션 상태는 하나로 통합 (editing, showSelling 등을 대체)
-  const [section, setSection] = useState<MypageSection>("info");
+  const navigate = useNavigate();
 
-  // 나머지 상태는 유지
-  const [editingProductId, setEditingProductId] = useState<number | null>(null);
-
-  // Review states
-  const [myReviews, setMyReviews] = useState<Review[]>([]);
-  const [averageRating, setAverageRating] = useState(0);
-  const [targetUserId, setTargetUserId] = useState<number>(0);
-  const [rating, setRating] = useState<number>(5);
-  const [comments, setComments] = useState<string>("");
-
-  // User form state
-  const [form, setForm] = useState({
-    nickName: user?.nickName || "",
-    password: "",
-    phone: user?.phone || "",
-  });
-
-  // Product form state
-  const [productForm, setProductForm] = useState<EditProductState>({
-    title: "",
-    content: "",
-    startingPrice: "",
-    auctionEndTime: "",
-    productStatus: PRODUCT_STATUS[0],
-    productType: "AUCTION" as ProductType, // ProductType을 명시적으로 설정
-    images: [],
-    productCategoryType: null,
-  });
+  // Tab state
+  const [activeTab, setActiveTab] = useState<TabId>("selling");
+  const tabRefs = useRef<{ [key in TabId]?: HTMLButtonElement }>({});
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
   // Data states
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
   const [myLikes, setMyLikes] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [myQnas, setMyQnas] = useState<ProductQna[]>([]);
-  // 🚨 categories 상태 제거 (types.ts 반영)
   const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
+  const [myReviews, setMyReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
+  // Profile edit state
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    nickName: user?.nickName || "",
+    password: "",
+    phone: user?.phone || "",
+  });
 
-  // ----------------------------------------------------
-  // Effects & Initial Load
-  // ----------------------------------------------------
+  // Stats
+  const [stats, setStats] = useState({
+    sellingCount: 0,
+    likesCount: 0,
+    bidsCount: 0,
+    rating: 0,
+  });
 
+  // Update indicator position when tab changes
+  useEffect(() => {
+    const currentTab = tabRefs.current[activeTab];
+    if (currentTab) {
+      setIndicatorStyle({
+        left: currentTab.offsetLeft,
+        width: currentTab.offsetWidth,
+      });
+    }
+  }, [activeTab]);
+
+  // Load user data on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/");
+      navigate("/login");
       return;
     }
 
-    fetch(`${API_BASE_URL}/api/users/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (!res.ok) throw new Error("유저 정보 불러오기 실패");
-        return res.json();
-      })
+    API.fetchCurrentUser(token)
       .then((data) => setUser(data))
-      .catch((err) => {
+      .catch((err: any) => {
         console.error(err);
-        navigate("/");
+        if (err.status === 401) {
+          alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
+          localStorage.removeItem("token");
+          setUser(null);
+          navigate("/login");
+        } else {
+          navigate("/");
+        }
       });
   }, [navigate, setUser]);
 
-  // 🚨 카테고리 로딩 useEffect 제거 (types.ts 및 enums 기반으로 변경)
-
+  // Update profile form when user changes
   useEffect(() => {
     if (user) {
-      setForm((prev) => ({
-        ...prev,
+      setProfileForm({
         nickName: user.nickName || "",
+        password: "",
         phone: user.phone || "",
-      }));
+      });
     }
   }, [user]);
 
-  // ----------------------------------------------------
-  // User Actions
-  // ----------------------------------------------------
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleUpdate = async () => {
-    if (!user) return alert("로그인이 필요합니다.");
-
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/users/${user.userId}/mypage`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(form),
-        }
-      );
-      if (res.ok) {
-        const updatedUser = await res.json();
-        setUser(updatedUser);
-        alert("정보가 수정되었습니다.");
-      } else {
-        const errorText = await res.text();
-        alert("정보 수정 실패: " + errorText);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!user) return alert("로그인이 필요합니다.");
-    if (!confirm("정말 회원 탈퇴하시겠습니까?")) return;
-
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(
-        `${API_BASE_URL}/api/users/${user.userId}/withdraw`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (res.ok) {
-        setUser(null);
-        navigate("/");
-        alert("회원탈퇴 완료");
-      } else {
-        const errorText = await res.text();
-        alert("회원 탈퇴 실패: " + errorText);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
-
-  // ----------------------------------------------------
-  // Data Fetching & Helpers
-  // ----------------------------------------------------
-
-  // 카테고리 코드를 이름으로 변환하는 로컬 함수
-  const getCategoryName = (categoryCode: string | null | undefined): string => {
-    if (!categoryCode) return "없음";
-    return PRODUCT_CATEGORIES[categoryCode as ProductCategoryType] || "기타";
-  };
-
-  const goToProductDetail = (productId: number) =>
-    navigate(`/products/${productId}`);
-
-  const fetchSellingProducts = async () => {
-    if (!user) return;
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/products/seller/${user.userId}`
-      );
-      if (res.ok) {
-        const data: Partial<Product>[] = await res.json();
-        setSellingProducts(data.map((p) => normalizeProduct(p)));
-      } else {
-        alert("판매 상품 조회 실패");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
-
-  const handleFetchMyLikes = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/bookmarks/mypage`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.ok) {
-        const data: Partial<Product>[] = await res.json();
-        setMyLikes(data.map((p) => normalizeProduct(p)));
-      } else {
-        alert("찜 상품 조회 실패");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
-
-  const handleFetchReports = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE_URL}/api/reports/mypage`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      if (res.ok) {
-        const data: Report[] = await res.json();
-        setReports(data);
-      } else {
-        alert("신고 내역 조회 실패");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
-
-  const handleFetchMyQnas = async () => {
-    if (!user) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/qna/user/${user.userId}`);
-      if (res.ok) {
-        const data: ProductQna[] = await res.json();
-        setMyQnas(data);
-      } else {
-        alert("Q&A 조회 실패");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
-
-  const handleFetchMyInquiries = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("로그인이 필요합니다.");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/inquiry/user`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.ok) {
-        const dataFromServer: {
-          inquiryId: number;
-          title: string;
-          content: string;
-          createdAt: string;
-          answers?: {
-            inquiryReviewId: number;
-            answer: string;
-            nickName?: string;
-            createdAt?: string;
-          }[];
-        }[] = await res.json();
-        const mappedData: Inquiry[] = dataFromServer.map((i) => ({
-          inquiryId: i.inquiryId,
-          title: i.title,
-          question: i.content,
-          createdAt: i.createdAt,
-          answers: (i.answers ?? []).map((a) => ({
-            inquiryReviewId: a.inquiryReviewId,
-            answer: a.answer,
-            nickName: a.nickName ?? "익명",
-            createdAt:
-              a.createdAt ??
-              (() => {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = String(now.getMonth() + 1).padStart(2, "0");
-                const day = String(now.getDate()).padStart(2, "0");
-                const hours = String(now.getHours()).padStart(2, "0");
-                const minutes = String(now.getMinutes()).padStart(2, "0");
-                const seconds = String(now.getSeconds()).padStart(2, "0");
-                return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-              })(),
-          })),
-        }));
-        setMyInquiries(mappedData);
-      } else {
-        alert("문의 내역 조회 실패");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
-
-  const fetchMyReviews = async () => {
-    if (!user) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/reviews/user/${user.userId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setMyReviews(data);
-      }
-      const avgRes = await fetch(
-        `${API_BASE_URL}/reviews/user/${user.userId}/average`
-      );
-      if (avgRes.ok) {
-        const data = await avgRes.json();
-        setAverageRating(data.averageRating);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("리뷰 불러오기 실패");
-    }
-  };
-
-  const handleSubmitReview = async () => {
-    if (!targetUserId || !rating)
-      return alert("리뷰 대상과 평점을 입력해주세요.");
-
-    const token = localStorage.getItem("token");
-    if (!token) return alert("로그인이 필요합니다.");
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/reviews/${targetUserId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ rating, comments }),
-      });
-
-      if (res.ok) {
-        alert("리뷰가 등록되었습니다.");
-        fetchMyReviews();
-        setTargetUserId(0);
-        setComments("");
-        setRating(5);
-      } else {
-        const errorText = await res.text();
-        alert("리뷰 등록 실패: " + errorText);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
-
-  // ----------------------------------------------------
-  // Product Edit Actions
-  // ----------------------------------------------------
-
-  const handleEditProduct = (product: Product) => {
-    setEditingProductId(product.productId);
-    setProductForm({
-      title: product.title,
-      content: product.content ?? "",
-      startingPrice: String(product.startingPrice ?? 0),
-      auctionEndTime: product.auctionEndTime || "",
-      productCategoryType: product.productCategoryType ?? null,
-      productStatus: product.productStatus ?? PRODUCT_STATUS[0],
-      productType: product.productType ?? 'AUCTION' as ProductType, // ProductType을 가져와서 설정
-      images: [],
-    });
-  };
-
-  const handleChangeProductForm = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
-  ) => {
-    if (e.target.type === "file") {
-      const files = (e.target as HTMLInputElement).files;
-      if (files) {
-        setProductForm({ ...productForm, images: Array.from(files) });
-      }
-      return;
-    }
-
-    // ProductStatus, ProductCategoryType, ProductType, string 필드 처리
-    const value = e.target.value;
-
-    setProductForm({ ...productForm, [e.target.name]: value });
-  };
-
-  const handleSaveProduct = async () => {
-    if (!editingProductId) return;
-
-    if (!productForm.productCategoryType) {
-      alert("카테고리를 선택해주세요.");
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append("title", productForm.title);
-      formData.append("content", productForm.content);
-      formData.append("startingPrice", productForm.startingPrice);
-      formData.append("productCategoryType", productForm.productCategoryType);
-      formData.append("auctionEndTime", productForm.auctionEndTime);
-      formData.append("productStatus", productForm.productStatus);
-      formData.append("productType", productForm.productType); // 상품 타입 추가
-
-      // 이미지 파일 추가
-      productForm.images?.forEach((file) => formData.append("images", file));
-
-      const res = await fetch(
-        `${API_BASE_URL}/api/products/${editingProductId}`,
-        {
-          method: "PUT",
-          body: formData,
-        }
-      );
-
-      if (res.ok) {
-        const updatedProduct = normalizeProduct(await res.json());
-        setSellingProducts((prev) =>
-          prev.map((p) =>
-            p.productId === editingProductId ? updatedProduct : p
-          )
-        );
-        setEditingProductId(null);
-        alert("상품이 수정되었습니다.");
-      } else {
-        const errorText = await res.text();
-        alert("상품 수정 실패: " + errorText);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류");
-    }
-  };
-
-  const handleCancelProductEdit = () => setEditingProductId(null);
-
-  // ----------------------------------------------------
-  // Section Change Logic (with Data Fetching)
-  // ----------------------------------------------------
-
-  const handleSectionChange = (newSection: MypageSection) => {
-    setSection(newSection);
-    setEditingProductId(null); // 상품 수정 모드 해제
-
-    switch (newSection) {
-      case "selling":
-        fetchSellingProducts();
-        break;
-      case "likes":
-        handleFetchMyLikes();
-        break;
-      case "reports":
-        handleFetchReports();
-        break;
-      case "qnas":
-        handleFetchMyQnas();
-        break;
-      case "inquiries":
-        handleFetchMyInquiries();
-        break;
-      case "reviews":
-        if (!user) return alert("로그인이 필요합니다.");
-        fetchMyReviews();
-        break;
-      default:
-        // 'info', 'payments', 'purchases', 'bids', 'withdrawal' 등은 별도 로직 없음
-        break;
-    }
-  };
-
-  const location = useLocation();
-
-  // URL 쿼리 파라미터로 섹션 이동
+  // Load stats
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tab = params.get("tab");
-    if (tab && tab !== section) {
-      const validTabs = ["info", "selling", "likes", "reports", "qnas", "inquiries", "reviews", "payments", "purchases", "bids", "withdrawal"];
-      if (validTabs.includes(tab)) {
-        handleSectionChange(tab as MypageSection);
+    if (!user) return;
+
+    const loadStats = async () => {
+      try {
+        const token = localStorage.getItem("token")!;
+        const [selling, likes] = await Promise.all([
+          API.fetchSellingProducts(user.userId),
+          API.fetchMyLikes(token),
+        ]);
+
+        let rating = 0;
+        try {
+          const ratingData = await API.fetchAverageRating(user.userId);
+          rating = ratingData.averageRating;
+        } catch (err) {
+          // Rating might not exist
+        }
+
+        setStats({
+          sellingCount: selling.length,
+          likesCount: likes.length,
+          bidsCount: 0, // TODO: Add bid count API
+          rating,
+        });
+      } catch (err) {
+        console.error("Failed to load stats", err);
       }
+    };
+
+    loadStats();
+  }, [user]);
+
+  // Tab content loader
+  const loadTabContent = async (tab: TabId) => {
+    if (!user) return;
+    setLoading(true);
+    const token = localStorage.getItem("token")!;
+
+    try {
+      switch (tab) {
+        case "selling":
+          const selling = await API.fetchSellingProducts(user.userId);
+          setSellingProducts(selling);
+          const qnas = await API.fetchUserQnas(user.userId);
+          setMyQnas(qnas);
+          break;
+        case "buying":
+          const likes = await API.fetchMyLikes(token);
+          setMyLikes(likes);
+          break;
+        case "community":
+          const [reviews, inquiries, reportsData] = await Promise.all([
+            API.fetchUserReviews(user.userId),
+            API.fetchUserInquiries(token),
+            API.fetchReports(token),
+          ]);
+          setMyReviews(reviews);
+          setMyInquiries(inquiries.map((i: any) => ({
+            inquiryId: i.inquiryId,
+            title: i.title,
+            question: i.content,
+            createdAt: i.createdAt,
+            answers: (i.answers ?? []).map((a: any) => ({
+              inquiryReviewId: a.inquiryReviewId,
+              answer: a.answer,
+              nickName: a.nickName ?? "익명",
+              createdAt: a.createdAt ?? new Date().toISOString(),
+            })),
+          })));
+          setReports(reportsData);
+          break;
+        case "settings":
+          // Settings don't need additional data loading
+          break;
+      }
+    } catch (err) {
+      console.error("Failed to load tab content", err);
+    } finally {
+      setLoading(false);
     }
-  }, [location.search]);
+  };
 
-  // ----------------------------------------------------
-  // Render
-  // ----------------------------------------------------
+  // Load content when tab changes
+  useEffect(() => {
+    loadTabContent(activeTab);
+  }, [activeTab, user]);
+
+  // Handle profile update
+  const handleUpdateProfile = async () => {
+    if (!user) return;
+
+    try {
+      const updatedUser = await API.updateUserProfile(user.userId, profileForm);
+      setUser(updatedUser);
+      setIsEditingProfile(false);
+      alert("프로필이 수정되었습니다.");
+    } catch (err: any) {
+      alert(err.message || "프로필 수정 실패");
+    }
+  };
+
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    if (!confirm("정말 회원 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
+
+    try {
+      const token = localStorage.getItem("token")!;
+      await API.withdrawUser(user.userId, token);
+      setUser(null);
+      localStorage.removeItem("token");
+      navigate("/");
+      alert("회원탈퇴가 완료되었습니다.");
+    } catch (err: any) {
+      alert(err.message || "회원 탈퇴 실패");
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="container flex items-center justify-center">
+        <div className="text-gray-500">로딩 중...</div>
+      </div>
+    );
+  }
+
+  const tabs = [
+    { id: "selling" as TabId, label: "판매 관리", icon: Package },
+    { id: "buying" as TabId, label: "구매 활동", icon: ShoppingBag },
+    { id: "community" as TabId, label: "커뮤니티", icon: MessageSquare },
+    { id: "settings" as TabId, label: "설정", icon: Settings },
+  ];
+
   return (
-    <div className="container p-0">
-      <div
-        className="admin-page"
-        style={{
-          display: "flex",
-          minHeight: "100vh",
-          backgroundColor: "#f4f4f4",
-        }}
-      >
-        {/* 1. 사이드바 (AdminPage.tsx와 동일한 스타일) */}
-        <nav
-          className="sidebar"
-          style={{
-            width: "250px",
-            backgroundColor: "#333",
-            color: "white",
-            padding: "20px",
-            flexShrink: 0,
-          }}
-        >
-          <h2
-            style={{
-              color: "#fff",
-              marginBottom: "20px",
-            }}
-          >
-            마이페이지
-          </h2>
+    <div className="min-h-screen">
+      <div className="max-w-[1280px] mx-auto">
+        {/* Profile Summary Card */}
+        <div className="py-8 mb-8 border-b border-[#eee]">
+          <div className="flex items-center gap-6">
+            {/* Avatar */}
+            <div className="w-24 h-24 rounded-lg bg-[#333] flex items-center justify-center text-white text-3xl font-bold">
+              {user.nickName?.charAt(0).toUpperCase() || "U"}
+            </div>
 
-          <div
-            style={{ marginTop: "20px" }}
-            className="flex flex-col gap-2 items-start"
-          >
-            <h4 style={{ color: "#ddd", marginBottom: "10px" }}>메인 메뉴</h4>
-            {[
-              { key: "info", name: "내 정보 수정" },
-              { key: "selling", name: "판매 상품 관리" },
-              { key: "bookmarks", name: "찜 목록" },
-              { key: "reports", name: "신고 내역" },
-              { key: "qnas", name: "내 Q&A" },
-              { key: "inquiries", name: "1:1 문의 내역" },
-              { key: "reviews", name: "리뷰 관리" },
-            ].map((item) => (
-              <button
-                key={item.key}
-                style={{
-                  color: section === item.key ? "#111" : "#ddd",
-                  border: "none",
-                }}
-                className="text-16"
-                onClick={() => handleSectionChange(item.key as MypageSection)}
-              >
-                {item.name}
-              </button>
-            ))}
+            {/* User Info */}
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-[#111] mb-1">{user.nickName || user.userName}</h2>
+              <p className="text-sm text-[#666]">{user.email}</p>
+            </div>
+
+            {/* Edit Button */}
+            <button
+              onClick={() => {
+                setActiveTab("settings");
+                setIsEditingProfile(true);
+              }}
+              className="px-6 py-2.5 bg-[#111] text-white rounded-lg font-medium hover:bg-[#333] transition-colors"
+            >
+              프로필 수정
+            </button>
           </div>
 
-          <div
-            style={{
-              marginTop: "30px",
-              borderTop: "1px solid #555",
-              paddingTop: "15px",
-            }}
-          >
-            <h4 style={{ color: "#ddd", marginBottom: "10px" }}>기타 메뉴</h4>
-            <div className="flex flex-col gap-2 items-start">
-              <div className="flex gap-2 w-full mt-[10px]">
-                <button
-                  className="text-16 color-ddd"
-                  onClick={() => handleSectionChange("payments")}
-                >
-                  결제 수단 관리
-                </button>
-                <button
-                  className="text-16 color-ddd"
-                  onClick={() => handleSectionChange("purchases")}
-                >
-                  결제 완료 상품
-                </button>
-                <button
-                  className="text-16 color-ddd"
-                  onClick={() => handleSectionChange("bids")}
-                >
-                  입찰 목록
-                </button>
-                <button className="text-16 color-ddd" onClick={handleDelete}>
-                  회원탈퇴
-                </button>
-              </div>
+          {/* Stats */}
+          <div className="flex gap-8 mt-6 pt-6 border-t border-[#eee]">
+            <div className="flex items-center gap-2">
+              <Package size={18} className="text-[#666]" />
+              <span className="text-sm text-[#666]">
+                판매중 <span className="font-bold text-[#111]">{stats.sellingCount}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Heart size={18} className="text-[#666]" />
+              <span className="text-sm text-[#666]">
+                찜 <span className="font-bold text-[#111]">{stats.likesCount}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Gavel size={18} className="text-[#666]" />
+              <span className="text-sm text-[#666]">
+                입찰 <span className="font-bold text-[#111]">{stats.bidsCount}</span>
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Star size={18} className="text-[#666]" />
+              <span className="text-sm text-[#666]">
+                평점 <span className="font-bold text-[#111]">{stats.rating.toFixed(1)}</span>
+              </span>
             </div>
           </div>
-        </nav>
+        </div>
 
-        {/* 2. 메인 컨텐츠 영역 (AdminPage.tsx와 동일한 스타일) */}
-        <main className="w-full px-[30px] py-5">
-          <h1
-            style={{
-              marginBottom: "20px",
-            }}
-          >
-            {
-              {
-                info: "내 정보 수정",
-                selling: "판매 상품 관리",
-                likes: "찜 목록",
-                reports: "신고 내역",
-                qnas: "내 Q&A",
-                inquiries: "1:1 문의 내역",
-                reviews: "리뷰 관리",
-                payments: "결제 수단 관리",
-                purchases: "구매 상품",
-                bids: "입찰 목록",
-                withdrawal: "회원탈퇴",
-              }[section]
-            }
-          </h1>
-
-          {/* 섹션별 컴포넌트 렌더링 */}
-          {section === "info" && (
-            <MyProfile
-              form={form}
-              handleChange={handleChange}
-              handleUpdate={handleUpdate}
-              setEditing={() => {
-                /* 이 레이아웃에서는 setEditing(false) 대신 섹션 전환을 사용하거나 내부 상태로 관리 */
-              }}
+        {/* Tabbed Navigation */}
+        <div className="bg-white rounded-t-xl border-b border-gray-200 sticky top-14 z-10 shadow-sm">
+          <div className="flex relative">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  ref={(el) => {
+                    if (el) tabRefs.current[tab.id] = el;
+                  }}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 px-6 py-4 text-sm font-medium transition-colors relative flex items-center justify-center gap-2 ${activeTab === tab.id
+                    ? "text-[#333]"
+                    : "text-gray-600 hover:text-gray-900"
+                    }`}
+                >
+                  <Icon size={18} />
+                  {tab.label}
+                </button>
+              );
+            })}
+            {/* Animated underline */}
+            <div
+              className="absolute bottom-0 h-0.5 bg-[#333] transition-all duration-300 ease-out"
+              style={{ left: `${indicatorStyle.left}px`, width: `${indicatorStyle.width}px` }}
             />
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="bg-white rounded-b-xl py-4 px-1">
+          {loading ? (
+            <div className="flex items-center justify-center">
+              <div className="text-gray-500">로딩 중...</div>
+            </div>
+          ) : (
+            <>
+              {/* Selling Tab */}
+              {activeTab === "selling" && (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <Package size={20} />
+                      판매 중인 상품
+                    </h3>
+                    {sellingProducts.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 rounded-lg">
+                        <Package size={48} className="mx-auto text-gray-300 mb-3" />
+                        <p className="text-gray-500 mb-4">판매 중인 상품이 없습니다.</p>
+                        <button
+                          onClick={() => navigate("/register")}
+                          className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                          상품 등록하기
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                        {sellingProducts.map((product) => (
+                          <ProductCard key={product.productId} product={product} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <MessageSquare size={20} />
+                      상품 Q&A
+                    </h3>
+                    {myQnas.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">문의 내역이 없습니다.</p>
+                      </div>
+                    ) : (
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        {myQnas.map((qna, idx) => (
+                          <div
+                            key={qna.productQnaId}
+                            className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""} hover:bg-gray-50`}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <p className="font-medium text-gray-900 mb-1">{qna.title}</p>
+                              <span className="text-xs text-gray-500">{new Date(qna.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">{qna.content}</p>
+                            {qna.answers && qna.answers.length > 0 && (
+                              <div className="space-y-2">
+                                {qna.answers.map((answer) => (
+                                  <div key={answer.qnaReviewId} className="mt-2 pl-4 border-l-2 border-blue-500 bg-blue-50 p-3 rounded-r">
+                                    <p className="text-sm text-gray-700">{answer.content}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Buying Tab */}
+              {activeTab === "buying" && (
+                <div className="space-y-8 px-1">
+                  {/* 찜한 상품 섹션 */}
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111] mb-4 flex items-center gap-2">
+                      <Heart size={20} className="text-[#666]" />
+                      찜한 상품
+                    </h3>
+
+                    {myLikes.length === 0 ? (
+                      <div className="text-center py-16 bg-[#f9f9f9] rounded-lg border border-[#eee]">
+                        <Heart size={48} className="mx-auto text-[#ddd] mb-3" />
+                        <p className="text-[#666] mb-4">찜한 상품이 없습니다.</p>
+                        <button
+                          onClick={() => navigate("/products")}
+                          className="px-6 py-2.5 bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors font-medium"
+                        >
+                          상품 둘러보기
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                        {myLikes.map((product) => (
+                          <ProductCard key={product.productId} product={product} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 입찰 내역 섹션 */}
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111] mb-4 flex items-center gap-2">
+                      <Gavel size={20} className="text-[#666]" />
+                      입찰 내역
+                    </h3>
+
+                    <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]">
+                      <Gavel size={40} className="mx-auto text-[#ddd] mb-2" />
+                      <p className="text-[#666]">입찰 내역이 없습니다.</p>
+                    </div>
+                  </div>
+
+                  {/* 구매 내역 섹션 */}
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111] mb-4 flex items-center gap-2">
+                      <ShoppingBag size={20} className="text-[#666]" />
+                      구매 내역
+                    </h3>
+
+                    <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]">
+                      <ShoppingBag size={40} className="mx-auto text-[#ddd] mb-2" />
+                      <p className="text-[#666]">구매 내역이 없습니다.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Community Tab */}
+              {activeTab === "community" && (
+                <div className="space-y-8">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <Star size={20} className="text-yellow-600" />
+                      리뷰
+                    </h3>
+                    {myReviews.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">작성한 리뷰가 없습니다.</p>
+                      </div>
+                    ) : (
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        {myReviews.map((review, idx) => (
+                          <div
+                            key={review.reviewId}
+                            className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""}`}
+                          >
+                            <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={16}
+                                    className={i < review.rating ? "text-yellow-500" : "text-gray-300"}
+                                    fill={i < review.rating ? "currentColor" : "none"}
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-sm text-gray-700">{review.content}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText size={20} />
+                      1:1 문의
+                    </h3>
+                    {myInquiries.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">문의 내역이 없습니다.</p>
+                      </div>
+                    ) : (
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        {myInquiries.map((inquiry, idx) => (
+                          <div
+                            key={inquiry.inquiryId}
+                            className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""}`}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <p className="font-medium text-gray-900">{inquiry.title}</p>
+                              <span className="text-xs text-gray-500">{new Date(inquiry.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 mb-2">{inquiry.question}</p>
+                            {inquiry.answers.map((answer) => (
+                              <div key={answer.inquiryReviewId} className="mt-2 pl-4 border-l-2 border-green-500 bg-green-50 p-3 rounded-r">
+                                <p className="text-sm font-medium text-gray-900 mb-1">{answer.nickName}</p>
+                                <p className="text-sm text-gray-700">{answer.answer}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <FileText size={20} />
+                      신고 내역
+                    </h3>
+                    {reports.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">신고 내역이 없습니다.</p>
+                      </div>
+                    ) : (
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        {reports.map((report, idx) => (
+                          <div
+                            key={report.reportId}
+                            className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""}`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <p className="text-sm font-medium text-gray-900 mb-1">신고 사유: {report.reason}</p>
+                                <p className="text-xs text-gray-500">{new Date(report.createdAt).toLocaleDateString()}</p>
+                              </div>
+                              <span
+                                className={`px-2 py-1 rounded text-xs font-bold ${report.status ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                                  }`}
+                              >
+                                {report.status ? "처리 완료" : "처리 중"}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Settings Tab */}
+              {activeTab === "settings" && (
+                <div className="space-y-8 max-w-2xl">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <UserIcon size={20} />
+                      프로필 정보
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">닉네임</label>
+                        <input
+                          type="text"
+                          value={profileForm.nickName}
+                          onChange={(e) => setProfileForm({ ...profileForm, nickName: e.target.value })}
+                          disabled={!isEditingProfile}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">전화번호</label>
+                        <input
+                          type="tel"
+                          value={profileForm.phone}
+                          onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                          disabled={!isEditingProfile}
+                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
+                        />
+                      </div>
+                      {isEditingProfile && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            비밀번호 <span className="text-gray-500">(변경 시에만 입력)</span>
+                          </label>
+                          <input
+                            type="password"
+                            value={profileForm.password}
+                            onChange={(e) => setProfileForm({ ...profileForm, password: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="새 비밀번호"
+                          />
+                        </div>
+                      )}
+                      <div className="flex gap-3">
+                        {isEditingProfile ? (
+                          <>
+                            <button
+                              onClick={handleUpdateProfile}
+                              className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                            >
+                              저장
+                            </button>
+                            <button
+                              onClick={() => {
+                                setIsEditingProfile(false);
+                                setProfileForm({
+                                  nickName: user.nickName || "",
+                                  password: "",
+                                  phone: user.phone || "",
+                                });
+                              }}
+                              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                            >
+                              취소
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            onClick={() => setIsEditingProfile(true)}
+                            className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                          >
+                            수정하기
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-gray-200 pt-8">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <Settings size={20} />
+                      계정 관리
+                    </h3>
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+                      <h4 className="font-medium text-red-900 mb-2">회원 탈퇴</h4>
+                      <p className="text-sm text-red-700 mb-4">
+                        회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
+                      </p>
+                      <button
+                        onClick={handleDeleteAccount}
+                        className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                      >
+                        회원 탈퇴
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
-
-          {section === "selling" && (
-            <MySellingProducts
-              sellingProducts={sellingProducts}
-              editingProductId={editingProductId}
-              productForm={productForm}
-              goToProductDetail={goToProductDetail}
-              handleEditProduct={handleEditProduct}
-              handleChangeProductForm={handleChangeProductForm}
-              handleSaveProduct={handleSaveProduct}
-              handleCancelProductEdit={handleCancelProductEdit}
-            />
-          )}
-
-          {section === "likes" && (
-            <MyLikes
-              MyLikes={myLikes}
-              getCategoryName={getCategoryName}
-              goToProductDetail={goToProductDetail}
-            />
-          )}
-
-          {section === "reports" && <MyReports reports={reports} />}
-
-          {section === "qnas" && <MyProductQna MyProductQna={myQnas} />}
-
-          {section === "inquiries" && <MyInquiries myInquiries={myInquiries} />}
-
-          {section === "reviews" && (
-            <MyStoreProfile
-              averageRating={averageRating}
-              myReviews={myReviews}
-              rating={rating}
-              setRating={setRating}
-              targetUserId={targetUserId}
-              setTargetUserId={setTargetUserId}
-              comments={comments}
-              setComments={setComments}
-              handleSubmitReview={handleSubmitReview}
-            />
-          )}
-
-          {/* 기타 메뉴에 대한 간단한 Placeholder */}
-          {section === "payments" && <div>결제 수단 관리 페이지입니다.</div>}
-          {section === "purchases" && user && (
-            <MyPaymentHistory token={localStorage.getItem("token") || ""} />
-          )}
-
-          {section === "bids" && <div>입찰 목록 페이지입니다.</div>}
-          {section === "withdrawal" && (
-            <button
-              style={{ width: "200px", backgroundColor: "red" }}
-              onClick={handleDelete}
-            >
-              회원탈퇴 진행
-            </button>
-          )}
-        </main>
+        </div>
       </div>
     </div>
   );

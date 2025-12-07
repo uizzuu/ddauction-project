@@ -46,6 +46,7 @@ import PublicChat from "../components/chat/PublicChat";
 import FloatingWidgets from "../components/ui/FloatingWidgets";
 import NotificationModal from "../components/modal/NotificationModal";
 import CartPage from "../pages/general/CartPage";
+import WishlistPage from "../pages/general/WishlistPage";
 import RankPage from "../pages/main/RankPage";
 import SearchPage from "../pages/product/ProductList"; // Alias for readability
 
@@ -98,5 +99,6 @@ export {
   SearchPage,
   NotificationModal,
   CartPage,
+  WishlistPage,
   RankPage,
 };

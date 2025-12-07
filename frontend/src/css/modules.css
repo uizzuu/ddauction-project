@@ -20,7 +20,7 @@
 }
 
 .nav-tab {
-  @apply py-1 text-base;
+  @apply pb-2 text-base;
 }
 
 .nav-tab.active {
@@ -141,34 +141,23 @@
   @apply h-fit;
 }
 
-/* AdminPage.css (Migrated) */
-/* Admin styles inlined to AdminPage.tsx and components */
-.admin-table {
-  @apply w-full border-collapse;
+/* Admin styles removed - components now use Tailwind CSS */
+
+/* Select option styling */
+select option {
+  padding: 8px 12px;
+  background-color: white;
+  color: #111;
 }
 
-.admin-table th,
-.admin-table td {
-  @apply border border-[#ccc] p-[10px] text-center;
+select option:hover {
+  background-color: #f9f9f9;
 }
 
-.admin-table th {
-  @apply bg-[#e0e0e0];
+select option:checked {
+  background-color: #f0f0f0;
+  font-weight: 500;
 }
-
-.admin-table tr:nth-child(even) {
-  @apply bg-[#f9f9f9];
-}
-
-.admin-table button {
-  @apply py-[5px] px-[10px] cursor-pointer border-none rounded;
-}
-
-.banned-text {
-  @apply text-gray-500;
-}
-
-/* App.css Components (Migrated) */
 
 /* Form Components */
 .form-group {
