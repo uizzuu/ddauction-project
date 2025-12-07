@@ -143,7 +143,7 @@ export default function ProductRegister({ user }: Props) {
   if (!user) {
     return (
       <div className="min-h-[calc(100vh-120px)] flex justify-center items-center py-10 px-5 bg-white">
-        <div className="bg-white p-[50px] rounded-2xl w-full max-w-[450px] border border-[#b17576]">
+        <div className="bg-white p-[50px] rounded-2xl w-full max-w-[450px] border border-[#111]">
           <p className="text-18 text-center mb-1rem color-main">
             로그인 후 물품을 등록할 수 있습니다
           </p>
@@ -157,7 +157,7 @@ export default function ProductRegister({ user }: Props) {
 
   return (
     <div className="min-h-[calc(100vh-120px)] flex justify-center items-center py-10 px-5 bg-white">
-      <div className="bg-white p-[50px] rounded-2xl w-full max-w-[450px] border border-[#b17576]">
+      <div className="bg-white p-[50px] rounded-2xl w-full max-w-[450px] border border-[#111]">
         <h2 className="title-32 mb-30 text-center">물품 등록</h2>
 
         <div className="form-group register">

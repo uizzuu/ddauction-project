@@ -247,7 +247,7 @@ export default function UserChat({ user }: UserChatProps) {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                className="flex-1 p-2 border border-[#ddd] rounded focus:outline-none focus:border-[#b17576]"
+                className="flex-1 p-2 border border-[#ddd] rounded focus:outline-none focus:border-[#111]"
                 placeholder="메시지를 입력하세요..."
               />
               <button

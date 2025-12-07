@@ -67,6 +67,7 @@ export interface Product {
 
   // 정렬 로직 (인기순)을 위해 ProductSearchPage에서 사용되는 필드를 옵셔널로 추가
   bookmarkCount?: number;
+  isBookmarked?: boolean;
 }
 
 

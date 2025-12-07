@@ -116,7 +116,7 @@ export default function PublicChat({ user }: Props) {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                        className="flex-1 p-2 border border-[#ddd] rounded focus:outline-none focus:border-[#b17576]"
+                        className="flex-1 p-2 border border-[#ddd] rounded focus:outline-none focus:border-[#111]"
                         placeholder="메시지를 입력하세요..."
                     />
                     <button onClick={sendMessage} className="px-4 py-2 bg-[#333] text-white rounded hover:bg-[#555] transition-colors">

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import type {
   User,
   Product, // Product 타입은 이미 productCategoryType을 포함한다고 가정
@@ -523,6 +523,20 @@ export default function MyPage({ user, setUser }: Props) {
     }
   };
 
+  const location = useLocation();
+
+  // URL 쿼리 파라미터로 섹션 이동
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab && tab !== section) {
+      const validTabs = ["info", "selling", "likes", "reports", "qnas", "inquiries", "reviews", "payments", "purchases", "bids", "withdrawal"];
+      if (validTabs.includes(tab)) {
+        handleSectionChange(tab as MypageSection);
+      }
+    }
+  }, [location.search]);
+
   // ----------------------------------------------------
   // Render
   // ----------------------------------------------------
@@ -573,7 +587,7 @@ export default function MyPage({ user, setUser }: Props) {
               <button
                 key={item.key}
                 style={{
-                  color: section === item.key ? "#b17576" : "#ddd",
+                  color: section === item.key ? "#111" : "#ddd",
                   border: "none",
                 }}
                 className="text-16"

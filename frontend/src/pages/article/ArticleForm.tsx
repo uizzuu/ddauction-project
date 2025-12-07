@@ -127,7 +127,7 @@ export default function ArticleForm({ userId }: Props) {
         </div>
 
         <div className="w-full flex flex-col items-start">
-          <button type="submit" className="w-fit text-sm py-[12px] px-[16px] bg-white border border-[#ddd] rounded-xl text-[#aaa] font-normal whitespace-nowrap active:text-[#b17576] active:border-[#b17576] outline-none">
+          <button type="submit" className="w-fit text-sm py-[12px] px-[16px] bg-white border border-[#ddd] rounded-xl text-[#aaa] font-normal whitespace-nowrap active:text-[#111] active:border-[#111] outline-none">
             {id ? "수정하기" : "등록하기"}
           </button>
         </div>

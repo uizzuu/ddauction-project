@@ -11,25 +11,25 @@ export default function ErrorPage() {
       searchParams.get("message") || "페이지를 찾을 수 없습니다";
 
     const errorDetails: Record<string, { title: string; description: string }> =
-      {
-        "404": {
-          title: "페이지를 찾을 수 없습니다",
-          description: "요청하신 페이지가 존재하지 않거나 삭제되었습니다.",
-        },
-        "500": {
-          title: "서버 에러가 발생했습니다",
-          description:
-            "일시적인 서버 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
-        },
-        "403": {
-          title: "접근 권한이 없습니다",
-          description: "이 페이지에 접근할 권한이 없습니다.",
-        },
-        "502": {
-          title: "게이트웨이 오류",
-          description: "서버와의 통신 중 문제가 발생했습니다.",
-        },
-      };
+    {
+      "404": {
+        title: "페이지를 찾을 수 없습니다",
+        description: "요청하신 페이지가 존재하지 않거나 삭제되었습니다.",
+      },
+      "500": {
+        title: "서버 에러가 발생했습니다",
+        description:
+          "일시적인 서버 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+      },
+      "403": {
+        title: "접근 권한이 없습니다",
+        description: "이 페이지에 접근할 권한이 없습니다.",
+      },
+      "502": {
+        title: "게이트웨이 오류",
+        description: "서버와의 통신 중 문제가 발생했습니다.",
+      },
+    };
 
     return {
       code: errorCode,
@@ -56,7 +56,7 @@ export default function ErrorPage() {
           style={{
             fontSize: "72px",
             fontWeight: "700",
-            color: "#b17576",
+            color: "#111",
             marginBottom: "20px",
             lineHeight: "1",
           }}
@@ -103,7 +103,7 @@ export default function ErrorPage() {
               padding: "18px 60px",
               fontSize: "16px",
               fontWeight: "600",
-              backgroundColor: "#b17576",
+              backgroundColor: "#111",
               color: "#fff",
               border: "none",
               borderRadius: "8px",
@@ -119,7 +119,7 @@ export default function ErrorPage() {
                 "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = "#b17576";
+              (e.target as HTMLButtonElement).style.backgroundColor = "#111";
               (e.target as HTMLButtonElement).style.transform = "translateY(0)";
             }}
           >

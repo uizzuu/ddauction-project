@@ -327,7 +327,7 @@ export default function ProductQnA({
                         style={{
                           marginTop: 8,
                           paddingLeft: 12,
-                          borderLeft: "3px solid #b17576",
+                          borderLeft: "3px solid #111",
                         }}
                       >
                         {q.answers.map((a) => (

@@ -26,6 +26,8 @@ import {
   FindPassword,
   UserChat,
   PublicChat,
+  CartPage,
+  RankPage,
 } from "./common/import";
 import type { User } from "./common/types";
 
@@ -50,6 +52,8 @@ const VALID_PATHS = [
   "/public-chat",
   "/user-chat",
   "/verify",
+  "/cart",
+  "/rank",
 ];
 
 // 동적 경로 패턴 (예: /products/123, /articles/456 등)
@@ -198,6 +202,8 @@ export default function App() {
         <Route path="/payment" element={<PaymentPage />} />
         <Route path="/find-email" element={<FindEmail />} />
         <Route path="/find-password" element={<FindPassword />} />
+        <Route path="/cart" element={user ? <CartPage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
+        <Route path="/rank" element={<RankPage />} />
 
         {/* 에러 페이지 - 마지막에 정의 (와일드카드는 마지막!) */}
         <Route path="/error" element={<ErrorPage />} />

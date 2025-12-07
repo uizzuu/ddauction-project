@@ -15,7 +15,7 @@ import type {
   EditProductForm,
   WinnerCheckResponse,
 } from "../../common/types";
-import { API_BASE_URL } from "../../common/api";
+import { API_BASE_URL, toggleBookmark } from "../../common/api";
 import { formatDateTime } from "../../common/util";
 import ProductQnA from "../../components/product/ProductQnA";
 import AuctionBidGraph from "../../components/product/AuctionBidGraph";
@@ -609,8 +609,8 @@ export default function ProductDetail({ user }: Props) {
                   >
                     <path
                       d="M6 11L5.13 10.2087C2.04 7.40926 0 5.55695 0 3.297C0 1.44469 1.452 0 3.3 0C4.344 0 5.346 0.485559 6 1.24687C6.654 0.485559 7.656 0 8.7 0C10.548 0 12 1.44469 12 3.297C12 5.55695 9.96 7.40926 6.87 10.2087L6 11Z"
-                      fill={isBookMarked ? "#b17576" : "#fff"}
-                      stroke="#b17576"
+                      fill={isBookMarked ? "#111" : "#fff"}
+                      stroke="#111"
                     />
                   </svg>
                   <p>{bookmarkCount}</p>
@@ -882,16 +882,62 @@ export default function ProductDetail({ user }: Props) {
           </div>
         </div>
 
-        <button
-          onClick={() => {
-            console.log("productId:", product.productId);
-            navigate("/user-chat", {
-              state: { sellerId: product.sellerId, productId: product.productId },
-            });
-          }}
-        >
-          1:1 채팅하기
-        </button>
+
+        <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+          <button
+            onClick={() => {
+              console.log("productId:", product.productId);
+              navigate("/user-chat", {
+                state: { sellerId: product.sellerId, productId: product.productId },
+              });
+            }}
+          >
+            1:1 채팅하기
+          </button>
+
+          <button
+            onClick={async () => {
+              const token = localStorage.getItem("token");
+              if (!token) {
+                alert("로그인이 필요합니다.");
+                return;
+              }
+              if (isBookMarked) {
+                alert("이미 장바구니에 담겨있는 상품입니다.");
+                return;
+              }
+              try {
+                // 토글 실행 (현재 미등록 상태이므로 등록됨)
+                await toggleBookmark(product.productId, token);
+
+                // 상태 업데이트
+                setIsBookMarked(true);
+                // 약간의 지연 후 이벤트 발생 (서버 DB 반영 시간 고려)
+                setTimeout(() => {
+                  window.dispatchEvent(new Event("cart-updated"));
+                }, 300);
+
+                // 사용자 피드백
+                alert("장바구니에 담겼습니다.");
+              } catch (err) {
+                console.error(err);
+                alert("장바구니 추가 실패");
+              }
+            }}
+            style={{
+              backgroundColor: isBookMarked ? "#999" : "#333",
+              color: "#fff",
+              padding: "8px 16px",
+              borderRadius: "4px",
+              fontSize: "14px",
+              fontWeight: "bold",
+              border: "none",
+              cursor: isBookMarked ? "default" : "pointer"
+            }}
+          >
+            {isBookMarked ? "장바구니 담김" : "장바구니 담기"}
+          </button>
+        </div>
 
 
         <AuctionBidding

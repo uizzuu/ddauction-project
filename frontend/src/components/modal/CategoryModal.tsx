@@ -59,7 +59,7 @@ export default function CategoryModal({
     >
       {/* 전체 카테고리 클릭 시 전체 검색으로 이동 */}
       <p
-        className="block w-full text-left cursor-pointer transition-colors text-[13px] font-medium bg-[#b17576] text-white py-3 px-6 hover:bg-[#8c5d5e]"
+        className="block w-full text-left cursor-pointer transition-colors text-[13px] font-medium bg-[#111] text-white py-3 px-6 hover:bg-[#8c5d5e]"
         onClick={() => {
           navigate("/search");
           onClose();
@@ -71,7 +71,7 @@ export default function CategoryModal({
         {categories.map((cat) => (
           <li key={cat.value}>
             <button
-              className="block w-full text-left px-6 py-0 cursor-pointer transition-colors text-[13px] font-medium hover:text-[#b17576]"
+              className="block w-full text-left px-6 py-0 cursor-pointer transition-colors text-[13px] font-medium hover:text-[#111]"
               onClick={() => {
                 onSelectCategory(cat);
                 navigate(`/search?category=${cat.value}`);

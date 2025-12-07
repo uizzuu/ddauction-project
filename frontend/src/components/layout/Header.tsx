@@ -1,7 +1,8 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { User } from "../../common/types";
-import { logout, fetchSuggestions, fetchPopularKeywords, saveSearchLog } from "../../common/api";
+import { logout, fetchSuggestions, fetchPopularKeywords, saveSearchLog, fetchMyLikes } from "../../common/api";
+import { NotificationModal } from "../../common/import";
 import { RealTimeSearch } from "../../common/websocket";
 
 import "../../css/modules.css";
@@ -12,16 +13,44 @@ type Props = {
 };
 
 export default function Header({ user, setUser }: Props) {
-    const cartItemCount = 3;
+    const [cartItemCount, setCartItemCount] = useState(0);
+
+    const updateCartCount = async () => {
+        if (!user) {
+            setCartItemCount(0);
+            return;
+        }
+        const token = localStorage.getItem("token");
+        if (token) {
+            try {
+                const likes = await fetchMyLikes(token);
+                console.log("Cart updated. Count:", likes.length);
+                setCartItemCount(likes.length);
+            } catch (error) {
+                console.error("장바구니 카운트 로드 실패", error);
+            }
+        }
+    };
 
     const navigate = useNavigate();
     const location = useLocation();
+
+    useEffect(() => {
+        updateCartCount();
+
+        const handleCartUpdate = () => updateCartCount();
+        window.addEventListener("cart-updated", handleCartUpdate);
+        return () => window.removeEventListener("cart-updated", handleCartUpdate);
+    }, [user, location.pathname]);
+
+
     const [lastScrollY, setLastScrollY] = useState(0);
     const [isScrollDown, setIsScrollDown] = useState(false);
     const [isSticky, setIsSticky] = useState(false);
     const [suggestions, setSuggestions] = useState<string[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -428,7 +457,7 @@ export default function Header({ user, setUser }: Props) {
                                             <span className="text-base opacity-60">🔍</span>
                                             {item.split(new RegExp(`(${searchKeyword})`, "gi")).map((part, i) =>
                                                 part.toLowerCase() === searchKeyword.toLowerCase() ? (
-                                                    <span key={i} className="text-[#b17576] font-bold">{part}</span>
+                                                    <span key={i} className="text-[#111] font-bold">{part}</span>
                                                 ) : (
                                                     part
                                                 )
@@ -437,9 +466,9 @@ export default function Header({ user, setUser }: Props) {
                                     ))
                                 ) : (
                                     /* 2. 최근 검색어 + 인기 검색어 (검색어 없을 때) */
-                                    <div className="p-5">
+                                    <div className="px-3 py-5">
                                         {/* 최근 검색어 */}
-                                        <div className="mb-6">
+                                        <div className="mb-4">
                                             <div className="flex justify-between items-center mb-3">
                                                 <h3 className="text-sm font-bold text-[#333]">최근 검색어</h3>
                                                 {recentKeywords.length > 0 && (
@@ -486,7 +515,7 @@ export default function Header({ user, setUser }: Props) {
                                                         className="flex items-center gap-3 cursor-pointer hover:bg-[#fafafa] p-1 rounded"
                                                         onClick={() => handleSuggestionClick(keyword)}
                                                     >
-                                                        <span className={`w-5 font-bold ${index < 3 ? "text-[#b17576]" : "text-[#333]"}`}>
+                                                        <span className={`w-5 font-bold ${index < 3 ? "text-[#111]" : "text-[#333]"}`}>
                                                             {index + 1}
                                                         </span>
                                                         <span className="text-sm text-[#333] truncate">{keyword}</span>
@@ -507,7 +536,7 @@ export default function Header({ user, setUser }: Props) {
                                             setIsAutoSave(!isAutoSave);
                                         }}
                                     >
-                                        <div className={`w-8 h-4 rounded-full relative transition-colors ${isAutoSave ? "bg-[#b17576]" : "bg-[#ddd]"}`}>
+                                        <div className={`w-8 h-4 rounded-full relative transition-colors ${isAutoSave ? "bg-[#111]" : "bg-[#ddd]"}`}>
                                             <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-transform ${isAutoSave ? "left-4.5" : "left-0.5"}`} style={{ left: isAutoSave ? '18px' : '2px' }} />
                                         </div>
                                         자동저장 {isAutoSave ? "끄기" : "켜기"}
@@ -527,22 +556,29 @@ export default function Header({ user, setUser }: Props) {
                     </div>
 
                     {/* 아이콘 */}
+
                     <nav
                         className="flex items-center gap-3 relative flex-shrink-0 ml-auto"
                         aria-label="주요 메뉴"
                     >
-                        <button
-                            className="p-1 hover:opacity-70 transition-opacity"
-                            aria-label="알림"
-                        >
-                            <img
-                                className="w-6 h-6"
-                                alt=""
-                                src="https://c.animaapp.com/vpqlbV8X/img/group@2x.png"
-                            />
-                        </button>
+                        <div className="relative">
+                            <button
+                                className="p-1 hover:opacity-70 transition-opacity"
+                                aria-label="알림"
+                                onClick={() => setShowNotifications(!showNotifications)}
+                            >
+                                <img
+                                    className="w-6 h-6"
+                                    alt=""
+                                    src="https://c.animaapp.com/vpqlbV8X/img/group@2x.png"
+                                />
+                            </button>
+                            <NotificationModal isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
+                        </div>
 
-                        <button
+                        <NavLink
+                            to="/mypage?tab=likes"
+                            onClick={(e) => handleProtectedNavigation(e, "/mypage?tab=likes")}
                             className="p-1 hover:opacity-70 transition-opacity"
                             aria-label="찜하기"
                         >
@@ -551,7 +587,7 @@ export default function Header({ user, setUser }: Props) {
                                 alt=""
                                 src="https://c.animaapp.com/vpqlbV8X/img/vector-1.svg"
                             />
-                        </button>
+                        </NavLink>
 
                         <NavLink
                             to="/mypage"
@@ -579,8 +615,8 @@ export default function Header({ user, setUser }: Props) {
                             />
 
                             {cartItemCount > 0 && (
-                                <div className="cart-badge-container">
-                                    <div className="font-medium text-[10px] leading-[7px] text-white transition-opacity duration-300">{cartItemCount}</div>
+                                <div className="absolute top-[0.5px] -right-[0.5px] flex items-center justify-center w-4 h-4 bg-[--color-alert-red] rounded-full">
+                                    <div className="font-medium text-[10px] leading-[7px] text-white">{cartItemCount}</div>
                                 </div>
                             )}
                         </NavLink>
@@ -598,6 +634,12 @@ export default function Header({ user, setUser }: Props) {
                             className={({ isActive }) => `nav-tab ${isActive || location.pathname === '/' ? "active" : "inactive"}`}
                         >
                             추천
+                        </NavLink>
+                        <NavLink
+                            to="/rank"
+                            className={({ isActive }) => `nav-tab ${isActive ? "active" : "inactive"}`}
+                        >
+                            랭킹
                         </NavLink>
                         <NavLink
                             to="/search"

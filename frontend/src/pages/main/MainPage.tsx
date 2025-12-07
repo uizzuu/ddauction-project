@@ -42,7 +42,7 @@ function CategoryNextArrow(props: any) {
     <button
       onClick={onClick}
       disabled={isDisabled}
-      className={`absolute top-1/2 -translate-y-1/2 -right-10 z-10 p-2 transition-all ${isDisabled ? "text-[#eee] cursor-default" : "text-gray-400 hover:text-black cursor-pointer"
+      className={`absolute top-1/2 -translate-y-1/2 -right-12 z-10 p-2 transition-all ${isDisabled ? "text-[#eee] cursor-default" : "text-gray-400 hover:text-black cursor-pointer"
         }`}
     >
       <ChevronRight size={28} />
@@ -57,7 +57,7 @@ function CategoryPrevArrow(props: any) {
     <button
       onClick={onClick}
       disabled={isDisabled}
-      className={`absolute top-1/2 -translate-y-1/2 -left-10 z-10 p-2 transition-all ${isDisabled ? "text-[#eee] cursor-default" : "text-gray-400 hover:text-black cursor-pointer"
+      className={`absolute top-1/2 -translate-y-1/2 -left-12 z-10 p-2 transition-all ${isDisabled ? "text-[#eee] cursor-default" : "text-gray-400 hover:text-black cursor-pointer"
         }`}
     >
       <ChevronLeft size={28} />
@@ -71,7 +71,7 @@ function BannerNextArrow(props: any) {
   return (
     <div
       onClick={onClick}
-      className="absolute top-0 bottom-0 right-0 w-[80px] z-10 flex items-center justify-center transition-opacity opacity-0 hover:opacity-100 cursor-pointer"
+      className="absolute top-0 bottom-0 right-2 w-[40px] z-10 flex items-center justify-center transition-opacity opacity-0 hover:opacity-100 cursor-pointer"
     >
       <ChevronRight size={48} className="text-white drop-shadow-lg" />
     </div>
@@ -83,7 +83,7 @@ function BannerPrevArrow(props: any) {
   return (
     <div
       onClick={onClick}
-      className="absolute top-0 bottom-0 left-0 w-[80px] z-10 flex items-center justify-center transition-opacity opacity-0 hover:opacity-100 cursor-pointer"
+      className="absolute top-0 bottom-0 left-2 w-[40px] z-10 flex items-center justify-center transition-opacity opacity-0 hover:opacity-100 cursor-pointer"
     >
       <ChevronLeft size={48} className="text-white drop-shadow-lg" />
     </div>
@@ -105,7 +105,7 @@ export default function Main() {
       setLoading(true);
       try {
         const latestProducts = await fetchLatestProducts();
-        setProducts(latestProducts.slice(0, 4));
+        setProducts(latestProducts.slice(0, 6));
         const bannerData = await fetchBannerProducts();
         setBanners(bannerData);
       } catch (err) {
@@ -145,7 +145,7 @@ export default function Main() {
   return (
     <div className="w-full bg-white pb-20">
       {/* 1. Banner Section (Fixed Size, Rounded) */}
-      <div className="w-full mb-12 mt-6">
+      <div className="w-full mb-10 mt-6">
         <div className="w-full max-w-[1280px] mx-auto h-[400px] relative group rounded-[12px] overflow-hidden bg-[#f4f4f4]">
           {banners.length > 0 ? (
             <>
@@ -188,7 +188,7 @@ export default function Main() {
       <div className="container mx-auto px-4 md:px-0">
 
         {/* 2. Category Shortcuts (Slider) */}
-        <section className="mb-16">
+        <section className="mb-20">
           <div className="relative w-fit mx-auto max-w-full">
             <Slider {...categorySettings}>
               {(Object.keys(PRODUCT_CATEGORY_LABELS) as ProductCategoryType[]).map((cat) => (
@@ -197,7 +197,7 @@ export default function Main() {
                     className="category flex flex-col items-center gap-2 cursor-pointer w-[80px]"
                     onClick={() => navigate(`/search?category=${cat}`)}
                   >
-                    <div className="w-[80px] h-[80px] rounded-[12px] bg-[#f4f4f4] flex items-center justify-center text-[#333] transition-colors group-hover:bg-[#f0f0f0]">
+                    <div className="w-[80px] h-[80px] rounded-[10px] bg-[#f4f4f4] flex items-center justify-center text-[#333] transition-colors group-hover:bg-[#f0f0f0]">
                       {CATEGORY_ICONS[cat]}
                     </div>
                     <span className="text-[14px] text-[#333] font-medium text-center whitespace-nowrap group-hover:font-semibold">
@@ -212,14 +212,14 @@ export default function Main() {
 
         {/* 3. Just Dropped */}
         <section className="mb-20">
-          <div className="kream-section-header">
+          <div className="main-section-header">
             <div>
-              <h2 className="kream-section-title">Just Dropped</h2>
-              <p className="text-sm text-[#888]">발매된 지 얼마 안 된 따끈따끈한 신상</p>
+              <h2 className="main-section-title">Just Dropped</h2>
+              <p className="text-[#666] -mt-[6px]">발매된 지 얼마 안 된 따끈따끈한 신상</p>
             </div>
             <button
-              onClick={() => navigate("/search")}
-              className="text-sm text-[#888] hover:text-[#333] font-medium transition-colors"
+              onClick={() => navigate("/search?sort=latest")}
+              className="text-[#666] hover:text-[#333] transition-colors"
             >
               더보기
             </button>
@@ -228,26 +228,26 @@ export default function Main() {
           {loading ? (
             <div className="h-60 flex items-center justify-center text-[#999]">로딩중...</div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8">
-              {products.map(p => (
-                <ProductCard key={p.productId} product={p} />
-              ))}
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
+            {products.map(p => (
+              <ProductCard key={p.productId} product={p} />
+            ))}
+          </div>
           ) : (
-            <div className="h-40 flex items-center justify-center text-[#999]">등록된 상품이 없습니다.</div>
+          <div className="h-40 flex items-center justify-center text-[#999]">등록된 상품이 없습니다.</div>
           )}
         </section>
 
-        {/* 4. Most Popular */}
+        {/* Most Popular */}
         <section className="mb-20">
-          <div className="kream-section-header">
+          <div className="main-section-header">
             <div>
-              <h2 className="kream-section-title">Most Popular</h2>
-              <p className="text-sm text-[#888]">지금 가장 인기 있는 상품</p>
+              <h2 className="main-section-title">Most Popular</h2>
+              <p className="text-[#666] -mt-[6px]">지금 가장 인기 있는 상품</p>
             </div>
             <button
               onClick={() => navigate("/search?sort=popularity")}
-              className="text-sm text-[#888] hover:text-[#333] font-medium transition-colors"
+              className="text-[#666] hover:text-[#333] transition-colors"
             >
               더보기
             </button>
@@ -255,13 +255,13 @@ export default function Main() {
           {loading ? (
             <div className="h-60 flex items-center justify-center text-[#999]">로딩중...</div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-8">
-              {[...products].reverse().slice(0, 4).map(p => (
-                <ProductCard key={p.productId} product={p} />
-              ))}
-            </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
+            {[...products].reverse().slice(0, 6).map(p => (
+              <ProductCard key={p.productId} product={p} />
+            ))}
+          </div>
           ) : (
-            <div className="h-40 flex items-center justify-center text-[#999]">등록된 상품이 없습니다.</div>
+          <div className="h-40 flex items-center justify-center text-[#999]">등록된 상품이 없습니다.</div>
           )}
         </section>
       </div>

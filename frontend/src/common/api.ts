@@ -100,12 +100,14 @@ export const fetchBookmarkCheck = (productId: number, token?: string) =>
   });
 
 // 찜 토글
-export const toggleBookmark = (productId: number, token?: string) => {
+export const toggleBookmark = async (productId: number, token?: string) => {
   const t = ensureToken(token);
-  return fetchJson<string>(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${productId}`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${productId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
   });
+  if (!res.ok) throw new Error("찜하기 실패");
+  return res.text();
 };
 
 // 모든 입찰 내역 조회
@@ -360,11 +362,11 @@ export async function getProducts(): Promise<TYPE.Product[]> {
 export async function createProduct(
   productData: TYPE.CreateProductRequest
 ): Promise<TYPE.Product> {
-  const token = localStorage.getItem('token'); 
+  const token = localStorage.getItem('token');
 
   // 2. 토큰 유효성 검사
   if (!token) {
-    throw new Error("상품 등록 실패: 인증 토큰이 없습니다. 로그인이 필요합니다."); 
+    throw new Error("상품 등록 실패: 인증 토큰이 없습니다. 로그인이 필요합니다.");
   }
 
   // 3. 일반 fetch를 사용하여 요청을 보냅니다.
@@ -372,7 +374,7 @@ export async function createProduct(
     method: "POST",
     headers: {
       // ⭐ 토큰과 JSON 타입을 명시적으로 추가
-      "Authorization": `Bearer ${token}`, 
+      "Authorization": `Bearer ${token}`,
       "Content-Type": "application/json", // JSON 데이터임을 명시
     },
     body: JSON.stringify(productData),
@@ -380,7 +382,7 @@ export async function createProduct(
 
   if (!response.ok) {
     if (response.status === 401) {
-        throw new Error("상품 등록 실패: 인증이 만료되었거나 유효하지 않습니다.");
+      throw new Error("상품 등록 실패: 인증이 만료되었거나 유효하지 않습니다.");
     }
     throw new Error(`상품 등록 실패: ${response.status}: ${response.statusText}`);
   }
@@ -814,7 +816,7 @@ export async function registerProductWithImages(
     try {
       const s3Url = await uploadImageToS3(file);
       console.log(`S3 업로드 성공:`, s3Url);
-      
+
       await registerProductImage(product.productId, s3Url, productData.productType);
       console.log(`DB 저장 완료`);
     } catch (err) {
@@ -1125,8 +1127,9 @@ export async function fetchSellingProducts(userId: number): Promise<TYPE.Product
 
 // 찜 상품
 export async function fetchMyLikes(token: string): Promise<TYPE.Product[]> {
-  const res = await fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/mypage`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/mypage?t=${Date.now()}`, {
     headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store"
   });
   if (!res.ok) throw new Error("찜 상품 조회 실패");
   const data: Partial<TYPE.Product>[] = await res.json();

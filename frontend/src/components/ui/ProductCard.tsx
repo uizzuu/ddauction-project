@@ -1,14 +1,19 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Product } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
-import { Heart, Truck, ChevronRight } from "lucide-react";
+import { Heart, Truck, ChevronRight, ChevronUp, ChevronDown, Minus } from "lucide-react";
+import { toggleBookmark } from "../../common/api";
 
 type Props = {
     product: Product;
+    rank?: number;
+    rankChange?: "UP" | "DOWN" | "SAME";
 };
 
-export default function ProductCard({ product }: Props) {
+export default function ProductCard({ product, rank, rankChange }: Props) {
     const navigate = useNavigate();
+    const [isLiked, setIsLiked] = useState(!!product.isBookmarked);
 
     // 임시 카테고리 표시 (Used) - 실제 데이터 없으면 "기타"
     const categoryName = "기타";
@@ -17,6 +22,28 @@ export default function ProductCard({ product }: Props) {
 
     const handleCardClick = () => {
         navigate(`/products/${product.productId}`);
+    };
+
+    const handleLike = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+
+        const token = localStorage.getItem("token");
+        if (!token) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+
+        const prev = isLiked;
+        setIsLiked(!prev);
+
+        try {
+            await toggleBookmark(product.productId, token);
+        } catch (err) {
+            console.error(err);
+            setIsLiked(prev); // Revert
+            const msg = err instanceof Error ? err.message : "알 수 없는 오류";
+            alert(`찜하기 실패: ${msg}`);
+        }
     };
 
     return (
@@ -59,18 +86,63 @@ export default function ProductCard({ product }: Props) {
                 {/* Top-Right Heart Icon */}
                 <button
                     className="absolute top-3 right-3 z-10 p-1 hover:scale-110 transition-transform"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        // 찜하기 로직 연동 필요
-                        console.log("찜하기 클릭", product.productId);
-                    }}
+                    onClick={handleLike}
                 >
-                    <Heart size={20} className="text-[#333] hover:fill-[#b17576] hover:text-[#b17576]" />
+                    <Heart
+                        size={20}
+                        className={isLiked ? "fill-[#111] text-[#111]" : "text-[#333] hover:fill-[#111] hover:text-[#111]"}
+                    />
                 </button>
             </div>
 
             {/* 2. Content Area */}
             <div className="flex flex-col px-1">
+                {/* Optional Rank Badge Row */}
+                {rank && (
+                    <div className="flex items-center gap-1 mb-1">
+                        <span className="font-bold text-lg leading-none">{rank}</span>
+                        <div className="flex items-center justify-center w-4 h-4">
+                            {rankChange === "UP" && (
+                                <svg
+                                    width="9"
+                                    height="6"
+                                    viewBox="0 0 9 6"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="rotate-180 mb-[1px]"
+                                >
+                                    <path
+                                        d="M8.5 0.25C8.5961 0.25 8.68396 0.304985 8.72559 0.391602C8.76720 0.478214 8.75534 0.581213 8.69531 0.65625L4.69531 5.65625C4.64787 5.71555 4.57595 5.75 4.5 5.75C4.42405 5.75 4.35213 5.71555 4.30469 5.65625L0.304688 0.65625C0.244658 0.581213 0.232795 0.478214 0.274414 0.391602C0.316044 0.304985 0.403899 0.25 0.5 0.25H8.5Z"
+                                        fill="#EF4444"
+                                        stroke="#EF4444"
+                                        strokeWidth="0.5"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                            )}
+                            {rankChange === "DOWN" && (
+                                <svg
+                                    width="9"
+                                    height="6"
+                                    viewBox="0 0 9 6"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="mb-[1px]"
+                                >
+                                    <path
+                                        d="M8.5 0.25C8.5961 0.25 8.68396 0.304985 8.72559 0.391602C8.76720 0.478214 8.75534 0.581213 8.69531 0.65625L4.69531 5.65625C4.64787 5.71555 4.57595 5.75 4.5 5.75C4.42405 5.75 4.35213 5.71555 4.30469 5.65625L0.304688 0.65625C0.244658 0.581213 0.232795 0.478214 0.274414 0.391602C0.316044 0.304985 0.403899 0.25 0.5 0.25H8.5Z"
+                                        fill="#3B82F6"
+                                        stroke="#3B82F6"
+                                        strokeWidth="0.5"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                            )}
+                            {(!rankChange || rankChange === "SAME") && <Minus size={16} className="text-gray-400" />}
+                        </div>
+                    </div>
+                )}
+
                 {/* Type-Specific Header Info */}
                 <div className="mb-1 min-h-[16px]">
                     {product.productType === "AUCTION" && product.auctionEndTime && (
@@ -106,7 +178,7 @@ export default function ProductCard({ product }: Props) {
                                 시작가 {formatPrice(product.startingPrice)}
                             </div>
                             <div className="flex items-baseline gap-1 mt-0.5">
-                                <span className="text-[11px] text-[#b17576] font-bold">현재가</span>
+                                <span className="text-[11px] text-[#111] font-bold">현재가</span>
                                 <span className="text-[15px] font-bold text-[#333]">
                                     {formatPrice(product.bidPrice || product.startingPrice)}
                                 </span>
@@ -118,7 +190,7 @@ export default function ProductCard({ product }: Props) {
                                 {formatPrice(Math.round((product.startingPrice || 0) * 1.2))} {/* 임시 원가 */}
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[15px] font-bold text-[#b17576]">{discountRate}%</span>
+                                <span className="text-[15px] font-bold text-[#111]">{discountRate}%</span>
                                 <span className="text-[15px] font-bold text-[#333]">
                                     {formatPrice(product.startingPrice)}
                                 </span>

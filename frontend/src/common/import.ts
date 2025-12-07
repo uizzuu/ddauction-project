@@ -44,6 +44,9 @@ import FindPassword from "../pages/FindPassword";
 import UserChat from "../components/chat/UserChat";
 import PublicChat from "../components/chat/PublicChat";
 import FloatingWidgets from "../components/ui/FloatingWidgets";
+import NotificationModal from "../components/modal/NotificationModal";
+import CartPage from "../pages/general/CartPage";
+import RankPage from "../pages/main/RankPage";
 import SearchPage from "../pages/product/ProductList"; // Alias for readability
 
 export {
@@ -91,5 +94,9 @@ export {
   UserChat,
   PublicChat,
   FloatingWidgets,
+
   SearchPage,
+  NotificationModal,
+  CartPage,
+  RankPage,
 };
