@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { UserChatProps, PrivateChat, ChatMessagePayload, User } from "../../common/types";
-import { deletePrivateChat } from "../../common/api";
+import { deletePrivateChat, fetchProductById } from "../../common/api";
 
 // -----------------------------
 // UserChat 컴포넌트
 // -----------------------------
 export default function UserChat({ user }: UserChatProps) {
   const location = useLocation();
+  const navigate = useNavigate(); // Added navigate
   const state =
-    (location.state as { sellerId?: number; productId?: number }) || undefined;
+    (location.state as { sellerId?: number; productId?: number } | null) || undefined;
 
   const [messages, setMessages] = useState<PrivateChat[]>([]);
   const [input, setInput] = useState("");
@@ -105,13 +106,29 @@ export default function UserChat({ user }: UserChatProps) {
           setChatRoomId(msgData[0].chatRoomId);
         }
 
-      } catch (e) {
+      } catch (e: any) {
         console.error("1:1 채팅 내역 불러오기 실패", e);
       }
     };
 
     loadPrivateMessages();
+    loadPrivateMessages();
   }, [user, selectedUser, selectedProductId]);
+
+  // -----------------------------
+  // Product Info Fetching
+  // -----------------------------
+  const [product, setProduct] = useState<any>(null);
+
+  useEffect(() => {
+    if (!selectedProductId) {
+      setProduct(null);
+      return;
+    }
+    fetchProductById(selectedProductId)
+      .then(setProduct)
+      .catch((err: any) => console.error("상품 정보 조회 실패:", err));
+  }, [selectedProductId]);
 
 
   // -----------------------------
@@ -197,7 +214,7 @@ export default function UserChat({ user }: UserChatProps) {
   // 7. 화면 렌더링
   // -----------------------------
   return (
-    <div className="max-w-[1280px] p-0 mx-auto flex h-[calc(100vh-160px)] border border-[#ccc] rounded-lg overflow-hidden bg-white shadow-sm">
+    <div className="max-w-[1280px] p-0 mt-[20px] mx-auto flex h-[calc(100vh-180px)] border border-[#ccc] rounded-lg overflow-hidden bg-white shadow-sm">
 
       {/* 🔹 관리자만 유저 목록 사이드바 표시 */}
       {isAdmin && (
@@ -228,19 +245,19 @@ export default function UserChat({ user }: UserChatProps) {
                 }}
               >
                 <div>
-                  <div className="text-sm">{u.nickName}</div>
-                  <div className="text-xs text-gray-400">{u.userName}</div>
+                  <div className="text-sm">{u.nickName}({u.userName || "이름 없음"})</div>
                 </div>
                 {/* 관리자 사이드바 제재 메뉴 (호버 시 표시) */}
                 <button
                   className="opacity-0 group-hover:opacity-100 text-xs bg-red-100 text-red-500 px-2 py-1 rounded hover:bg-red-200"
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (window.confirm(`'${u.nickName}(${u.userName})' 님을 제재 하시겠습니까?`)) {
+                    if (window.confirm(`'${u.nickName}(${u.userName || "이름 없음"})' 님을 제재 하시겠습니까?`)) {
                       alert("제재 기능 미구현");
                     }
                   }}
-                >제재</button>
+                >제재
+                </button>
               </div>
             ))}
           </div>
@@ -261,8 +278,8 @@ export default function UserChat({ user }: UserChatProps) {
             <div className="p-4 border-b border-[#eee] bg-white flex justify-between items-center">
               <h2 className="text-lg font-bold">
                 {/* 관리자 뷰: 닉네임 (실명) */}
-                {isAdmin && selectedUser.userName
-                  ? `${selectedUser.nickName} (${selectedUser.userName})`
+                {isAdmin
+                  ? `${selectedUser.nickName} (${selectedUser.userName || "이름 없음"})`
                   : selectedUser.nickName}
                 <span className="text-sm font-normal text-gray-500 ml-2">님과의 대화</span>
               </h2>
@@ -271,13 +288,40 @@ export default function UserChat({ user }: UserChatProps) {
                 <button
                   className="text-xs bg-red-50 text-red-500 px-3 py-1 rounded border border-red-200 hover:bg-red-100"
                   onClick={() => {
-                    if (window.confirm(`'${selectedUser.nickName}(${selectedUser.userName})' 님을 제재 하시겠습니까?`)) {
+                    if (window.confirm(`'${selectedUser.nickName}(${selectedUser.userName || "이름 없음"})' 님을 제재 하시겠습니까?`)) {
                       alert("제재 기능 미구현");
                     }
                   }}
                 >🚨 사용자 제재</button>
               )}
             </div>
+
+            {/* Sticky Product Header */}
+            {product && (
+              <div
+                className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-3 flex items-center gap-3 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => navigate(`/products/${product.productId}`)}
+              >
+                <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0">
+                  <img
+                    src={product.images?.[0]?.imagePath || "/placeholder.png"}
+                    alt={product.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-xs font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">
+                      {product.productCategoryType || "기타"}
+                    </span>
+                    <h3 className="text-sm font-medium text-gray-900 truncate">{product.title}</h3>
+                  </div>
+                  <p className="text-sm font-bold text-gray-900">
+                    {product.startingPrice?.toLocaleString()}원
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
               {messages.map((msg, i) => {

@@ -1,6 +1,6 @@
-import { X, Check } from "lucide-react";
+import { X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType, DELIVERY_TYPE, DELIVERY_TYPE_LABELS, type DeliveryType } from "../../common/enums";
+import { PRODUCT_CATEGORIES, type ProductCategoryType, DELIVERY_TYPES, type DeliveryType } from "../../common/enums";
 
 const BENEFITS = [
     { id: "free_shipping", label: "배송비 무료" },
@@ -148,7 +148,7 @@ export default function SideFilterModal({
                             >
                                 전체
                             </button>
-                            {(Object.keys(PRODUCT_CATEGORY_LABELS) as ProductCategoryType[]).map((cat) => (
+                            {(Object.keys(PRODUCT_CATEGORIES) as ProductCategoryType[]).map((cat) => (
                                 <button
                                     key={cat}
                                     onClick={() => onCategoryChange(cat)}
@@ -157,7 +157,7 @@ export default function SideFilterModal({
                                         ${selectedCategory === cat ? "bg-[#333] text-white border-[#333]" : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"}
                                     `}
                                 >
-                                    {PRODUCT_CATEGORY_LABELS[cat]}
+                                    {PRODUCT_CATEGORIES[cat]}
                                 </button>
                             ))}
                         </div>
@@ -233,7 +233,7 @@ export default function SideFilterModal({
                     <div>
                         <h3 className="font-bold mb-3 text-[15px]">배송 방법</h3>
                         <div className="flex flex-col gap-2.5">
-                            {DELIVERY_TYPE.map((type) => (
+                            {(Object.keys(DELIVERY_TYPES) as DeliveryType[]).map((type) => (
                                 <label key={type} className="flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -244,7 +244,7 @@ export default function SideFilterModal({
                                             else onDeliveryChange(selectedDeliveryTypes.filter(t => t !== type));
                                         }}
                                     />
-                                    <span className="text-sm text-[#333]">{DELIVERY_TYPE_LABELS[type]}</span>
+                                    <span className="text-sm text-[#333]">{DELIVERY_TYPES[type]}</span>
                                 </label>
                             ))}
                         </div>

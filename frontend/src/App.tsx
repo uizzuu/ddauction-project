@@ -159,11 +159,11 @@ export default function App() {
         <Route path="/community" element={<ArticleList user={user} />} />
         <Route
           path="/articles/new"
-          element={<ArticleForm userId={user?.userId ?? null} />}
+          element={<ArticleForm user={user} />}
         />
         <Route
           path="/articles/:id/edit"
-          element={<ArticleForm userId={user?.userId ?? null} />}
+          element={<ArticleForm user={user} />}
         />
         <Route path="/articles/:id" element={<ArticleDetail user={user} />} />
         <Route path="/search" element={<SearchPage />} />

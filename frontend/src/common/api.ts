@@ -29,7 +29,7 @@ function isProduct(obj: unknown): obj is TYPE.Product {
   return (
     typeof o.productId === "number" &&
     typeof o.title === "string" &&
-    typeof o.auctionEndTime === "string" &&
+    (o.auctionEndTime === undefined || o.auctionEndTime === null || typeof o.auctionEndTime === "string") &&
     bidsValid
   );
 }
@@ -203,7 +203,8 @@ export async function createArticle(
     body: JSON.stringify(articleData),
   });
   if (!response.ok) throw new Error("게시글 생성 실패");
-  return response.json();
+  const result = await response.json();
+  return result.data; // Extract data from wrapper
 }
 
 export async function updateArticle(
@@ -369,7 +370,9 @@ export async function createProduct(
     throw new Error("상품 등록 실패: 인증 토큰이 없습니다. 로그인이 필요합니다.");
   }
 
-  // 3. 일반 fetch를 사용하여 요청을 보냅니다.
+  console.log("🚀 [createProduct] Sending payload:", JSON.stringify(productData, null, 2));
+  console.log("🔑 [createProduct] Token (last 10 chars):", token ? token.slice(-10) : "NONE");
+
   const response = await fetch(`${API_BASE_URL}${SPRING_API}/products`, {
     method: "POST",
     headers: {
@@ -745,6 +748,10 @@ async function saveImageToDatabase(
     refId: refId,
   };
   const token = localStorage.getItem("token");
+
+  console.log("🚀 [saveImageToDatabase] Payload:", JSON.stringify([imageDto], null, 2));
+  console.log("🔑 [saveImageToDatabase] Token:", token ? token.slice(-10) : "NONE");
+
   const response = await fetch(`${API_BASE_URL}${SPRING_API}/images/batch`, {
     method: "POST",
     headers: {
@@ -792,7 +799,7 @@ export async function registerProductWithImages(
     title: string;
     content: string;
     startingPrice: number;
-    auctionEndTime: string;
+    auctionEndTime?: string | null;
     sellerId: number;
     productCategoryType: TYPE.ProductCategoryType | null;
     productStatus: string;
@@ -1224,6 +1231,7 @@ export async function fetchFilteredProducts(params: {
   keyword?: string;
   category?: string; // categoryCode (PRODUCT_CATEGORY_TYPE)
   productStatus?: string; // "ACTIVE" (거래 가능만)
+  productType?: string; // "AUCTION", "USED", "STORE"
   sort?: SortOption; // "latest", "priceAsc" 등
   minPrice?: number;
   maxPrice?: number;
@@ -1235,6 +1243,7 @@ export async function fetchFilteredProducts(params: {
   if (params.keyword) query.append("keyword", params.keyword);
   if (params.category) query.append("productCategoryType", params.category);
   if (params.productStatus) query.append("productStatus", params.productStatus);
+  if (params.productType) query.append("productType", params.productType);
   if (params.sort) query.append("sort", params.sort);
   if (params.minPrice !== undefined) query.append("minPrice", params.minPrice.toString());
   if (params.maxPrice !== undefined) query.append("maxPrice", params.maxPrice.toString());

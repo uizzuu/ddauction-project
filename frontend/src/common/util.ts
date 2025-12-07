@@ -1,10 +1,10 @@
 import type { Product, ProductCategoryType, ProductType } from "./types";
-import { PRODUCT_STATUS, PAYMENT_STATUS, PRODUCT_CATEGORY_LABELS } from "./enums";
+import { PRODUCT_STATUS, PAYMENT_STATUS, PRODUCT_CATEGORIES } from "./enums";
 
 // SortOption
 export type SortOption = "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity";
 
-// 날짜 yyyy-MM-dd HH:mm
+// 날짜 yyyy-MM-dd HH:mm:ss
 export const formatDateTime = (isoString: string | undefined) => {
   if (!isoString) return "";
   const d = new Date(isoString);
@@ -14,11 +14,22 @@ export const formatDateTime = (isoString: string | undefined) => {
   const hour = String(d.getHours()).padStart(2, "0");
   const min = String(d.getMinutes()).padStart(2, "0");
   const sec = String(d.getSeconds()).padStart(2, "0");
-  return `${year}-${month}-${day}T${hour}:${min}:${sec}`;
+  return `${year}-${month}-${day} ${hour}:${min}:${sec}`;
+};
+
+// 짧은 날짜 MM.dd
+export const formatShortDate = (isoString: string | undefined) => {
+  if (!isoString) return "";
+  const d = new Date(isoString);
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${month}.${day}`;
 };
 
 // 남은 시간 “X일 X시간 X분 X초”
-export const calculateRemainingTime = (endTime: string) => {
+// 남은 시간 “X일 X시간 X분 X초”
+export const calculateRemainingTime = (endTime: string | undefined) => {
+  if (!endTime) return "";
   const now = new Date();
   const end = new Date(endTime);
   const diff = end.getTime() - now.getTime();
@@ -198,8 +209,8 @@ export const sortProducts = async (
         return (b.startingPrice ?? 0) - (a.startingPrice ?? 0);
       case "timeLeft":
         return (
-          parseWithTZ(a.auctionEndTime).getTime() -
-          parseWithTZ(b.auctionEndTime).getTime()
+          parseWithTZ(a.auctionEndTime || "").getTime() -
+          parseWithTZ(b.auctionEndTime || "").getTime()
         );
       default:
         return 0;
@@ -212,5 +223,5 @@ export const getCategoryName = (
   categoryCode: string | null | undefined
 ): string => {
   if (!categoryCode) return "없음";
-  return PRODUCT_CATEGORY_LABELS[categoryCode as ProductCategoryType] || "기타";
+  return PRODUCT_CATEGORIES[categoryCode as ProductCategoryType] || "기타";
 };

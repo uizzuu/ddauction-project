@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Product } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
-import { Heart, Truck, ChevronRight, ChevronUp, ChevronDown, Minus } from "lucide-react";
+import { Heart, Truck, ChevronRight, Minus } from "lucide-react";
 import { toggleBookmark } from "../../common/api";
 
 type Props = {
@@ -21,8 +21,6 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
         setIsLiked(!!product.isBookmarked);
     }, [product.isBookmarked]);
 
-    // 임시 카테고리 표시 (Used) - 실제 데이터 없으면 "기타"
-    const categoryName = "기타";
     // 임시 할인율 (Store) - 실제 데이터 없으면 0
     const discountRate = 20;
 
@@ -155,19 +153,19 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                 {/* Type-Specific Header Info */}
                 <div className="mb-1 min-h-[16px]">
                     {product.productType === "AUCTION" && product.auctionEndTime && (
-                        <span className="text-[11px] text-[#888]">
+                        <span className="text-[0.8rem] text-[#888]">
                             {/* 보여줄 데이터 포맷 고민: 남은 시간 상세 or 간단히 */}
                             {calculateRemainingTime(product.auctionEndTime)}
                         </span>
                     )}
                     {product.productType === "USED" && (
                         /* 중고는 상단에 특별한 정보가 없으면 공백 혹은 카테고리 등 표시 */
-                        <span className="text-[11px] text-[#888]">
+                        <span className="text-[0.8rem] text-[#888]">
                             {/* 카테고리나 브랜드 명 */}
                         </span>
                     )}
                     {product.productType === "STORE" && (
-                        <div className="flex items-center gap-0.5 text-[11px] font-bold text-[#333]">
+                        <div className="flex items-center gap-0.5 text-[0.8rem] font-bold text-[#333]">
                             <span>{product.sellerNickName || "브랜드명"}</span>
                             <ChevronRight size={10} />
                         </div>
@@ -175,7 +173,7 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-[14px] font-normal text-[#111] leading-tight mb-1.5 line-clamp-2 min-h-[32px] break-keep">
+                <h3 className="text-[0.95rem] font-semibold text-[#111] mb-2 leading-tight line-clamp-2 break-keep">
                     {product.title}
                 </h3>
 
@@ -183,24 +181,24 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                 <div className="mt-auto">
                     {product.productType === "AUCTION" ? (
                         <div className="flex flex-col">
-                            <div className="text-[11px] text-[#999] line-through decoration-slate-300">
+                            <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
                                 시작가 {formatPrice(product.startingPrice)}
                             </div>
                             <div className="flex items-baseline gap-1 mt-0.5">
-                                <span className="text-[11px] text-[#111] font-bold">현재가</span>
-                                <span className="text-[15px] font-bold text-[#333]">
+                                <span className="text-[0.85rem] text-[#111] font-bold">현재가</span>
+                                <span className="text-[0.95rem] font-bold text-[#333]">
                                     {formatPrice(product.bidPrice || product.startingPrice)}
                                 </span>
                             </div>
                         </div>
                     ) : product.productType === "STORE" ? (
                         <div className="flex flex-col">
-                            <div className="text-[11px] text-[#999] line-through decoration-slate-300">
+                            <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
                                 {formatPrice(Math.round((product.startingPrice || 0) * 1.2))} {/* 임시 원가 */}
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[15px] font-bold text-[#111]">{discountRate}%</span>
-                                <span className="text-[15px] font-bold text-[#333]">
+                                <span className="text-[0.85rem] font-bold text-[#111]">{discountRate}%</span>
+                                <span className="text-[0.95rem] font-bold text-[#333]">
                                     {formatPrice(product.startingPrice)}
                                 </span>
                             </div>
@@ -208,7 +206,7 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                     ) : (
                         // USED
                         <div className="flex flex-col">
-                            <span className="text-[15px] font-bold text-[#333]">
+                            <span className="text-[0.95rem] font-bold text-[#333]">
                                 {formatPrice(product.startingPrice)}
                             </span>
                         </div>
@@ -216,7 +214,7 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                 </div>
 
                 {/* Footer Info Area */}
-                <div className="mt-2 text-[10px] text-[#999] font-medium flex items-center gap-1">
+                <div className="mt-2 text-[0.85rem] text-[#999] font-medium flex items-center gap-1">
                     {product.productType === "AUCTION" ? (
                         <span className="text-[#aaa]">입찰 {product.bids?.length || 0}건</span>
                     ) : product.productType === "STORE" ? (

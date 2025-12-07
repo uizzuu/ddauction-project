@@ -11,7 +11,7 @@ import type {
 } from "../../common/types";
 import {
   PRODUCT_STATUS,
-  PRODUCT_CATEGORY_LABELS, // common/enums에서 import
+  PRODUCT_CATEGORIES, // common/enums에서 import
 } from "../../common/enums";
 import type { ProductCategoryType, ProductType } from "../../common/enums";
 import { API_BASE_URL } from "../../common/api";
@@ -205,7 +205,7 @@ export default function MyPage({ user, setUser }: Props) {
   // 카테고리 코드를 이름으로 변환하는 로컬 함수
   const getCategoryName = (categoryCode: string | null | undefined): string => {
     if (!categoryCode) return "없음";
-    return PRODUCT_CATEGORY_LABELS[categoryCode as ProductCategoryType] || "기타";
+    return PRODUCT_CATEGORIES[categoryCode as ProductCategoryType] || "기타";
   };
 
   const goToProductDetail = (productId: number) =>
@@ -412,7 +412,7 @@ export default function MyPage({ user, setUser }: Props) {
       title: product.title,
       content: product.content ?? "",
       startingPrice: String(product.startingPrice ?? 0),
-      auctionEndTime: product.auctionEndTime,
+      auctionEndTime: product.auctionEndTime || "",
       productCategoryType: product.productCategoryType ?? null,
       productStatus: product.productStatus ?? PRODUCT_STATUS[0],
       productType: product.productType ?? 'AUCTION' as ProductType, // ProductType을 가져와서 설정

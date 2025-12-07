@@ -74,24 +74,12 @@ export const AuctionBidding = ({
     currentHighestBid > 0 ? `${currentHighestBid.toLocaleString()}` : "0";
 
   return (
-    <div style={{ width: "260px", flexShrink: 0 }} className="h-[450px]">
-      <div
-        style={{
-          backgroundColor: "#fff",
-          borderRadius: "12px",
-          padding: "12px",
-          boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          gap: "8px",
-          height: "100%",
-        }}
-      >
+    <div>
+      <div className="h-full">
         {/* 입찰 리스트 */}
         <div
           ref={scrollRef}
-          className="mb-5 flex flex-col gap-2 max-h-[350px] overflow-y-auto bid-scroll"
+          className="mb-5 flex flex-col gap-2 h-full overflow-y-auto bid-scroll"
         >
           {mergedBids.length > 0 ? (
             mergedBids.map((b, i) => (

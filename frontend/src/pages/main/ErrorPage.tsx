@@ -49,122 +49,43 @@ export default function ErrorPage() {
   };
 
   return (
-    <div className="container">
-      <div className="flex-column flex-center mt-100">
+    <div className="w-[1280px] mx-auto flex items-center justify-center min-h-[calc(100vh-200px)]">
+      <div className="text-center">
         {/* 에러 코드 */}
-        <div
-          style={{
-            fontSize: "72px",
-            fontWeight: "700",
-            color: "#111",
-            marginBottom: "20px",
-            lineHeight: "1",
-          }}
-        >
+        <div className="text-[72px] font-bold text-[#111] mb-5 leading-none">
           {error.code}
         </div>
 
         {/* 에러 제목 */}
-        <h1
-          style={{
-            fontSize: "28px",
-            fontWeight: "700",
-            color: "#333",
-            marginBottom: "12px",
-          }}
-        >
+        <h1 className="text-[28px] font-bold text-[#333] mb-3">
           {error.title}
         </h1>
 
         {/* 에러 설명 */}
-        <p
-          style={{
-            fontSize: "16px",
-            color: "#777",
-            marginBottom: "40px",
-            lineHeight: "1.6",
-          }}
-        >
+        <p className="text-[16px] text-[#777] mb-10 leading-relaxed">
           {error.description}
         </p>
 
         {/* 버튼 그룹 */}
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
+        <div className="flex gap-3 justify-center">
           <button
             onClick={handleGoHome}
-            style={{
-              padding: "18px 60px",
-              fontSize: "16px",
-              fontWeight: "600",
-              backgroundColor: "#111",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              flex: "1",
-              minWidth: "150px",
-              whiteSpace: "nowrap"
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = "#8c5d5e";
-              (e.target as HTMLButtonElement).style.transform =
-                "translateY(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = "#111";
-              (e.target as HTMLButtonElement).style.transform = "translateY(0)";
-            }}
+            className="px-8 py-4 bg-[#111] text-white text-[16px] font-bold rounded hover:bg-[#333] transition-colors"
           >
-            🏠 홈으로
+            홈으로
           </button>
 
           <button
             onClick={handleRefresh}
-            style={{
-              padding: "18px 60px",
-              fontSize: "16px",
-              fontWeight: "600",
-              backgroundColor: "#f0f0f0",
-              color: "#333",
-              border: "1px solid #ddd",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              flex: "1",
-              minWidth: "150px",
-              whiteSpace: "nowrap"
-            }}
-            onMouseEnter={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = "#e8e8e8";
-              (e.target as HTMLButtonElement).style.transform =
-                "translateY(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              (e.target as HTMLButtonElement).style.backgroundColor = "#f0f0f0";
-              (e.target as HTMLButtonElement).style.transform = "translateY(0)";
-            }}
+            className="px-8 py-4 bg-gray-100 text-[#333] text-[16px] font-bold rounded hover:bg-gray-200 transition-colors"
           >
-            🔄 새로고침
+            새로고침
           </button>
         </div>
 
         {/* 추가 정보 */}
-        <div
-          style={{
-            marginTop: "40px",
-            paddingTop: "24px",
-            borderTop: "1px solid #eee",
-          }}
-        >
-          <p style={{ fontSize: "14px", color: "#aaa", margin: "0" }}>
+        <div className="mt-10 pt-6 border-t border-gray-100">
+          <p className="text-[14px] text-[#aaa]">
             문제가 지속되면 고객 지원팀에 문의해주세요.
           </p>
         </div>

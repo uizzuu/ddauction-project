@@ -11,7 +11,7 @@ import {
   Monitor, Refrigerator, Armchair, Utensils, Sandwich, Baby, Book, Pencil,
   Shirt, Watch, Sparkles, Dumbbell, Gamepad2, Ticket, Dog, Leaf, MoreHorizontal
 } from "lucide-react";
-import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../../common/enums";
+import { PRODUCT_CATEGORIES, type ProductCategoryType } from "../../common/enums";
 import "../../css/modules.css";
 
 const CATEGORY_ICONS: Record<ProductCategoryType, React.ReactNode> = {
@@ -170,11 +170,21 @@ export default function Main() {
                       onClick={() => b.product && navigate(`/products/${b.product.productId}`)}
                     >
                       {b.image ? (
-                        <img
-                          src={b.image}
-                          alt={b.text}
-                          className="w-full h-full object-cover"
-                        />
+                        <>
+                          <img
+                            src={b.image}
+                            alt={b.text}
+                            className="w-full h-full object-cover"
+                          />
+                          {/* Banner Text Overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
+                          <div className="absolute bottom-12 left-10 text-white z-10 text-left">
+                            <h3 className="text-3xl font-bold drop-shadow-md mb-2">{b.text}</h3>
+                            <p className="text-sm font-light opacity-90 tracking-wider">
+                              {b.product ? "지금 바로 구경하기 →" : "자세히 보기 →"}
+                            </p>
+                          </div>
+                        </>
                       ) : (
                         <div className="w-full h-full bg-[#333] flex items-center justify-center text-white">
                           <span className="text-2xl font-bold">{b.text || "배너"}</span>
@@ -209,17 +219,17 @@ export default function Main() {
             onScroll={checkScroll}
             className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth px-1"
           >
-            {(Object.keys(PRODUCT_CATEGORY_LABELS) as ProductCategoryType[]).map((cat) => (
+            {(Object.keys(PRODUCT_CATEGORIES) as ProductCategoryType[]).map((cat) => (
               <div
                 key={cat}
-                className="category flex flex-col items-center gap-2 cursor-pointer w-[80px] flex-shrink-0"
+                className="category flex flex-col items-center gap-2 cursor-pointer w-[80px] flex-shrink-0 group"
                 onClick={() => navigate(`/search?category=${cat}`)}
               >
-                <div className="w-[80px] h-[80px] rounded-[10px] bg-[#f4f4f4] flex items-center justify-center text-[#333] transition-colors hover:bg-[#f0f0f0]">
+                <div className="w-[80px] h-[80px] rounded-[20px] bg-[#f8f9fa] flex items-center justify-center text-[#333] transition-all duration-300 ease-out group-hover:bg-white group-hover:shadow-[0_8px_20px_rgba(0,0,0,0.08)] group-hover:-translate-y-2 group-hover:text-black border border-transparent group-hover:border-[#eee]">
                   {CATEGORY_ICONS[cat]}
                 </div>
                 <span className="text-[14px] text-[#333] font-medium text-center whitespace-nowrap group-hover:font-semibold">
-                  {PRODUCT_CATEGORY_LABELS[cat]}
+                  {PRODUCT_CATEGORIES[cat]}
                 </span>
               </div>
             ))}

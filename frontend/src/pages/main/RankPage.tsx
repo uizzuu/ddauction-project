@@ -1,10 +1,9 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { fetchFilteredProducts, API_BASE_URL } from "../../common/api";
 import { sortProducts } from "../../common/util";
 import type { Product } from "../../common/types";
 import { ChevronLeft, ChevronRight, Info } from "lucide-react";
-import { PRODUCT_CATEGORY_LABELS } from "../../common/enums";
+import { PRODUCT_CATEGORIES } from "../../common/enums";
 import ProductCard from "../../components/ui/ProductCard";
 
 // 카테고리용 화살표 컴포넌트
@@ -33,7 +32,6 @@ function CategoryPrevArrow({ onClick, visible }: { onClick: () => void; visible:
 }
 
 export default function RankPage() {
-    const navigate = useNavigate();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -173,7 +171,7 @@ export default function RankPage() {
                         전체
                     </button>
 
-                    {Object.entries(PRODUCT_CATEGORY_LABELS).map(([code, label]) => (
+                    {Object.entries(PRODUCT_CATEGORIES).map(([code, label]) => (
                         <button
                             key={code}
                             onClick={() => setSelectedCategory(code)}

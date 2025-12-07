@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchFilteredProducts } from "../../common/api";
-import type { Product } from "../../common/types";
+import { type Product } from "../../common/types";
 import { parseWithTZ } from "../../common/util";
 import type { SortOption } from "../../common/util";
 import ProductCard from "../../components/ui/ProductCard";
-import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType, type DeliveryType } from "../../common/enums";
+import { type DeliveryType } from "../../common/enums";
 import { ArrowUpDown } from "lucide-react";
 import FilterBar from "../../components/modal/FilterBar";
 import SideFilterModal from "../../components/modal/SideFilterModal";
@@ -15,7 +15,6 @@ export default function ProductSearchPage() {
   const navigate = useNavigate();
 
   // State
-  const [keyword, setKeyword] = useState("");
   const [categoryCode, setCategoryCode] = useState<string | "">("");
   const [activeOnly, setActiveOnly] = useState(false);
 
@@ -26,6 +25,7 @@ export default function ProductSearchPage() {
   const [maxStartPrice, setMaxStartPrice] = useState<number | undefined>();
   const [selectedDeliveryTypes, setSelectedDeliveryTypes] = useState<DeliveryType[]>([]);
   const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
+  const [productType, setProductType] = useState<string | null>(null);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,7 +39,8 @@ export default function ProductSearchPage() {
     catCode: string | "" = "",
     active: boolean = false,
     sort: SortOption = "latest",
-    priceRange?: { min?: number, max?: number, minStart?: number, maxStart?: number }
+    priceRange?: { min?: number, max?: number, minStart?: number, maxStart?: number },
+    pType?: string | null
   ) => {
     setLoading(true);
     try {
@@ -47,11 +48,13 @@ export default function ProductSearchPage() {
       const currentMaxPrice = priceRange?.max !== undefined ? priceRange.max : maxPrice;
       const currentMinStart = priceRange?.minStart !== undefined ? priceRange.minStart : minStartPrice;
       const currentMaxStart = priceRange?.maxStart !== undefined ? priceRange.maxStart : maxStartPrice;
+      const currentProductType = pType !== undefined ? pType : productType;
 
       let data: Product[] = await fetchFilteredProducts({
         keyword: kw,
         category: catCode,
         productStatus: active ? "ACTIVE" : undefined,
+        productType: currentProductType || undefined,
         sort: sort,
         minPrice: currentMinPrice,
         maxPrice: currentMaxPrice,
@@ -65,7 +68,7 @@ export default function ProductSearchPage() {
         data = data.filter(
           (p) =>
             p.productStatus === "ACTIVE" &&
-            (p.productType !== "AUCTION" || parseWithTZ(p.auctionEndTime).getTime() > now.getTime())
+            (p.productType !== "AUCTION" || parseWithTZ(p.auctionEndTime || "").getTime() > now.getTime())
         );
       }
       setProducts(data);
@@ -83,7 +86,7 @@ export default function ProductSearchPage() {
     const catCode = params.get("category") || "";
     const sortParam = params.get("sort") as SortOption;
 
-    setKeyword(kw);
+    // setKeyword(kw); // State removed
     setCategoryCode(catCode);
 
     if (sortParam && sortParam !== sortOption) {
@@ -95,8 +98,8 @@ export default function ProductSearchPage() {
     // Use `undefined` for prices here as we rely on the state (or pass updated state if available)
     fetchProducts(kw, catCode, activeOnly, sortOption, {
       min: minPrice, max: maxPrice, minStart: minStartPrice, maxStart: maxStartPrice
-    });
-  }, [location.search, activeOnly, sortOption, minPrice, maxPrice, minStartPrice, maxStartPrice]);
+    }, productType);
+  }, [location.search, activeOnly, sortOption, minPrice, maxPrice, minStartPrice, maxStartPrice, productType]);
 
   const handleCategoryClick = (cat: string) => {
     const params = new URLSearchParams(location.search);
@@ -144,6 +147,10 @@ export default function ProductSearchPage() {
           selectedCategory={categoryCode}
           onCategoryChange={handleCategoryClick}
           onOpenSideModal={() => setIsSideModalOpen(true)}
+
+          selectedProductType={productType}
+          onProductTypeChange={setProductType}
+
           minPrice={minPrice}
           maxPrice={maxPrice}
           minStartPrice={minStartPrice}
@@ -237,7 +244,7 @@ export default function ProductSearchPage() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-[#aaa] border-t border-[#eee] w-full">
+            <div className="flex flex-col items-center justify-center py-20 text-[#aaa] border-t border-[#eee] w-[1280px] mx-auto">
               <p className="text-lg mb-2 text-[#333] font-medium">검색 결과가 없습니다.</p>
               <p className="text-sm text-[#888] mb-6">다른 키워드나 필터를 변경해보세요.</p>
               <button

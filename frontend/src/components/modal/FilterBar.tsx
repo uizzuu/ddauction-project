@@ -1,6 +1,6 @@
-import { Menu, X, ChevronDown, Check } from "lucide-react";
+import { Menu, ChevronDown, Check } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType, DELIVERY_TYPE, DELIVERY_TYPE_LABELS, type DeliveryType } from "../../common/enums";
+import { PRODUCT_CATEGORIES, type ProductCategoryType, DELIVERY_TYPES, type DeliveryType } from "../../common/enums";
 
 const BENEFITS = [
     { id: "free_shipping", label: "배송비 무료" },
@@ -13,6 +13,10 @@ type Props = {
     selectedCategory: string;
     onCategoryChange: (cat: string) => void;
     onOpenSideModal: () => void;
+
+    // Product Type Filter
+    selectedProductType: string | null;
+    onProductTypeChange: (type: string | null) => void;
 
     // Price Filters
     minPrice: number | undefined;
@@ -47,7 +51,8 @@ export default function FilterBar({
     minPrice, maxPrice, minStartPrice, maxStartPrice, onPriceChange,
     excludeEnded, onExcludeEndedChange,
     selectedDeliveryTypes, onDeliveryChange,
-    selectedBenefits, onBenefitChange
+    selectedBenefits, onBenefitChange,
+    selectedProductType, onProductTypeChange
 }: Props) {
     const [openTab, setOpenTab] = useState<string | null>(null);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
@@ -134,19 +139,40 @@ export default function FilterBar({
     };
 
     return (
-        <div className="w-full">
-            <div className="h-fit flex items-center">
-                {/* 1. Hamburger Button (Left) */}
-                <button
-                    onClick={onOpenSideModal}
-                    className="mr-3 text-[#666] hover:text-[#111] transition-colors flex-shrink-0"
-                    aria-label="필터 전체보기"
-                >
-                    <Menu size={20} />
-                </button>
+        <div className="sticky top-[60px] z-30 bg-white border-b border-gray-100">
+            <div className="max-w-[1280px] mx-auto">
+                {/* 1. Product Type Filter (Top Row) */}
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                    {[
+                        { label: "전체", value: null },
+                        { label: "경매", value: "AUCTION" },
+                        { label: "중고거래", value: "USED" },
+                        { label: "스토어", value: "STORE" },
+                    ].map((type) => (
+                        <button
+                            key={type.label}
+                            onClick={() => onProductTypeChange(type.value)}
+                            className={`
+                                px-4 py-2 rounded-[18px] text-[14px] font-medium whitespace-nowrap border transition-all
+                                ${selectedProductType === type.value
+                                    ? "bg-[#333] text-white border-[#333]"
+                                    : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"}
+                                }`}
+                        >
+                            {type.label}
+                        </button>
+                    ))}
+                </div>
 
-                {/* 2. Scrollable Tabs */}
-                <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-2" ref={dropdownRef}>
+                {/* 2. Detailed Filters (Bottom Row) */}
+                <div className="flex items-center gap-2 py-3 overflow-x-auto scrollbar-hide relative">
+                    <button
+                        onClick={onOpenSideModal}
+                        className="flex items-center gap-1 text-gray-700 transition-colors flex-shrink-0"
+                    >
+                        <Menu size={20} />
+                    </button>
+
                     {TABS.map((tab) => {
                         const isCategoryTab = tab.id === "category";
                         const isExcludeEnded = tab.id === "exclude_ended";
@@ -161,7 +187,7 @@ export default function FilterBar({
                         else isActive = openTab === tab.id;
 
                         let label = tab.label;
-                        if (isCategoryTab && selectedCategory) label = PRODUCT_CATEGORY_LABELS[selectedCategory as ProductCategoryType];
+                        if (isCategoryTab && selectedCategory) label = PRODUCT_CATEGORIES[selectedCategory as ProductCategoryType];
 
                         const hasArrow = ["category", "price", "start_price", "benefits", "shipping"].includes(tab.id);
                         const isDropdownOpen = openTab === tab.id;
@@ -209,7 +235,7 @@ export default function FilterBar({
                             <span>전체</span>
                             {!selectedCategory && <Check size={14} className="text-[#333]" />}
                         </button>
-                        {Object.entries(PRODUCT_CATEGORY_LABELS).map(([code, label]) => (
+                        {Object.entries(PRODUCT_CATEGORIES).map(([code, label]) => (
                             <button
                                 key={code}
                                 className={`w-full text-left px-4 py-2.5 text-sm hover:bg-gray-50 flex items-center justify-between ${selectedCategory === code ? "text-[#333] font-bold bg-gray-50" : "text-[#666]"}`}
@@ -282,7 +308,7 @@ export default function FilterBar({
                     </h4>
                     <div className="flex flex-col gap-2 mb-4">
                         {openTab === "shipping" ? (
-                            DELIVERY_TYPE.map((type) => (
+                            (Object.keys(DELIVERY_TYPES) as DeliveryType[]).map((type) => (
                                 <label key={type} className="flex items-center gap-2 cursor-pointer">
                                     <input
                                         type="checkbox"
@@ -293,7 +319,7 @@ export default function FilterBar({
                                             else setTempDelivery(tempDelivery.filter(t => t !== type));
                                         }}
                                     />
-                                    <span className="text-sm text-[#333]">{DELIVERY_TYPE_LABELS[type]}</span>
+                                    <span className="text-sm text-[#333]">{DELIVERY_TYPES[type]}</span>
                                 </label>
                             ))
                         ) : (

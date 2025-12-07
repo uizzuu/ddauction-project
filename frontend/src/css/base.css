@@ -235,7 +235,33 @@ button {
   display: none;
 }
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
+/* AI Chatbot Expansion Animation */
+@keyframes expandChatPanel {
+  from {
+    transform: scale(0);
+    opacity: 0;
+    border-radius: 50%;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+    border-radius: 12px;
+  }
+}
+
+@keyframes collapseChatPanel {
+  from {
+    transform: scale(1);
+    opacity: 1;
+    border-radius: 12px;
+  }
+  to {
+    transform: scale(0);
+    opacity: 0;
+    border-radius: 50%;
+  }
+}

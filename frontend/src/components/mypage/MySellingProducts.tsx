@@ -1,7 +1,7 @@
 import React from "react";
 import type { Product, ProductForm } from "../../common/types";
 import {
-  PRODUCT_CATEGORY_LABELS,
+  PRODUCT_CATEGORIES,
   CATEGORY_OPTIONS,
 } from "../../common/enums";
 import type { ProductCategoryType } from "../../common/enums";
@@ -12,7 +12,7 @@ import type { ProductCategoryType } from "../../common/enums";
 const getCategoryName = (categoryCode: string | null | undefined): string => {
   if (!categoryCode) return "N/A";
   // 타입 단언을 사용하여 안전하게 매핑
-  return PRODUCT_CATEGORY_LABELS[categoryCode as ProductCategoryType] || "기타";
+  return PRODUCT_CATEGORIES[categoryCode as ProductCategoryType] || "기타";
 };
 
 // 상품 상태 코드(string)를 받아 한글 이름으로 변환하는 함수
@@ -126,7 +126,7 @@ export default function MySellingProducts({
                     <div>결제 상태: {product.paymentStatus}</div>
                     <div>
                       경매 종료:{" "}
-                      {new Date(product.auctionEndTime).toLocaleString()}
+                      {new Date(product.auctionEndTime || "").toLocaleString()}
                     </div>
                     <div>
                       판매자: {product.sellerNickName} (ID: {product.sellerId})

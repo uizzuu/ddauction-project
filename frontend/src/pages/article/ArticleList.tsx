@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getArticles } from "../../common/api";
 import type { ArticleDto, User } from "../../common/types";
+import { ArticleType } from "../../common/types";
+import { formatShortDate } from "../../common/util";
 
 interface Props {
   user: User | null;
@@ -19,17 +21,34 @@ export default function ArticleList({ user }: Props) {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="container">로딩 중...</div>;
+  const getArticleTypeBadge = (type: ArticleType) => {
+    const badges = {
+      [ArticleType.NOTICE]: { label: "공지", bg: "bg-red-100", text: "text-red-600" },
+      [ArticleType.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-blue-600" },
+      [ArticleType.COMMUNITY]: { label: "자유", bg: "bg-gray-100", text: "text-gray-600" }
+    };
+    const badge = badges[type] || badges[ArticleType.COMMUNITY];
+    return (
+      <span className={`px-2 py-0.5 rounded text-xs font-bold ${badge.bg} ${badge.text}`}>
+        {badge.label}
+      </span>
+    );
+  };
+
+  if (loading) return (
+    <div className="max-w-[1280px] mx-auto py-8 flex items-center justify-center">
+      <div className="text-gray-500">로딩 중...</div>
+    </div>
+  );
 
   return (
-    <div className="container">
-      <div className="flex justify-between">
-        <h2 className="title-32 mb-4">게시판</h2>
-
+    <div className="max-w-[1280px] mx-auto py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-[#111]">커뮤니티</h1>
         {user && (
           <button
             onClick={() => navigate("/articles/new")}
-            className="article-btn"
+            className="px-6 py-2.5 bg-[#111] text-white rounded-lg font-bold text-sm hover:bg-[#333] transition-colors shadow-sm"
           >
             글쓰기
           </button>
@@ -37,53 +56,45 @@ export default function ArticleList({ user }: Props) {
       </div>
 
       {articles.length === 0 ? (
-        <p className="no-content-text">게시글이 없습니다.</p>
+        <div className="bg-white border border-[#ddd] rounded-lg p-12 text-center">
+          <p className="text-gray-400">게시글이 없습니다.</p>
+        </div>
       ) : (
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr style={{ borderBottom: "1px solid #ccc" }}>
-              <th
-                style={{ textAlign: "left", padding: "0.5rem", width: "100%" }}
-              >
-                제목
-              </th>
-              <th style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>
-                작성자
-              </th>
-              <th style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>
-                작성일
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+        <div className="bg-white border border-[#ddd] rounded-lg overflow-hidden shadow-sm">
+          {/* Header */}
+          <div className="bg-gray-50 border-b border-[#ddd] px-6 py-3 flex items-center gap-4 text-sm font-bold text-[#666]">
+            <div className="w-20 pl-[6px]">유형</div>
+            <div className="flex-1">제목</div>
+            <div className="w-32 text-center hidden md:block">작성자</div>
+            <div className="w-28 text-center hidden sm:block">작성일</div>
+          </div>
+
+          {/* Article List */}
+          <div className="divide-y divide-gray-100">
             {articles.map((article) => (
-              <tr
+              <div
                 key={article.articleId}
-                style={{
-                  borderBottom: "1px solid #eee",
-                  cursor: "pointer",
-                }}
                 onClick={() => navigate(`/articles/${article.articleId}`)}
+                className="px-6 py-4 hover:bg-gray-50 cursor-pointer transition-colors flex items-center gap-4"
               >
-                <td style={{ padding: "0.5rem", width: "100%" }}>
-                  {article.title}
-                </td>
-                <td style={{ padding: "0.5rem 2rem", whiteSpace: "noWrap" }}>
+                <div className="w-20 flex-shrink-0">
+                  {getArticleTypeBadge(article.articleType)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-medium text-[#111] truncate">
+                    {article.title}
+                  </h3>
+                </div>
+                <div className="w-32 text-center text-sm text-[#666] hidden md:block flex-shrink-0">
                   {article.nickName ?? "알 수 없음"}
-                </td>
-                <td
-                  style={{
-                    padding: "0.5rem 2rem",
-                    color: "#888",
-                    whiteSpace: "noWrap",
-                  }}
-                >
-                  {new Date(article.createdAt).toLocaleDateString()}
-                </td>
-              </tr>
+                </div>
+                <div className="w-28 text-center text-sm text-[#999] hidden sm:block flex-shrink-0">
+                  {formatShortDate(article.createdAt)}
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+        </div>
       )}
     </div>
   );

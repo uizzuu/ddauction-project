@@ -10,35 +10,31 @@ export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 export const CHAT_TYPE = ["PRIVATE", "PUBLIC"] as const;
 export type ChatType = (typeof CHAT_TYPE)[number];
 
-export const PRODUCT_TYPE = ["AUCTION", "USED", "STORE"] as const;
-export type ProductType = (typeof PRODUCT_TYPE)[number];
+// Product Type Definition (Consolidated)
+export const PRODUCT_TYPES = {
+  AUCTION: "경매",
+  USED: "중고",
+  STORE: "스토어",
+} as const;
+
+export type ProductType = keyof typeof PRODUCT_TYPES;
+export const PRODUCT_TYPE_KEYS = Object.keys(PRODUCT_TYPES) as ProductType[];
+
+// Article Types (Consolidated)
+export const ARTICLE_TYPES = {
+  NOTICE: "NOTICE",
+  COMMUNITY: "COMMUNITY",
+  FAQ: "FAQ"
+} as const;
+
+export type ArticleType = keyof typeof ARTICLE_TYPES;
+export const ARTICLE_TYPE_KEYS = Object.keys(ARTICLE_TYPES) as ArticleType[];
 
 export const IMAGE_TYPE = ["PRODUCT", "REVIEW", "USER"] as const;
 export type ImageType = (typeof IMAGE_TYPE)[number];
 
-export const PRODUCT_CATEGORY_TYPE = [
-  "ELECTRONICS",
-  "APPLIANCES",
-  "FURNITURE_INTERIOR",
-  "KITCHENWARE",
-  "FOODS",
-  "KIDS",
-  "BOOKS",
-  "STATIONERY",
-  "CLOTHING",
-  "ACCESSORIES",
-  "BEAUTY",
-  "SPORTS",
-  "ENTERTAINMENT",
-  "TICKETS",
-  "PET",
-  "PLANTS",
-  "ETC"
-] as const;
-export type ProductCategoryType = (typeof PRODUCT_CATEGORY_TYPE)[number];
-
-// 카테고리 한글 매핑
-export const PRODUCT_CATEGORY_LABELS: Record<ProductCategoryType, string> = {
+// Product Categories (Consolidated)
+export const PRODUCT_CATEGORIES = {
   ELECTRONICS: "디지털기기",
   APPLIANCES: "생활가전",
   FURNITURE_INTERIOR: "가구/인테리어",
@@ -56,19 +52,21 @@ export const PRODUCT_CATEGORY_LABELS: Record<ProductCategoryType, string> = {
   PET: "반려동물용품",
   PLANTS: "식물",
   ETC: "기타 물품"
-};
+} as const;
+
+export type ProductCategoryType = keyof typeof PRODUCT_CATEGORIES;
+export const PRODUCT_CATEGORY_KEYS = Object.keys(PRODUCT_CATEGORIES) as ProductCategoryType[];
 
 // SSelectStyle용 옵션 배열
-export const CATEGORY_OPTIONS = PRODUCT_CATEGORY_TYPE.map(code => ({
+// SSelectStyle용 옵션 배열
+export const CATEGORY_OPTIONS = PRODUCT_CATEGORY_KEYS.map(code => ({
   value: code,
-  label: PRODUCT_CATEGORY_LABELS[code]
+  label: PRODUCT_CATEGORIES[code]
 }));
 
 // 배송 방법
-export const DELIVERY_TYPE = ["PARCEL", "GS", "CU", "MAIL", "SEMIREGISTERED", "REGISTERED", "QUICK", "MEETUP", "PICKUP"] as const;
-export type DeliveryType = (typeof DELIVERY_TYPE)[number];
-
-export const DELIVERY_TYPE_LABELS: Record<DeliveryType, string> = {
+// 배송 방법 (Consolidated)
+export const DELIVERY_TYPES = {
   PARCEL: "택배",
   GS: "GS반값택배",
   CU: "CU알뜰택배",
@@ -78,4 +76,7 @@ export const DELIVERY_TYPE_LABELS: Record<DeliveryType, string> = {
   QUICK: "퀵서비스",
   MEETUP: "직거래",
   PICKUP: "방문수령"
-};
+} as const;
+
+export type DeliveryType = keyof typeof DELIVERY_TYPES;
+export const DELIVERY_TYPE_KEYS = Object.keys(DELIVERY_TYPES) as DeliveryType[];

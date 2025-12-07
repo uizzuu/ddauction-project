@@ -41,19 +41,16 @@ export default function FloatingWidgets() {
                     <ArrowUp size={20} />
                 </button>
 
-                {/* AI Chatbot Button */}
-                <button
-                    onClick={() => setIsChatOpen(true)}
-                    className="bg-white border border-[#eee] text-[#333] p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group relative"
-                    aria-label="AI 챗봇 열기"
-                >
-                    <Bot size={24} />
-
-                    {/* Tooltip (Hover) */}
-                    <span className="absolute right-full top-1/2 -translate-y-1/2 mr-3 px-2 py-1 bg-black/70 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        AI 챗봇 문의
-                    </span>
-                </button>
+                {/* AI Chatbot Button - 채팅창 열릴 때 숨김 */}
+                {!isChatOpen && (
+                    <button
+                        onClick={() => setIsChatOpen(true)}
+                        className="bg-white border border-[#eee] text-[#333] p-3 rounded-full shadow-lg hover:shadow-xl hover:scale-110 transition-all duration-300"
+                        aria-label="AI 챗봇 열기"
+                    >
+                        <Bot size={24} />
+                    </button>
+                )}
             </div>
 
             {/* AI Chatbot Modal */}

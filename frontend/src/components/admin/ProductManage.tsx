@@ -1,5 +1,5 @@
 import type { Product, EditProductForm } from "../../common/types";
-import { PRODUCT_STATUS, CATEGORY_OPTIONS, PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../../common/enums";
+import { PRODUCT_STATUS, CATEGORY_OPTIONS, PRODUCT_CATEGORIES, type ProductCategoryType } from "../../common/enums";
 
 type Props = {
   products: Product[];
@@ -120,7 +120,7 @@ export default function ProductManage({
                   </select>
                 ) : (
                   p.productCategoryType
-                    ? PRODUCT_CATEGORY_LABELS[p.productCategoryType]
+                    ? PRODUCT_CATEGORIES[p.productCategoryType]
                     : "-"
                 )}
               </td>

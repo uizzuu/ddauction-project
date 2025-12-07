@@ -1,14 +1,14 @@
-import { ROLE, PAYMENT_STATUS, PRODUCT_STATUS, CHAT_TYPE, PRODUCT_TYPE, IMAGE_TYPE } from './enums';
-import type { ProductCategoryType } from './enums';
+import { ROLE, PAYMENT_STATUS, PRODUCT_STATUS, CHAT_TYPE, IMAGE_TYPE, ARTICLE_TYPES } from './enums';
+import type { ProductType, ProductCategoryType, DeliveryType, ArticleType as ArticleTypeAlias } from './enums';
 
-// Re-export ProductCategoryType so it's available when importing from types.ts
-export type { ProductCategoryType };
+export type { ProductType, ProductCategoryType, DeliveryType };
+export type ArticleType = ArticleTypeAlias;
+export const ArticleType = ARTICLE_TYPES;
 
 export type Role = (typeof ROLE)[number];
 export type ProductStatus = (typeof PRODUCT_STATUS)[number];
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
 export type ChatType = (typeof CHAT_TYPE)[number];
-export type ProductType = (typeof PRODUCT_TYPE)[number];
 export type ImageType = (typeof IMAGE_TYPE)[number];
 
 export interface User {
@@ -51,7 +51,7 @@ export interface Product {
   content?: string;
   startingPrice?: number;
   images?: Image[];
-  auctionEndTime: string;
+  auctionEndTime?: string; // Optional for non-auction items
   productStatus: ProductStatus;
   paymentStatus: PaymentStatus;
   createdAt?: string;
@@ -68,6 +68,7 @@ export interface Product {
   // 정렬 로직 (인기순)을 위해 ProductSearchPage에서 사용되는 필드를 옵셔널로 추가
   bookmarkCount?: number;
   isBookmarked?: boolean;
+  viewCount?: number;
 }
 
 
@@ -120,7 +121,7 @@ export interface CreateProductRequest {
   content: string;
   startingPrice: string;
   imageUrl: string;
-  auctionEndTime: string;
+  auctionEndTime?: string | null;
   sellerId: number;
   productCategoryType: ProductCategoryType | null;
   productType: ProductType; // 상품 타입 필드 추가
@@ -138,6 +139,7 @@ export interface ArticleDto {
   content: string;
   createdAt: string;
   updatedAt: string;
+  articleType: ArticleType;
 }
 
 export interface ArticleForm {
@@ -145,6 +147,7 @@ export interface ArticleForm {
   content: string;
   boardId: number;
   userId?: number;
+  articleType: ArticleType;
 }
 
 export interface CommentDto {

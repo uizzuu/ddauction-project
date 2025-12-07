@@ -13,7 +13,33 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isClosing, setIsClosing] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const handleClose = () => {
+    if (chatHistory.length > 0) {
+      if (window.confirm("창을 닫으면 대화 내용이 저장되지 않습니다. 정말 닫으시겠습니까?")) {
+        triggerCloseAnimation();
+      }
+    } else {
+      triggerCloseAnimation();
+    }
+  };
+
+  const triggerCloseAnimation = () => {
+    setIsClosing(true);
+  };
+
+  // 애니메이션 종료 후 실제 onClose 호출
+  useEffect(() => {
+    if (isClosing) {
+      const timer = setTimeout(() => {
+        setIsClosing(false);
+        onClose();
+      }, 380); // 애니메이션 시간(0.4s)보다 약간 짧게 잡아 깜빡임 방지
+      return () => clearTimeout(timer);
+    }
+  }, [isClosing, onClose]);
 
   // 모달이 열릴 때마다 스크롤
   useEffect(() => {
@@ -26,12 +52,12 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
-        onClose();
+        handleClose();
       }
     };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [isOpen, onClose]);
+  }, [isOpen, chatHistory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,132 +100,63 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !isClosing) return null;
 
   return (
     <>
-      {/* 모달 오버레이 */}
       <div
+        className="fixed bottom-6 right-6 z-[1000] w-[400px] h-[650px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden origin-bottom-right"
         style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.5)",
-          zIndex: 999,
+          animation: isClosing
+            ? 'collapseChatPanel 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
+            : 'expandChatPanel 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
         }}
-        onClick={onClose}
-      />
-
-      {/* 모달 컨테이너 */}
-      <div
-        style={{
-          position: "fixed",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: "90%",
-          maxWidth: "800px",
-          height: "85vh",
-          maxHeight: "700px",
-          backgroundColor: "white",
-          borderRadius: "12px",
-          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.2)",
-          zIndex: 1000,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* 헤더 */}
-        <div
-          style={{
-            padding: "20px 24px",
-            borderBottom: "1px solid #e9ecef",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            backgroundColor: "#f8f9fa",
-          }}
-        >
+        <div className="px-6 py-5 border-b border-[#e9ecef] flex justify-between items-center bg-[#f8f9fa]">
           <div>
-            <h2 style={{ margin: 0, fontSize: "1.3rem" }}>
+            <h2 className="m-0 text-[1.3rem] font-semibold">
               땅땅옥션 문의 챗봇 🤖
             </h2>
-            <p
-              style={{ margin: "4px 0 0 0", fontSize: "0.9rem", color: "#666" }}
-            >
+            <p className="mt-1 text-[0.9rem] text-[#666]">
               무엇이든 물어보세요!
             </p>
           </div>
-          <div style={{ display: "flex", gap: "8px" }}>
+          <div className="flex gap-2 items-center">
             {chatHistory.length > 0 && (
               <button
                 onClick={handleClearHistory}
-                style={{
-                  padding: "6px 12px",
-                  fontSize: "0.9rem",
-                  border: "1px solid #dee2e6",
-                  borderRadius: "6px",
-                  background: "white",
-                  cursor: "pointer",
-                }}
+                className="px-3 py-1.5 text-sm border border-[#dee2e6] rounded-md bg-white hover:bg-gray-50 transition-colors"
               >
                 초기화
               </button>
             )}
             <button
-              onClick={onClose}
-              style={{
-                padding: "6px 12px",
-                fontSize: "1.2rem",
-                border: "none",
-                background: "transparent",
-                cursor: "pointer",
-                lineHeight: 1,
-              }}
+              onClick={handleClose}
+              className="absolute top-4 right-4 text-[#888] hover:text-[#333] hover:shadow-xl hover:scale-110 transition-all duration-300"
+              aria-label="챗봇 닫기"
             >
-              ✕
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
             </button>
           </div>
         </div>
 
         {/* 채팅 영역 */}
-        <div
-          style={{
-            flex: 1,
-            overflowY: "auto",
-            padding: "20px 24px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "16px",
-          }}
-        >
+        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
           {/* 안내 메시지 */}
           {chatHistory.length === 0 && (
-            <div
-              style={{
-                padding: "20px",
-                background: "#f8f9fa",
-                borderRadius: "8px",
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "1rem",
-                  fontWeight: 600,
-                  marginBottom: "12px",
-                }}
-              >
-                💡 사용 안내
+            <div className="p-5 bg-[#f8f9fa] rounded-[12px]">
+              <p className="text-base font-semibold mb-3">
+                사용 안내
               </p>
-              <ul style={{ margin: 0, paddingLeft: "20px", lineHeight: "1.8" }}>
+              <ul className="m-0 leading-[1.8]">
                 <li>땅땅옥션 이용 방법에 관한 질문을 자유롭게 해보세요.</li>
-                <li>예: "경매는 어떻게 진행되나요?"</li>
-                <li>예: "중고거래 시 주의사항이 있나요?"</li>
-                <li>예: "일반판매와 경매의 차이는 무엇인가요?"</li>
+                <li>(ex) 경매는 어떻게 진행되나요?</li>
+                <li>(ex) 중고거래 시 주의사항이 있나요?</li>
+                <li>(ex) 일반판매와 경매의 차이는 무엇인가요?</li>
               </ul>
             </div>
           )}
@@ -208,109 +165,41 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
           {chatHistory.map((chat) => (
             <div
               key={chat.id}
-              style={{ display: "flex", flexDirection: "column", gap: "12px" }}
+              className="flex flex-col gap-3"
             >
               {/* 사용자 질문 */}
-              <div
-                style={{
-                  alignSelf: "flex-end",
-                  maxWidth: "75%",
-                  background: "#007bff",
-                  color: "white",
-                  padding: "12px 16px",
-                  borderRadius: "12px 12px 0 12px",
-                }}
-              >
-                <p style={{ margin: 0, fontWeight: 500 }}>{chat.query}</p>
-                <span
-                  style={{
-                    fontSize: "0.8rem",
-                    opacity: 0.8,
-                    display: "block",
-                    textAlign: "right",
-                    marginTop: "6px",
-                  }}
-                >
+              <div className="self-end max-w-[75%] bg-[#007bff] text-white px-4 py-3 rounded-[12px_12px_0_12px]">
+                <p className="m-0 font-medium">{chat.query}</p>
+                <span className="text-[0.8rem] opacity-80 block text-right mt-1.5">
                   {formatDateTime(chat.timestamp)}
                 </span>
               </div>
 
               {/* AI 답변 */}
-              <div
-                style={{
-                  alignSelf: "flex-start",
-                  maxWidth: "75%",
-                  background: "#f1f3f5",
-                  padding: "12px 16px",
-                  borderRadius: "12px 12px 12px 0",
-                }}
-              >
-                <strong
-                  style={{
-                    color: "#28a745",
-                    display: "block",
-                    marginBottom: "8px",
-                  }}
-                >
+              <div className="self-start max-w-[75%] bg-[#f1f3f5] px-4 py-3 rounded-[12px_12px_12px_0]">
+                <strong className="text-[#28a745] block mb-2">
                   🤖 AI 답변
                 </strong>
-                <p
-                  style={{
-                    margin: 0,
-                    whiteSpace: "pre-wrap",
-                    lineHeight: "1.6",
-                  }}
-                >
+                <p className="m-0 whitespace-pre-wrap leading-relaxed">
                   {chat.response.response}
                 </p>
 
                 {/* 참고 문서 */}
                 {chat.response.sources.length > 0 && (
-                  <details style={{ marginTop: "12px" }}>
-                    <summary
-                      style={{
-                        cursor: "pointer",
-                        color: "#666",
-                        fontSize: "0.9rem",
-                      }}
-                    >
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-[#666] text-[0.9rem]">
                       📚 참고 문서 ({chat.response.sources.length}개)
                     </summary>
-                    <div
-                      style={{
-                        marginTop: "10px",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
-                      }}
-                    >
+                    <div className="mt-2.5 flex flex-col gap-2">
                       {chat.response.sources.map((doc, index) => (
                         <div
                           key={index}
-                          style={{
-                            padding: "10px",
-                            background: "white",
-                            borderRadius: "6px",
-                            border: "1px solid #dee2e6",
-                            fontSize: "0.85rem",
-                          }}
+                          className="p-2.5 bg-white rounded-md border border-[#dee2e6] text-[0.85rem]"
                         >
-                          <strong
-                            style={{
-                              color: "#495057",
-                              display: "block",
-                              marginBottom: "6px",
-                            }}
-                          >
+                          <strong className="text-[#495057] block mb-1.5">
                             📄 {doc.filename}
                           </strong>
-                          <p
-                            style={{
-                              margin: 0,
-                              color: "#6c757d",
-                              lineHeight: "1.5",
-                            }}
-                          >
+                          <p className="m-0 text-[#6c757d] leading-normal">
                             {doc.content_snippet.length > 200
                               ? `${doc.content_snippet.substring(0, 200)}...`
                               : doc.content_snippet}
@@ -326,29 +215,14 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
 
           {/* 로딩 인디케이터 */}
           {loading && (
-            <div
-              style={{
-                alignSelf: "flex-start",
-                padding: "12px 16px",
-                background: "#f1f3f5",
-                borderRadius: "12px",
-              }}
-            >
-              <p style={{ margin: 0, color: "#666" }}>답변 생성 중...</p>
+            <div className="self-start px-4 py-3 bg-[#f1f3f5] rounded-xl">
+              <p className="m-0 text-[#666]">답변 생성 중...</p>
             </div>
           )}
 
           {/* 에러 메시지 */}
           {error && (
-            <div
-              style={{
-                padding: "12px",
-                background: "#ffe6e6",
-                color: "#c92a2a",
-                borderRadius: "8px",
-                border: "1px solid #ffc9c9",
-              }}
-            >
+            <div className="p-3 bg-[#ffe6e6] text-[#c92a2a] rounded-lg border border-[#ffc9c9]">
               ⚠️ {error}
             </div>
           )}
@@ -357,30 +231,15 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
         </div>
 
         {/* 입력 폼 */}
-        <div
-          style={{
-            padding: "16px 24px",
-            borderTop: "1px solid #e9ecef",
-            backgroundColor: "#f8f9fa",
-          }}
-        >
+        <div className="px-6 py-4 border-t border-[#e9ecef] relative">
           <form onSubmit={handleSubmit}>
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div className="flex gap-2">
               <textarea
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="궁금한 점을 질문해주세요..."
                 disabled={loading}
-                style={{
-                  flex: 1,
-                  padding: "12px",
-                  border: "1px solid #dee2e6",
-                  borderRadius: "8px",
-                  resize: "none",
-                  fontSize: "0.95rem",
-                  minHeight: "60px",
-                  fontFamily: "inherit",
-                }}
+                className="flex-1 p-3 border border-[#dee2e6] rounded-lg resize-none text-[0.95rem] min-h-[60px] font-[inherit]"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
@@ -391,28 +250,13 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
               <button
                 type="submit"
                 disabled={loading || !query.trim()}
-                style={{
-                  padding: "12px 24px",
-                  border: "none",
-                  borderRadius: "8px",
-                  background: loading || !query.trim() ? "#dee2e6" : "#007bff",
-                  color: "white",
-                  cursor: loading || !query.trim() ? "not-allowed" : "pointer",
-                  fontSize: "0.95rem",
-                  fontWeight: 600,
-                  whiteSpace: "nowrap",
-                }}
+                className={`px-6 py-3 border-none rounded-lg text-white text-[0.95rem] font-semibold whitespace-nowrap cursor-pointer transition-colors ${loading || !query.trim() ? "bg-[#aaa] cursor-not-allowed" : "bg-[#666]"
+                  }`}
               >
-                {loading ? "전송 중..." : "전송 🚀"}
+                {loading ? "전송 중..." : "전송"}
               </button>
             </div>
-            <p
-              style={{
-                margin: "8px 0 0 0",
-                fontSize: "0.85rem",
-                color: "#868e96",
-              }}
-            >
+            <p className="mt-2 text-[0.85rem] text-[#aaa]">
               💡 Enter로 전송, Shift+Enter로 줄바꿈
             </p>
           </form>

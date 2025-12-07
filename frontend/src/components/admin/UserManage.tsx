@@ -96,7 +96,7 @@ export default function UserManage({
                     }
                   />
                 ) : (
-                  u.nickName
+                  `${u.nickName} (${u.userName})`
                 )}
               </td>
               <td>{u.email}</td>

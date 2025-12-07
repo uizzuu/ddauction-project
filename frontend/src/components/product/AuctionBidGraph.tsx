@@ -21,21 +21,9 @@ export default function AuctionBidGraph({ bids, startingPrice }: Props) {
   }));
 
   return (
-    <div style={{ marginTop: "24px" }}>
-      <h3
-        style={{ fontSize: "1.2rem", fontWeight: "bold", marginBottom: "8px" }}
-      >
-        입찰 그래프
-      </h3>
-      <div
-        style={{
-          backgroundColor: "#fff",
-          borderRadius: "12px",
-          padding: "12px",
-          boxShadow: "0 1px 6px rgba(0,0,0,0.1)",
-        }}
-      >
-        <ResponsiveContainer width="100%" height={250}>
+    <div>
+      <div>
+        <ResponsiveContainer width="100%" height={400}>
           <LineChart data={graphData}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
