@@ -5,6 +5,12 @@ export type { ProductType, ProductCategoryType, DeliveryType };
 export type ArticleType = ArticleTypeAlias;
 export const ArticleType = ARTICLE_TYPES;
 
+export interface CartItem extends Product {
+  quantity: number;
+  option?: string;
+  shipping: number;
+}
+
 export type Role = (typeof ROLE)[number];
 export type ProductStatus = (typeof PRODUCT_STATUS)[number];
 export type PaymentStatus = (typeof PAYMENT_STATUS)[number];

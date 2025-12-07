@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { findEmail } from "../common/api";
+import { findEmail } from "../../common/api";
 
 export default function FindEmail() {
   const navigate = useNavigate();

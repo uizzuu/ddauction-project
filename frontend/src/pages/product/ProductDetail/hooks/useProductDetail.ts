@@ -206,20 +206,30 @@ export const useProductDetail = (user: User | null) => {
         livePlaceBid(bidPrice);
     };
 
-    const handleReport = async () => {
-        if (!user) return alert("로그인이 필요합니다.");
-        const reason = prompt("신고 사유를 입력해주세요:");
-        if (!reason) return;
+    const [showReportModal, setShowReportModal] = useState(false);
+
+    const handleReport = () => {
+        if (!user) {
+            alert("로그인이 필요합니다.");
+            return;
+        }
+        setShowReportModal(true);
+    };
+
+    const submitReport = async (reason: string) => {
         try {
             const token = localStorage.getItem("token");
             const res = await fetch(`${API_BASE_URL}/api/reports`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ targetId: product?.sellerId, reason, reportType: "PRODUCT" }), // Adjust based on API
+                body: JSON.stringify({ targetId: product?.sellerId, reason, reportType: "PRODUCT" }),
             });
             if (res.ok) alert("신고가 접수되었습니다.");
             else alert("신고 접수 실패");
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error(e);
+            alert("오류가 발생했습니다.");
+        }
     };
 
     const handleDeleteProduct = async () => {
@@ -261,6 +271,9 @@ export const useProductDetail = (user: User | null) => {
         editingProductId,
         setEditingProductId,
         productForm,
-        setProductForm
+        setProductForm,
+        showReportModal,
+        setShowReportModal,
+        submitReport,
     };
 };

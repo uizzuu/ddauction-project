@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import AROverlayModal from "../../../components/modal/AROverlayModal";
+import { ReportModal } from "../../../components/ui/ReportModal"; // Added import
 import { useProductDetail } from "./hooks/useProductDetail";
 import { ImageSection } from "./sections/ImageSection";
 import { InfoSection } from "./sections/InfoSection";
@@ -37,7 +38,10 @@ export default function ProductDetail({ user }: Props) {
         editingProductId,
         setEditingProductId,
         productForm,
-        setProductForm
+        setProductForm,
+        showReportModal,
+        setShowReportModal,
+        submitReport,
     } = useProductDetail(user);
 
     const [showARModal, setShowARModal] = useState(false);
@@ -92,7 +96,7 @@ export default function ProductDetail({ user }: Props) {
                 {/* Left: Image Section (Fixed width) */}
                 <div className="w-full xl:w-[400px] top-24 h-fit">
                     <ImageSection product={product} setShowARModal={setShowARModal} />
-                </div> 
+                </div>
 
                 {/* Middle: Info Section (Dynamic width) */}
                 <div className="flex-1 w-full">
@@ -166,6 +170,14 @@ export default function ProductDetail({ user }: Props) {
                     </div>
                 )
             }
-        </div >
+
+            {/* Report Modal */}
+            <ReportModal
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                onSubmit={submitReport}
+            />
+
+        </div>
     );
 }

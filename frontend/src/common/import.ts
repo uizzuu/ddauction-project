@@ -24,7 +24,7 @@ import MyPaymentHistory from "../components/mypage/MyPaymentHistory";
 // pages
 import Main from "../pages/main/MainPage";
 import Login from "../pages/auth/Login";
-import Signup from "../pages/Signup";
+import Signup from "../pages/auth/Signup";
 import ProductList from "../pages/product/ProductList";
 import ProductRegister from "../pages/product/ProductForm/ProductForm";
 import MyPage from "../pages/general/MyPage";
@@ -35,12 +35,12 @@ import UserQnaForm from "../components/modal/ReportModal";
 import ErrorPage from "../pages/main/ErrorPage";
 import OAuth2Redirect from "../pages/auth/OAuth2Redirect";
 import ProductQnA from "../components/product/ProductQnA";
-import VerifyPage from "../pages/VerifyPage";
+import VerifyPage from "../pages/auth/VerifyPage";
 import ArticleForm from "../pages/article/ArticleForm";
 import ArticleDetail from "../pages/article/ArticleDetail";
 import PaymentPage from "../pages/payment/PaymentPage";
-import FindEmail from "../pages/FindEmail";
-import FindPassword from "../pages/FindPassword";
+import FindEmail from "../pages/auth/FindEmail";
+import FindPassword from "../pages/auth/FindPassword";
 import UserChat from "../components/chat/UserChat";
 import PublicChat from "../components/chat/PublicChat";
 import FloatingWidgets from "../components/ui/FloatingWidgets";
@@ -49,6 +49,8 @@ import CartPage from "../pages/general/CartPage";
 import WishlistPage from "../pages/general/WishlistPage";
 import RankPage from "../pages/main/RankPage";
 import SearchPage from "../pages/product/ProductList"; // Alias for readability
+import UserProfilePage from "../pages/user/UserProfilePage";
+import ReviewWritePage from "../pages/user/ReviewWritePage";
 
 export {
   Header,
@@ -101,4 +103,6 @@ export {
   CartPage,
   WishlistPage,
   RankPage,
+  UserProfilePage,
+  ReviewWritePage
 };

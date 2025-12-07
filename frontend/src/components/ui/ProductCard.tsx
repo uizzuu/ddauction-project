@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { Product } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
 import { Heart, Truck, ChevronRight, Minus } from "lucide-react";
-import { toggleBookmark } from "../../common/api";
+import { toggleBookmark, fetchBookmarkCheck } from "../../common/api";
 
 type Props = {
     product: Product;
@@ -16,10 +16,23 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
     // 1. Initialize state from prop
     const [isLiked, setIsLiked] = useState(!!product.isBookmarked);
 
-    // 2. Sync state with prop updates (e.g. valid when parent refetches)
+    // 2. Sync state with prop updates AND server status
     useEffect(() => {
+        // 우선 prop으로 동기화
         setIsLiked(!!product.isBookmarked);
-    }, [product.isBookmarked]);
+
+        // 서버에서 최신 상태 확인 (로그인 시)
+        const token = localStorage.getItem("token");
+        if (token) {
+            fetchBookmarkCheck(product.productId, token)
+                .then(checked => {
+                    setIsLiked(checked);
+                })
+                .catch(err => {
+                    console.error("찜 확인 실패", err);
+                });
+        }
+    }, [product.productId, product.isBookmarked]);
 
     // 임시 할인율 (Store) - 실제 데이터 없으면 0
     const discountRate = 20;

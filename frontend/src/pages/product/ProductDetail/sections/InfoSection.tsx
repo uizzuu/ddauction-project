@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { formatDateTime } from "../../../../common/util";
 import { PRODUCT_CATEGORIES } from "../../../../common/enums";
 import type { Product, User, EditProductForm } from "../../../../common/types";
@@ -91,12 +92,12 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                 </div>
 
                 <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
-                    <div className="flex items-center gap-2">
+                    <Link to={`/users/${product.sellerId}`} className="flex items-center gap-2 hover:underline decoration-gray-400 underline-offset-2">
                         <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">
                             {sellerNickName.slice(0, 1)}
                         </span>
                         <span className="font-medium text-gray-900">{sellerNickName}</span>
-                    </div>
+                    </Link>
                     <span className="w-px h-3 bg-gray-300"></span>
                     <span>{product.createdAt ? formatDateTimeNoSec(product.createdAt) : ""}</span>
                     <span className="w-px h-3 bg-gray-300"></span>

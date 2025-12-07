@@ -1069,8 +1069,9 @@ export async function fetchLatestProducts(): Promise<TYPE.Product[]> {
 }
 
 // 배너 상품 가져오기
+// 배너 상품 가져오기
 export async function fetchBannerProducts(): Promise<
-  { id: number; image?: string; text: string; product?: TYPE.Product }[]
+  { id: number; image?: string; text: string; product?: TYPE.Product; link?: string }[]
 > {
   try {
     const [topRes, latestRes, endingRes] = await Promise.all([
@@ -1079,36 +1080,111 @@ export async function fetchBannerProducts(): Promise<
       fetch(`${API_BASE_URL}${SPRING_API}/products/ending-soon`),
     ]);
 
-    if (!topRes.ok || !latestRes.ok || !endingRes.ok) {
-      throw new Error(
-        `배너 API 중 하나가 실패했습니다. top: ${topRes.status}, latest: ${latestRes.status}, ending: ${endingRes.status}`
-      );
+    // Helper to safely extract array
+    const extractArray = async (res: Response): Promise<TYPE.Product[]> => {
+      if (!res.ok) return [];
+      try {
+        const data = await res.json();
+        if (Array.isArray(data)) return data;
+        if (data && Array.isArray(data.content)) return data.content; // Page wrapper
+        if (data && Array.isArray(data.data)) return data.data; // Wrapper
+        return [];
+      } catch {
+        return [];
+      }
+    };
+
+    const topData = await extractArray(topRes);
+    const latestData = await extractArray(latestRes);
+    const endingData = await extractArray(endingRes);
+
+    const banners: { id: number; image?: string; text: string; product?: TYPE.Product; link?: string }[] = [];
+
+    // 1. Top Banner
+    let topProduct = topData[0] || latestData[0];
+    if (topProduct) {
+      banners.push({
+        id: 1,
+        image: topProduct.images?.[0]?.imagePath,
+        text: "실시간 인기 급상승 경매 🔥",
+        product: topProduct,
+      });
     }
 
-    const topData: TYPE.Product[] = await topRes.json();
-    const latestData: TYPE.Product[] = await latestRes.json();
-    const endingData: TYPE.Product[] = await endingRes.json();
-
-    return [
-      {
-        id: 1,
-        image: topData[0]?.images?.[0]?.imagePath,
-        text: "실시간 인기 급상승 경매 🔥",
-        product: topData[0],
-      },
-      {
+    // 2. Latest Banner (Unique)
+    let latestProduct = latestData[0];
+    if (latestProduct && latestProduct.productId === topProduct?.productId && latestData.length > 1) {
+      latestProduct = latestData[1];
+    }
+    // If different from top, add
+    if (latestProduct && latestProduct.productId !== topProduct?.productId) {
+      banners.push({
         id: 2,
-        image: latestData?.[0]?.images?.[0]?.imagePath,
-        text: "오늘의 추천! 신규 등록 상품 🎉",
-        product: latestData?.[0],
-      },
-      {
+        image: latestProduct.images?.[0]?.imagePath,
+        text: "새로 등록된 핫한 아이템 ✨",
+        product: latestProduct,
+      });
+    }
+
+    // 3. Ending Banner (Unique)
+    let endingProduct = endingData[0];
+    // Avoid duplicates
+    if (!endingProduct || endingProduct.productId === topProduct?.productId || endingProduct.productId === latestProduct?.productId) {
+      const potential = latestData.find(p => p.productId !== topProduct?.productId && p.productId !== latestProduct?.productId);
+      if (potential) endingProduct = potential;
+    }
+
+    if (endingProduct && endingProduct.productId !== topProduct?.productId && endingProduct.productId !== latestProduct?.productId) {
+      banners.push({
         id: 3,
-        image: endingData?.[0]?.images?.[0]?.imagePath,
+        image: endingProduct.images?.[0]?.imagePath,
         text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
-        product: endingData?.[0],
-      },
-    ];
+        product: endingProduct,
+      });
+    }
+
+    // Fallback Logic
+    if (banners.length < 3) {
+      const staticBanners = [
+        {
+          id: 101,
+          text: "나만의 보물찾기, 땅땅옥션 💎",
+          image: topProduct?.images?.[0]?.imagePath || "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1280&q=80",
+          link: "/search"
+        },
+        {
+          id: 102,
+          text: "더 많은 경매 보러가기 🚀",
+          image: latestProduct?.images?.[0]?.imagePath || "https://images.unsplash.com/photo-1531297461136-82lwDe8c2e0b?auto=format&fit=crop&w=1280&q=80",
+          link: "/search?sort=latest"
+        },
+        {
+          id: 103,
+          text: "지금 가장 핫한 상품을 만나보세요 🔥",
+          image: endingProduct?.images?.[0]?.imagePath || "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=1280&q=80",
+          link: "/search?sort=popular"
+        }
+      ];
+
+      let staticIndex = 0;
+      while (banners.length < 3 && staticIndex < staticBanners.length) {
+        const sb = staticBanners[staticIndex];
+        // Ensure ID uniqueness roughly
+        if (!banners.find(b => b.id === sb.id)) {
+          banners.push({
+            id: sb.id,
+            image: sb.image,
+            text: sb.text,
+            link: sb.link,
+            product: undefined
+          });
+        }
+        staticIndex++;
+      }
+    }
+
+    return banners;
+
   } catch (err) {
     console.error("배너 상품 불러오기 실패:", err);
     return [];
@@ -1458,6 +1534,8 @@ export async function fetchUserQnas(userId: number): Promise<TYPE.ProductQna[]> 
   return res.json();
 }
 
+
+
 export async function fetchUserInquiries(token: string): Promise<any[]> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/inquiry/user`, {
     headers: {
@@ -1469,11 +1547,89 @@ export async function fetchUserInquiries(token: string): Promise<any[]> {
   return res.json();
 }
 
-export async function fetchUserReviews(userId: number): Promise<TYPE.Review[]> {
-  const res = await fetch(`${API_BASE_URL}/reviews/user/${userId}`);
-  if (!res.ok) throw new Error("리뷰 조회 실패");
-  return res.json();
+// -------------------------------------------------------------------------
+// User Profile & Reviews (New Features)
+// -------------------------------------------------------------------------
+
+// 1. Public User Profile
+export async function fetchUserProfile(userId: number): Promise<TYPE.User> {
+  // Use public endpoint if available, otherwise fallback to known pattern
+  // Assuming /users/{userId} exposes public info
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" }
+  });
+
+  if (!response.ok) {
+    // Fallback/Mock for development if backend isn't ready
+    if (import.meta.env.DEV) {
+      console.warn("Mocking user profile for DEV");
+      return {
+        userId,
+        userName: "Mock User",
+        nickName: `Seller_${userId}`,
+        email: "hidden@email.com",
+        role: "USER"
+      };
+    }
+    throw new Error("유저 프로필 조회 실패");
+  }
+  return response.json();
 }
+
+// 2. User's Selling Products
+export async function fetchUserSellingProducts(userId: number): Promise<TYPE.Product[]> {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/products/seller/${userId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" }
+  });
+
+  if (!response.ok) {
+    if (import.meta.env.DEV) return []; // Return empty if not ready
+    throw new Error("판매 상품 조회 실패");
+  }
+  return response.json();
+}
+
+// 3. User's Received Reviews
+export async function fetchUserReviews(userId: number): Promise<TYPE.Review[]> {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/reviews/user/${userId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" }
+  });
+
+  if (!response.ok) {
+    if (import.meta.env.DEV) return [];
+    throw new Error("리뷰 목록 조회 실패");
+  }
+  return response.json();
+}
+
+// 4. Create Product Review
+export async function createProductReview(data: {
+  refId: number; // productId
+  content: string;
+  rating: number;
+  productType: string;
+}): Promise<void> {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("로그인이 필요합니다.");
+
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/reviews`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(data)
+  });
+
+  if (!response.ok) {
+    throw new Error("리뷰 등록 실패");
+  }
+}
+
+
 
 export async function fetchAverageRating(userId: number): Promise<{ averageRating: number }> {
   const res = await fetch(`${API_BASE_URL}/reviews/user/${userId}/average`);

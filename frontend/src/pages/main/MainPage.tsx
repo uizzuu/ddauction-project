@@ -35,7 +35,6 @@ const CATEGORY_ICONS: Record<ProductCategoryType, React.ReactNode> = {
 };
 
 // 카테고리용 깔끔한 화살표 (배너 스타일과 유사한 심플함, 하지만 배경에 맞게 컬러 조정)
-// 카테고리용 깔끔한 화살표 (배너 스타일과 유사한 심플함, 하지만 배경에 맞게 컬러 조정)
 function CategoryNextArrow({ onClick, visible }: { onClick: () => void; visible: boolean }) {
   if (!visible) return null;
   return (
@@ -91,7 +90,7 @@ export default function Main() {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [banners, setBanners] = useState<
-    { id: number; image?: string; text: string; product?: Product }[]
+    { id: number; image?: string; text: string; product?: Product; link?: string }[]
   >([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -167,7 +166,15 @@ export default function Main() {
                   <div key={i} className="h-[400px] outline-none">
                     <div
                       className="w-full h-full cursor-pointer relative bg-[#333]"
-                      onClick={() => b.product && navigate(`/products/${b.product.productId}`)}
+                      onClick={() => {
+                        if (b.product) {
+                          navigate(`/products/${b.product.productId}`);
+                        } else if (b.link) {
+                          navigate(b.link);
+                        } else {
+                          console.warn("Banner has no linked product or URL:", b);
+                        }
+                      }}
                     >
                       {b.image && (
                         <img

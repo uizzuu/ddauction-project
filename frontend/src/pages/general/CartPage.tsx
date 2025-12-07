@@ -1,16 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { formatPrice } from "../../common/util";
-import { fetchMyLikes, API_BASE_URL } from "../../common/api";
-import type { Product } from "../../common/types";
-
-interface CartItem extends Product {
-    quantity: number;
-    shipping: number;
-    option?: string;
-}
+import { formatPrice, getCartItems, removeFromCart } from "../../common/util";
+import { API_BASE_URL } from "../../common/api";
+import type { CartItem } from "../../common/types";
 
 export default function CartPage() {
     const navigate = useNavigate();
@@ -19,39 +12,18 @@ export default function CartPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const loadCartItems = async () => {
-            const token = localStorage.getItem("token");
-            if (!token) {
-                setLoading(false);
-                return;
-            }
-
-            try {
-                // 현재는 찜한 목록을 장바구니 데이터로 사용 (백엔드 장바구니 API 부재 시)
-                const products = await fetchMyLikes(token);
-                const items: CartItem[] = products.map(p => ({
-                    ...p,
-                    quantity: 1, // 기본 수량 1
-                    shipping: 0, // 기본 배송비 무료 (추후 로직 추가 가능)
-                    option: p.productCategoryType ? String(p.productCategoryType) : "기본",
-                }));
-                setCartItems(items);
-                setSelectedItems(items.map(i => i.productId));
-            } catch (err) {
-                console.error("장바구니 로드 실패:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        loadCartItems();
+        // Load cart items from LocalStorage
+        const items = getCartItems();
+        setCartItems(items);
+        setSelectedItems(items.map(i => i.productId));
+        setLoading(false);
     }, []);
 
     // Handlers
     const handleRemove = (id: number) => {
+        removeFromCart(id);
         setCartItems(prev => prev.filter(item => item.productId !== id));
         setSelectedItems(prev => prev.filter(itemId => itemId !== id));
-        // TODO: 실제 찜 목록에서도 제거하는 API 호출 추가 가능
     };
 
     const handleSelect = (id: number) => {

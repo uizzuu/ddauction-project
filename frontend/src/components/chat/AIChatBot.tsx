@@ -3,6 +3,7 @@ import { queryRAG } from "../../common/api";
 import type { ChatMessage, RAGResponse } from "../../common/types";
 import { formatDateTime } from "../../common/util";
 
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
@@ -14,13 +15,12 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
+  const [showCloseConfirm, setShowCloseConfirm] = useState(false); // Added state
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const handleClose = () => {
-    if (chatHistory.length > 0) {
-      if (window.confirm("창을 닫으면 대화 내용이 저장되지 않습니다. 정말 닫으시겠습니까?")) {
-        triggerCloseAnimation();
-      }
+    if (chatHistory.length > 0 || query.trim().length > 0) {
+      setShowCloseConfirm(true); // Open custom modal
     } else {
       triggerCloseAnimation();
     }
@@ -51,13 +51,13 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
   // ESC 키로 모달 닫기
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
+      if (e.key === "Escape" && isOpen && !showCloseConfirm) { // Prevent close if confirm is open
         handleClose();
       }
     };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, [isOpen, chatHistory]);
+  }, [isOpen, chatHistory, showCloseConfirm]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,6 +98,16 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
     if (window.confirm("채팅 기록을 모두 삭제하시겠습니까?")) {
       setChatHistory([]);
     }
+  };
+
+  const [isAlertClosing, setIsAlertClosing] = useState(false); // Alert closing state
+
+  const handleAlertCancel = () => {
+    setIsAlertClosing(true);
+    setTimeout(() => {
+      setIsAlertClosing(false);
+      setShowCloseConfirm(false);
+    }, 300); // Match animation duration
   };
 
   if (!isOpen && !isClosing) return null;
@@ -261,6 +271,40 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
             </p>
           </form>
         </div>
+
+        {/* Custom Internal Alert Modal */}
+        {(showCloseConfirm || isAlertClosing) && (
+          <div className={`absolute inset-0 z-[2000] flex items-center justify-center bg-black/40 backdrop-blur-none rounded-2xl ${isAlertClosing ? "animate-fade-out-down" : "animate-fade-in-up"}`}>
+            <div className="bg-white w-[270px] rounded-[14px] overflow-hidden shadow-2xl text-center">
+              {/* Title & Message */}
+              <div className="pt-5 pb-4 px-4">
+                <h3 className="text-[17px] font-semibold text-black mb-1">대화 종료</h3>
+                <p className="text-[13px] text-gray-800 leading-tight">
+                  창을 닫으면 대화 내용이<br />저장되지 않습니다.<br />정말 닫으시겠습니까?
+                </p>
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-300 flex">
+                {/* Cancel Button */}
+                <button
+                  onClick={handleAlertCancel}
+                  className="flex-1 py-3 text-[17px] text-[#007aff] font-normal hover:bg-gray-50 active:bg-gray-100 transition-colors border-r border-gray-300"
+                >
+                  취소
+                </button>
+
+                {/* Confirm Button */}
+                <button
+                  onClick={triggerCloseAnimation}
+                  className="flex-1 py-3 text-[17px] text-[#ff3b30] font-semibold hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                >
+                  종료
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -1,9 +1,10 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import type { User } from "../../common/types";
-import { logout, fetchSuggestions, fetchPopularKeywords, saveSearchLog, fetchMyLikes } from "../../common/api";
+import { logout, fetchSuggestions, fetchPopularKeywords, saveSearchLog } from "../../common/api";
 import { NotificationModal } from "../../common/import";
 import { RealTimeSearch } from "../../common/websocket";
+import { getCartItems } from "../../common/util";
 
 import "../../css/modules.css";
 
@@ -12,24 +13,13 @@ type Props = {
     setUser: (user: User | null) => void;
 };
 
+// Update Header Props and Component
 export default function Header({ user, setUser }: Props) {
     const [cartItemCount, setCartItemCount] = useState(0);
 
-    const updateCartCount = async () => {
-        if (!user) {
-            setCartItemCount(0);
-            return;
-        }
-        const token = localStorage.getItem("token");
-        if (token) {
-            try {
-                const likes = await fetchMyLikes(token);
-                console.log("Cart updated. Count:", likes.length);
-                setCartItemCount(likes.length);
-            } catch (error) {
-                console.error("장바구니 카운트 로드 실패", error);
-            }
-        }
+    const updateCartCount = () => {
+        const items = getCartItems();
+        setCartItemCount(items.length);
     };
 
     const navigate = useNavigate();
@@ -340,9 +330,9 @@ export default function Header({ user, setUser }: Props) {
                                     관리자 페이지
                                 </NavLink>
                             )}
-                            <NavLink to="/mypage/qna/new" className="hover:text-[#666] transition-colors">
+                            {/* <NavLink to="/mypage/qna/new" className="hover:text-[#666] transition-colors">
                                 1:1 문의
-                            </NavLink>
+                            </NavLink> */}
                             <button onClick={handleLogout} className="hover:text-[#666] transition-colors">
                                 로그아웃
                             </button>
@@ -355,13 +345,13 @@ export default function Header({ user, setUser }: Props) {
                             <NavLink to="/signup" className="hover:text-[#666] transition-colors">
                                 회원가입
                             </NavLink>
-                            <NavLink
+                            {/* <NavLink
                                 to="/mypage/qna/new"
                                 onClick={(e) => handleProtectedNavigation(e, "/mypage/qna/new")}
                                 className="hover:text-[#666] transition-colors"
                             >
                                 1:1 문의
-                            </NavLink>
+                            </NavLink> */}
                         </>
                     )}
                 </nav>
@@ -698,6 +688,21 @@ export default function Header({ user, setUser }: Props) {
                             className={({ isActive }) => `nav-tab ${isActive ? "active" : "inactive"}`}
                         >
                             일대일채팅
+                        </NavLink>
+                        <NavLink
+                            to={user ? `/users/${user.userId}` : "/login"}
+                            onClick={(e) => handleProtectedNavigation(e, user ? `/users/${user.userId}` : "/login")}
+                            className={({ isActive }) => `nav-tab ${isActive ? "active" : "inactive"}`}
+                            style={({ isActive }) => isActive ? { color: "#111", fontWeight: 600 } : {}}
+                        >
+                            프로필
+                        </NavLink>
+                        <NavLink
+                            to="/reviews/write/1"
+                            onClick={(e) => handleProtectedNavigation(e, "/reviews/write/1")}
+                            className={({ isActive }) => `nav-tab ${isActive ? "active" : "inactive"}`}
+                        >
+                            리뷰작성
                         </NavLink>
 
                         {/* Sliding Indicator */}

@@ -1,4 +1,4 @@
-import type { Product, ProductCategoryType, ProductType } from "./types";
+import type { Product, ProductCategoryType, ProductType, CartItem } from "./types";
 import { PRODUCT_STATUS, PAYMENT_STATUS, PRODUCT_CATEGORIES } from "./enums";
 
 // SortOption
@@ -224,4 +224,58 @@ export const getCategoryName = (
 ): string => {
   if (!categoryCode) return "없음";
   return PRODUCT_CATEGORIES[categoryCode as ProductCategoryType] || "기타";
+};
+
+// ============================
+// 장바구니 (moved from cart.ts)
+// ============================
+
+const CART_KEY = "ddauction_cart";
+
+// 장바구니 목록 가져오기
+export const getCartItems = (): CartItem[] => {
+  try {
+    const saved = localStorage.getItem(CART_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch (error) {
+    console.error("장바구니 로드 실패:", error);
+    return [];
+  }
+};
+
+// 장바구니에 추가
+export const addToCart = (product: Product): void => {
+  const currentItems = getCartItems();
+  const existingItemIndex = currentItems.findIndex((item) => item.productId === product.productId);
+
+  let newItems;
+  if (existingItemIndex > -1) {
+    newItems = [...currentItems];
+    newItems[existingItemIndex].quantity += 1;
+  } else {
+    const newItem: CartItem = {
+      ...product,
+      quantity: 1,
+      shipping: 0,
+      option: product.productCategoryType ? String(product.productCategoryType) : "기본",
+    };
+    newItems = [newItem, ...currentItems];
+  }
+
+  localStorage.setItem(CART_KEY, JSON.stringify(newItems));
+  window.dispatchEvent(new Event("cart-updated"));
+};
+
+// 장바구니에서 삭제
+export const removeFromCart = (productId: number): void => {
+  const currentItems = getCartItems();
+  const newItems = currentItems.filter((item) => item.productId !== productId);
+  localStorage.setItem(CART_KEY, JSON.stringify(newItems));
+  window.dispatchEvent(new Event("cart-updated"));
+};
+
+// 장바구니 비우기
+export const clearCart = (): void => {
+  localStorage.removeItem(CART_KEY);
+  window.dispatchEvent(new Event("cart-updated"));
 };

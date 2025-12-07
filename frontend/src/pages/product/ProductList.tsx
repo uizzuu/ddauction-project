@@ -71,6 +71,11 @@ export default function ProductSearchPage() {
             (p.productType !== "AUCTION" || parseWithTZ(p.auctionEndTime || "").getTime() > now.getTime())
         );
       }
+
+      // 🔹 상품 타입 클라이언트 사이드 필터링 (백엔드 미지원 대비)
+      if (currentProductType) {
+        data = data.filter(p => p.productType === currentProductType);
+      }
       setProducts(data);
     } catch (err) {
       console.error("❌ 상품 검색 중 오류 발생:", err);
@@ -170,6 +175,10 @@ export default function ProductSearchPage() {
         onClose={() => setIsSideModalOpen(false)}
         selectedCategory={categoryCode}
         onCategoryChange={handleCategoryClick}
+
+        selectedProductType={productType}
+        onProductTypeChange={setProductType}
+
         minPrice={minPrice}
         maxPrice={maxPrice}
         minStartPrice={minStartPrice}

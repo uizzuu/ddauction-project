@@ -30,6 +30,9 @@ type Props = {
 
     selectedBenefits: string[];
     onBenefitChange: (benefits: string[]) => void;
+
+    selectedProductType: string | null;
+    onProductTypeChange: (type: string | null) => void;
 };
 
 export default function SideFilterModal({
@@ -38,7 +41,8 @@ export default function SideFilterModal({
     minPrice, maxPrice, minStartPrice, maxStartPrice, onPriceChange,
     excludeEnded, onExcludeEndedChange,
     selectedDeliveryTypes, onDeliveryChange,
-    selectedBenefits, onBenefitChange
+    selectedBenefits, onBenefitChange,
+    selectedProductType, onProductTypeChange
 }: Props) {
     const [animate, setAnimate] = useState(false);
 
@@ -96,6 +100,7 @@ export default function SideFilterModal({
 
     const handleReset = () => {
         onCategoryChange("");
+        onProductTypeChange(null);
         onPriceChange("current", undefined, undefined);
         onPriceChange("start", undefined, undefined);
         onExcludeEndedChange(false);
@@ -158,6 +163,32 @@ export default function SideFilterModal({
                                     `}
                                 >
                                     {PRODUCT_CATEGORIES[cat]}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 1.5 Product Type */}
+                    <div>
+                        <h3 className="font-bold mb-3 text-[15px]">상품 유형</h3>
+                        <div className="flex flex-wrap gap-2">
+                            {[
+                                { label: "전체", value: null },
+                                { label: "경매", value: "AUCTION" },
+                                { label: "중고거래", value: "USED" },
+                                { label: "스토어", value: "STORE" },
+                            ].map((type) => (
+                                <button
+                                    key={type.label}
+                                    onClick={() => onProductTypeChange(type.value as string | null)}
+                                    className={`
+                                        px-3 py-2 rounded-[8px] text-[14px] border transition-colors
+                                        ${selectedProductType === type.value
+                                            ? "bg-[#333] text-white border-[#333]"
+                                            : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"}
+                                    `}
+                                >
+                                    {type.label}
                                 </button>
                             ))}
                         </div>

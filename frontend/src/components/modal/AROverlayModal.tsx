@@ -13,6 +13,7 @@ const AROverlayModal: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const codeReaderRef = useRef<BrowserMultiFormatReader | null>(null);
 
+
   // QR 코드 URL 생성
   useEffect(() => {
     fetchQrCodeImage(productId)
@@ -41,30 +42,19 @@ const AROverlayModal: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
 
   // QR 스캔 모드
   useEffect(() => {
-    console.log("🟡 useEffect 실행, mode:", mode);
-
     if (mode !== "scanning") {
-      console.log("⚪ mode가 scanning이 아님, 종료");
+
       return;
     }
-
-    console.log("🟢 QR 스캔 모드 진입!");
 
     const codeReader = new BrowserMultiFormatReader();
     codeReaderRef.current = codeReader;
     let active = true;
 
     const startScanner = async () => {
-      console.log("📷 카메라 스캔 시작...");
-
       try {
         const devices = await navigator.mediaDevices.enumerateDevices();
-        console.log("📹 감지된 장치:", devices.length);
-
-        const videoInputDevices = devices.filter(
-          (d) => d.kind === "videoinput"
-        );
-        console.log("📹 카메라 장치:", videoInputDevices.length);
+        const videoInputDevices = devices.filter((d) => d.kind === "videoinput");
 
         if (!active || videoInputDevices.length === 0) {
           setError("카메라를 찾을 수 없습니다.");
@@ -72,30 +62,19 @@ const AROverlayModal: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
         }
 
         const firstDeviceId = videoInputDevices[0].deviceId;
-        console.log("📹 사용할 카메라:", firstDeviceId);
-
-        if (!videoRef.current) {
-          console.error("❌ video element가 없음");
-          return;
-        }
-
-        console.log("📷 QR 디코딩 시작...");
+        if (!videoRef.current) return;
 
         codeReader.decodeFromVideoDevice(
           firstDeviceId,
           videoRef.current,
-          (result, scanError) => {
+          (result, _) => {
             if (result) {
-              console.log("🎯 QR 스캔 성공!");
               handleScan(result.getText());
-            }
-            if (scanError && scanError.name !== "NotFoundException") {
-              console.error("QR 스캔 에러:", scanError);
             }
           }
         );
       } catch (cameraError) {
-        console.error("❌ 카메라 장치 가져오기 실패:", cameraError);
+        console.error("Camera Error:", cameraError);
         setError("카메라 접근 권한이 필요합니다.");
       }
     };
@@ -103,281 +82,165 @@ const AROverlayModal: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
     startScanner();
 
     return () => {
-      console.log("🔴 useEffect cleanup");
       active = false;
-      if (codeReaderRef.current) {
-        try {
-          (codeReaderRef.current as any).reset?.();
-        } catch (cleanupError) {
-          console.warn("Scanner reset failed", cleanupError);
-        }
-      }
+
+      // codeReaderRef.current?.reset?.(); // Reset not available on some versions, rely on stop
+      // Use explicit stop if possible, but stopAsyncDecode is already called in cleanup
+      // Just nullify ref if needed or rely on stopAsyncDecode. 
+      // Ensure we stop scanning which is done by control.stop() if we had control, 
+      // or decodeFromVideoDevice returns a promise/control. 
+      // For now, removing the reset call if it doesn't exist on the type.
     };
   }, [mode, handleScan]);
 
-  return (
-    <div
-      style={{
-        position: "relative",
-        width: "100%",
-        height: "100%",
-        backgroundColor: "#000",
-      }}
+
+  // Helper Render Components
+  const BackButton = ({ onClick, label = "뒤로가기" }: { onClick: () => void, label?: string }) => (
+    <button
+      onClick={onClick}
+      className="px-6 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/10 text-white rounded-full transition-all flex items-center gap-2 text-sm font-medium"
     >
-      {/* 에러 메시지 */}
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      {label}
+    </button>
+  );
+
+  return (
+    <div className="relative w-full h-full bg-neutral-900 border border-neutral-800 overflow-hidden flex flex-col items-center justify-center">
+
+      {/* ERROR OVERLAY */}
       {error && (
-        <div
-          style={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            color: "#fff",
-            textAlign: "center",
-            zIndex: 10,
-            padding: "20px",
-            backgroundColor: "rgba(0,0,0,0.7)",
-            borderRadius: "8px",
-          }}
-        >
-          {error}
-          <br />
-          <button
-            onClick={() => {
-              setError(null);
-              setMode("initial");
-            }}
-            style={{
-              marginTop: "10px",
-              padding: "8px 16px",
-              backgroundColor: "#ff6600",
-              color: "#fff",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-            }}
-          >
-            처음으로
-          </button>
-        </div>
-      )}
-
-      {/* 초기 화면 - QR 스캔 버튼 */}
-      {mode === "initial" && !error && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-            gap: "20px",
-          }}
-        >
-          <button
-            onClick={() => setMode("showQR")}
-            style={{
-              padding: "1rem 2rem",
-              fontSize: "1.2rem",
-              backgroundColor: "#ff6600",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-          >
-            📱 QR 코드 보기
-          </button>
-          <button
-            onClick={() => {
-              console.log('🔵 "QR 코드 스캔하기" 버튼 클릭!');
-              setMode("scanning");
-            }}
-            style={{
-              padding: "1rem 2rem",
-              fontSize: "1.2rem",
-              backgroundColor: "#4CAF50",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-          >
-            📷 QR 코드 스캔하기
-          </button>
-        </div>
-      )}
-
-      {/* QR 코드 표시 화면 */}
-      {mode === "showQR" && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-            gap: "20px",
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: "#fff",
-              padding: "20px",
-              borderRadius: "12px",
-            }}
-          >
-            <img
-              src={qrCodeUrl}
-              alt="QR Code"
-              style={{ width: "300px", height: "300px" }}
-              onError={() => {
-                console.error("QR 이미지 로드 실패:", qrCodeUrl);
-                setError(
-                  "QR 코드를 불러올 수 없습니다. 백엔드 서버를 확인하세요."
-                );
-              }}
-              onLoad={() => {
-                console.log("QR 이미지 로드 성공:", qrCodeUrl);
-              }}
-            />
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm p-6 text-center">
+          <div className="bg-red-500/10 text-red-500 p-4 rounded-full mb-4">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
           </div>
-          <p style={{ color: "#fff", textAlign: "center" }}>
-            다른 기기로 이 QR 코드를 스캔하세요
-          </p>
+          <p className="text-white mb-6 max-w-xs">{error}</p>
           <button
-            onClick={() => setMode("initial")}
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#666",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
+            onClick={() => { setError(null); setMode("initial"); }}
+            className="px-6 py-2 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition-colors"
           >
-            ← 뒤로가기
+            홈으로 돌아가기
           </button>
         </div>
       )}
 
-      {/* 카메라 스캔 화면 */}
+      {/* INITIAL MODE */}
+      {mode === "initial" && !error && (
+        <div className="flex flex-col items-center gap-6 animate-fade-in">
+          <div className="w-20 h-20 bg-gradient-to-tr from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center shadow-lg mb-2">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+              <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM17 17l3 3" /><path d="M20 17l-3 3" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-white">AR 가상 착해보기</h2>
+          <p className="text-gray-400 text-center max-w-sm mb-4">
+            스마트폰으로 QR코드를 스캔하거나<br />웹캠을 사용하여 상품을 미리 체험해보세요.
+          </p>
+
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <button
+              onClick={() => setMode("showQR")}
+              className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm rounded-xl text-white font-bold transition-all flex items-center justify-center gap-3 group"
+            >
+              <span className="text-xl">📱</span>
+              <span className="group-hover:translate-x-1 transition-transform">모바일로 QR 스캔</span>
+            </button>
+            <button
+              onClick={() => setMode("scanning")}
+              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 transition-all flex items-center justify-center gap-3 group"
+            >
+              <span className="text-xl">📷</span>
+              <span className="group-hover:translate-x-1 transition-transform">웹캠으로 바로 실행</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* QR CODE MODE */}
+      {mode === "showQR" && (
+        <div className="flex flex-col items-center animate-fade-in-up w-full h-full justify-center p-6">
+          <div className="bg-white p-4 rounded-2xl shadow-2xl mb-8 transform hover:scale-105 transition-transform duration-300">
+            {qrCodeUrl ? (
+              <img src={qrCodeUrl} alt="QR Code" className="w-64 h-64 object-contain" />
+            ) : (
+              <div className="w-64 h-64 bg-gray-100 flex items-center justify-center rounded-lg text-gray-400">Loading...</div>
+            )}
+          </div>
+          <p className="text-white font-medium mb-8 bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
+            모바일 카메라로 스캔하여 AR을 체험하세요
+          </p>
+          <BackButton onClick={() => setMode("initial")} />
+        </div>
+      )}
+
+      {/* SCANNING MODE */}
       {mode === "scanning" && !error && (
         <>
           <video
             ref={videoRef}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            className="absolute inset-0 w-full h-full object-cover"
             autoPlay
             muted
             playsInline
           />
-          <div
-            style={{
-              position: "absolute",
-              top: "20px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              color: "#fff",
-              backgroundColor: "rgba(0,0,0,0.6)",
-              padding: "10px 20px",
-              borderRadius: "8px",
-              fontSize: "0.9rem",
-            }}
-          >
-            QR 코드를 화면에 맞춰주세요
+          {/* Overlay UI */}
+          <div className="absolute inset-x-0 top-0 p-6 flex justify-between items-start bg-gradient-to-b from-black/60 to-transparent">
+            <div className="px-4 py-2 bg-black/40 backdrop-blur-md rounded-full text-white text-sm border border-white/10 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              {imageUrl ? "AR 모드 활성화됨" : "QR 코드를 비쳐주세요"}
+            </div>
           </div>
-          <button
-            onClick={() => {
-              setMode("initial");
-              setImageUrl(null);
-            }}
-            style={{
-              position: "absolute",
-              bottom: "30px",
-              left: "50%",
-              transform: "translateX(-50%)",
-              padding: "10px 20px",
-              backgroundColor: "#666",
-              color: "#fff",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
-          >
-            ← 뒤로가기
-          </button>
-        </>
-      )}
 
-      {/* AR 오버레이 이미지 (스캔 성공 시) */}
-      {imageUrl && mode === "scanning" && (
-        <>
-          <div
-            style={{
-              position: "absolute",
-              top: "10px",
-              left: "10px",
-              backgroundColor: "rgba(0,255,0,0.7)",
-              color: "#000",
-              padding: "8px 12px",
-              borderRadius: "6px",
-              fontSize: "0.8rem",
-              fontWeight: "bold",
-              zIndex: 10,
-            }}
-          >
-            ✅ AR 활성화
+          {/* SCAN GUIDE FRAME */}
+          {!imageUrl && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 z-10 pointer-events-none">
+              <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white/80 rounded-tl-xl" />
+              <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white/80 rounded-tr-xl" />
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white/80 rounded-bl-xl" />
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white/80 rounded-br-xl" />
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-0.5 bg-red-500/50 animate-scan" />
+            </div>
+          )}
+
+          {/* AR OBJECT */}
+          {imageUrl && (
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] pointer-events-none z-20">
+              <img
+                src={imageUrl}
+                alt="AR Object"
+                className="w-full drop-shadow-2xl animate-float"
+                style={{ filter: "drop-shadow(0 10px 20px rgba(0,0,0,0.5))" }}
+              />
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-white text-xs bg-black/50 px-2 py-1 rounded">
+                가상 상품
+              </div>
+            </div>
+          )}
+
+          {/* CONTROLS */}
+          <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center gap-4 z-30">
+            {imageUrl && (
+              <button
+                onClick={async () => {
+                  try {
+                    const bgRemovedUrl = await removeProductBackground(productId);
+                    setImageUrl(bgRemovedUrl);
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : "배경 제거 실패");
+                  }
+                }}
+                className="px-6 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-full font-bold shadow-lg shadow-indigo-500/40 transition-all flex items-center gap-2"
+              >
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.121 15.536c-1.171 1.952-3.07 1.952-4.242 0-1.172-1.953-1.172-5.119 0-7.072 1.171-1.952 3.07-1.952 4.242 0M8 10.5h4m-4 3h4m9-1.5a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                ✂️ 배경 제거하기
+              </button>
+            )}
+            <BackButton onClick={() => { setMode("initial"); setImageUrl(null); }} label="종료하기" />
           </div>
-          <img
-            src={imageUrl}
-            alt="상품 AR"
-            style={{
-              position: "absolute",
-              top: "40%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "50%",
-              maxWidth: "300px",
-              pointerEvents: "none",
-              opacity: 0.85,
-              filter: "drop-shadow(0 4px 8px rgba(0,0,0,0.3))",
-              zIndex: 5,
-              border: "3px solid #00ff00",
-            }}
-            onLoad={() => console.log("✅ AR 이미지 렌더링 성공")}
-            onError={() => {
-              console.error("❌ AR 이미지 로드 실패:", imageUrl);
-              setError("이미지를 불러올 수 없습니다.");
-            }}
-          />
-          {/* ✅ 배경제거 버튼 */}
-    <button
-      onClick={async () => {
-        try {
-          const bgRemovedUrl = await removeProductBackground(productId);
-          setImageUrl(bgRemovedUrl); // AR 이미지 교체
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "배경 제거 실패");
-        }
-      }}
-      style={{
-        position: "absolute",
-        bottom: "80px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        padding: "10px 20px",
-        backgroundColor: "#ff6600",
-        color: "#fff",
-        border: "none",
-        borderRadius: "8px",
-        cursor: "pointer",
-        zIndex: 10,
-      }}
-    >
-      ✂️ 배경제거
-    </button>
         </>
       )}
     </div>

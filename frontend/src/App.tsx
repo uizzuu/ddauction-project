@@ -29,6 +29,8 @@ import {
   CartPage,
   RankPage,
   WishlistPage,
+  UserProfilePage,
+  ReviewWritePage
 } from "./common/import";
 import type { User } from "./common/types";
 
@@ -63,6 +65,9 @@ const DYNAMIC_PATH_PATTERNS = [
   /^\/products\/\d+$/,
   /^\/articles\/\d+$/,
   /^\/articles\/\d+\/edit$/,
+  /^\/users\/\d+$/,
+  /^\/reviews\/\d+$/,
+  /^\/reviews\/write\/\d+$/,
 ];
 
 // 현재 경로가 유효한지 확인
@@ -206,7 +211,10 @@ export default function App() {
         <Route path="/find-password" element={<FindPassword />} />
         <Route path="/cart" element={user ? <CartPage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
         <Route path="/wishlist" element={user ? <WishlistPage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
+        <Route path="/wishlist" element={user ? <WishlistPage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
+        <Route path="/reviews/write/:productId" element={user ? <ReviewWritePage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
         <Route path="/rank" element={<RankPage />} />
+        <Route path="/users/:userId" element={<UserProfilePage />} />
 
         {/* 에러 페이지 - 마지막에 정의 (와일드카드는 마지막!) */}
         <Route path="/error" element={<ErrorPage />} />

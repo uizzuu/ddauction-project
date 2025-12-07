@@ -1,35 +1,28 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getWinningInfo, preparePayment, completePayment } from "../../common/api";
-import type { WinningInfo } from "../../common/types";
+import { fetchProductById, getWinningInfo, preparePayment, completePayment } from "../../common/api";
 
-//  PortOne 타입 선언
+
+// PortOne Global Type
 declare global {
   interface Window {
     IMP?: {
       init: (impCode: string) => void;
       request_pay: (
-        params: {
-          pg: string;
-          pay_method: string;
-          merchant_uid: string;
-          name: string;
-          amount: number;
-          buyer_email: string;
-          buyer_name: string;
-          buyer_tel: string;
-          buyer_addr?: string;
-          buyer_postcode?: string;
-        },
-        callback: (response: {
-          success: boolean;
-          imp_uid?: string;
-          merchant_uid?: string;
-          error_msg?: string;
-        }) => void
+        params: any,
+        callback: (response: any) => void
       ) => void;
     };
   }
+}
+
+// Unified Payment Info Interface
+interface PaymentInfo {
+  productTitle: string;
+  productImage: string | null;
+  sellerName: string;
+  price: number;
+  shippingFee: number;
 }
 
 export default function PaymentPage() {
@@ -37,15 +30,15 @@ export default function PaymentPage() {
   const [searchParams] = useSearchParams();
   const productId = Number(searchParams.get("productId"));
 
-  const [winningInfo, setWinningInfo] = useState<WinningInfo | null>(null);
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // 배송지 정보
+  // Form State
   const [address, setAddress] = useState("");
   const [postcode, setPostcode] = useState("");
   const [phone, setPhone] = useState("");
-
-  // 결제 수단
+  const [name, setName] = useState(""); // Buyer Name
   const [paymentMethod, setPaymentMethod] = useState("card");
 
   useEffect(() => {
@@ -55,369 +48,280 @@ export default function PaymentPage() {
       return;
     }
 
-    fetchWinningInfo();
+    const initPage = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("로그인이 필요합니다.");
+          navigate("/login");
+          return;
+        }
+
+        // 1. Fetch Product Type first
+        const product = await fetchProductById(productId);
+
+        if (product.productType === 'USED') {
+          alert("중고 거래 상품은 1:1 채팅을 통해 거래해주세요.");
+          navigate(`/products/${productId}`);
+          return;
+        }
+
+        if (product.productType === 'STORE') {
+          // Store Product: Direct Purchase
+          setPaymentInfo({
+            productTitle: product.title,
+            productImage: (product.images && product.images.length > 0) ? product.images[0].imagePath : null,
+            sellerName: product.sellerNickName || "판매자",
+            price: Number(product.startingPrice), // Store uses startingPrice as fixed price
+            shippingFee: 0 // Free shipping for now based on previous UI
+          });
+        } else if (product.productType === 'AUCTION') {
+          // Auction Product: Check Winning Info
+          try {
+            const winData = await getWinningInfo(productId);
+            setPaymentInfo({
+              productTitle: winData.productTitle,
+              productImage: winData.productImage,
+              sellerName: winData.sellerName,
+              price: winData.bidPrice,
+              shippingFee: 0
+            });
+          } catch (e) {
+            setErrorMsg("낙찰 정보를 찾을 수 없습니다. (낙찰자가 아니거나 종료되지 않음)");
+          }
+        }
+
+      } catch (err) {
+        console.error(err);
+        setErrorMsg("상품 정보를 불러오는 중 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initPage();
   }, [productId, navigate]);
 
-  // ✅ PortOne 스크립트 로드
+  // Load PortOne SDK
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://cdn.iamport.kr/v1/iamport.js";
     script.async = true;
     document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
+    return () => { document.body.removeChild(script); };
   }, []);
 
-  const fetchWinningInfo = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("로그인이 필요합니다.");
-        navigate("/login");
-        return;
-      }
-
-      // ✅ API 함수 사용
-      const data = await getWinningInfo(productId);
-      setWinningInfo(data);
-    } catch (err) {
-      console.error(err);
-      alert(
-        err instanceof Error
-          ? err.message
-          : "낙찰 정보 조회 중 오류가 발생했습니다."
-      );
-      navigate("/");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handlePayment = async () => {
-    if (!winningInfo) return;
+    if (!paymentInfo) return;
 
-    // 필수 입력 검증
-    if (!address.trim()) {
-      alert("배송지를 입력해주세요.");
-      return;
-    }
-    if (!phone.trim()) {
-      alert("전화번호를 입력해주세요.");
+    // Basic Validation
+    if (!address.trim() || !phone.trim() || !name.trim()) {
+      alert("배송지 정보와 구매자 정보를 모두 입력해주세요.");
       return;
     }
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        alert("로그인이 필요합니다.");
-        navigate("/login");
-        return;
-      }
-
-      // 1️⃣ 결제 준비 (✅ API 함수 사용)
+      // 1. Prepare
       const prepareData = await preparePayment(productId);
 
-      // 2️⃣ PortOne 결제창 호출
       if (!window.IMP) {
-        alert("결제 모듈 로딩 중입니다. 잠시 후 다시 시도해주세요.");
+        alert("결제 모듈 로딩 중입니다.");
         return;
       }
 
       window.IMP.init(prepareData.impCode);
 
-      window.IMP.request_pay(
-        {
-          pg: "html5_inicis",
-          pay_method: paymentMethod,
-          merchant_uid: prepareData.merchantUid,
-          name: prepareData.name,
-          amount: prepareData.amount,
-          buyer_email: prepareData.buyerEmail,
-          buyer_name: prepareData.buyerName,
-          buyer_tel: phone,
-          buyer_addr: address,
-          buyer_postcode: postcode,
-        },
-        async (response) => {
-          if (response.success && response.imp_uid) {
-            try {
-              //  결제 완료 검증 ( API 함수 사용)
-              await completePayment({
-                imp_uid: response.imp_uid,
-                productId: productId,
-                merchant_uid: response.merchant_uid!,
-              });
+      const payParams = {
+        pg: "html5_inicis", // or kcp, toss, etc
+        pay_method: paymentMethod, // card, trans, vbank
+        merchant_uid: prepareData.merchantUid,
+        name: prepareData.name,
+        amount: prepareData.amount, // Server-side calculated amount
+        buyer_email: prepareData.buyerEmail,
+        buyer_name: name,
+        buyer_tel: phone,
+        buyer_addr: address,
+        buyer_postcode: postcode,
+      };
 
-              alert("결제가 완료되었습니다!");
-              navigate(`/products/${productId}`);
-            } catch (err) {
-              alert(err instanceof Error ? err.message : "결제 검증 실패");
-            }
-          } else {
-            alert("결제 실패: " + (response.error_msg || "알 수 없는 오류"));
+      window.IMP.request_pay(payParams, async (response) => {
+        if (response.success && response.imp_uid) {
+          try {
+            await completePayment({
+              imp_uid: response.imp_uid,
+              productId: productId,
+              merchant_uid: response.merchant_uid!,
+            });
+            alert("결제가 완료되었습니다!");
+            navigate(`/products/${productId}`);
+          } catch (e) {
+            alert("결제 검증 실패: " + (e instanceof Error ? e.message : "알 수 없는 오류"));
           }
+        } else {
+          alert("결제 실패: " + (response.error_msg || "취소됨"));
         }
-      );
+      });
+
     } catch (err) {
       console.error(err);
-      alert(
-        err instanceof Error ? err.message : "결제 처리 중 오류가 발생했습니다."
-      );
+      alert("결제 준비 중 오류가 발생했습니다.");
     }
   };
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          maxWidth: "800px",
-          margin: "0 auto",
-          padding: "20px",
-          textAlign: "center",
-        }}
-      >
-        <p>불러오는 중...</p>
-      </div>
-    );
-  }
-
-  if (!winningInfo) {
-    return (
-      <div
-        style={{
-          maxWidth: "800px",
-          margin: "0 auto",
-          padding: "20px",
-          textAlign: "center",
-        }}
-      >
-        <p>낙찰 정보를 찾을 수 없습니다.</p>
-      </div>
-    );
-  }
+  if (loading) return <div className="min-h-screen flex items-center justify-center">불러오는 중...</div>;
+  if (errorMsg) return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold">{errorMsg}</div>;
+  if (!paymentInfo) return null;
 
   return (
-    <div style={{ maxWidth: "800px", margin: "0 auto", padding: "20px" }}>
-      <h1
-        style={{ marginBottom: "30px", fontSize: "2rem", fontWeight: "bold" }}
-      >
-        결제하기
-      </h1>
+    <div className="bg-gray-50 min-h-screen py-10">
+      <div className="max-w-6xl mx-auto px-4">
+        <h1 className="text-3xl font-bold mb-8 text-gray-900">주문/결제</h1>
 
-      {/* 주문 상품 */}
-      <section
-        style={{
-          marginBottom: "30px",
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          padding: "20px",
-        }}
-      >
-        <h2 style={{ marginBottom: "15px", fontSize: "1.3rem" }}>주문 상품</h2>
-        <div style={{ display: "flex", gap: "20px", alignItems: "center" }}>
-          {winningInfo.productImage && (
-            <img
-              src={winningInfo.productImage}
-              alt={winningInfo.productTitle}
-              style={{
-                width: "120px",
-                height: "120px",
-                objectFit: "cover",
-                borderRadius: "8px",
-              }}
-            />
-          )}
-          <div>
-            <p style={{ fontSize: "1.1rem", fontWeight: "bold" }}>
-              {winningInfo.productTitle}
-            </p>
-            <p style={{ color: "#666", marginTop: "8px" }}>
-              판매자: {winningInfo.sellerName}
-            </p>
-            <p
-              style={{
-                fontSize: "1.3rem",
-                fontWeight: "bold",
-                color: "#ff6600",
-                marginTop: "10px",
-              }}
-            >
-              {winningInfo.bidPrice.toLocaleString()}원
-            </p>
+        <div className="flex flex-col lg:flex-row gap-8">
+
+          {/* Left Column: Input Forms */}
+          <div className="flex-1 space-y-6">
+
+            {/* Product Info Card */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                주문 상품 <span className="text-gray-400 text-sm font-normal">1건</span>
+              </h2>
+              <div className="flex gap-4 items-start">
+                <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                  {paymentInfo.productImage ? (
+                    <img src={paymentInfo.productImage} alt="Product" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No Image</div>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-500 mb-1">{paymentInfo.sellerName}</div>
+                  <div className="text-lg font-medium text-gray-900 mb-2 truncate">{paymentInfo.productTitle}</div>
+                  <div className="font-bold text-gray-900">{paymentInfo.price.toLocaleString()}원</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Shipping Info Card */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-bold mb-6">배송지 정보</h2>
+              <div className="space-y-4">
+                <div className="flex gap-4">
+                  <div className="w-24 pt-3 font-medium text-gray-500">받는 분</div>
+                  <input
+                    type="text"
+                    value={name} onChange={(e) => setName(e.target.value)}
+                    placeholder="이름"
+                    className="flex-1 border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-24 pt-3 font-medium text-gray-500">연락처</div>
+                  <input
+                    type="tel"
+                    value={phone} onChange={(e) => setPhone(e.target.value)}
+                    placeholder="- 없이 입력"
+                    className="flex-1 border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
+                  />
+                </div>
+                <div className="flex gap-4">
+                  <div className="w-24 pt-3 font-medium text-gray-500">주소</div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={postcode} onChange={(e) => setPostcode(e.target.value)}
+                        placeholder="우편번호"
+                        className="w-32 border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
+                      />
+                      <button className="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">우편번호 찾기</button>
+                    </div>
+                    <input
+                      type="text"
+                      value={address} onChange={(e) => setAddress(e.target.value)}
+                      placeholder="기본 주소 + 상세 주소"
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Method Card */}
+            <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+              <h2 className="text-xl font-bold mb-6">결제 수단</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { id: 'card', label: '신용/체크카드' },
+                  { id: 'vbank', label: '무통장입금' },
+                  { id: 'trans', label: '계좌이체' },
+                  { id: 'mobile', label: '휴대폰결제' },
+                ].map((method) => (
+                  <label
+                    key={method.id}
+                    className={`
+                                        cursor-pointer border rounded-xl p-4 flex items-center justify-center gap-2 font-medium transition-all
+                                        ${paymentMethod === method.id ? 'border-orange-500 bg-orange-50 text-orange-600 ring-1 ring-orange-500' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600'}
+                                    `}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value={method.id}
+                      checked={paymentMethod === method.id}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                      className="hidden"
+                    />
+                    {method.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
           </div>
-        </div>
-      </section>
 
-      {/* 배송지 정보 */}
-      <section
-        style={{
-          marginBottom: "30px",
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          padding: "20px",
-        }}
-      >
-        <h2 style={{ marginBottom: "15px", fontSize: "1.3rem" }}>
-          배송지 정보
-        </h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-          <input
-            type="text"
-            placeholder="우편번호"
-            value={postcode}
-            onChange={(e) => setPostcode(e.target.value)}
-            style={{
-              padding: "12px",
-              border: "1px solid #ddd",
-              borderRadius: "6px",
-              fontSize: "1rem",
-            }}
-          />
-          <input
-            type="text"
-            placeholder="주소 *"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            style={{
-              padding: "12px",
-              border: "1px solid #ddd",
-              borderRadius: "6px",
-              fontSize: "1rem",
-            }}
-            required
-          />
-          <input
-            type="tel"
-            placeholder="전화번호 *"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            style={{
-              padding: "12px",
-              border: "1px solid #ddd",
-              borderRadius: "6px",
-              fontSize: "1rem",
-            }}
-            required
-          />
-        </div>
-      </section>
+          {/* Right Column: Sticky Summary */}
+          <div className="w-full lg:w-[360px]">
+            <div className="sticky top-24 space-y-4">
+              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <h2 className="text-xl font-bold mb-6">결제 금액</h2>
 
-      {/* 결제 수단 */}
-      <section
-        style={{
-          marginBottom: "30px",
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          padding: "20px",
-        }}
-      >
-        <h2 style={{ marginBottom: "15px", fontSize: "1.3rem" }}>결제 수단</h2>
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <input
-              type="radio"
-              value="card"
-              checked={paymentMethod === "card"}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-            />
-            <span>신용카드</span>
-          </label>
-          <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <input
-              type="radio"
-              value="vbank"
-              checked={paymentMethod === "vbank"}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-            />
-            <span>가상계좌</span>
-          </label>
-          <label style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <input
-              type="radio"
-              value="trans"
-              checked={paymentMethod === "trans"}
-              onChange={(e) => setPaymentMethod(e.target.value)}
-            />
-            <span>실시간 계좌이체</span>
-          </label>
-        </div>
-      </section>
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between text-gray-600">
+                    <span>주문금액</span>
+                    <span>{paymentInfo.price.toLocaleString()}원</span>
+                  </div>
+                  <div className="flex justify-between text-gray-600">
+                    <span>배송비</span>
+                    <span>{paymentInfo.shippingFee === 0 ? "무료" : `${paymentInfo.shippingFee.toLocaleString()}원`}</span>
+                  </div>
+                  <div className="h-px bg-gray-100 my-4" />
+                  <div className="flex justify-between items-center">
+                    <span className="font-bold text-gray-900">최종 결제 금액</span>
+                    <span className="text-2xl font-bold text-orange-600">
+                      {(paymentInfo.price + paymentInfo.shippingFee).toLocaleString()}
+                      <span className="text-base text-gray-600 font-normal ml-1">원</span>
+                    </span>
+                  </div>
+                </div>
 
-      {/* 최종 결제 금액 */}
-      <section
-        style={{
-          marginBottom: "30px",
-          border: "1px solid #ddd",
-          borderRadius: "8px",
-          padding: "20px",
-          backgroundColor: "#f9f9f9",
-        }}
-      >
-        <h2 style={{ marginBottom: "15px", fontSize: "1.3rem" }}>
-          최종 결제 금액
-        </h2>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "1.1rem",
-            marginBottom: "10px",
-          }}
-        >
-          <span>낙찰가</span>
-          <span>{winningInfo.bidPrice.toLocaleString()}원</span>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "1.1rem",
-            marginBottom: "10px",
-          }}
-        >
-          <span>배송비</span>
-          <span>무료</span>
-        </div>
-        <hr
-          style={{
-            margin: "15px 0",
-            border: "none",
-            borderTop: "1px solid #ddd",
-          }}
-        />
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: "1.5rem",
-            fontWeight: "bold",
-            color: "#ff6600",
-          }}
-        >
-          <span>총 결제 금액</span>
-          <span>{winningInfo.bidPrice.toLocaleString()}원</span>
-        </div>
-      </section>
+                <button
+                  onClick={handlePayment}
+                  className="w-full py-4 bg-black text-white rounded-xl font-bold text-lg hover:bg-gray-800 transition-colors shadow-lg"
+                >
+                  결제하기
+                </button>
 
-      {/* 결제 버튼 */}
-      <button
-        onClick={handlePayment}
-        style={{
-          width: "100%",
-          padding: "18px",
-          fontSize: "1.2rem",
-          fontWeight: "bold",
-          backgroundColor: "#ff6600",
-          color: "#fff",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-        }}
-      >
-        {winningInfo.bidPrice.toLocaleString()}원 결제하기
-      </button>
+                <p className="text-xs text-gray-400 mt-4 text-center leading-relaxed">
+                  위 주문 내용을 확인하였으며,<br />결제에 동의합니다.
+                </p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { resetPassword } from "../common/api";
+import { resetPassword } from "../../common/api";
 
 export default function FindPassword() {
   const navigate = useNavigate();

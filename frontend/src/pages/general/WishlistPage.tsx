@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { Heart, Trash2, ShoppingBag } from "lucide-react";
+import { Heart, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { formatPrice } from "../../common/util";
 import { fetchMyLikes, API_BASE_URL } from "../../common/api";
 import type { Product } from "../../common/types";
+import ProductCard from "../../components/ui/ProductCard";
 
 export default function WishlistPage() {
     const navigate = useNavigate();
@@ -21,8 +21,13 @@ export default function WishlistPage() {
 
             try {
                 const products = await fetchMyLikes(token);
-                setWishlistItems(products);
-                setSelectedItems(products.map(p => p.productId));
+                // 중복 제거 (productId 기준)
+                const uniqueProducts = Array.from(
+                    new Map(products.map((item) => [item.productId, item])).values()
+                ).map(p => ({ ...p, isBookmarked: true })); // 찜 목록이므로 true 강제
+
+                setWishlistItems(uniqueProducts);
+                // 모두 선택하지 않음 (초기값)
             } catch (err: any) {
                 console.error("찜 목록 로드 실패:", err);
                 if (err.status === 401 || err.message?.includes("401")) {
@@ -37,31 +42,6 @@ export default function WishlistPage() {
 
         loadWishlist();
     }, [navigate]);
-
-    const handleRemove = async (id: number) => {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/bookmarks/${id}`, {
-                method: "DELETE",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            if (response.ok) {
-                setWishlistItems(prev => prev.filter(item => item.productId !== id));
-                setSelectedItems(prev => prev.filter(itemId => itemId !== id));
-            } else {
-                alert("찜 삭제 실패");
-            }
-        } catch (err) {
-            console.error("찜 삭제 중 오류:", err);
-            alert("찜 삭제 중 오류가 발생했습니다.");
-        }
-    };
 
     const handleSelect = (id: number) => {
         setSelectedItems(prev =>
@@ -86,8 +66,14 @@ export default function WishlistPage() {
         try {
             await Promise.all(
                 selectedItems.map(id =>
-                    fetch(`${API_BASE_URL}/api/bookmarks/${id}`, {
-                        method: "DELETE",
+                    fetch(`${API_BASE_URL}/api/bookmarks/toggle?productId=${id}`, { // toggle API 사용 or DELETE API 확인 필요. 기존 코드는 DELETE /api/bookmarks/{id} 였음.
+                        // api.ts에는 toggleBookmark가 POST /bookmarks/toggle 로 정의됨.
+                        // 기존 WishlistPage.tsx의 handleRemove는 DELETE /api/bookmarks/{id}를 호출했었음.
+                        // 하지만 api.ts에는 toggleBookmark만 보임.
+                        // 확인 결과: api.ts에 toggleBookmark만 있고 DELETE /bookmarks/{id}는 없음.
+                        // 기존 코드가 직접 fetch를 썼던 것 같음.
+                        // 안전하게 toggleBookmark 사용 (이미 찜 상태니까 toggle하면 삭제됨)
+                        method: "POST",
                         headers: {
                             "Content-Type": "application/json",
                             Authorization: `Bearer ${token}`,
@@ -97,6 +83,8 @@ export default function WishlistPage() {
             );
             setWishlistItems(prev => prev.filter(item => !selectedItems.includes(item.productId)));
             setSelectedItems([]);
+            // 이벤트 발생 (헤더 업데이트용 - 만약 찜 카운트가 있다면)
+            window.dispatchEvent(new Event("cart-updated"));
         } catch (err) {
             console.error("선택 항목 삭제 실패:", err);
             alert("삭제 중 오류가 발생했습니다.");
@@ -127,94 +115,54 @@ export default function WishlistPage() {
                 </div>
             ) : (
                 <div>
-                    {/* Select All */}
-                    <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-4">
+                    {/* Select All Tool Bar */}
+                    <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
                         <label className="flex items-center gap-2 cursor-pointer select-none">
                             <input
                                 type="checkbox"
                                 checked={selectedItems.length === wishlistItems.length && wishlistItems.length > 0}
                                 onChange={handleSelectAll}
-                                className="w-4 h-4 text-[#111] rounded border-gray-300 focus:ring-[#111]"
+                                className="w-5 h-5 accent-black rounded border-gray-300"
                             />
-                            <span className="text-sm text-[#666]">전체 선택 ({selectedItems.length}/{wishlistItems.length})</span>
+                            <span className="text-sm font-medium text-[#333]">전체 선택 ({selectedItems.length}/{wishlistItems.length})</span>
                         </label>
                         <button
                             onClick={handleRemoveSelected}
-                            className="text-xs text-[#666] hover:text-[#111] disabled:opacity-50"
+                            className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded transition-colors ${selectedItems.length > 0
+                                ? "text-red-500 hover:bg-red-50"
+                                : "text-gray-300 cursor-not-allowed"
+                                }`}
                             disabled={selectedItems.length === 0}
                         >
+                            <Trash2 size={16} />
                             선택 삭제
                         </button>
                     </div>
 
                     {/* Grid Layout */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
                         {wishlistItems.map((item) => (
-                            <div key={item.productId} className="bg-white border border-gray-100 rounded-lg overflow-hidden hover:border-gray-200 hover:shadow-md transition-all">
-                                {/* Checkbox */}
-                                <div className="p-3 flex items-center justify-between border-b border-gray-100">
-                                    <label className="flex items-center gap-2 cursor-pointer">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedItems.includes(item.productId)}
-                                            onChange={() => handleSelect(item.productId)}
-                                            className="w-4 h-4 text-[#111] rounded border-gray-300 focus:ring-[#111]"
-                                        />
-                                        <span className="text-xs text-[#666]">선택</span>
-                                    </label>
-                                    <button
-                                        onClick={() => handleRemove(item.productId)}
-                                        className="text-[#999] hover:text-[#111] p-1"
-                                        title="찜 삭제"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                            <div key={item.productId} className="relative group/wish">
+                                {/* Checkbox Overlay - Moved outside/above card as requested */}
+                                <div className="absolute -top-2 -left-2 z-30">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedItems.includes(item.productId)}
+                                        onChange={() => handleSelect(item.productId)}
+                                        className="w-5 h-5 accent-black rounded border-gray-300 shadow-sm cursor-pointer"
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
                                 </div>
 
-                                {/* Image */}
-                                <div
-                                    className="aspect-square bg-gray-100 cursor-pointer overflow-hidden"
-                                    onClick={() => navigate(`/products/${item.productId}`)}
-                                >
-                                    {item.images && item.images.length > 0 ? (
-                                        <img
-                                            src={`${API_BASE_URL}${item.images[0].imagePath}`}
-                                            alt={item.title}
-                                            className="w-full h-full object-cover hover:scale-105 transition-transform"
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-xs text-gray-500">No Image</div>
-                                    )}
+                                {/* Product Card */}
+                                <div className={selectedItems.includes(item.productId) ? "opacity-100" : ""}>
+                                    <ProductCard product={item} />
                                 </div>
 
-                                {/* Info */}
-                                <div className="p-4">
-                                    <h3
-                                        className="font-medium text-[#111] mb-2 cursor-pointer hover:underline line-clamp-2"
-                                        onClick={() => navigate(`/products/${item.productId}`)}
-                                    >
-                                        {item.title}
-                                    </h3>
-                                    <div className="text-lg font-bold text-[#111] mb-2">{formatPrice(item.startingPrice || 0)}</div>
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => navigate(`/products/${item.productId}`)}
-                                            className="flex-1 py-2 bg-white border border-[#111] text-[#111] rounded text-sm font-medium hover:bg-gray-50 transition-colors"
-                                        >
-                                            상세보기
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                // Add to cart logic (if implemented)
-                                                alert("장바구니 담기 기능은 준비 중입니다.");
-                                            }}
-                                            className="p-2 bg-[#111] text-white rounded hover:bg-[#333] transition-colors"
-                                            title="장바구니 담기"
-                                        >
-                                            <ShoppingBag size={16} />
-                                        </button>
-                                    </div>
-                                </div>
+                                {/* Selection Border Effect (Optional) */}
+                                {selectedItems.includes(item.productId) && (
+                                    <div className="absolute inset-0 border-2 border-black rounded-[10px] pointer-events-none z-20"></div>
+                                )}
                             </div>
                         ))}
                     </div>
