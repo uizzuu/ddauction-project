@@ -1,26 +1,65 @@
 import { Menu, X, ChevronDown, Check } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../../common/enums";
+import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType, DELIVERY_TYPE, DELIVERY_TYPE_LABELS, type DeliveryType } from "../../common/enums";
+
+const BENEFITS = [
+    { id: "free_shipping", label: "배송비 무료" },
+    { id: "discount", label: "할인 상품" },
+    { id: "escrow", label: "안전결제 환영" },
+    { id: "certified", label: "정품 인증" },
+];
 
 type Props = {
     selectedCategory: string;
     onCategoryChange: (cat: string) => void;
     onOpenSideModal: () => void;
+
+    // Price Filters
+    minPrice: number | undefined;
+    maxPrice: number | undefined;
+    minStartPrice: number | undefined;
+    maxStartPrice: number | undefined;
+    onPriceChange: (type: "current" | "start", min?: number, max?: number) => void;
+
+    // Toggles
+    excludeEnded: boolean;
+    onExcludeEndedChange: (val: boolean) => void;
+
+    // Multi-select Filters
+    selectedDeliveryTypes: DeliveryType[];
+    onDeliveryChange: (types: DeliveryType[]) => void;
+    selectedBenefits: string[];
+    onBenefitChange: (benefits: string[]) => void;
 };
+
 const TABS = [
     { id: "category", label: "카테고리" },
-    { id: "registered", label: "초기 등록가" }, // Mock
+    { id: "price", label: "가격" },
+    { id: "start_price", label: "경매시작가" },
     { id: "benefits", label: "혜택/할인" }, // Mock
     { id: "shipping", label: "배송비" }, // Mock
-    { id: "method", label: "배송방법" }, // Mock
     { id: "soldout", label: "품절 제외" }, // Mock
+    { id: "exclude_ended", label: "경매종료 제외" },
 ];
 
-export default function FilterBar({ selectedCategory, onCategoryChange, onOpenSideModal }: Props) {
-    // Only "category" tab has a real dropdown interaction here
+export default function FilterBar({
+    selectedCategory, onCategoryChange, onOpenSideModal,
+    minPrice, maxPrice, minStartPrice, maxStartPrice, onPriceChange,
+    excludeEnded, onExcludeEndedChange,
+    selectedDeliveryTypes, onDeliveryChange,
+    selectedBenefits, onBenefitChange
+}: Props) {
     const [openTab, setOpenTab] = useState<string | null>(null);
     const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Temp state for price inputs
+    const [tempMin, setTempMin] = useState<string>("");
+    const [tempMax, setTempMax] = useState<string>("");
+
+    // Temp state for multi-selects
+    const [tempDelivery, setTempDelivery] = useState<DeliveryType[]>([]);
+    const [tempBenefits, setTempBenefits] = useState<string[]>([]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -34,6 +73,13 @@ export default function FilterBar({ selectedCategory, onCategoryChange, onOpenSi
     }, []);
 
     const toggleTab = (tabId: string, event: React.MouseEvent<HTMLButtonElement>) => {
+        if (tabId === "exclude_ended") {
+            // Toggle Logic
+            onExcludeEndedChange(!excludeEnded);
+            setOpenTab(null); // Close any open dropdowns
+            return;
+        }
+
         if (openTab === tabId) {
             setOpenTab(null);
         } else {
@@ -43,16 +89,57 @@ export default function FilterBar({ selectedCategory, onCategoryChange, onOpenSi
                 left: rect.left
             });
             setOpenTab(tabId);
+
+            setOpenTab(tabId);
+
+            setOpenTab(tabId);
+
+            // Initialize temp state
+            if (tabId === "price") {
+                setTempMin(minPrice ? minPrice.toString() : "");
+                setTempMax(maxPrice ? maxPrice.toString() : "");
+            } else if (tabId === "start_price") {
+                setTempMin(minStartPrice ? minStartPrice.toString() : "");
+                setTempMax(maxStartPrice ? maxStartPrice.toString() : "");
+            } else if (tabId === "shipping") {
+                setTempDelivery([...selectedDeliveryTypes]);
+            } else if (tabId === "benefits") {
+                setTempBenefits([...selectedBenefits]);
+            }
+        }
+    };
+
+    const handleApply = () => {
+        const min = tempMin ? isNaN(Number(tempMin)) ? undefined : Number(tempMin) : undefined;
+        const max = tempMax ? isNaN(Number(tempMax)) ? undefined : Number(tempMax) : undefined;
+
+        if (openTab === "price") {
+            onPriceChange("current", min, max);
+        } else if (openTab === "start_price") {
+            onPriceChange("start", min, max);
+        } else if (openTab === "shipping") {
+            onDeliveryChange(tempDelivery);
+        } else if (openTab === "benefits") {
+            onBenefitChange(tempBenefits);
+        }
+        setOpenTab(null);
+    };
+
+    // Helper to format/parse number input if needed (simple version for now)
+    const handleNumberInput = (setter: typeof setTempMin, val: string) => {
+        // Allow only numbers
+        if (/^\d*$/.test(val)) {
+            setter(val);
         }
     };
 
     return (
-        <div className="w-full border-b border-[#eee]">
-            <div className="h-fit flex items-center py-1">
+        <div className="w-full">
+            <div className="h-fit flex items-center">
                 {/* 1. Hamburger Button (Left) */}
                 <button
                     onClick={onOpenSideModal}
-                    className="mr-3 py-2 text-[#666] hover:text-[#111] transition-colors flex-shrink-0"
+                    className="mr-3 text-[#666] hover:text-[#111] transition-colors flex-shrink-0"
                     aria-label="필터 전체보기"
                 >
                     <Menu size={20} />
@@ -62,35 +149,40 @@ export default function FilterBar({ selectedCategory, onCategoryChange, onOpenSi
                 <div className="flex-1 overflow-x-auto no-scrollbar flex items-center gap-2" ref={dropdownRef}>
                     {TABS.map((tab) => {
                         const isCategoryTab = tab.id === "category";
-                        // Active condition:
-                        // - if it's the category tab, it's active if a category is selected OR if the dropdown is open
-                        // - for others, it's active if openTab matches (for mock purpose)
-                        const isActive = isCategoryTab
-                            ? !!selectedCategory || openTab === tab.id
-                            : openTab === tab.id;
+                        const isExcludeEnded = tab.id === "exclude_ended";
+
+                        let isActive = false;
+                        if (isCategoryTab) isActive = !!selectedCategory || openTab === tab.id;
+                        else if (isExcludeEnded) isActive = excludeEnded;
+                        else if (tab.id === "price") isActive = (minPrice !== undefined || maxPrice !== undefined) || openTab === tab.id;
+                        else if (tab.id === "start_price") isActive = (minStartPrice !== undefined || maxStartPrice !== undefined) || openTab === tab.id;
+                        else if (tab.id === "shipping") isActive = selectedDeliveryTypes.length > 0 || openTab === tab.id;
+                        else if (tab.id === "benefits") isActive = selectedBenefits.length > 0 || openTab === tab.id;
+                        else isActive = openTab === tab.id;
+
+                        let label = tab.label;
+                        if (isCategoryTab && selectedCategory) label = PRODUCT_CATEGORY_LABELS[selectedCategory as ProductCategoryType];
+
+                        const hasArrow = ["category", "price", "start_price", "benefits", "shipping"].includes(tab.id);
+                        const isDropdownOpen = openTab === tab.id;
 
                         return (
                             <div key={tab.id} className="relative">
                                 <button
-                                    onClick={(e) => {
-                                        if (isCategoryTab) {
-                                            toggleTab(tab.id, e);
-                                        } else {
-                                            // Mock behavior for other tabs: just toggle 'active' visual state
-                                            toggleTab(tab.id, e);
-                                        }
-                                    }}
+                                    onClick={(e) => toggleTab(tab.id, e)}
                                     className={`
-                                        flex items-center justify-center px-3 py-1.5 rounded-[18px] text-[13px] font-medium whitespace-nowrap border transition-all
+                                        flex items-center justify-center px-3 py-1.5 rounded-[18px] text-[14px] font-medium whitespace-nowrap border transition-all
                                         ${isActive
                                             ? "bg-[#333] text-white border-[#333]"
-                                            : "bg-white text-[#666] border-[#eee] hover:bg-[#f9f9f9]"}
+                                            : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"}
                                     `}
                                 >
-                                    {isCategoryTab && selectedCategory ? PRODUCT_CATEGORY_LABELS[selectedCategory as ProductCategoryType] : tab.label}
-                                    {/* Dropdown arrow if it's a select-type tab */}
-                                    {["category", "registered", "benefits", "shipping", "method"].includes(tab.id) && (
-                                        <ChevronDown size={14} className={`ml-1 ${isActive ? "text-white" : "text-[#999]"}`} />
+                                    {label}
+                                    {hasArrow && (
+                                        <ChevronDown
+                                            size={14}
+                                            className={`ml-1 origin-center ${isDropdownOpen ? "rotate-180" : ""} ${isActive ? "text-white" : "text-[#999]"}`}
+                                        />
                                     )}
                                 </button>
                             </div>
@@ -99,7 +191,7 @@ export default function FilterBar({ selectedCategory, onCategoryChange, onOpenSi
                 </div>
             </div>
 
-            {/* Dropdown Menu (Fixed Position to avoid overflow clipping) */}
+            {/* Dropdown Menu (Fixed) */}
             {openTab === "category" && (
                 <div
                     ref={dropdownRef}
@@ -130,6 +222,110 @@ export default function FilterBar({ selectedCategory, onCategoryChange, onOpenSi
                                 {selectedCategory === code && <Check size={14} className="text-[#333]" />}
                             </button>
                         ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Price Dropdown */}
+            {(openTab === "price" || openTab === "start_price") && (
+                <div
+                    ref={dropdownRef}
+                    className="fixed w-[260px] bg-white border border-[#eee] rounded-lg shadow-xl z-50 p-4 animate-in fade-in zoom-in-95 duration-100"
+                    style={{ top: dropdownPos.top, left: dropdownPos.left }}
+                >
+                    <h4 className="text-sm font-bold mb-3 text-[#333]">
+                        {openTab === "price" ? "가격 설정" : "시작가 설정"}
+                    </h4>
+                    <div className="flex items-center gap-2 mb-4">
+                        <input
+                            type="text"
+                            className="w-full bg-[#f5f5f5] text-sm px-3 py-2 rounded border border-transparent focus:bg-white focus:border-[#333] outline-none"
+                            placeholder="최소"
+                            value={tempMin}
+                            onChange={(e) => handleNumberInput(setTempMin, e.target.value)}
+                        />
+                        <span className="text-[#999] text-sm">~</span>
+                        <input
+                            type="text"
+                            className="w-full bg-[#f5f5f5] text-sm px-3 py-2 rounded border border-transparent focus:bg-white focus:border-[#333] outline-none"
+                            placeholder="최대"
+                            value={tempMax}
+                            onChange={(e) => handleNumberInput(setTempMax, e.target.value)}
+                        />
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            className="flex-1 py-2 text-sm text-[#666] bg-gray-100 rounded hover:bg-gray-200"
+                            onClick={() => setOpenTab(null)}
+                        >
+                            취소
+                        </button>
+                        <button
+                            className="flex-1 py-2 text-sm text-white bg-[#333] rounded hover:bg-black font-medium"
+                            onClick={handleApply}
+                        >
+                            적용
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Delivery & Benefits Dropdown */}
+            {(openTab === "shipping" || openTab === "benefits") && (
+                <div
+                    ref={dropdownRef}
+                    className="fixed w-[240px] bg-white border border-[#eee] rounded-lg shadow-xl z-50 p-4 animate-in fade-in zoom-in-95 duration-100"
+                    style={{ top: dropdownPos.top, left: dropdownPos.left }}
+                >
+                    <h4 className="text-sm font-bold mb-3 text-[#333]">
+                        {openTab === "shipping" ? "배송비 설정" : "혜택/할인 설정"}
+                    </h4>
+                    <div className="flex flex-col gap-2 mb-4">
+                        {openTab === "shipping" ? (
+                            DELIVERY_TYPE.map((type) => (
+                                <label key={type} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="accent-black w-4 h-4"
+                                        checked={tempDelivery.includes(type)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) setTempDelivery([...tempDelivery, type]);
+                                            else setTempDelivery(tempDelivery.filter(t => t !== type));
+                                        }}
+                                    />
+                                    <span className="text-sm text-[#333]">{DELIVERY_TYPE_LABELS[type]}</span>
+                                </label>
+                            ))
+                        ) : (
+                            BENEFITS.map((b) => (
+                                <label key={b.id} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        className="accent-black w-4 h-4"
+                                        checked={tempBenefits.includes(b.id)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) setTempBenefits([...tempBenefits, b.id]);
+                                            else setTempBenefits(tempBenefits.filter(id => id !== b.id));
+                                        }}
+                                    />
+                                    <span className="text-sm text-[#333]">{b.label}</span>
+                                </label>
+                            ))
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            className="flex-1 py-2 text-sm text-[#666] bg-gray-100 rounded hover:bg-gray-200"
+                            onClick={() => setOpenTab(null)}
+                        >
+                            취소
+                        </button>
+                        <button
+                            className="flex-1 py-2 text-sm text-white bg-[#333] rounded hover:bg-black font-medium"
+                            onClick={handleApply}
+                        >
+                            적용
+                        </button>
                     </div>
                 </div>
             )}

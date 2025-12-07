@@ -75,11 +75,11 @@ export default function CartPage() {
     const totalPrice = totalProductPrice + totalShipping;
 
     if (loading) {
-        return <div className="max-w-[1280px] mx-auto px-4 py-8 flex justify-center">로딩 중...</div>;
+        return <div className="conatainer px-4 py-8 flex justify-center">로딩 중...</div>;
     }
 
     return (
-        <div className="max-w-[1280px] mx-auto px-4 py-8 min-h-[80vh]">
+        <div className="container">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
                 <ShoppingBag className="text-[#111]" />
                 장바구니
@@ -190,7 +190,7 @@ export default function CartPage() {
                             </div>
 
                             <button
-                                className="w-full py-3 bg-[#111] text-white rounded-lg font-bold hover:bg-[#a06465] transition-colors flex items-center justify-center gap-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                className="w-full py-3 bg-[#111] text-white rounded-lg font-bold hover:bg-[#666] transition-colors flex items-center justify-center gap-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
                                 disabled={selectedItems.length === 0}
                                 onClick={() => alert("주문 기능은 준비 중입니다.")}
                             >

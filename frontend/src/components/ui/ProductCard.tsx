@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Product } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
@@ -13,7 +13,13 @@ type Props = {
 
 export default function ProductCard({ product, rank, rankChange }: Props) {
     const navigate = useNavigate();
+    // 1. Initialize state from prop
     const [isLiked, setIsLiked] = useState(!!product.isBookmarked);
+
+    // 2. Sync state with prop updates (e.g. valid when parent refetches)
+    useEffect(() => {
+        setIsLiked(!!product.isBookmarked);
+    }, [product.isBookmarked]);
 
     // 임시 카테고리 표시 (Used) - 실제 데이터 없으면 "기타"
     const categoryName = "기타";
@@ -34,10 +40,13 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
         }
 
         const prev = isLiked;
-        setIsLiked(!prev);
+        setIsLiked(!prev); // Optimistic Update
 
         try {
             await toggleBookmark(product.productId, token);
+            // 헤더 카운트 즉시 업데이트
+            window.dispatchEvent(new Event("cart-updated"));
+            console.log("Like toggled, event dispatched");
         } catch (err) {
             console.error(err);
             setIsLiked(prev); // Revert
@@ -85,7 +94,7 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
 
                 {/* Top-Right Heart Icon */}
                 <button
-                    className="absolute top-3 right-3 z-10 p-1 hover:scale-110 transition-transform"
+                    className="absolute top-3 right-3 z-10 hover:scale-110 transition-transform"
                     onClick={handleLike}
                 >
                     <Heart
@@ -166,7 +175,7 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-[13px] font-normal text-[#111] leading-tight mb-1.5 line-clamp-2 min-h-[32px] break-keep">
+                <h3 className="text-[14px] font-normal text-[#111] leading-tight mb-1.5 line-clamp-2 min-h-[32px] break-keep">
                     {product.title}
                 </h3>
 

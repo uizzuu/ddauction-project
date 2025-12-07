@@ -52,6 +52,25 @@ export default function Header({ user, setUser }: Props) {
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const [showNotifications, setShowNotifications] = useState(false);
 
+    // Header Sliding Indicator
+    const navRef = useRef<HTMLDivElement>(null);
+    const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });
+
+    useEffect(() => {
+        if (navRef.current) {
+            const activeTab = navRef.current.querySelector('.nav-tab.active') as HTMLElement;
+            if (activeTab) {
+                setIndicatorStyle({
+                    left: activeTab.offsetLeft,
+                    width: activeTab.offsetWidth,
+                    opacity: 1
+                });
+            } else {
+                setIndicatorStyle(prev => ({ ...prev, opacity: 0 }));
+            }
+        }
+    }, [location.pathname]);
+
     useEffect(() => {
         const handleScroll = () => {
             const currentScrollY = window.scrollY;
@@ -349,7 +368,7 @@ export default function Header({ user, setUser }: Props) {
             </div>
             {/* 메인헤더 */}
             <div className="w-full bg-white py-2">
-                <div className="w-full max-w-[1280px] mx-auto flex gap-3 items-center">
+                <div className="w-full max-w-[1280px] mx-auto flex gap-4 items-center">
                     {/* 로고 */}
                     <a
                         href="/"
@@ -386,7 +405,7 @@ export default function Header({ user, setUser }: Props) {
                                 onKeyDown={handleKeyDown}
                                 onFocus={handleInputFocus}
                                 autoComplete="off"
-                                className="w-full border-none outline-none bg-transparent h-full ring-0 text-sm text-[#333] placeholder-[#aaa]"
+                                className="w-full border-none outline-none bg-transparent h-full ring-0 text-[15px] text-[#333] placeholder-[#aaa]"
                                 aria-label="검색어 입력"
                                 ref={inputRef}
                             />
@@ -400,10 +419,10 @@ export default function Header({ user, setUser }: Props) {
                                         setIsShowingPopular(true);
                                         inputRef.current?.focus();
                                     }}
-                                    className="text-gray-400 hover:text-gray-600 p-1"
+                                    className="text-gray-300 hover:text-gray-400 p-1"
                                     aria-label="검색어 삭제"
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                     </svg>
                                 </button>
@@ -411,7 +430,7 @@ export default function Header({ user, setUser }: Props) {
 
                             <button
                                 type="button"
-                                className={`inline-flex flex-col items-start gap-2.5 p-[0.5px] relative flex-[0_0_auto] transition-opacity duration-300 ${showSuggestions ? "rotate-180" : "rotate-0"}`}
+                                className={`inline-flex flex-col items-start gap-2.5 p-[0.5px] relative flex-[0_0_auto] origin-center ${showSuggestions ? "rotate-180" : "rotate-0"}`}
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     setShowSuggestions(!showSuggestions);
@@ -425,19 +444,21 @@ export default function Header({ user, setUser }: Props) {
                                     className="relative w-[9px] h-1.5 mt-[-0.50px] mb-[-0.50px] ml-[-0.50px] mr-[-0.50px]"
                                     alt=""
                                     src="https://c.animaapp.com/vpqlbV8X/img/vector.svg"
+                                    style={{ filter: "invert(20%)" }}
                                 />
                             </button>
 
                             <div
-                                className="w-[1px] h-[14px] bg-[#ddd] mx-1"
+                                className="w-[1px] h-[14px] bg-[#888] mx-1"
                                 aria-hidden="true"
                             />
 
                             <button type="submit" aria-label="검색" className="pl-2">
                                 <img
-                                    className="relative flex-[0_0_auto]"
+                                    className="relative flex-[0_0_auto] w-[22px] h-[22px]"
                                     alt=""
                                     src="https://c.animaapp.com/vpqlbV8X/img/search.svg"
+                                    style={{ filter: "invert(20%)" }}
                                 />
                             </button>
                         </form>
@@ -477,7 +498,7 @@ export default function Header({ user, setUser }: Props) {
                                                             setRecentKeywords([]);
                                                             localStorage.removeItem("recent_searches");
                                                         }}
-                                                        className="text-xs text-[#999] hover:text-[#666] underline"
+                                                        className="text-[14px] text-[#999] hover:text-[#666] underline"
                                                     >
                                                         전체삭제
                                                     </button>
@@ -501,7 +522,7 @@ export default function Header({ user, setUser }: Props) {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-sm text-[#aaa] py-2">최근 검색 내역이 없습니다.</p>
+                                                <p className="text-[14px] text-[#aaa] py-2">최근 검색 내역이 없습니다.</p>
                                             )}
                                         </div>
 
@@ -518,7 +539,7 @@ export default function Header({ user, setUser }: Props) {
                                                         <span className={`w-5 font-bold ${index < 3 ? "text-[#111]" : "text-[#333]"}`}>
                                                             {index + 1}
                                                         </span>
-                                                        <span className="text-sm text-[#333] truncate">{keyword}</span>
+                                                        <span className="text-[14px] text-[#333] truncate">{keyword}</span>
                                                         {/* 등락폭은 API 데이터 부재로 생략, 추후 추가 가능 */}
                                                     </div>
                                                 ))}
@@ -568,9 +589,10 @@ export default function Header({ user, setUser }: Props) {
                                 onClick={() => setShowNotifications(!showNotifications)}
                             >
                                 <img
-                                    className="w-6 h-6"
+                                    className="w-[21px] h-[23px]"
                                     alt=""
                                     src="https://c.animaapp.com/vpqlbV8X/img/group@2x.png"
+                                    style={{ filter: "invert(20%)" }}
                                 />
                             </button>
                             <NotificationModal isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
@@ -583,9 +605,10 @@ export default function Header({ user, setUser }: Props) {
                             aria-label="찜하기"
                         >
                             <img
-                                className="w-6 h-6"
+                                className="w-[23px] h-[23px]"
                                 alt=""
                                 src="https://c.animaapp.com/vpqlbV8X/img/vector-1.svg"
+                                style={{ filter: "invert(20%)" }}
                             />
                         </NavLink>
 
@@ -596,9 +619,10 @@ export default function Header({ user, setUser }: Props) {
                             className="p-1 hover:opacity-70 transition-opacity"
                         >
                             <img
-                                className="w-6 h-6"
+                                className="w-[23px] h-[23px]"
                                 alt=""
                                 src="https://c.animaapp.com/vpqlbV8X/img/mypage.svg"
+                                style={{ filter: "invert(20%)" }}
                             />
                         </NavLink>
 
@@ -609,9 +633,10 @@ export default function Header({ user, setUser }: Props) {
                             aria-label={`장바구니 ${cartItemCount}개 상품`}
                         >
                             <img
-                                className="w-6 h-6"
+                                className="w-[21px] h-[23px]"
                                 alt=""
                                 src="https://c.animaapp.com/vpqlbV8X/img/group-1@2x.png"
+                                style={{ filter: "invert(20%)" }}
                             />
 
                             {cartItemCount > 0 && (
@@ -627,8 +652,8 @@ export default function Header({ user, setUser }: Props) {
             <div
                 className={`hidden md:block w-full bg-white overflow-hidden transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0 border-none" : "max-h-[60px] opacity-100 border-b"}`}
             >
-                <div className="w-full max-w-[1280px] mx-auto">
-                    <nav className="flex gap-6" aria-label="카테고리">
+                <div className="w-full max-w-[1280px] mx-auto relative">
+                    <nav className="flex gap-6 relative" aria-label="카테고리" ref={navRef}>
                         <NavLink
                             to="/"
                             className={({ isActive }) => `nav-tab ${isActive || location.pathname === '/' ? "active" : "inactive"}`}
@@ -674,6 +699,16 @@ export default function Header({ user, setUser }: Props) {
                         >
                             일대일채팅
                         </NavLink>
+
+                        {/* Sliding Indicator */}
+                        <div
+                            className="absolute bottom-0 h-[2px] bg-black transition-all duration-300 ease-out"
+                            style={{
+                                left: `${indicatorStyle.left}px`,
+                                width: `${indicatorStyle.width}px`,
+                                opacity: indicatorStyle.opacity
+                            }}
+                        />
                     </nav>
                 </div>
             </div>

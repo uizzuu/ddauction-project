@@ -1225,30 +1225,25 @@ export async function fetchFilteredProducts(params: {
   category?: string; // categoryCode (PRODUCT_CATEGORY_TYPE)
   productStatus?: string; // "ACTIVE" (거래 가능만)
   sort?: SortOption; // "latest", "priceAsc" 등
+  minPrice?: number;
+  maxPrice?: number;
+  minStartPrice?: number;
+  maxStartPrice?: number;
 }): Promise<TYPE.Product[]> {
   // 1. 쿼리 스트링 생성
   const query = new URLSearchParams();
   if (params.keyword) query.append("keyword", params.keyword);
-  if (params.category) query.append("category", params.category);
+  if (params.category) query.append("productCategoryType", params.category);
   if (params.productStatus) query.append("productStatus", params.productStatus);
-
-  // NOTE: 서버에서 정렬을 지원하지 않으면 클라이언트에서 처리해야 함. 
-  // 여기서는 API에 'sort' 파라미터를 추가하여 서버 정렬을 시도하는 방식으로 확장합니다.
   if (params.sort) query.append("sort", params.sort);
+  if (params.minPrice !== undefined) query.append("minPrice", params.minPrice.toString());
+  if (params.maxPrice !== undefined) query.append("maxPrice", params.maxPrice.toString());
+  if (params.minStartPrice !== undefined) query.append("minStartPrice", params.minStartPrice.toString());
+  if (params.maxStartPrice !== undefined) query.append("maxStartPrice", params.maxStartPrice.toString());
 
-  // 2. URL 결정
-  let url = `${API_BASE_URL}${SPRING_API}/products/search?${query.toString()}`;
-
-  if (!params.keyword && !params.category && !params.productStatus) {
-    // 필터링 파라미터가 없으면 전체 목록 조회 API를 사용하거나, 
-    // 위 url을 그대로 사용하여 전체 목록을 가져올 수 있습니다.
-    url = `${API_BASE_URL}${SPRING_API}/products?${query.toString()}`;
-  }
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("상품 목록 조회 실패");
-
-  return res.json() as Promise<TYPE.Product[]>;
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/products/search?${query.toString()}`);
+  if (!response.ok) throw new Error("상품 검색 실패");
+  return response.json();
 }
 
 export async function submitUserQna(title: string, content: string): Promise<void> {
@@ -1380,3 +1375,41 @@ export const saveSearchLog = async (keyword: string): Promise<void> => {
     throw new Error("검색 로그 저장 실패");
   }
 };
+
+// ===================== 채팅 관리 (Admin) =====================
+
+export async function deletePublicChat(publicChatId: number): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/chats/public/${publicChatId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("공개 채팅 삭제 실패");
+}
+
+export async function deletePrivateChat(privateChatId: number): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/chats/private/${privateChatId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("개인 채팅 삭제 실패");
+}
+
+export async function searchPublicChats(keyword: string): Promise<TYPE.PublicChat[]> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/chats/admin/search/public?keyword=${encodeURIComponent(keyword)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("공개 채팅 검색 실패");
+  return res.json();
+}
+
+export async function searchPrivateChats(keyword: string): Promise<TYPE.PrivateChat[]> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/chats/admin/search/private?keyword=${encodeURIComponent(keyword)}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("개인 채팅 검색 실패");
+  return res.json();
+}

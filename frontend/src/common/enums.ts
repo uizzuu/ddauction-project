@@ -63,3 +63,19 @@ export const CATEGORY_OPTIONS = PRODUCT_CATEGORY_TYPE.map(code => ({
   value: code,
   label: PRODUCT_CATEGORY_LABELS[code]
 }));
+
+// 배송 방법
+export const DELIVERY_TYPE = ["PARCEL", "GS", "CU", "MAIL", "SEMIREGISTERED", "REGISTERED", "QUICK", "MEETUP", "PICKUP"] as const;
+export type DeliveryType = (typeof DELIVERY_TYPE)[number];
+
+export const DELIVERY_TYPE_LABELS: Record<DeliveryType, string> = {
+  PARCEL: "택배",
+  GS: "GS반값택배",
+  CU: "CU알뜰택배",
+  MAIL: "일반우편",
+  SEMIREGISTERED: "준등기",
+  REGISTERED: "등기",
+  QUICK: "퀵서비스",
+  MEETUP: "직거래",
+  PICKUP: "방문수령"
+};

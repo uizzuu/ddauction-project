@@ -5,8 +5,8 @@ import type { Product } from "../../common/types";
 import { parseWithTZ } from "../../common/util";
 import type { SortOption } from "../../common/util";
 import ProductCard from "../../components/ui/ProductCard";
-import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType } from "../../common/enums";
-import { SlidersHorizontal, ArrowUpDown } from "lucide-react";
+import { PRODUCT_CATEGORY_LABELS, type ProductCategoryType, type DeliveryType } from "../../common/enums";
+import { ArrowUpDown } from "lucide-react";
 import FilterBar from "../../components/modal/FilterBar";
 import SideFilterModal from "../../components/modal/SideFilterModal";
 
@@ -18,6 +18,15 @@ export default function ProductSearchPage() {
   const [keyword, setKeyword] = useState("");
   const [categoryCode, setCategoryCode] = useState<string | "">("");
   const [activeOnly, setActiveOnly] = useState(false);
+
+  // Price Filter State
+  const [minPrice, setMinPrice] = useState<number | undefined>();
+  const [maxPrice, setMaxPrice] = useState<number | undefined>();
+  const [minStartPrice, setMinStartPrice] = useState<number | undefined>();
+  const [maxStartPrice, setMaxStartPrice] = useState<number | undefined>();
+  const [selectedDeliveryTypes, setSelectedDeliveryTypes] = useState<DeliveryType[]>([]);
+  const [selectedBenefits, setSelectedBenefits] = useState<string[]>([]);
+
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortOption, setSortOption] = useState<SortOption>("latest");
@@ -29,15 +38,25 @@ export default function ProductSearchPage() {
     kw: string = "",
     catCode: string | "" = "",
     active: boolean = false,
-    sort: SortOption = "latest"
+    sort: SortOption = "latest",
+    priceRange?: { min?: number, max?: number, minStart?: number, maxStart?: number }
   ) => {
     setLoading(true);
     try {
+      const currentMinPrice = priceRange?.min !== undefined ? priceRange.min : minPrice;
+      const currentMaxPrice = priceRange?.max !== undefined ? priceRange.max : maxPrice;
+      const currentMinStart = priceRange?.minStart !== undefined ? priceRange.minStart : minStartPrice;
+      const currentMaxStart = priceRange?.maxStart !== undefined ? priceRange.maxStart : maxStartPrice;
+
       let data: Product[] = await fetchFilteredProducts({
         keyword: kw,
         category: catCode,
         productStatus: active ? "ACTIVE" : undefined,
         sort: sort,
+        minPrice: currentMinPrice,
+        maxPrice: currentMaxPrice,
+        minStartPrice: currentMinStart,
+        maxStartPrice: currentMaxStart
       });
 
       // 거래 가능만 보기 필터 (클라이언트 사이드 추가 필터링)
@@ -67,32 +86,52 @@ export default function ProductSearchPage() {
     setKeyword(kw);
     setCategoryCode(catCode);
 
-    // URL에 sort 파라미터가 있고 현재 상태와 다르면 업데이트 (이 경우 fetch는 다음 렌더링에서 실행됨)
     if (sortParam && sortParam !== sortOption) {
       setSortOption(sortParam);
       return;
     }
 
-    // activeOnly와 sortOption은 로컬 스테이트로 관리 (초기화시 리셋 안함)
-    fetchProducts(kw, catCode, activeOnly, sortOption);
-  }, [location.search, activeOnly, sortOption]);
+    // Pass current state values explicitly for clarity, though closure captures them.
+    // Use `undefined` for prices here as we rely on the state (or pass updated state if available)
+    fetchProducts(kw, catCode, activeOnly, sortOption, {
+      min: minPrice, max: maxPrice, minStart: minStartPrice, maxStart: maxStartPrice
+    });
+  }, [location.search, activeOnly, sortOption, minPrice, maxPrice, minStartPrice, maxStartPrice]);
 
   const handleCategoryClick = (cat: string) => {
     const params = new URLSearchParams(location.search);
     if (categoryCode === cat) {
-      // Toggle off
       params.delete("category");
       setCategoryCode("");
     } else {
       params.set("category", cat);
       setCategoryCode(cat);
     }
-    // keyword 유지
     navigate(`/search?${params.toString()}`);
   };
 
+  const handlePriceChange = (type: "current" | "start", min?: number, max?: number) => {
+    if (type === "current") {
+      setMinPrice(min);
+      setMaxPrice(max);
+    } else {
+      setMinStartPrice(min);
+      setMaxStartPrice(max);
+    }
+    // Effect will trigger fetch
+  };
+
+  const handleDeliveryChange = (types: DeliveryType[]) => setSelectedDeliveryTypes(types);
+  const handleBenefitChange = (benefits: string[]) => setSelectedBenefits(benefits);
+
   const clearFilters = () => {
     setActiveOnly(false);
+    setMinPrice(undefined);
+    setMaxPrice(undefined);
+    setMinStartPrice(undefined);
+    setMaxStartPrice(undefined);
+    setSelectedDeliveryTypes([]);
+    setSelectedBenefits([]);
     navigate("/search");
   };
 
@@ -105,6 +144,17 @@ export default function ProductSearchPage() {
           selectedCategory={categoryCode}
           onCategoryChange={handleCategoryClick}
           onOpenSideModal={() => setIsSideModalOpen(true)}
+          minPrice={minPrice}
+          maxPrice={maxPrice}
+          minStartPrice={minStartPrice}
+          maxStartPrice={maxStartPrice}
+          onPriceChange={handlePriceChange}
+          excludeEnded={activeOnly}
+          onExcludeEndedChange={setActiveOnly}
+          selectedDeliveryTypes={selectedDeliveryTypes}
+          onDeliveryChange={handleDeliveryChange}
+          selectedBenefits={selectedBenefits}
+          onBenefitChange={handleBenefitChange}
         />
       </div>
 
@@ -113,13 +163,24 @@ export default function ProductSearchPage() {
         onClose={() => setIsSideModalOpen(false)}
         selectedCategory={categoryCode}
         onCategoryChange={handleCategoryClick}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        minStartPrice={minStartPrice}
+        maxStartPrice={maxStartPrice}
+        onPriceChange={handlePriceChange}
+        excludeEnded={activeOnly}
+        onExcludeEndedChange={setActiveOnly}
+        selectedDeliveryTypes={selectedDeliveryTypes}
+        onDeliveryChange={handleDeliveryChange}
+        selectedBenefits={selectedBenefits}
+        onBenefitChange={handleBenefitChange}
       />
 
       {/* Main Content Area */}
       <div className="flex-1">
 
         <div className="flex justify-between items-center mb-4 bg-white z-10 py-2">
-          <span className="text-sm text-[#555]">
+          <span className="text-[#555]">
             상품 <span className="font-bold text-[#111]">{products.length}</span>개
           </span>
 
@@ -128,7 +189,7 @@ export default function ProductSearchPage() {
             <button
               onClick={() => setIsSortOpen(!isSortOpen)}
               onBlur={() => setTimeout(() => setIsSortOpen(false), 200)}
-              className="flex items-center gap-1 text-sm font-medium text-[#666] hover:text-black"
+              className="flex items-center gap-1 text-[14px] font-medium text-[#666] hover:text-black"
             >
               <ArrowUpDown size={14} />
               <span>
@@ -141,7 +202,7 @@ export default function ProductSearchPage() {
 
             {/* Dropdown Menu */}
             {isSortOpen && (
-              <div className="absolute top-full right-0 mt-2 w-[120px] bg-white border border-[#eee] rounded shadow-lg z-20 text-sm">
+              <div className="absolute top-full right-0 mt-2 w-[120px] bg-white border border-[#eee] rounded shadow-lg z-20 text-[14px]">
                 {[
                   { value: "latest", label: "최신순" },
                   { value: "priceAsc", label: "가격 낮은순" },

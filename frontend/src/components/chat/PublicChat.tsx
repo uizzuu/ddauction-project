@@ -84,45 +84,109 @@ export default function PublicChat({ user }: Props) {
     };
 
     return (
-        <div className="flex-1 flex flex-col max-w-[1280px] mx-auto w-full h-[calc(100vh-120px)] p-5">
+        <div className="container mx-auto flex flex-col p-5 h-[calc(100vh-160px)]">
             <h1 className="mb-3 text-xl font-bold border-b pb-2">공개 채팅</h1>
 
             <div className="border border-[#ccc] p-3 w-full h-full flex flex-col rounded-lg shadow-sm bg-white">
-                <div className="flex-1 overflow-y-auto mb-3 p-2 bg-gray-50 rounded border border-[#eee]">
-                    {messages.map((msg, i) => (
-                        <div
-                            key={i}
-                            className="mb-2"
-                            style={{ textAlign: msg.user?.userId === user?.userId ? "right" : "left" }}
-                        >
-                            <b>{msg.user?.userId === user?.userId ? "나" : msg.user?.nickName}:</b>{" "}
-                            {msg.content}
-                            {msg.createdAt && (
-                                <span className="text-[#888] ml-2 text-xs">
-                                    {new Date(msg.createdAt).toLocaleTimeString([], {
-                                        hour: "2-digit",
-                                        minute: "2-digit",
-                                    })}
-                                </span>
-                            )}
-                        </div>
-                    ))}
+                <div className="flex-1 overflow-y-auto mb-3 p-4 bg-gray-50 rounded-lg border border-[#eee]">
+                    {messages.map((msg, i) => {
+                        const isMe = msg.user?.userId === user?.userId;
+                        const isAdmin = user.role === "ADMIN";
+                        const isDeleted = msg.isDeleted; // 백엔드 isDeleted 필드 (boolean)
+
+                        // 닉네임 표시 로직 (관리자는 "닉네임(실명)" 형태)
+                        const displayName = isAdmin && msg.user?.userName
+                            ? `${msg.user.nickName} (${msg.user.userName})`
+                            : msg.user?.nickName;
+
+                        if (isDeleted) {
+                            return (
+                                <div key={i} className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}>
+                                    <div className="bg-gray-100 text-gray-400 px-4 py-2 rounded-lg text-sm italic border border-gray-200">
+                                        관리자에 의해 삭제된 메시지입니다.
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        return (
+                            <div key={i} className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}>
+                                <div className={`max-w-[70%] flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+
+                                    {/* 유저 이름 (관리자: 클릭 시 제재 메뉴) */}
+                                    {!isMe && (
+                                        <div
+                                            className={`text-xs text-gray-500 mb-1 font-bold ${isAdmin ? "cursor-pointer hover:text-red-500 hover:underline" : ""}`}
+                                            onClick={() => {
+                                                if (isAdmin) {
+                                                    // TODO: 제재 메뉴 (모달 or 드롭다운) 구현 필요
+                                                    if (window.confirm(`'${displayName}' 님을 제재(경고/정지) 하시겠습니까?`)) {
+                                                        alert("제재 기능은 아직 구현되지 않았습니다.");
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            {displayName}
+                                        </div>
+                                    )}
+
+                                    {/* 메시지 내용 (관리자: 클릭 시 삭제 메뉴) */}
+                                    <div
+                                        className={`relative group px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-all hover:shadow-md 
+                                            ${isMe ? "bg-[#333] text-white rounded-br-none" : "bg-white border border-gray-200 text-black rounded-bl-none"}
+                                        `}
+                                        onClick={() => {
+                                            if (isAdmin) {
+                                                if (window.confirm("이 메시지를 삭제하시겠습니까?")) {
+                                                    const token = localStorage.getItem("token");
+                                                    fetch(`${backendHost}/api/chats/public/${msg.publicChatId}`, {
+                                                        method: "DELETE",
+                                                        headers: { Authorization: `Bearer ${token}` }
+                                                    }).then(res => {
+                                                        if (res.ok) {
+                                                            setMessages(prev => prev.map(m => m.publicChatId === msg.publicChatId ? { ...m, isDeleted: true } : m));
+                                                        } else {
+                                                            alert("삭제 실패");
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        }}
+                                        title={isAdmin ? "클릭하여 메시지 삭제" : ""}
+                                    >
+                                        <div className="text-sm break-all whitespace-pre-wrap">{msg.content}</div>
+                                    </div>
+
+                                    {/* 시간 표시 */}
+                                    <div className="text-[10px] text-gray-400 mt-1 px-1">
+                                        {msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ""}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
                     <div ref={messagesEndRef} />
                 </div>
 
-                <div className="flex gap-2">
-                    <input
-                        type="text"
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-                        className="flex-1 p-2 border border-[#ddd] rounded focus:outline-none focus:border-[#111]"
-                        placeholder="메시지를 입력하세요..."
-                    />
-                    <button onClick={sendMessage} className="px-4 py-2 bg-[#333] text-white rounded hover:bg-[#555] transition-colors">
-                        전송
-                    </button>
-                </div>
+                {user.role !== "ADMIN" ? (
+                    <div className="flex gap-2">
+                        <input
+                            type="text"
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
+                            className="flex-1 p-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm shadow-sm"
+                            placeholder="메시지를 입력하세요..."
+                        />
+                        <button onClick={sendMessage} className="px-6 py-2 bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors font-bold text-sm shadow-md">
+                            전송
+                        </button>
+                    </div>
+                ) : (
+                    <div className="p-3 bg-gray-100 text-center text-gray-500 text-sm rounded-lg border border-gray-200">
+                        🔒 관리자 모드: 메시지를 클릭하여 삭제하거나, 유저 이름을 클릭하여 제재할 수 있습니다.
+                    </div>
+                )}
             </div>
         </div>
     );

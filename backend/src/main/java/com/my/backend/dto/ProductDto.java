@@ -1,17 +1,25 @@
 package com.my.backend.dto;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.my.backend.entity.Bid;
+import com.my.backend.entity.Payment;
+import com.my.backend.entity.Product;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.DeliveryType;
 import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
 import com.my.backend.enums.ProductType;
-import com.my.backend.enums.DeliveryType;
-import com.my.backend.entity.*;
-import lombok.*;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -58,6 +66,8 @@ public class ProductDto {
 
     @Builder.Default
     private List<ImageDto> images = new ArrayList<>();
+
+    private boolean isBookmarked;
 
     // Entity → DTO
     public static ProductDto fromEntity(Product product) {

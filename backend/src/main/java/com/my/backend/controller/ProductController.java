@@ -1,16 +1,7 @@
 package com.my.backend.controller;
 
-import com.my.backend.entity.Users;
-import com.my.backend.enums.ProductCategoryType;
-import com.my.backend.enums.ProductStatus;
-import com.my.backend.dto.BidDto;
-import com.my.backend.dto.ProductDto;
-import com.my.backend.dto.auth.CustomUserDetails;
-import com.my.backend.service.BookMarkService;
-import com.my.backend.service.ProductService;
-import jakarta.servlet.http.HttpSession;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,9 +10,28 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import com.my.backend.dto.BidDto;
+import com.my.backend.dto.ProductDto;
+import com.my.backend.dto.auth.CustomUserDetails;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.ProductCategoryType;
+import com.my.backend.enums.ProductStatus;
+import com.my.backend.service.BookMarkService;
+import com.my.backend.service.ProductService;
+
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/products")
@@ -110,12 +120,14 @@ public class ProductController {
     public ResponseEntity<List<ProductDto>> searchProducts(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String productCategoryType,
-            @RequestParam(required = false) String productStatus) {
-
-        ProductStatus status = null;
-        if (productStatus != null) {
-            status = ProductStatus.valueOf(productStatus.toUpperCase());
-        }
+            @RequestParam(required = false) ProductStatus productStatus,
+            @RequestParam(required = false) Long minPrice,
+            @RequestParam(required = false) Long maxPrice,
+            @RequestParam(required = false) Long minStartPrice,
+            @RequestParam(required = false) Long maxStartPrice,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long userId = userDetails != null ? userDetails.getUser().getUserId() : null;
 
         ProductCategoryType categoryType = null;
         if (productCategoryType != null) {
@@ -126,7 +138,14 @@ public class ProductController {
             }
         }
 
-        List<ProductDto> result = productService.searchProducts(keyword, categoryType, status);
+        // Use the Specification-based search but return List
+        List<ProductDto> result = productService.searchProducts(
+                keyword, categoryType, productStatus,
+                minPrice, maxPrice,
+                minStartPrice, maxStartPrice,
+                userId
+        );
+
         return ResponseEntity.ok(result);
     }
 
@@ -162,9 +181,15 @@ public class ProductController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryType,
             @RequestParam(required = false) ProductStatus productStatus,
+            @RequestParam(required = false) Long minPrice,
+            @RequestParam(required = false) Long maxPrice,
+            @RequestParam(required = false) Long minStartPrice,
+            @RequestParam(required = false) Long maxStartPrice,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
+        Long userId = userDetails != null ? userDetails.getUser().getUserId() : null;
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
 
         ProductCategoryType categoryEnum = null;
@@ -176,7 +201,13 @@ public class ProductController {
             }
         }
 
-        Page<ProductDto> result = productService.searchProductsPaged(keyword, categoryEnum, productStatus, pageable);
+        Page<ProductDto> result = productService.searchProductsPaged(
+                keyword, categoryEnum, productStatus,
+                minPrice, maxPrice,
+                minStartPrice, maxStartPrice,
+                pageable,
+                userId
+        );
 
         return ResponseEntity.ok(result);
     }

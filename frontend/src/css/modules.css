@@ -3,7 +3,7 @@
 /* Header.tsx */
 
 .search-container {
-  @apply w-[450px] h-10 border border-[#111111] rounded-[0.4rem] relative z-20 bg-white box-border;
+  @apply w-[450px] h-10 border border-[#666] rounded-[0.4rem] relative z-20 bg-white box-border;
 }
 
 .search-container.active {
@@ -20,11 +20,11 @@
 }
 
 .nav-tab {
-  @apply py-1 text-base border-b-2;
+  @apply py-1 text-base;
 }
 
 .nav-tab.active {
-  @apply text-[#111] border-black;
+  @apply text-[#111];
 }
 
 .nav-tab.inactive {
@@ -33,7 +33,7 @@
 
 .autocomplete-dropdown {
   @apply absolute top-full left-[-1px] w-[calc(100%+2px)] bg-white 
-  border border-[#111] border-t-0 rounded-b-lg 
+  border border-[#666] border-t-0 rounded-b-lg 
   max-h-[400px] overflow-y-auto z-10 mt-0;
 }
 

@@ -1,24 +1,38 @@
 package com.my.backend.service;
 
-import com.my.backend.dto.ImageDto;
-import com.my.backend.enums.*;
-import com.my.backend.dto.ProductDto;
-import com.my.backend.dto.BidDto;
-import com.my.backend.entity.*;
-import com.my.backend.repository.*;
-import jakarta.persistence.EntityManager;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.my.backend.dto.BidDto;
+import com.my.backend.dto.ImageDto;
+import com.my.backend.dto.ProductDto;
+import com.my.backend.entity.Bid;
+import com.my.backend.entity.Image;
+import com.my.backend.entity.Payment;
+import com.my.backend.entity.Product;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.ImageType;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductCategoryType;
+import com.my.backend.enums.ProductStatus;
+import com.my.backend.repository.BidRepository;
+import com.my.backend.repository.BookMarkRepository;
+import com.my.backend.repository.ImageRepository;
+import com.my.backend.repository.PaymentRepository;
+import com.my.backend.repository.ProductRepository;
+import com.my.backend.repository.UserRepository;
+
+import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +42,7 @@ public class ProductService {
     private final BidRepository bidRepository;
     private final UserRepository userRepository;
     private final PaymentRepository paymentRepository;
+    private final BookMarkRepository bookMarkRepository;
     private final ImageRepository imageRepository;
     private final EntityManager em;
 
@@ -46,6 +61,15 @@ public class ProductService {
         dto.setImages(images);
 
         return dto;
+    }
+
+    // 북마크 여부 업데이트 헬퍼
+    private void updateBookmarkStatus(List<ProductDto> products, Long userId) {
+        if (userId == null) return;
+        for (ProductDto dto : products) {
+            boolean isBookmarked = bookMarkRepository.existsByUserUserIdAndProductProductId(userId, dto.getProductId());
+            dto.setBookmarked(isBookmarked);
+        }
     }
 
     // 전체 상품 조회
@@ -190,36 +214,44 @@ public class ProductService {
                 .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
     }
 
-    // 상품 검색
+    // 일반 검색 (기존 유지)
     public List<ProductDto> searchProducts(String keyword, ProductCategoryType categoryType, ProductStatus status) {
-        List<Product> products;
+        return searchProducts(keyword, categoryType, status, null, null, null, null);
+    }
 
-        boolean hasKeyword = keyword != null && !keyword.isEmpty();
-        boolean hasCategory = categoryType != null;
-        boolean hasStatus = status != null;
+    // 일반 검색 (가격 필터 추가)
+    public List<ProductDto> searchProducts(
+            String keyword, ProductCategoryType categoryType, ProductStatus status,
+            Long minPrice, Long maxPrice,
+            Long minStartPrice, Long maxStartPrice
+    ) {
+        Specification<Product> spec = ProductRepository.createSpecification(
+                keyword, categoryType, status,
+                minPrice, maxPrice,
+                minStartPrice, maxStartPrice
+        );
 
-        if (hasKeyword && hasCategory && hasStatus) {
-            products = productRepository.findByTitleContainingAndProductCategoryTypeAndProductStatus(keyword, categoryType, status);
-        } else if (hasKeyword && hasCategory) {
-            products = productRepository.findByTitleContainingAndProductCategoryType(keyword, categoryType);
-        } else if (hasKeyword && hasStatus) {
-            products = productRepository.findByTitleContainingAndProductStatus(keyword, status);
-        } else if (hasCategory && hasStatus) {
-            products = productRepository.findByProductCategoryTypeAndProductStatus(categoryType, status);
-        } else if (hasKeyword) {
-            products = productRepository.findByTitleContaining(keyword);
-        } else if (hasCategory) {
-            products = productRepository.findByProductCategoryType(categoryType);
-        } else if (hasStatus) {
-            products = productRepository.findByProductStatus(status);
-        } else {
-            products = productRepository.findAll();
-        }
-
-        return products.stream()
+        // Sort by createdAt desc by default for non-paged search, similar to existing logic
+        return productRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
+                .stream()
                 .map(this::convertToDto)
-                .sorted((a, b) -> b.getCreatedAt().compareTo(a.getCreatedAt()))
                 .collect(Collectors.toList());
+    }
+
+    // 일반 검색 (UserId 포함)
+    public List<ProductDto> searchProducts(
+            String keyword, ProductCategoryType categoryType, ProductStatus status,
+            Long minPrice, Long maxPrice,
+            Long minStartPrice, Long maxStartPrice,
+            Long userId
+    ) {
+        List<ProductDto> products = searchProducts(
+                keyword, categoryType, status,
+                minPrice, maxPrice,
+                minStartPrice, maxStartPrice
+        );
+        updateBookmarkStatus(products, userId);
+        return products;
     }
 
     // 최신 등록 상품 1개 조회
@@ -239,37 +271,43 @@ public class ProductService {
         return convertToDto(endingProduct);
     }
 
-    // 페이징 검색
+    // 페이징 검색 (기존 유지)
     public Page<ProductDto> searchProductsPaged(String keyword, ProductCategoryType categoryType, ProductStatus status, Pageable pageable) {
-        Page<Product> products;
+        return searchProductsPaged(keyword, categoryType, status, null, null, null, null, pageable);
+    }
 
-        boolean hasKeyword = keyword != null && !keyword.isEmpty();
-        boolean hasCategory = categoryType != null;
-        boolean hasStatus = status != null;
+    // 페이징 검색 (가격 필터 추가)
+    public Page<ProductDto> searchProductsPaged(
+            String keyword, ProductCategoryType categoryType, ProductStatus status,
+            Long minPrice, Long maxPrice,
+            Long minStartPrice, Long maxStartPrice,
+            Pageable pageable) {
 
-        if (hasKeyword && hasCategory && hasStatus) {
-            products = productRepository.findByTitleContainingAndProductCategoryTypeAndProductStatus(
-                    keyword, categoryType, status, pageable);
-        } else if (hasKeyword && hasCategory) {
-            products = productRepository.findByTitleContainingAndProductCategoryType(
-                    keyword, categoryType, pageable);
-        } else if (hasKeyword && hasStatus) {
-            products = productRepository.findByTitleContainingAndProductStatus(
-                    keyword, status, pageable);
-        } else if (hasCategory && hasStatus) {
-            products = productRepository.findByProductCategoryTypeAndProductStatus(
-                    categoryType, status, pageable);
-        } else if (hasKeyword) {
-            products = productRepository.findByTitleContaining(keyword, pageable);
-        } else if (hasCategory) {
-            products = productRepository.findByProductCategoryType(categoryType, pageable);
-        } else if (hasStatus) {
-            products = productRepository.findByProductStatus(status, pageable);
-        } else {
-            products = productRepository.findAll(pageable);
-        }
+        Specification<Product> spec = ProductRepository.createSpecification(
+                keyword, categoryType, status,
+                minPrice, maxPrice,
+                minStartPrice, maxStartPrice
+        );
 
-        return products.map(this::convertToDto);
+        return productRepository.findAll(spec, pageable).map(this::convertToDto);
+    }
+
+    // 페이징 검색 (UserId 포함)
+    public Page<ProductDto> searchProductsPaged(
+            String keyword, ProductCategoryType categoryType, ProductStatus status,
+            Long minPrice, Long maxPrice,
+            Long minStartPrice, Long maxStartPrice,
+            Pageable pageable, Long userId) {
+
+        Page<ProductDto> page = searchProductsPaged(
+                keyword, categoryType, status,
+                minPrice, maxPrice,
+                minStartPrice, maxStartPrice,
+                pageable
+        );
+        
+        updateBookmarkStatus(page.getContent(), userId);
+        return page;
     }
 
     // 로그인한 사용자의 구매 완료 상품 목록 조회

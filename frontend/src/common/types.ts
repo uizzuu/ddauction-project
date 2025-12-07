@@ -304,14 +304,17 @@ export interface PrivateChat {
   user: User;               // ★ user는 반드시 존재한다
   chatRoomId: number;       // ★ 없으면 추가
   targetUserId?: number;    // ★ websocket 메시지 받을 때 필요함
+  isDeleted: boolean;       // Soft Delete
 }
 
 // 백엔드 PublicChat 엔티티 기반
 export interface PublicChat {
+  publicChatId?: number;    // ID 추가
   user?: User;
   content: string;
   type: "PUBLIC";
   createdAt?: string;
+  isDeleted: boolean;       // Soft Delete
 }
 
 // WebSocket 메시지 송수신용 타입

@@ -1,19 +1,27 @@
 package com.my.backend.repository;
 
-import com.my.backend.entity.Users;
-import com.my.backend.enums.PaymentStatus;
-import com.my.backend.enums.ProductCategoryType;
-import com.my.backend.enums.ProductStatus;
-import com.my.backend.entity.Product;
-import io.lettuce.core.dynamic.annotation.Param;
+import java.time.LocalDateTime;
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
-import java.time.LocalDateTime;
-import java.util.List;
+import com.my.backend.entity.Bid;
+import com.my.backend.entity.Product;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductCategoryType;
+import com.my.backend.enums.ProductStatus;
+
+import io.lettuce.core.dynamic.annotation.Param;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpecificationExecutor<Product> {
 
@@ -95,4 +103,64 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 """)
     List<String> findTopKeywordsByViewCount(Pageable pageable);
 
+
+    static Specification<Product> createSpecification(
+            String keyword,
+            ProductCategoryType categoryType,
+            ProductStatus status,
+            Long minPrice, Long maxPrice,
+            Long minStartPrice, Long maxStartPrice
+    ) {
+        return (root, query, criteriaBuilder) -> {
+            Predicate predicate = criteriaBuilder.conjunction();
+
+            // 1. Keyword (Title or Tag)
+            if (keyword != null && !keyword.isEmpty()) {
+                String likePattern = "%" + keyword + "%";
+                Predicate titleLike = criteriaBuilder.like(root.get("title"), likePattern);
+                Predicate tagLike = criteriaBuilder.like(root.get("tag"), likePattern);
+                predicate = criteriaBuilder.and(predicate, criteriaBuilder.or(titleLike, tagLike));
+            }
+
+            // 2. Category
+            if (categoryType != null) {
+                predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(root.get("productCategoryType"), categoryType));
+            }
+
+            // 3. Status
+            if (status != null) {
+                predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(root.get("productStatus"), status));
+            }
+
+            // 4. Start Price Range
+            if (minStartPrice != null) {
+                predicate = criteriaBuilder.and(predicate, criteriaBuilder.greaterThanOrEqualTo(root.get("startingPrice"), minStartPrice));
+            }
+            if (maxStartPrice != null) {
+                predicate = criteriaBuilder.and(predicate, criteriaBuilder.lessThanOrEqualTo(root.get("startingPrice"), maxStartPrice));
+            }
+
+            // 5. Current Price Range (Complex)
+            // Current Price = MAX(Bid Price) OR Starting Price if no bids
+            if (minPrice != null || maxPrice != null) {
+                // Subquery for Max Bid Price
+                Subquery<Long> maxBidSubquery = query.subquery(Long.class);
+                Root<Bid> bidRoot = maxBidSubquery.from(Bid.class);
+                maxBidSubquery.select(criteriaBuilder.max(bidRoot.get("bidPrice")));
+                maxBidSubquery.where(criteriaBuilder.equal(bidRoot.get("product"), root));
+
+                // Effective Price: COALESCE(MaxBid, StartingPrice)
+                Expression<Long> currentPrice = criteriaBuilder.coalesce(maxBidSubquery, root.get("startingPrice"));
+
+                if (minPrice != null) {
+                    predicate = criteriaBuilder.and(predicate, criteriaBuilder.greaterThanOrEqualTo(currentPrice, minPrice));
+                }
+                if (maxPrice != null) {
+                    predicate = criteriaBuilder.and(predicate, criteriaBuilder.lessThanOrEqualTo(currentPrice, maxPrice));
+                }
+            }
+
+            return predicate;
+        };
+    }
 }

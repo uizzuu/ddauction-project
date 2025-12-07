@@ -35,30 +35,25 @@ const CATEGORY_ICONS: Record<ProductCategoryType, React.ReactNode> = {
 };
 
 // 카테고리용 깔끔한 화살표 (배너 스타일과 유사한 심플함, 하지만 배경에 맞게 컬러 조정)
-function CategoryNextArrow(props: any) {
-  const { className, onClick } = props;
-  const isDisabled = className?.includes("slick-disabled");
+// 카테고리용 깔끔한 화살표 (배너 스타일과 유사한 심플함, 하지만 배경에 맞게 컬러 조정)
+function CategoryNextArrow({ onClick, visible }: { onClick: () => void; visible: boolean }) {
+  if (!visible) return null;
   return (
     <button
       onClick={onClick}
-      disabled={isDisabled}
-      className={`absolute top-1/2 -translate-y-1/2 -right-12 z-10 p-2 transition-all ${isDisabled ? "text-[#eee] cursor-default" : "text-gray-400 hover:text-black cursor-pointer"
-        }`}
+      className="absolute top-1/2 -translate-y-1/2 -right-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all"
     >
       <ChevronRight size={28} />
     </button>
   );
 }
 
-function CategoryPrevArrow(props: any) {
-  const { className, onClick } = props;
-  const isDisabled = className?.includes("slick-disabled");
+function CategoryPrevArrow({ onClick, visible }: { onClick: () => void; visible: boolean }) {
+  if (!visible) return null;
   return (
     <button
       onClick={onClick}
-      disabled={isDisabled}
-      className={`absolute top-1/2 -translate-y-1/2 -left-12 z-10 p-2 transition-all ${isDisabled ? "text-[#eee] cursor-default" : "text-gray-400 hover:text-black cursor-pointer"
-        }`}
+      className="absolute top-1/2 -translate-y-1/2 -left-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all"
     >
       <ChevronLeft size={28} />
     </button>
@@ -100,6 +95,34 @@ export default function Main() {
   >([]);
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // Native Scroll Refs & State
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const checkScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+    setShowLeftArrow(scrollLeft > 0);
+    // 1px tolerance
+    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 1);
+  };
+
+  const scroll = (direction: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const scrollAmount = 300; // 300px 씩 스크롤
+    scrollRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth"
+    });
+  };
+
+  useEffect(() => {
+    checkScroll();
+    window.addEventListener("resize", checkScroll);
+    return () => window.removeEventListener("resize", checkScroll);
+  }, []);
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -130,16 +153,6 @@ export default function Main() {
     nextArrow: <BannerNextArrow />,
     prevArrow: <BannerPrevArrow />,
     beforeChange: (_: number, next: number) => setCurrentSlide(next),
-  };
-
-  const categorySettings = {
-    dots: false,
-    infinite: false, // 👈 순환 끔
-    speed: 500,
-    variableWidth: true,
-    slidesToScroll: 5,
-    nextArrow: <CategoryNextArrow />,
-    prevArrow: <CategoryPrevArrow />,
   };
 
   return (
@@ -188,26 +201,31 @@ export default function Main() {
       <div className="container mx-auto px-4 md:px-0">
 
         {/* 2. Category Shortcuts (Slider) */}
-        <section className="mb-20">
-          <div className="relative w-fit mx-auto max-w-full">
-            <Slider {...categorySettings}>
-              {(Object.keys(PRODUCT_CATEGORY_LABELS) as ProductCategoryType[]).map((cat) => (
-                <div key={cat} className="outline-none pr-4">
-                  <div
-                    className="category flex flex-col items-center gap-2 cursor-pointer w-[80px]"
-                    onClick={() => navigate(`/search?category=${cat}`)}
-                  >
-                    <div className="w-[80px] h-[80px] rounded-[10px] bg-[#f4f4f4] flex items-center justify-center text-[#333] transition-colors group-hover:bg-[#f0f0f0]">
-                      {CATEGORY_ICONS[cat]}
-                    </div>
-                    <span className="text-[14px] text-[#333] font-medium text-center whitespace-nowrap group-hover:font-semibold">
-                      {PRODUCT_CATEGORY_LABELS[cat]}
-                    </span>
-                  </div>
+        <section className="mb-20 relative group w-fit mx-auto max-w-full">
+          <CategoryPrevArrow onClick={() => scroll("left")} visible={showLeftArrow} />
+
+          <div
+            ref={scrollRef}
+            onScroll={checkScroll}
+            className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth px-1"
+          >
+            {(Object.keys(PRODUCT_CATEGORY_LABELS) as ProductCategoryType[]).map((cat) => (
+              <div
+                key={cat}
+                className="category flex flex-col items-center gap-2 cursor-pointer w-[80px] flex-shrink-0"
+                onClick={() => navigate(`/search?category=${cat}`)}
+              >
+                <div className="w-[80px] h-[80px] rounded-[10px] bg-[#f4f4f4] flex items-center justify-center text-[#333] transition-colors hover:bg-[#f0f0f0]">
+                  {CATEGORY_ICONS[cat]}
                 </div>
-              ))}
-            </Slider>
+                <span className="text-[14px] text-[#333] font-medium text-center whitespace-nowrap group-hover:font-semibold">
+                  {PRODUCT_CATEGORY_LABELS[cat]}
+                </span>
+              </div>
+            ))}
           </div>
+
+          <CategoryNextArrow onClick={() => scroll("right")} visible={showRightArrow} />
         </section>
 
         {/* 3. Just Dropped */}
@@ -228,13 +246,13 @@ export default function Main() {
           {loading ? (
             <div className="h-60 flex items-center justify-center text-[#999]">로딩중...</div>
           ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
-            {products.map(p => (
-              <ProductCard key={p.productId} product={p} />
-            ))}
-          </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
+              {products.map(p => (
+                <ProductCard key={p.productId} product={p} />
+              ))}
+            </div>
           ) : (
-          <div className="h-40 flex items-center justify-center text-[#999]">등록된 상품이 없습니다.</div>
+            <div className="h-40 flex items-center justify-center text-[#999]">등록된 상품이 없습니다.</div>
           )}
         </section>
 
@@ -246,7 +264,7 @@ export default function Main() {
               <p className="text-[#666] -mt-[6px]">지금 가장 인기 있는 상품</p>
             </div>
             <button
-              onClick={() => navigate("/search?sort=popularity")}
+              onClick={() => navigate("/rank")}
               className="text-[#666] hover:text-[#333] transition-colors"
             >
               더보기
@@ -255,13 +273,13 @@ export default function Main() {
           {loading ? (
             <div className="h-60 flex items-center justify-center text-[#999]">로딩중...</div>
           ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
-            {[...products].reverse().slice(0, 6).map(p => (
-              <ProductCard key={p.productId} product={p} />
-            ))}
-          </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
+              {[...products].reverse().slice(0, 6).map(p => (
+                <ProductCard key={p.productId} product={p} />
+              ))}
+            </div>
           ) : (
-          <div className="h-40 flex items-center justify-center text-[#999]">등록된 상품이 없습니다.</div>
+            <div className="h-40 flex items-center justify-center text-[#999]">등록된 상품이 없습니다.</div>
           )}
         </section>
       </div>

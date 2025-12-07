@@ -1,5 +1,13 @@
 package com.my.backend.service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import org.springframework.stereotype.Service;
+
 import com.my.backend.dto.ChatRoomDto;
 import com.my.backend.dto.PrivateChatDto;
 import com.my.backend.dto.PublicChatDto;
@@ -10,18 +18,12 @@ import com.my.backend.entity.Product;
 import com.my.backend.entity.Users;
 import com.my.backend.repository.ChatRoomRepository;
 import com.my.backend.repository.PrivateChatRepository;
-import com.my.backend.repository.PublicChatRepository;
 import com.my.backend.repository.ProductRepository;
+import com.my.backend.repository.PublicChatRepository;
 import com.my.backend.repository.UserRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -159,5 +161,40 @@ public class ChattingService {
                 .senderId(chatRoom.getSender().getUserId())
                 .productId(chatRoom.getProduct() != null ? chatRoom.getProduct().getProductId() : null)
                 .build();
+    }
+    // ===================== 채팅 삭제 (Soft Delete) =====================
+    public void softDeletePublicChat(Long publicChatId) {
+        publicChatRepository.findById(publicChatId).ifPresent(chat -> {
+            chat.setDeleted(true);
+            publicChatRepository.save(chat);
+        });
+    }
+
+    public void softDeletePrivateChat(Long privateChatId) {
+        privateChatRepository.findById(privateChatId).ifPresent(chat -> {
+            chat.setDeleted(true);
+            privateChatRepository.save(chat);
+        });
+    }
+
+    // ===================== 채팅 검색 (Admin) =====================
+    public List<PublicChatDto> searchPublicChats(String keyword) {
+        // 실제로는 Repository에 findByContentContainingIgnoreCase 등을 추가해야 함.
+        // 편의상 findAll 후 필터링 (데이터 많을 시 성능 이슈 주의)
+        return publicChatRepository.findAll().stream()
+                .filter(chat -> chat.getContent().contains(keyword) || 
+                                (chat.getUser().getNickName() != null && chat.getUser().getNickName().contains(keyword)))
+                .map(PublicChatDto::fromEntity)
+                .sorted(Comparator.comparing(PublicChatDto::getCreatedAt))
+                .collect(Collectors.toList());
+    }
+
+    public List<PrivateChatDto> searchPrivateChats(String keyword) {
+        return privateChatRepository.findAll().stream()
+                .filter(chat -> chat.getContent().contains(keyword) ||
+                                (chat.getUser().getNickName() != null && chat.getUser().getNickName().contains(keyword)))
+                .map(PrivateChatDto::fromEntity)
+                .sorted(Comparator.comparing(PrivateChatDto::getCreatedAt))
+                .collect(Collectors.toList());
     }
 }
