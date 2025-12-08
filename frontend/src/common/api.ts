@@ -321,22 +321,21 @@ export function getSocialLoginURL(provider: "google" | "naver" | "kakao") {
 // 로그아웃
 export async function logout(): Promise<void> {
   const token = localStorage.getItem("token");
-  const res = await fetch(`${API_BASE_URL}${SPRING_API}/auth/logout`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "로그아웃 실패");
+  try {
+    await fetch(`${API_BASE_URL}${SPRING_API}/auth/logout`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  } catch (error) {
+    console.warn("Logout API error (proceeding with local cleanup):", error);
+  } finally {
+    // 🔹 항상 로컬 토큰 삭제 (서버 오류가 나도 클라이언트는 로그아웃 처리)
+    localStorage.removeItem("token");
+    localStorage.removeItem("loginUser");
   }
-
-  // 로컬 처리
-  localStorage.removeItem("token");
-  localStorage.removeItem("loginUser");
 }
 
 // 회원가입

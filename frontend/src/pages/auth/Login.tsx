@@ -68,7 +68,7 @@ export default function Login({ setUser }: Props) {
         </svg>
       </div>
 
-      <div className="bg-white p-10 md:p-14 border border-gray-200 shadow-sm rounded-lg w-full max-w-[460px]">
+      <div className="bg-white p-10 md:p-14 border border-gray-200 shadow-sm  w-full max-w-[460px]">
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
           {/* Email */}
@@ -85,7 +85,7 @@ export default function Login({ setUser }: Props) {
                   email: val && !isEmailValid(val) ? "올바른 이메일 형식이 아닙니다" : "",
                 }));
               }}
-              className={`w-full px-4 py-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-none focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors`}
+              className={`w-full px-4 py-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-[4px] focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors`}
             />
             {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
           </div>
@@ -104,7 +104,7 @@ export default function Login({ setUser }: Props) {
                   password: val && val.length < 8 ? "비밀번호는 8자리 이상이어야 합니다" : "",
                 }));
               }}
-              className={`w-full px-4 py-3 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-none focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors`}
+              className={`w-full px-4 py-3 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-[4px] focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors`}
             />
             {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
           </div>
@@ -113,7 +113,7 @@ export default function Login({ setUser }: Props) {
 
           <button
             type="submit"
-            className="w-full bg-[#03c75a] text-white font-bold py-3 mt-4 hover:bg-[#02b351] transition-colors flex justify-center items-center"
+            className="w-full bg-[#333] text-white font-bold py-3 mt-4 hover:bg-[#aaa] transition-colors flex justify-center items-center rounded-[4px]"
           >
             로그인
           </button>
@@ -134,27 +134,25 @@ export default function Login({ setUser }: Props) {
           <div className="flex gap-4">
             <button
               onClick={() => handleSocialLogin("naver")}
-              className="w-12 h-12 rounded-full border border-[#e5e7eb] flex items-center justify-center hover:bg-gray-50 transition-colors overflow-hidden"
+              className="w-12 h-12 rounded-full border border-[#e5e7eb] bg-[#03c75a] flex items-center justify-center hover:bg-gray-50 transition-colors overflow-hidden"
               title="네이버 로그인"
             >
-              <img src="https://static.nid.naver.com/oauth/small_g_in.PNG" alt="Naver" className="w-full h-full object-cover" />
-              {/* Using SVG from previous code if available, but for now assuming image or improved SVG. reusing previous svg logic */}
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.1 17.5" className="w-5 h-5" fill="#03c75a">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 19.1 17.5" className="w-4 h-4" fill="#fff">
                 <path d="M12.59 0 12.59 8.83 6.54 0 0 0 0 17.5 6.51 17.5 6.51 8.67 12.56 17.5 19.1 17.5 19.1 0 12.59 0" />
               </svg>
             </button>
             <button
               onClick={() => handleSocialLogin("kakao")}
-              className="w-12 h-12 rounded-full border border-[#e5e7eb] flex items-center justify-center hover:bg-gray-50 transition-colors"
+              className="w-12 h-12 rounded-full border border-[#e5e7eb] bg-[#FEE500] flex items-center justify-center hover:bg-gray-50 transition-colors"
               title="카카오 로그인"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" className="w-6 h-6" fill="#FEE500">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" className="w-6 h-6">
                 <path fill="#391B1B" fillRule="evenodd" clipRule="evenodd" d="M9.96052 3C5.83983 3 2.5 5.59377 2.5 8.79351C2.5 10.783 3.79233 12.537 5.75942 13.5807L4.9313 16.6204C4.85835 16.8882 5.1634 17.1029 5.39883 16.9479L9.02712 14.5398C9.33301 14.5704 9.64386 14.587 9.96052 14.587C14.0812 14.587 17.421 11.9932 17.421 8.79351C17.421 5.59377 14.0812 3 9.96052 3Z" />
               </svg>
             </button>
             <button
               onClick={() => handleSocialLogin("google")}
-              className="w-12 h-12 rounded-full border border-[#e5e7eb] flex items-center justify-center hover:bg-gray-50 transition-colors"
+              className="w-12 h-12 rounded-full flex items-center justify-center hover:bg-gray-50 transition-colors border border-solid border-[#f3f3f3]"
               title="구글 로그인"
             >
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-5 h-5">
