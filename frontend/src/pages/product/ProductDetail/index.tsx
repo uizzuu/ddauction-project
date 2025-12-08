@@ -34,7 +34,7 @@ export default function ProductDetail({ user }: Props) {
         handleToggleBookmark,
         handleReport,
         handleDeleteProduct,
-        handlePlaceBid,
+
         editingProductId,
         setEditingProductId,
         productForm,
@@ -106,6 +106,7 @@ export default function ProductDetail({ user }: Props) {
                         sellerNickName={sellerNickName}
                         remainingTime={remainingTime}
                         highestBid={mergedBids.length ? Math.max(...mergedBids.map(b => b.bidPrice)) : (product.startingPrice || 0)}
+                        mergedBids={mergedBids}
                         editingProductId={editingProductId}
                         productForm={productForm}
                         handleEditProduct={handleEditProduct}
@@ -126,7 +127,6 @@ export default function ProductDetail({ user }: Props) {
                         isBookMarked={isBookMarked}
                         isWinner={isWinner}
                         editingProductId={editingProductId}
-                        handlePlaceBid={handlePlaceBid}
                         handleToggleBookmark={handleToggleBookmark}
                         handleReport={handleReport}
                         navigate={navigate}

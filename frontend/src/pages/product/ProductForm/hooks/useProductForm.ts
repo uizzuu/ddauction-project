@@ -60,7 +60,7 @@ export default function useProductForm(user: User | null) {
                 return;
             }
 
-            const formatted = formatDateTime(date.toISOString());
+            const formatted = formatDateTime(date.toISOString()).replace(" ", "T");
 
             setForm((prev) => ({
                 ...prev,
@@ -117,10 +117,14 @@ export default function useProductForm(user: User | null) {
         if (!form.images || form.images.length === 0)
             return "최소 1개 이상의 이미지를 선택해주세요";
 
-        if (!form.address) return "거래 희망 장소를 입력해주세요";
-
         if (form.productType !== "STORE" && (!form.deliveryAvailable || form.deliveryAvailable.length === 0)) {
             return "거래 가능 방식을 최소 1개 이상 선택해주세요";
+        }
+
+        // Address Validation: Required ONLY if "직거래" is selected
+        const isDirectTransaction = form.deliveryAvailable?.some(method => method.includes("직거래"));
+        if (isDirectTransaction && !form.address) {
+            return "직거래를 선택하셨으므로 거래 희망 장소를 입력해주세요";
         }
         return "";
     };
@@ -150,7 +154,7 @@ export default function useProductForm(user: User | null) {
                 title: form.title,
                 content: form.content,
                 startingPrice: priceNumber,
-                auctionEndTime: form.auctionEndTime || undefined,
+                auctionEndTime: form.auctionEndTime ? form.auctionEndTime.replace(" ", "T") : undefined,
                 sellerId: user.userId,
                 productCategoryType: form.productCategoryType,
                 productStatus: "ACTIVE" as TYPE.ProductStatus,

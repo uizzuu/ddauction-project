@@ -222,7 +222,7 @@ export const useProductDetail = (user: User | null) => {
             const res = await fetch(`${API_BASE_URL}/api/reports`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ targetId: product?.sellerId, reason, reportType: "PRODUCT" }),
+                body: JSON.stringify({ refId: product?.productId, reason, reportType: "PRODUCT" }),
             });
             if (res.ok) alert("신고가 접수되었습니다.");
             else alert("신고 접수 실패");

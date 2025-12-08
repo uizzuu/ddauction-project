@@ -1,19 +1,20 @@
 package com.my.backend.oauth2;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.my.backend.dto.auth.CustomOAuth2User;
-import com.my.backend.enums.Role;
-import com.my.backend.myjwt.JWTUtil;
+import java.io.IOException;
+
 import org.springframework.beans.factory.annotation.Value;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.util.Map;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.my.backend.dto.auth.CustomOAuth2User;
+import com.my.backend.enums.Role;
+import com.my.backend.myjwt.JWTUtil;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
@@ -48,7 +49,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             }
             System.out.println("✅ OAuth2 사용자 정보: email=" + email + ", roleEnum=" + roleEnum);
             // JWT 생성
-            String jwtToken = jwtUtil.createJwt(userId, email, roleEnum, nickName, 60 * 60 * 1000L);
+            String jwtToken = jwtUtil.createJwt(userId, email, roleEnum, nickName, 24 * 60 * 60 * 1000L);
             System.out.println("✅ JWT 토큰 생성 완료");
             // React 앱 URL로 리다이렉트 + 토큰 전달
             String redirectUrl = frontendUrl + "/oauth2/redirect?token=" + jwtToken;

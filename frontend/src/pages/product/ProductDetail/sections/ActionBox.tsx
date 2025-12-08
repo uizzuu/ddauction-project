@@ -1,6 +1,7 @@
 import React from "react";
 import { AuctionBidding } from "../../../../components/product/AuctionBidding";
 import type { Product, Bid } from "../../../../common/types";
+import * as API from "../../../../common/api";
 import { addToCart } from "../../../../common/util";
 
 interface ActionBoxProps {
@@ -10,7 +11,7 @@ interface ActionBoxProps {
     isBookMarked: boolean;
     isWinner: boolean;
     editingProductId: number | null;
-    handlePlaceBid: (bidPrice: number) => void;
+
     handleToggleBookmark: () => void;
     handleReport: () => void;
     navigate: (path: string, state?: any) => void;
@@ -23,137 +24,195 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
     isBookMarked,
     isWinner,
     editingProductId,
-    handlePlaceBid,
+
     handleToggleBookmark,
     handleReport,
     navigate,
 }) => {
+    const [bidValue, setBidValue] = React.useState("");
+
     if (editingProductId) return null;
 
-    return (
-        <div className="rounded-xl border border-gray-200 shadow-sm p-5 sticky top-24 h-[400px] box-border flex flex-col">
 
-            <div className="flex-1 overflow-y-auto scrollbar-hide">
+
+    return (
+        <div className="rounded-xl border border-gray-200 shadow-sm p-5 sticky top-24 h-[400px] box-border flex flex-col bg-white">
+
+            {/* Fixed Header Area */}
+            <div className="mb-2 shrink-0">
+                <div className="flex justify-between items-center">
+                    <span className="font-bold text-gray-800 text-lg">
+                        {product.productType === "AUCTION"
+                            ? "입찰하기"
+                            : product.productType === 'STORE' ? "스토어 구매" : "중고 거래"}
+                    </span>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={handleReport}
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-50 hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-all"
+                            title="신고하기"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={handleToggleBookmark}
+                            className={`w-8 h-8 flex items-center justify-center rounded-full transition-all ${isBookMarked ? 'bg-pink-100 text-pink-500' : 'bg-gray-50 hover:bg-gray-100 text-gray-400'} `}
+                            title="찜하기"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill={isBookMarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Scrollable Content Area */}
+            <div className="flex-1 overflow-y-auto scrollbar-hide mb-4 space-y-4 min-h-0">
                 {product.productType === "AUCTION" ? (
-                    <div className="flex flex-col h-full">
-                        {/* Auction Header with Bookmark */}
-                        <div className="flex justify-between items-center mb-4">
-                            <span className="font-bold text-gray-800 text-lg">입찰하기</span>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleReport}
-                                    className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 hover:border-gray-400 text-gray-400 hover:text-gray-600 transition-all"
-                                    title="신고하기"
-                                >
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                        <line x1="12" y1="8" x2="12" y2="12" />
-                                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                                    </svg>
-                                </button>
-                                <button
-                                    onClick={handleToggleBookmark}
-                                    className={`w-10 h-10 flex items-center justify-center rounded-full border transition-all ${isBookMarked ? 'border-pink-500 bg-pink-50 text-pink-500' : 'border-gray-200 hover:border-gray-400 text-gray-300'} `}
-                                    title="찜하기"
-                                >
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill={isBookMarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
+                    <div className="flex flex-col">
+                        {/* Auction Bidding List */}
                         <AuctionBidding
-                            productId={product.productId}
                             mergedBids={mergedBids}
-                            currentHighestBid={currentHighestBid}
-                            placeBid={handlePlaceBid}
                         />
                     </div>
                 ) : (
-                    <div className="flex flex-col h-full">
-                        {/* Store/Used Header with Bookmark */}
-                        <div className="flex justify-between items-center mb-4">
-                            <span className="font-bold text-gray-800 text-lg">
-                                {product.productType === 'STORE' ? "스토어 구매" : "중고 거래"}
-                            </span>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={handleReport}
-                                    className="w-10 h-10 flex items-center justify-center rounded-full border border-gray-200 hover:border-gray-400 text-gray-400 hover:text-gray-600 transition-all"
-                                    title="신고하기"
-                                >
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                                        <line x1="12" y1="8" x2="12" y2="12" />
-                                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                                    </svg>
-                                </button>
-                                <button
-                                    onClick={handleToggleBookmark}
-                                    className={`w-10 h-10 flex items-center justify-center rounded-full border transition-all ${isBookMarked ? 'border-pink-500 bg-pink-50 text-pink-500' : 'border-gray-200 hover:border-gray-400 text-gray-300'} `}
-                                    title="찜하기"
-                                >
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill={isBookMarked ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-3 flex-1">
-                            <div className="flex justify-between items-center text-sm mb-4">
-                                <span className="text-gray-500">배송방법</span>
-                                <span className="font-bold text-gray-800">택배배송 (무료)</span>
+                    <div className="flex flex-col">
+                        <div className="space-y-3">
+                            {/* Delivery Info */}
+                            <div className="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg">
+                                <span className="text-gray-500 font-medium">배송 방법</span>
+                                <span className="font-bold text-gray-800">
+                                    {product.deliveryIncluded ? "무료배송" : "택배배송"}
+                                </span>
                             </div>
 
-                            {/* Action Buttons Row */}
-                            <div className="flex gap-2 h-[56px]">
-                                {product.productType === 'STORE' ? (
-                                    <>
-                                        <button
-                                            onClick={() => {
-                                                addToCart(product);
-                                                alert("장바구니에 담겼습니다.");
-                                            }}
-                                            className="flex-1 bg-white border-2 border-gray-800 text-gray-900 rounded-xl font-bold hover:bg-gray-50 transition-colors flex items-center justify-center gap-2"
-                                        >
-                                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                            </svg>
-                                            장바구니
-                                        </button>
-                                        <button
-                                            onClick={() => navigate(`/ payment ? productId = ${product.productId} `)}
-                                            className="flex-1 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-colors shadow-md"
-                                        >
-                                            구매하기
-                                        </button>
-                                    </>
-                                ) : (
-                                    <button
-                                        onClick={() => navigate("/user-chat", { state: { sellerId: product.sellerId, productId: product.productId } })}
-                                        className="flex-1 bg-white border-2 border-yellow-400 text-black rounded-xl font-bold hover:bg-yellow-50 transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                                        </svg>
-                                        판매자와 1:1 채팅하기
-                                    </button>
-                                )}
+                            {/* Additional Info */}
+                            <div className="text-xs text-gray-400 leading-relaxed px-1">
+                                ❗ 결제 전 상품 정보를 다시 한 번 확인해주세요.
                             </div>
                         </div>
                     </div>
                 )}
+            </div>
 
-                {isWinner && (
+            {/* Bottom: Action Buttons (Fixed at Bottom) */}
+            <div className="mt-auto pt-4 border-t border-gray-100 bg-white">
+                {product.productType === 'STORE' ? (
+                    <div className="flex gap-3 h-[56px]">
+                        <button
+                            onClick={() => {
+                                addToCart(product);
+                                alert("장바구니에 담겼습니다.");
+                            }}
+                            className="flex-1 bg-white border-2 border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 hover:border-gray-300 transition-all flex items-center justify-center gap-2"
+                        >
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            장바구니
+                        </button>
+                        <button
+                            onClick={() => navigate(`/payment?productId=${product.productId}`)}
+                            className="flex-1 bg-[#111] text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg shadow-black/10"
+                        >
+                            구매하기
+                        </button>
+                    </div>
+                ) : product.productType === 'USED' ? (
                     <button
-                        onClick={() => navigate(`/ payment ? productId = ${product.productId} `)}
-                        className="w-full mt-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold py-4 rounded-xl shadow-lg animate-pulse"
+                        onClick={() => navigate("/user-chat", { state: { sellerId: product.sellerId, productId: product.productId } })}
+                        className="w-full h-[56px] bg-[#f5f5f5] text-[#333] rounded-xl font-semibold hover:bg-[#eee] transition-colors flex items-center justify-center gap-2"
                     >
-                        🎉 낙찰 축하드립니다! 결제하기
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 5.92 2 10.75c0 2.8 1.5 5.25 3.84 6.88.24.17.38.48.33.77l-.46 2.37c-.08.41.38.74.74.53l3.36-1.95c.2-.12.44-.15.65-.08.82.26 1.7.41 2.6.41 5.52 0 10-3.92 10-8.75S17.52 2 12 2z" />
+                        </svg>
+                        판매자와 채팅하기
                     </button>
+                ) : (
+                    // Auction Controls
+                    <div className="flex flex-col gap-3">
+                        {isWinner ? (
+                            <button
+                                onClick={() => navigate(`/payment?productId=${product.productId}`)}
+                                className="w-full h-[56px] bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold rounded-xl shadow-lg animate-pulse"
+                            >
+                                낙찰 상품 결제하기
+                            </button>
+                        ) : (
+                            <>
+                                {/* Quick Add Buttons */}
+                                <div className="flex gap-2">
+                                    {[1000, 5000, 10000].map((amt) => (
+                                        <button
+                                            key={amt}
+                                            onClick={() => {
+                                                const current = Number(bidValue || currentHighestBid || 0);
+                                                setBidValue(String(current + amt));
+                                            }}
+                                            className="flex-1 py-1.5 text-xs font-bold text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 active:bg-gray-200 transition-colors"
+                                        >
+                                            +{amt.toLocaleString()}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex gap-2 h-[50px]">
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="text"
+                                            value={bidValue ? Number(bidValue).toLocaleString() : ""}
+                                            onChange={(e) => {
+                                                const clean = e.target.value.replace(/[^0-9]/g, "");
+                                                setBidValue(clean);
+                                            }}
+                                            placeholder={currentHighestBid > 0 ? `${currentHighestBid.toLocaleString()}` : "0"}
+                                            className="w-full h-full pl-4 pr-8 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all text-sm font-bold text-gray-800 placeholder:text-gray-300"
+                                        />
+                                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">원</span>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            const token = localStorage.getItem("token");
+                                            if (!token) {
+                                                alert("로그인이 필요합니다.");
+                                                return;
+                                            }
+
+                                            const bidNum = Number(bidValue);
+                                            if (!bidValue || isNaN(bidNum) || bidNum <= 0) {
+                                                alert("올바른 금액을 입력해주세요 (0보다 큰 숫자)");
+                                                return;
+                                            }
+
+                                            if (bidNum <= currentHighestBid) {
+                                                alert(`입찰가가 현재 최고 입찰가(${currentHighestBid.toLocaleString()}원)보다 높아야 합니다.`);
+                                                return;
+                                            }
+
+                                            try {
+                                                await API.placeBid(product.productId, bidNum, token);
+                                                setBidValue("");
+                                                alert("입찰에 성공했습니다!");
+                                            } catch (error: any) {
+                                                console.error(error);
+                                                alert(error.message || "입찰에 실패했습니다.");
+                                            }
+                                        }}
+                                        className="px-6 bg-black text-white font-bold rounded-xl hover:bg-gray-800 transition-all shadow-md active:scale-95 whitespace-nowrap"
+                                    >
+                                        입찰
+                                    </button>
+                                </div>
+                            </>
+                        )}
+                    </div>
                 )}
             </div>
+
         </div>
     );
 };

@@ -128,11 +128,11 @@ export default function StoreSection({ price, onChangePrice, uploading, form, up
                 </div>
                 <div>
                     <label className="block text-sm font-bold text-[#333] mb-2">
-                        도서산간 추가비용
+                        도서산간 추가비용 <span className="text-xs font-normal text-gray-500">(기본 배송비에 더해짐)</span>
                     </label>
                     <input
                         type="text"
-                        placeholder="0"
+                        placeholder="예: 3000"
                         value={form.deliveryAddPrice ? Number(form.deliveryAddPrice).toLocaleString() : ""}
                         onChange={(e) => updateForm("deliveryAddPrice", e.target.value.replace(/[^0-9]/g, ''))}
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-white text-sm"
