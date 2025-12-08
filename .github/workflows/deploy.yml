@@ -117,6 +117,8 @@ jobs:
             MAIL_PORT=587
             MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
             MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+            # NTS API KEY 
+            NTS_API_KEY=${{ secrets.NTS_API_KEY }}
             ENVEOF
 
             echo "=== Docker 로그인 ==="
