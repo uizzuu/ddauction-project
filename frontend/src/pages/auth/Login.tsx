@@ -111,7 +111,7 @@ export default function Login({ setUser }: Props) {
 
           <button
             type="submit"
-            className="w-full bg-[#333] text-white font-bold py-3 mt-4 hover:bg-[#aaa] transition-colors flex justify-center items-center rounded-[4px]"
+            className="w-full text-white font-bold py-4 mt-4 hover:bg-[#333] transition-colors flex justify-center items-center rounded-[4px] bg-gray-300"
           >
             로그인
           </button>

@@ -369,7 +369,7 @@ export default function Signup() {
           <button
             onClick={handleSubmit}
             disabled={!isEmailVerified}
-            className={`w-full py-4 mt-4 font-bold text-white transition-colors ${!isEmailVerified ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#03c75a] hover:bg-[#02b351]'} rounded-[4px]`}
+            className={`w-full py-4 mt-4 font-bold text-white transition-colors ${!isEmailVerified ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#888] hover:bg-[#333]'} rounded-[4px]`}
           >
             가입하기
           </button>

@@ -90,7 +90,7 @@ export default function App() {
   const location = useLocation();
   const [isInvalidPath, setIsInvalidPath] = useState(false);
 
-  const noHeaderPaths = ["/login", "/signup"];
+  const noHeaderPaths = ["/login", "/signup", "/find-email", "/find-password"];
   const showHeader = !noHeaderPaths.includes(location.pathname);
 
   // 경로 유효성 확인
