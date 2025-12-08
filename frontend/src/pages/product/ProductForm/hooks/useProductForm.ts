@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User, ProductForm } from "../../../../common/types";
+import * as TYPE from "../../../../common/types";
 import { formatDateTime } from "../../../../common/util";
 import { generateAiDescription, registerProductWithImages } from "../../../../common/api";
 
@@ -14,6 +15,18 @@ export default function useProductForm(user: User | null) {
         productType: "AUCTION",
         auctionEndTime: "",
         productCategoryType: null,
+        // New State
+        tag: "",
+        address: "",
+        deliveryAvailable: [], // Array of keys
+        productBanners: [], // Array of Files
+        originalPrice: "",
+        discountRate: "",
+        deliveryPrice: "",
+        deliveryAddPrice: "",
+        deliveryIncluded: false,
+        latitude: undefined,
+        longitude: undefined,
     });
 
     const [error, setError] = useState("");
@@ -80,7 +93,15 @@ export default function useProductForm(user: User | null) {
 
     const validateForm = () => {
         if (!form.title) return "제목은 필수 입력 항목입니다";
-        if (!form.content) return "상세 설명은 필수 입력 항목입니다";
+
+        // Content Validation: Optional for STORE if banners exist
+        if (form.productType === "STORE") {
+            if (!form.content && (!form.productBanners || form.productBanners.length === 0)) {
+                return "스토어 상품은 상세 설명 또는 상세 이미지를 입력해야 합니다";
+            }
+        } else {
+            if (!form.content) return "상세 설명은 필수 입력 항목입니다";
+        }
 
         // Check price based on type? Or always checking startingPrice?
         // Original code checks startingPrice for all types (as Used/Store also use it field-wise)
@@ -95,6 +116,12 @@ export default function useProductForm(user: User | null) {
         if (!form.productCategoryType) return "카테고리를 선택해주세요";
         if (!form.images || form.images.length === 0)
             return "최소 1개 이상의 이미지를 선택해주세요";
+
+        if (!form.address) return "거래 희망 장소를 입력해주세요";
+
+        if (form.productType !== "STORE" && (!form.deliveryAvailable || form.deliveryAvailable.length === 0)) {
+            return "거래 가능 방식을 최소 1개 이상 선택해주세요";
+        }
         return "";
     };
 
@@ -123,14 +150,35 @@ export default function useProductForm(user: User | null) {
                 title: form.title,
                 content: form.content,
                 startingPrice: priceNumber,
-                // 빈 문자열("")을 보내면 백엔드 파싱 에러(401/400)가 날 수 있으므로, 없으면 undefined 처리
                 auctionEndTime: form.auctionEndTime || undefined,
                 sellerId: user.userId,
                 productCategoryType: form.productCategoryType,
-                productStatus: "ACTIVE",
-                paymentStatus: "PENDING",
+                productStatus: "ACTIVE" as TYPE.ProductStatus,
+                paymentStatus: "PENDING" as TYPE.PaymentStatus,
                 productType: form.productType,
+                // New Fields
+                tag: form.tag,
+                address: form.address,
+                deliveryAvailable: form.deliveryAvailable?.join(","), // Convert array to comma-string
+                originalPrice: Number(form.originalPrice) || undefined,
+                discountRate: Number(form.discountRate) || undefined,
+                deliveryPrice: Number(form.deliveryPrice) || undefined,
+                deliveryAddPrice: Number(form.deliveryAddPrice) || undefined,
+
+                deliveryIncluded: form.deliveryIncluded,
+                latitude: form.latitude,
+                longitude: form.longitude,
             };
+
+            // Handle Product Banners (Detail Images)
+            let bannerUrls: string[] = [];
+            if (form.productBanners && form.productBanners.length > 0) {
+                const { uploadImageToS3 } = await import("../../../../common/api");
+                bannerUrls = await Promise.all(
+                    form.productBanners.map((file) => uploadImageToS3(file))
+                );
+                (productData as any).productBanners = bannerUrls;
+            }
 
             await registerProductWithImages(productData, Array.from(form.images || []));
 

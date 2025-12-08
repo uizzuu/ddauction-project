@@ -48,6 +48,11 @@ public class ProductDto {
     private boolean deliveryIncluded;
     private Long deliveryPrice;
     private Long deliveryAddPrice;
+    private Double latitude;
+    private Double longitude;
+    private String address;
+    private String deliveryAvailable;
+    private List<String> productBanners;
     // Enum 타입들
     private ProductType productType;
     private ProductStatus productStatus;
@@ -91,6 +96,11 @@ public class ProductDto {
                 .deliveryIncluded(product.isDeliveryIncluded())
                 .deliveryPrice(product.getDeliveryPrice())
                 .deliveryAddPrice(product.getDeliveryAddPrice())
+                .latitude(product.getLatitude())
+                .longitude(product.getLongitude())
+                .address(product.getAddress())
+                .deliveryAvailable(product.getDeliveryAvailable())
+                .productBanners(product.getProductBanners())
                 .productType(product.getProductType())
                 .productStatus(product.getProductStatus())
                 .paymentStatus(product.getPaymentStatus())
@@ -121,6 +131,9 @@ public class ProductDto {
                 .deliveryIncluded(this.deliveryIncluded)
                 .deliveryPrice(this.deliveryPrice)
                 .deliveryAddPrice(this.deliveryAddPrice)
+                .address(this.address)
+                .deliveryAvailable(this.deliveryAvailable)
+                .productBanners(this.productBanners)
                 .productType(this.productType)
                 .productStatus(this.productStatus)
                 .paymentStatus(this.paymentStatus)

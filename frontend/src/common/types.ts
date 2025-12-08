@@ -71,6 +71,17 @@ export interface Product {
   productCategoryType?: ProductCategoryType | null;
   productType?: ProductType; // 상품 타입 추가 (경매/중고/스토어)
 
+  // New Fields
+  tag?: string;
+  address?: string;
+  deliveryAvailable?: string; // Comma separated
+  productBanners?: string[]; // List of URLs
+  originalPrice?: number;
+  discountRate?: number;
+  deliveryPrice?: number;
+  deliveryAddPrice?: number;
+  deliveryIncluded?: boolean;
+
   // 정렬 로직 (인기순)을 위해 ProductSearchPage에서 사용되는 필드를 옵셔널로 추가
   bookmarkCount?: number;
   isBookmarked?: boolean;
@@ -101,6 +112,19 @@ export interface ProductForm {
   productCategoryType: ProductCategoryType | null;
   productType: ProductType; // 상품 타입 필드 추가
   images?: File[];
+
+  // New Fields
+  tag?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  deliveryAvailable?: string[]; // Frontend uses array, convert to string for backend
+  productBanners?: File[]; // Store only (Multi-upload)
+  originalPrice?: string;
+  discountRate?: string;
+  deliveryPrice?: string;
+  deliveryAddPrice?: string;
+  deliveryIncluded?: boolean;
 }
 
 // 상품 수정 데이터 타입
@@ -132,6 +156,22 @@ export interface CreateProductRequest {
   productCategoryType: ProductCategoryType | null;
   productType: ProductType; // 상품 타입 필드 추가
   productStatus: ProductStatus;
+
+  // New Fields
+  tag?: string;
+  address?: string; // "AddressString"
+  deliveryAvailable?: string; // "GS,CU"
+  productBanners?: string[]; // URLs after upload 
+  // Need to check if `productBanner` file is handled separate or standard.
+  // For now, let's assume it's part of the request payload or separate logic.
+  // Actually, `registerProductWithImages` sends JSON + Files. 
+  // If `productBanner` is a file, it needs special handling in API.
+  // Let's stick to base fields first.
+  originalPrice?: number;
+  discountRate?: number;
+  deliveryPrice?: number;
+  deliveryAddPrice?: number;
+  deliveryIncluded?: boolean;
 }
 
 //게시판

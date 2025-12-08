@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import useProductForm from "./hooks/useProductForm";
 import AuctionSection from "./sections/AuctionSection";
 import UsedSection from "./sections/UsedSection";
@@ -30,6 +31,38 @@ export default function ProductRegister({ user }: Props) {
         minDateTime,
         maxDateTime,
     } = useProductForm(user);
+
+    // Tag Logic
+    const [currentTag, setCurrentTag] = useState("");
+
+    // Parse tags from form.tag string
+    const tags = form.tag ? form.tag.split(",").filter(Boolean) : [];
+
+    const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === " " || e.key === "Enter") {
+            e.preventDefault();
+            const val = currentTag.trim();
+            if (val && !tags.includes(val)) {
+                const newTags = [...tags, val];
+                updateForm("tag", newTags.join(","));
+                setCurrentTag("");
+            }
+        }
+    };
+
+    const removeTag = (tagToRemove: string) => {
+        const newTags = tags.filter(t => t !== tagToRemove);
+        updateForm("tag", newTags.join(","));
+    };
+
+    // Thumbnail Logic (Move to index 0)
+    const setThumbnail = (index: number) => {
+        if (!form.images) return;
+        const newImages = [...form.images];
+        const [selected] = newImages.splice(index, 1);
+        newImages.unshift(selected);
+        updateForm("images", newImages);
+    };
 
     if (!user) {
         return (
@@ -78,6 +111,92 @@ export default function ProductRegister({ user }: Props) {
                         </div>
                     </div>
 
+                    {/* 이미지 등록 */}
+                    <div>
+                        <label className="block text-sm font-bold text-[#333] mb-3">
+                            상품 이미지 <span className="text-red-500">*</span>
+                            <span className="text-xs font-normal text-gray-400 ml-2">첫 번째 이미지가 썸네일로 지정됩니다.</span>
+                        </label>
+
+                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                            <label className={`
+                                aspect-square flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 cursor-pointer hover:border-black hover:bg-gray-50 transition-all
+                                ${uploading ? "opacity-50 cursor-not-allowed" : ""}
+                            `}>
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    onChange={(e) => handleImageChange(e.target.files)}
+                                    className="hidden"
+                                    disabled={uploading}
+                                />
+                                <span className="text-2xl mb-1 text-gray-400">+</span>
+                                <span className="text-xs text-gray-500">이미지 추가</span>
+                            </label>
+
+                            {(form.images || []).map((file, idx) => (
+                                <div
+                                    key={idx}
+                                    draggable
+                                    onDragStart={(e) => {
+                                        e.dataTransfer.setData("text/plain", idx.toString());
+                                        e.dataTransfer.effectAllowed = "move";
+                                    }}
+                                    onDragOver={(e) => {
+                                        e.preventDefault();
+                                        e.dataTransfer.dropEffect = "move";
+                                    }}
+                                    onDrop={(e) => {
+                                        e.preventDefault();
+                                        const dragIdx = Number(e.dataTransfer.getData("text/plain"));
+                                        if (dragIdx === idx) return;
+
+                                        const newImages = [...(form.images || [])];
+                                        const [draggedItem] = newImages.splice(dragIdx, 1);
+                                        newImages.splice(idx, 0, draggedItem);
+                                        updateForm("images", newImages);
+                                    }}
+                                    className={`relative aspect-square rounded-xl bg-gray-100 border overflow-hidden group cursor-move ${idx === 0 ? "border-2 border-indigo-500 ring-2 ring-indigo-100" : "border-gray-200"}`}
+                                >
+                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-50 pointer-events-none">
+                                        <img
+                                            src={URL.createObjectURL(file)}
+                                            alt="preview"
+                                            className="w-full h-full object-cover"
+                                            onLoad={(e) => URL.revokeObjectURL(e.currentTarget.src)}
+                                        />
+                                    </div>
+                                    {idx === 0 && (
+                                        <span className="absolute top-1 left-1 bg-indigo-500 text-white text-[10px] px-1.5 py-0.5 rounded font-bold shadow-sm z-10 pointer-events-none">
+                                            대표
+                                        </span>
+                                    )}
+                                    {idx !== 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setThumbnail(idx)}
+                                            className="absolute bottom-1 left-1/2 -translate-x-1/2 px-2 py-0.5 bg-black/70 text-white text-[10px] rounded hover:bg-black w-max opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                        >
+                                            대표 설정
+                                        </button>
+                                    )}
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevent drag start if clicking remove
+                                            removeImage(idx);
+                                        }}
+                                        className="absolute top-1 right-1 w-5 h-5 bg-black/50 hover:bg-black text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
+                                        disabled={uploading}
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* 2. Title */}
                     <div>
                         <label className="block text-sm font-bold text-[#333] mb-2">
@@ -111,49 +230,222 @@ export default function ProductRegister({ user }: Props) {
                         />
                     </div>
 
-                    {/* 4. Description & AI Button */}
+                    {/* 3.5 Tags (Chip UI) */}
                     <div>
-                        <div className="flex justify-between items-end mb-2">
-                            <label className="block text-sm font-bold text-[#333]">
-                                상세 설명 <span className="text-red-500">*</span>
-                            </label>
-                            <button
-                                type="button"
-                                onClick={generateAiDescriptionAuto}
-                                disabled={
-                                    uploading ||
-                                    aiGenerating ||
-                                    !form.title ||
-                                    form.title.trim().length < 2
-                                }
-                                className={`text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors ${!form.title || form.title.trim().length < 2
-                                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                    : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-medium"
-                                    }`}
-                            >
-                                {aiGenerating ? (
-                                    <>
-                                        <span className="animate-spin text-[10px]">⏳</span>
-                                        <span>생성 중...</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span>✨</span>
-                                        <span>AI 자동 생성</span>
-                                    </>
-                                )}
-                            </button>
+                        <label className="block text-sm font-bold text-[#333] mb-2">
+                            태그
+                        </label>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                            {tags.map((tag, idx) => (
+                                <span key={idx} className="inline-flex items-center px-3 py-2 bg-indigo-50 text-indigo-700 text-sm rounded-full">
+                                    <div className="mr-[3px]">#</div>
+                                    {tag}
+                                    <button
+                                        type="button"
+                                        onClick={() => removeTag(tag)}
+                                        className="ml-1.5 w-4 h-4 flex items-center justify-center bg-indigo-200 text-indigo-800 rounded-full text-xs hover:bg-indigo-300"
+                                    >
+                                        ×
+                                    </button>
+                                </span>
+                            ))}
                         </div>
-                        <textarea
-                            placeholder="상품에 대한 자세한 설명을 입력해주세요.&#13;&#10;(브랜드, 모델명, 구매 시기, 하자 유무 등)"
-                            value={form.content}
-                            onChange={(e) => updateForm("content", e.target.value)}
-                            rows={8}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-gray-50/30 text-sm resize-none placeholder:text-gray-400"
+                        <input
+                            type="text"
+                            placeholder="태그 입력 후 스페이스바 또는 엔터 (예: #명품 #신상)"
+                            value={currentTag}
+                            onChange={(e) => {
+                                // Block special characters, leave only standard text/numbers/spaces
+                                const val = e.target.value.replace(/[^\w\sㄱ-ㅎㅏ-ㅣ가-힣]/g, "");
+                                setCurrentTag(val);
+                            }}
+                            onKeyDown={handleTagKeyDown}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-gray-50/30 text-sm placeholder:text-gray-400"
                             disabled={uploading}
                         />
-                        {errors.content && <p className="text-xs text-red-500 mt-1 pl-1">{errors.content}</p>}
+                        <p className="text-xs text-gray-400 mt-1 pl-1">입력 후 스페이스바를 누르면 태그가 등록됩니다.</p>
                     </div>
+
+                    {/* 4. Description & AI Button */}
+                    {/* 4. Description & Detail Images (Grouped for Store) */}
+                    {form.productType === "STORE" ? (
+                        // STORE LAYOUT: Grouped
+                        <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 space-y-6">
+                            <div>
+                                <label className="block text-sm font-bold text-[#333] mb-1">
+                                    상품 상세 정보 <span className="text-red-500">*</span>
+                                </label>
+                                <p className="text-xs text-gray-500 mb-4">상세 설명 또는 상세 이미지 중 하나만 입력해도 됩니다.</p>
+
+                                {/* 4.1. Description (Store) */}
+                                <div className="mb-6">
+                                    <div className="flex justify-between items-end mb-2">
+                                        <label className="block text-xs font-bold text-gray-500">
+                                            상세 설명
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={generateAiDescriptionAuto}
+                                            disabled={
+                                                uploading ||
+                                                aiGenerating ||
+                                                !form.title ||
+                                                form.title.trim().length < 2
+                                            }
+                                            className={`text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors ${!form.title || form.title.trim().length < 2
+                                                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                                : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-medium"
+                                                }`}
+                                        >
+                                            {aiGenerating ? (
+                                                <>
+                                                    <span className="animate-spin text-[10px]">⏳</span>
+                                                    <span>생성 중...</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <span>✨</span>
+                                                    <span>AI 자동 생성</span>
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        placeholder="상품에 대한 자세한 설명을 입력해주세요.&#13;&#10;(브랜드, 모델명, 구매 시기, 하자 유무 등)"
+                                        value={form.content}
+                                        onChange={(e) => updateForm("content", e.target.value)}
+                                        rows={8}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-white text-sm resize-none placeholder:text-gray-400"
+                                        disabled={uploading}
+                                        maxLength={300}
+
+                                    />
+                                    {errors.content && <p className="text-xs text-red-500 mt-1 pl-1">{errors.content}</p>}
+                                </div>
+
+                                {/* 4.2. Detail Images (Store) */}
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-500 mb-2">
+                                        상세 이미지
+                                    </label>
+                                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                                        <label className="aspect-[3/2] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-all bg-white">
+                                            <span className="text-gray-400 text-sm">+ 이미지 추가</span>
+                                            <input
+                                                type="file"
+                                                multiple
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    if (!e.target.files) return;
+                                                    const newFiles = Array.from(e.target.files);
+                                                    updateForm("productBanners", [...(form.productBanners || []), ...newFiles]);
+                                                }}
+                                                className="hidden"
+                                                disabled={uploading}
+                                            />
+                                        </label>
+
+                                        {(form.productBanners || []).map((file: File, idx: number) => (
+                                            <div
+                                                key={idx}
+                                                draggable
+                                                onDragStart={(e) => {
+                                                    e.dataTransfer.setData("text/plain", idx.toString());
+                                                    e.dataTransfer.effectAllowed = "move";
+                                                }}
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    e.dataTransfer.dropEffect = "move";
+                                                }}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    const dragIdx = Number(e.dataTransfer.getData("text/plain"));
+                                                    if (dragIdx === idx) return;
+
+                                                    const newBanners = [...(form.productBanners || [])];
+                                                    const [draggedItem] = newBanners.splice(dragIdx, 1);
+                                                    newBanners.splice(idx, 0, draggedItem);
+                                                    updateForm("productBanners", newBanners);
+                                                }}
+                                                className="relative aspect-[3/2] rounded-xl overflow-hidden border border-gray-200 group bg-gray-100 cursor-move hover:ring-2 hover:ring-indigo-100 transition-all"
+                                            >
+                                                <img
+                                                    src={URL.createObjectURL(file)}
+                                                    alt={`banner-${idx}`}
+                                                    className="w-full h-full object-cover pointer-events-none"
+                                                    draggable={false}
+                                                    onLoad={(e) => URL.revokeObjectURL(e.currentTarget.src)}
+                                                />
+                                                <div className="absolute top-1 left-1 bg-black/60 text-white text-[10px] px-1.5 rounded pointer-events-none z-10">
+                                                    {idx + 1}
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const newBanners = (form.productBanners || []).filter((_: any, i: number) => i !== idx);
+                                                        updateForm("productBanners", newBanners);
+                                                    }}
+                                                    className="absolute top-1 right-1 w-5 h-5 bg-black/50 hover:bg-black text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-20"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-2">
+                                        * 등록된 순서대로 상품 상세 정보에 노출됩니다.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        // STANDARD LAYOUT: Description Only (Used/Auction)
+                        <div>
+                            <div className="flex justify-between items-end mb-2">
+                                <label className="block text-sm font-bold text-[#333]">
+                                    상세 설명 <span className="text-red-500">*</span>
+                                </label>
+                                <button
+                                    type="button"
+                                    onClick={generateAiDescriptionAuto}
+                                    disabled={
+                                        uploading ||
+                                        aiGenerating ||
+                                        !form.title ||
+                                        form.title.trim().length < 2
+                                    }
+                                    className={`text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 transition-colors ${!form.title || form.title.trim().length < 2
+                                        ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                                        : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-medium"
+                                        }`}
+                                >
+                                    {aiGenerating ? (
+                                        <>
+                                            <span className="animate-spin text-[10px]">⏳</span>
+                                            <span>생성 중...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <span>✨</span>
+                                            <span>AI 자동 생성</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            <textarea
+                                placeholder="상품에 대한 자세한 설명을 입력해주세요.&#13;&#10;(브랜드, 모델명, 구매 시기, 하자 유무 등)"
+                                value={form.content}
+                                onChange={(e) => updateForm("content", e.target.value)}
+                                rows={8}
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-gray-50/30 text-sm resize-none placeholder:text-gray-400"
+                                disabled={uploading}
+                                maxLength={300}
+
+                            />
+                            {errors.content && <p className="text-xs text-red-500 mt-1 pl-1">{errors.content}</p>}
+                        </div>
+                    )}
 
                     {/* 5. Dynamic Section based on Product Type */}
                     <div className="p-6 bg-gray-50 rounded-xl border border-gray-100">
@@ -166,6 +458,8 @@ export default function ProductRegister({ user }: Props) {
                                 onChangePrice={(val) => updateForm("startingPrice", val)}
                                 onDateChange={handleDateChange}
                                 uploading={uploading}
+                                form={form}
+                                updateForm={updateForm}
                             />
                         )}
 
@@ -174,6 +468,8 @@ export default function ProductRegister({ user }: Props) {
                                 price={form.startingPrice}
                                 onChangePrice={(val) => updateForm("startingPrice", val)}
                                 uploading={uploading}
+                                form={form}
+                                updateForm={updateForm}
                             />
                         )}
 
@@ -182,58 +478,13 @@ export default function ProductRegister({ user }: Props) {
                                 price={form.startingPrice}
                                 onChangePrice={(val) => updateForm("startingPrice", val)}
                                 uploading={uploading}
+                                form={form}
+                                updateForm={updateForm}
                             />
                         )}
                         {errors.startingPrice && <p className="text-xs text-red-500 mt-2 text-center">{errors.startingPrice}</p>}
                     </div>
 
-
-                    {/* 6. Image Upload */}
-                    <div>
-                        <label className="block text-sm font-bold text-[#333] mb-3">
-                            상품 이미지 <span className="text-red-500">*</span>
-                            <span className="text-xs font-normal text-gray-400 ml-2">최소 1장 이상 등록해주세요</span>
-                        </label>
-
-                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
-                            <label className={`
-                                aspect-square flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 cursor-pointer hover:border-black hover:bg-gray-50 transition-all
-                                ${uploading ? "opacity-50 cursor-not-allowed" : ""}
-                            `}>
-                                <input
-                                    type="file"
-                                    multiple
-                                    accept="image/*"
-                                    onChange={(e) => handleImageChange(e.target.files)}
-                                    className="hidden"
-                                    disabled={uploading}
-                                />
-                                <span className="text-2xl mb-1 text-gray-400">+</span>
-                                <span className="text-xs text-gray-500">이미지 추가</span>
-                            </label>
-
-                            {(form.images || []).map((file, idx) => (
-                                <div key={idx} className="relative aspect-square rounded-xl bg-gray-100 border border-gray-200 overflow-hidden group">
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-                                        <img 
-                                            src={URL.createObjectURL(file)} 
-                                            alt="preview" 
-                                            className="w-full h-full object-cover"
-                                            onLoad={(e) => URL.revokeObjectURL(e.currentTarget.src)}
-                                        />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => removeImage(idx)}
-                                        className="absolute top-1 right-1 w-5 h-5 bg-black/50 hover:bg-black text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                                        disabled={uploading}
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
 
 
                     {/* Error Message */}

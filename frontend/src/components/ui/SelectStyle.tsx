@@ -37,7 +37,8 @@ export default function SelectStyle({
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`custom-select-button ${open ? "open" : ""}`}
+        style={{ border: "1px solid #d1d5db" }}
+        className={`custom-select-button rounded-xl px-4 py-3 flex items-center justify-between bg-white transition-all ${open ? "open ring-2 ring-black/5" : "hover:bg-gray-50"}`}
       >
         <span className={`custom-select-label ${open ? "selected" : ""}`}>
           {selectedLabel}

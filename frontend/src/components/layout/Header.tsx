@@ -34,7 +34,7 @@ export default function Header({ user, setUser }: Props) {
     }, [user, location.pathname]);
 
 
-    const [lastScrollY, setLastScrollY] = useState(0);
+    const lastScrollY = useRef(0);
     const [isScrollDown, setIsScrollDown] = useState(false);
     const [isSticky, setIsSticky] = useState(false);
     const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -64,16 +64,45 @@ export default function Header({ user, setUser }: Props) {
     useEffect(() => {
         const handleScroll = () => {
             const currentScrollY = window.scrollY;
-            // 스크롤 방향 감지 (10px 이상 차이날 때만)
-            if (Math.abs(currentScrollY - lastScrollY) > 5) {
-                setIsScrollDown(currentScrollY > lastScrollY && currentScrollY > 100);
-                setLastScrollY(currentScrollY);
+            const docHeight = document.documentElement.scrollHeight;
+            const winHeight = window.innerHeight;
+
+            // 1. Prevent Top Overscroll (iOS/Mac bounce)
+            if (currentScrollY <= 0) {
+                setIsSticky(false);
+                setIsScrollDown(false);
+                lastScrollY.current = 0;
+                return;
             }
-            setIsSticky(currentScrollY > 10);
+
+            // 2. Logic for Sticky (Shadow)
+            setIsSticky(currentScrollY > 0);
+
+            // 3. Prevent Bottom Overscroll / Jitter
+            // If near bottom, always show header (prevents "scroll up" detection from rubber band)
+            if (currentScrollY + winHeight >= docHeight - 20) {
+                setIsScrollDown(false);
+                return;
+            }
+
+            // 4. Main Scroll Direction Logic
+            const delta = Math.abs(currentScrollY - lastScrollY.current);
+            if (delta > 10) { // Threshold 10px
+                if (currentScrollY > lastScrollY.current && currentScrollY > 60) {
+                    setIsScrollDown(true); // Hide
+                } else if (currentScrollY < lastScrollY.current) {
+                    setIsScrollDown(false); // Show
+                }
+                lastScrollY.current = currentScrollY;
+            }
         };
-        window.addEventListener("scroll", handleScroll);
+
+        // Use requestAnimationFrame for smoother performance if needed, 
+        // but simple throttling via logic above is usually sufficient for React updates.
+        // Adding passive listener for performance
+        window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [lastScrollY]);
+    }, []);
 
     // 실시간 검색어 & 최근 검색어
     const [popularKeywords, setPopularKeywords] = useState<string[]>([]); // API 인기 검색어
@@ -439,11 +468,10 @@ export default function Header({ user, setUser }: Props) {
                             </button>
 
                             <div
-                                className="w-[1px] h-[14px] bg-[#888] mx-1"
+                                className="w-[1px] h-[14px] bg-[#888] ml-1"
                                 aria-hidden="true"
                             />
-
-                            <button type="submit" aria-label="검색" className="pl-2">
+                            <button type="submit" aria-label="검색" className="ml-1">
                                 <img
                                     className="relative flex-[0_0_auto] w-[22px] h-[22px]"
                                     alt=""

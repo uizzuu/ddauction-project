@@ -1,13 +1,17 @@
 package com.my.backend.dto;
 
-import com.my.backend.entity.Review;
-import com.my.backend.entity.Product;
-import com.my.backend.enums.ProductType;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.my.backend.entity.Review;
+import com.my.backend.enums.ProductType;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter

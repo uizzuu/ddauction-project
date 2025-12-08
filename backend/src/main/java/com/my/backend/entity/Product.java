@@ -1,20 +1,35 @@
 package com.my.backend.entity;
 
-import com.my.backend.enums.PaymentStatus;
-import com.my.backend.enums.ProductCategoryType;
-import com.my.backend.enums.ProductStatus;
-import com.my.backend.enums.ProductType;
-import com.my.backend.enums.DeliveryType;
-import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import java.time.LocalDateTime;
+
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import com.my.backend.enums.DeliveryType;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductCategoryType;
+import com.my.backend.enums.ProductStatus;
+import com.my.backend.enums.ProductType;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "product")
@@ -34,8 +49,7 @@ public class Product {
     @Column(nullable = false)
     private String title;
 
-    @NotBlank
-    @Column(nullable = false,length = 300)
+    @Column(length = 300)
     private String content;
 
     @Column(unique = true)
@@ -59,6 +73,20 @@ public class Product {
     private Long deliveryAddPrice;
 
     private boolean deliveryIncluded;
+
+    private String address;
+
+    private Double latitude;
+
+    private Double longitude;
+
+    private String deliveryAvailable;
+
+    @jakarta.persistence.ElementCollection
+    @jakarta.persistence.CollectionTable(name = "product_banners", joinColumns = @JoinColumn(name = "product_id"))
+    @jakarta.persistence.Column(name = "banner_url")
+    @jakarta.persistence.OrderColumn(name = "banner_order")
+    private java.util.List<String> productBanners = new java.util.ArrayList<>();
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

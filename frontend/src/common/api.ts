@@ -99,6 +99,10 @@ export const fetchBookmarkCheck = (productId: number, token?: string) =>
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
 
+// 주소 변환 (Reverse Geocoding)
+export const reverseGeocode = (latitude: number, longitude: number) =>
+  fetchJson<string>(`${API_BASE_URL}${SPRING_API}/geo/reverse?latitude=${latitude}&longitude=${longitude}`);
+
 // 찜 토글
 export const toggleBookmark = async (productId: number, token?: string) => {
   const t = ensureToken(token);
@@ -798,17 +802,36 @@ export async function registerProductWithImages(
     title: string;
     content: string;
     startingPrice: number;
-    auctionEndTime?: string | null;
-    sellerId: number;
+    // ... other fields
+    auctionEndTime?: string;
     productCategoryType: TYPE.ProductCategoryType | null;
-    productStatus: string;
-    paymentStatus: string;
-    productType: string;
+    productStatus: TYPE.ProductStatus;
+    productType: TYPE.ProductType;
+    paymentStatus: TYPE.PaymentStatus;
+    sellerId: number;
+
+    // New Fields
+    tag?: string;
+    address?: string;
+    latitude?: number;
+    longitude?: number;
+    deliveryAvailable?: string;
+    // deliveryPrice, addPrice, discountRate, etc. should also be passed if needed
+    originalPrice?: number;
+    discountRate?: number;
+    deliveryPrice?: number;
+    deliveryAddPrice?: number;
+    deliveryIncluded?: boolean;
+    productBanner?: string; // If we decided to pass it here (Wait, StoreSection banner logic might differ)
   },
   images: File[]
 ): Promise<TYPE.Product> {
   // 1. 상품 등록
-  const product = await createProduct(productData as unknown as TYPE.CreateProductRequest);
+  const data: any = {
+    ...productData,
+    auctionEndTime: productData.auctionEndTime || null,
+  };
+  const product = await createProduct(data as TYPE.CreateProductRequest);
 
   if (!product.productId) {
     throw new Error("서버에서 productId를 받지 못했습니다.");
