@@ -78,6 +78,10 @@ rag:
 nts:
   api:
     key: ${NTS_API_KEY}
+solapi:
+  api-key: ${SOL_API_KEY}
+  api-secret: ${SOL_API_SECRET}
+  from-number: ${SOL_API_FROM_NUMBER}
 
 # ===================================
 # 로컬 환경

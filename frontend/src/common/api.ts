@@ -469,6 +469,75 @@ export async function preparePayment(productId: number): Promise<{
 
 // 결제 완료 검증
 
+// ============================
+//  배송 및 결제 내역 (추가)
+// ============================
+
+export interface PaymentHistoryResponse {
+  paymentId: number;
+  productId: number;
+  productTitle: string;
+  productImage: string | null;
+  price: number;
+  status: string;
+  paidAt: string;
+  courier: string | null;
+  trackingNumber: string | null;
+  buyerName: string;
+  buyerNickName: string;
+  buyerPhone: string;
+  buyerAddress: string;
+  sellerNickName: string;
+}
+
+// 판매 내역 조회
+export async function fetchSellingHistory(): Promise<PaymentHistoryResponse[]> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/payments/portone/history/sell`);
+  if (!response.ok) throw new Error("판매 내역 조회 실패");
+  return response.json();
+}
+
+// 구매 내역 조회
+export async function fetchBuyingHistory(): Promise<PaymentHistoryResponse[]> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/payments/portone/history/buy`);
+  if (!response.ok) throw new Error("구매 내역 조회 실패");
+  return response.json();
+}
+
+// 배송 정보 입력
+export async function updateShippingInfo(
+  paymentId: number,
+  courier: string,
+  trackingNumber: string
+): Promise<void> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/payments/portone/shipping`, {
+    method: "POST",
+    body: JSON.stringify({ paymentId, courier, trackingNumber }),
+  });
+  if (!response.ok) throw new Error("배송 정보 등록 실패");
+}
+
+// 사용자 주소 조회 (결제 페이지용)
+export async function fetchUserAddress(userId: number): Promise<{
+  address: string;
+  zipCode: string;
+  detailAddress: string;
+  phone: string;
+  userName: string;
+}> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`);
+  if (!response.ok) throw new Error("사용자 정보 조회 실패");
+  const data = await response.json();
+  return {
+    address: data.address || "",
+    zipCode: data.zipCode || "",
+    detailAddress: data.detailAddress || "",
+    phone: data.phone || "",
+    userName: data.userName || "",
+  };
+}
+
+
 export async function completePayment(data: {
   imp_uid: string;
   productId: number;
