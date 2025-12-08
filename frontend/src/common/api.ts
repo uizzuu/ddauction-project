@@ -1676,7 +1676,7 @@ export async function searchByColor(params: {
   min_similarity?: number;
 }): Promise<TYPE.Product[]> {
   const response = await fetch(
-    `${AI_BASE_URL}${PYTHON_API}/recommendations/color`,
+    `${AI_BASE_URL}/recommendations/color`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1748,7 +1748,7 @@ export async function checkImageQuality(imageBase64: string): Promise<{
   recommendation: string;
 }> {
   const response = await fetch(
-    `${AI_BASE_URL}${PYTHON_API}/image/quality-check`,
+    `${AI_BASE_URL}/image/quality-check`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1769,7 +1769,7 @@ export async function checkImageQuality(imageBase64: string): Promise<{
  */
 export async function optimizeImage(imageBase64: string): Promise<string> {
   const response = await fetch(
-    `${AI_BASE_URL}${PYTHON_API}/image/optimize`,
+    `${AI_BASE_URL}/image/optimize`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1797,7 +1797,7 @@ export async function extractImageMetadata(imageBase64: string): Promise<{
   color_names: string[];
 }> {
   const response = await fetch(
-    `${AI_BASE_URL}${PYTHON_API}/image/metadata`,
+    `${AI_BASE_URL}/image/metadata`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
