@@ -8,6 +8,11 @@ export const API_BASE_URL =
   import.meta.env.MODE === "production"
     ? ""
     : import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+export const AI_BASE_URL =
+  import.meta.env.MODE === "production"
+    ? ""
+    : import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 // ===================== 타입가드 =====================
 
 function isBid(obj: unknown): obj is TYPE.Bid {
@@ -1023,7 +1028,7 @@ export const fetchQrCodeImage = async (productId: number): Promise<string> => {
 
 // 배경 제거 (Python FastAPI) 스프링 거칠필요없음 로컬에서 테스트 안함
 export const removeProductBackground = async (productId: number): Promise<string> => {
-  const res = await fetch(`${API_BASE_URL}${PYTHON_API}/remove-bg`, {
+  const res = await fetch(`${AI_BASE_URL}/remove-bg`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ product_id: productId }),
@@ -1658,30 +1663,34 @@ export async function fetchAverageRating(userId: number): Promise<{ averageRatin
   if (!res.ok) throw new Error("평균 평점 조회 실패");
   return res.json();
 }
-// ===================== 이미지 기반 추천 API =====================
+
+// ===================== 색상 기반 이미지 추천 API =====================
 
 /**
- * 이미지로 유사한 상품 검색 (Base64)
+ * 색상 기반 유사 상품 검색 (Base64)
  */
-export async function searchByImage(params: {
+export async function searchByColor(params: {
   image_base64: string;
   limit?: number;
   category_filter?: string;
   min_similarity?: number;
 }): Promise<TYPE.Product[]> {
-  const response = await fetch(`${API_BASE_URL}${PYTHON_API}/recommendations/image`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      image_base64: params.image_base64,
-      limit: params.limit || 10,
-      category_filter: params.category_filter || null,
-      min_similarity: params.min_similarity || 0.3,
-    }),
-  });
+  const response = await fetch(
+    `${AI_BASE_URL}/recommendations/color`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        image_base64: params.image_base64,
+        limit: params.limit || 10,
+        category_filter: params.category_filter || null,
+        min_similarity: params.min_similarity || 0.5,
+      }),
+    }
+  );
 
   if (!response.ok) {
-    throw new Error("이미지 검색 실패");
+    throw new Error("색상 검색 실패");
   }
 
   const data = await response.json();
@@ -1689,7 +1698,7 @@ export async function searchByImage(params: {
 }
 
 /**
- * 이미지 파일 업로드로 유사한 상품 검색
+ * 이미지 파일 업로드로 색상 기반 검색
  */
 export async function searchByImageFile(params: {
   file: File;
@@ -1702,7 +1711,7 @@ export async function searchByImageFile(params: {
 
   const queryParams = new URLSearchParams({
     limit: (params.limit || 10).toString(),
-    min_similarity: (params.min_similarity || 0.3).toString(),
+    min_similarity: (params.min_similarity || 0.5).toString(),
   });
 
   if (params.category_filter) {
@@ -1710,7 +1719,7 @@ export async function searchByImageFile(params: {
   }
 
   const response = await fetch(
-    `${API_BASE_URL}${PYTHON_API}/recommendations/image/upload?${queryParams}`,
+    `${AI_BASE_URL}/recommendations/color/upload?${queryParams}`,
     {
       method: "POST",
       body: formData,
@@ -1726,31 +1735,85 @@ export async function searchByImageFile(params: {
 }
 
 /**
- * 특정 상품의 이미지와 시각적으로 유사한 상품 추천
+ * 이미지 품질 체크
  */
-export async function getVisualSimilarProducts(
-  productId: number,
-  limit: number = 6
-): Promise<TYPE.Product[]> {
+export async function checkImageQuality(imageBase64: string): Promise<{
+  quality_score: number;
+  width: number;
+  height: number;
+  file_size_kb: number;
+  brightness: number;
+  sharpness: number;
+  issues: string[];
+  recommendation: string;
+}> {
   const response = await fetch(
-    `${API_BASE_URL}${PYTHON_API}/recommendations/product-image-similar`,
+    `${AI_BASE_URL}/image/quality-check`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        product_id: productId,
-        limit: limit,
-      }),
+      body: JSON.stringify({ image_base64: imageBase64 }),
     }
   );
 
   if (!response.ok) {
-    throw new Error("시각적 유사 상품 조회 실패");
+    throw new Error("이미지 품질 체크 실패");
   }
 
   const data = await response.json();
-  return data.similar_products || [];
+  return data.analysis;
 }
+
+/**
+ * 이미지 자동 최적화
+ */
+export async function optimizeImage(imageBase64: string): Promise<string> {
+  const response = await fetch(
+    `${AI_BASE_URL}/image/optimize`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image_base64: imageBase64 }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("이미지 최적화 실패");
+  }
+
+  const data = await response.json();
+  return data.optimized_image;
+}
+
+/**
+ * 이미지 메타데이터 추출
+ */
+export async function extractImageMetadata(imageBase64: string): Promise<{
+  width: number;
+  height: number;
+  format: string;
+  mode: string;
+  dominant_colors: string[];
+  color_names: string[];
+}> {
+  const response = await fetch(
+    `${AI_BASE_URL}/image/metadata`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ image_base64: imageBase64 }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("메타데이터 추출 실패");
+  }
+
+  const data = await response.json();
+  return data.metadata;
+}
+
+
 
 // 사업자 인증 요청
 export async function verifyBusiness(userId: number, businessNumber: string): Promise<{ verified: boolean; companyName?: string }> {
