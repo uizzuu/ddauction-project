@@ -13,7 +13,7 @@ from product_generator import generator_service
 from remove_bg import remove_background_from_qr
 
 # 추천 엔진 imports
-from image_recommendation import image_recommendation_engine  # 🆕 추가
+# from image_recommendation import image_recommendation_engine  # 🆕 추가
 
 load_dotenv()
 app = FastAPI()
@@ -127,100 +127,100 @@ async def remove_background(request: ProductImageRequest):
     return {"image_base64": image_base64, "message": "배경 제거 완료"}
 
 # ============ 🆕 이미지 기반 추천 엔드포인트 ============
-
-@app.post("/recommendations/image")
-async def recommend_by_image(request: ImageRecommendationRequest):
-    """
-    이미지 업로드로 유사한 상품 추천
-
-    - **image_base64**: Base64 인코딩된 이미지
-    - **limit**: 반환할 상품 수 (기본: 10)
-    - **category_filter**: 카테고리 필터 (선택)
-    - **min_similarity**: 최소 유사도 임계값 (0.0~1.0)
-    """
-    try:
-        recommendations = image_recommendation_engine.recommend_by_image(
-            image_base64=request.image_base64,
-            limit=request.limit,
-            category_filter=request.category_filter,
-            min_similarity=request.min_similarity
-        )
-
-        return {
-            "success": True,
-            "recommendations": recommendations,
-            "count": len(recommendations),
-            "search_type": "image_based"
-        }
-    except Exception as e:
-        print(f"❌ 이미지 기반 추천 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"이미지 기반 추천 실패: {str(e)}")
-
-
-@app.post("/recommendations/image/upload")
-async def recommend_by_image_upload(
-        file: UploadFile = File(...),
-        limit: int = 10,
-        category_filter: Optional[str] = None,
-        min_similarity: float = 0.3
-):
-    """
-    이미지 파일 업로드로 유사한 상품 추천
-
-    - **file**: 이미지 파일 (jpg, png, etc.)
-    - **limit**: 반환할 상품 수
-    - **category_filter**: 카테고리 필터 (선택)
-    - **min_similarity**: 최소 유사도 임계값
-    """
-    try:
-        # 파일을 base64로 변환
-        contents = await file.read()
-        image_base64 = base64.b64encode(contents).decode('utf-8')
-
-        # 추천 실행
-        recommendations = image_recommendation_engine.recommend_by_image(
-            image_base64=image_base64,
-            limit=limit,
-            category_filter=category_filter,
-            min_similarity=min_similarity
-        )
-
-        return {
-            "success": True,
-            "filename": file.filename,
-            "recommendations": recommendations,
-            "count": len(recommendations),
-            "search_type": "image_upload"
-        }
-    except Exception as e:
-        print(f"❌ 이미지 업로드 추천 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"이미지 업로드 추천 실패: {str(e)}")
-
-
-@app.post("/recommendations/product-image-similar")
-async def get_visually_similar_products(request: ProductImageSimilarRequest):
-    """
-    특정 상품의 이미지와 시각적으로 유사한 상품 추천
-
-    - **product_id**: 기준 상품 ID
-    - **limit**: 반환할 상품 수 (기본: 6)
-    """
-    try:
-        similar_products = image_recommendation_engine.recommend_by_product_image(
-            product_id=request.product_id,
-            limit=request.limit
-        )
-
-        return {
-            "success": True,
-            "product_id": request.product_id,
-            "similar_products": similar_products,
-            "count": len(similar_products),
-            "match_type": "visual_similarity"
-        }
-    except Exception as e:
-        print(f"❌ 시각적 유사 상품 추천 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"시각적 유사 상품 추천 실패: {str(e)}")
+#
+# @app.post("/recommendations/image")
+# async def recommend_by_image(request: ImageRecommendationRequest):
+#     """
+#     이미지 업로드로 유사한 상품 추천
+#
+#     - **image_base64**: Base64 인코딩된 이미지
+#     - **limit**: 반환할 상품 수 (기본: 10)
+#     - **category_filter**: 카테고리 필터 (선택)
+#     - **min_similarity**: 최소 유사도 임계값 (0.0~1.0)
+#     """
+#     try:
+#         recommendations = image_recommendation_engine.recommend_by_image(
+#             image_base64=request.image_base64,
+#             limit=request.limit,
+#             category_filter=request.category_filter,
+#             min_similarity=request.min_similarity
+#         )
+#
+#         return {
+#             "success": True,
+#             "recommendations": recommendations,
+#             "count": len(recommendations),
+#             "search_type": "image_based"
+#         }
+#     except Exception as e:
+#         print(f"❌ 이미지 기반 추천 실패: {e}")
+#         raise HTTPException(status_code=500, detail=f"이미지 기반 추천 실패: {str(e)}")
+#
+#
+# @app.post("/recommendations/image/upload")
+# async def recommend_by_image_upload(
+#         file: UploadFile = File(...),
+#         limit: int = 10,
+#         category_filter: Optional[str] = None,
+#         min_similarity: float = 0.3
+# ):
+#     """
+#     이미지 파일 업로드로 유사한 상품 추천
+#
+#     - **file**: 이미지 파일 (jpg, png, etc.)
+#     - **limit**: 반환할 상품 수
+#     - **category_filter**: 카테고리 필터 (선택)
+#     - **min_similarity**: 최소 유사도 임계값
+#     """
+#     try:
+#         # 파일을 base64로 변환
+#         contents = await file.read()
+#         image_base64 = base64.b64encode(contents).decode('utf-8')
+#
+#         # 추천 실행
+#         recommendations = image_recommendation_engine.recommend_by_image(
+#             image_base64=image_base64,
+#             limit=limit,
+#             category_filter=category_filter,
+#             min_similarity=min_similarity
+#         )
+#
+#         return {
+#             "success": True,
+#             "filename": file.filename,
+#             "recommendations": recommendations,
+#             "count": len(recommendations),
+#             "search_type": "image_upload"
+#         }
+#     except Exception as e:
+#         print(f"❌ 이미지 업로드 추천 실패: {e}")
+#         raise HTTPException(status_code=500, detail=f"이미지 업로드 추천 실패: {str(e)}")
+#
+#
+# @app.post("/recommendations/product-image-similar")
+# async def get_visually_similar_products(request: ProductImageSimilarRequest):
+#     """
+#     특정 상품의 이미지와 시각적으로 유사한 상품 추천
+#
+#     - **product_id**: 기준 상품 ID
+#     - **limit**: 반환할 상품 수 (기본: 6)
+#     """
+#     try:
+#         similar_products = image_recommendation_engine.recommend_by_product_image(
+#             product_id=request.product_id,
+#             limit=request.limit
+#         )
+#
+#         return {
+#             "success": True,
+#             "product_id": request.product_id,
+#             "similar_products": similar_products,
+#             "count": len(similar_products),
+#             "match_type": "visual_similarity"
+#         }
+#     except Exception as e:
+#         print(f"❌ 시각적 유사 상품 추천 실패: {e}")
+#         raise HTTPException(status_code=500, detail=f"시각적 유사 상품 추천 실패: {str(e)}")
 
 
 if __name__ == "__main__":
