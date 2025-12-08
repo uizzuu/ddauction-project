@@ -1635,3 +1635,96 @@ export async function fetchAverageRating(userId: number): Promise<{ averageRatin
   if (!res.ok) throw new Error("평균 평점 조회 실패");
   return res.json();
 }
+// ===================== 이미지 기반 추천 API =====================
+
+/**
+ * 이미지로 유사한 상품 검색 (Base64)
+ */
+export async function searchByImage(params: {
+  image_base64: string;
+  limit?: number;
+  category_filter?: string;
+  min_similarity?: number;
+}): Promise<TYPE.Product[]> {
+  const response = await fetch(`${API_BASE_URL}/ai/recommendations/image`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      image_base64: params.image_base64,
+      limit: params.limit || 10,
+      category_filter: params.category_filter || null,
+      min_similarity: params.min_similarity || 0.3,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("이미지 검색 실패");
+  }
+
+  const data = await response.json();
+  return data.recommendations || [];
+}
+
+/**
+ * 이미지 파일 업로드로 유사한 상품 검색
+ */
+export async function searchByImageFile(params: {
+  file: File;
+  limit?: number;
+  category_filter?: string;
+  min_similarity?: number;
+}): Promise<TYPE.Product[]> {
+  const formData = new FormData();
+  formData.append("file", params.file);
+
+  const queryParams = new URLSearchParams({
+    limit: (params.limit || 10).toString(),
+    min_similarity: (params.min_similarity || 0.3).toString(),
+  });
+
+  if (params.category_filter) {
+    queryParams.append("category_filter", params.category_filter);
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}${PYTHON_API}/recommendations/image/upload?${queryParams}`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("이미지 업로드 검색 실패");
+  }
+
+  const data = await response.json();
+  return data.recommendations || [];
+}
+
+/**
+ * 특정 상품의 이미지와 시각적으로 유사한 상품 추천
+ */
+export async function getVisualSimilarProducts(
+  productId: number,
+  limit: number = 6
+): Promise<TYPE.Product[]> {
+  const response = await fetch(
+    `${API_BASE_URL}/ai/recommendations/product-image-similar`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        product_id: productId,
+        limit: limit,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("시각적 유사 상품 조회 실패");
+  }
+
+  const data = await response.json();
+  return data.similar_products || [];
+}
