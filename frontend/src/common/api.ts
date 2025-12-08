@@ -1728,3 +1728,25 @@ export async function getVisualSimilarProducts(
   const data = await response.json();
   return data.similar_products || [];
 }
+
+// 사업자 인증 요청
+export async function verifyBusiness(userId: number, businessNumber: string): Promise<{ verified: boolean; companyName?: string }> {
+  const token = localStorage.getItem("token");
+  if (!token) throw new Error("로그인이 필요합니다.");
+
+  const res = await fetch(`${API_BASE_URL}/api/business/verify`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ userId, businessNumber }), // userId 포함
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "사업자 인증 실패");
+  }
+
+  return res.json();
+}
