@@ -82,6 +82,9 @@ dependencies {
 
     // 이메일 전송용
     implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // sms 전송용
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
 }
 
 tasks.named('test') {
