@@ -1745,7 +1745,7 @@ export async function searchByColor(params: {
   min_similarity?: number;
 }): Promise<TYPE.Product[]> {
   const response = await fetch(
-    `${AI_BASE_URL}/recommendations/color`,
+    `${AI_BASE_URL}${PYTHON_API}/recommendations/color`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1788,7 +1788,7 @@ export async function searchByImageFile(params: {
   }
 
   const response = await fetch(
-    `${AI_BASE_URL}/recommendations/color/upload?${queryParams}`,
+    `${AI_BASE_URL}${PYTHON_API}/recommendations/color/upload?${queryParams}`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       body: formData,
@@ -1817,7 +1817,7 @@ export async function checkImageQuality(imageBase64: string): Promise<{
   recommendation: string;
 }> {
   const response = await fetch(
-    `${AI_BASE_URL}/image/quality-check`,
+    `${AI_BASE_URL}${PYTHON_API}/image/quality-check`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1838,7 +1838,7 @@ export async function checkImageQuality(imageBase64: string): Promise<{
  */
 export async function optimizeImage(imageBase64: string): Promise<string> {
   const response = await fetch(
-    `${AI_BASE_URL}/image/optimize`,
+    `${AI_BASE_URL}${PYTHON_API}/image/optimize`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1866,7 +1866,7 @@ export async function extractImageMetadata(imageBase64: string): Promise<{
   color_names: string[];
 }> {
   const response = await fetch(
-    `${AI_BASE_URL}/image/metadata`,
+    `${AI_BASE_URL}${PYTHON_API}/image/metadata`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1881,6 +1881,7 @@ export async function extractImageMetadata(imageBase64: string): Promise<{
   const data = await response.json();
   return data.metadata;
 }
+
 
 
 
