@@ -1,5 +1,6 @@
-package com.my.backend.business;
+package com.my.backend.service;
 
+import com.my.backend.dto.BusinessVerifyDto;
 import com.my.backend.entity.Users;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

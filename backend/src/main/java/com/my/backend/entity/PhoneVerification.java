@@ -34,4 +34,7 @@ public class PhoneVerification {
     private LocalDateTime createdAt;
 
     private LocalDateTime expiredAt;
+
+    @Column(nullable = false)
+    private boolean verified;
 }
