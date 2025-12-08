@@ -1646,7 +1646,7 @@ export async function searchByImage(params: {
   category_filter?: string;
   min_similarity?: number;
 }): Promise<TYPE.Product[]> {
-  const response = await fetch(`${API_BASE_URL}/ai/recommendations/image`, {
+  const response = await fetch(`${API_BASE_URL}${PYTHON_API}/recommendations/image`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -1710,7 +1710,7 @@ export async function getVisualSimilarProducts(
   limit: number = 6
 ): Promise<TYPE.Product[]> {
   const response = await fetch(
-    `${API_BASE_URL}/ai/recommendations/product-image-similar`,
+    `${API_BASE_URL}${PYTHON_API}/recommendations/product-image-similar`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
