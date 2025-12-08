@@ -98,4 +98,10 @@ public class Users {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "phone_verification_id")
     private PhoneVerification phoneVerification;
+
+    public boolean isVerified() {
+        // 이메일 또는 핸드폰 인증 중 하나라도 완료면 true
+        return (emailVerification != null && emailVerification.isVerified())
+                || (phoneVerification != null && phoneVerification.isVerified());
+    }
 }

@@ -1,4 +1,4 @@
-package com.my.backend.business;
+package com.my.backend.dto;
 
 import lombok.Getter;
 import lombok.Setter;

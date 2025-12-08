@@ -1,9 +1,10 @@
-package com.my.backend.business;
+package com.my.backend.controller;
 
+import com.my.backend.dto.BusinessVerifyDto;
+import com.my.backend.service.BusinessVerifyService;
 import com.my.backend.dto.auth.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

@@ -1,46 +1,44 @@
-#RAG 시스템 및 API 구동에 필요한 라이브러리 목록
-
-#--- Web/API layer ---
-
+# Web/API layer
 fastapi>=0.115.0
-uvicorn[standard]>=0.30.0 # extra dependencies (standard) 사용 시 백슬래시 제거
+uvicorn[standard]>=0.30.0
 
-#--- LLM / Reasoning / Graph ---
-
+# LLM / Reasoning / Graph
 openai>=1.40.0
 langchain>=0.3.27
 langchain-core>=0.3.80
 langchain-openai>=0.3.35
-langgraph # LangGraph는 버전 제약 없이 최신 버전 사용
+langgraph
 
-#--- Environment / Utils ---
-
+# Environment / Utils
 python-dotenv>=1.0.1
-pydantic # FastAPI BaseModel 사용을 위해 필수
+pydantic
 
-#--- Vector DB (기존 Pinecone RAG 시스템에 필수) ---
-
+# Vector DB
 pinecone-client
-langchain-pinecone # LangChain 통합을 위해 필수
+langchain-pinecone
 
-#--- PDF Processing (PDF to MD 변환 스크립트에 필수) ---
-
+# PDF Processing
 PyMuPDF==1.23.25
 
-#--- Text Splitting (process_embeddings.py에 필수) ---
-
+# Text Splitting
 langchain-text-splitters
 
-# 추천 시스템용 추가
-scikit-learn>=1.3.2
+# 기본 데이터 처리
 numpy>=1.26.2
 pandas>=2.1.4
 requests>=2.31.0
+scikit-learn>=1.3.2
 scipy>=1.11.4
 
-# 이미지 기반 추천 시스템용 추가
+# 이미지 처리
 pillow>=10.0.0
-torch>=2.0.0
-torchvision>=0.15.0
-transformers>=4.30.0
 python-multipart>=0.0.6
+
+# CPU 전용 PyTorch + torchvision + torchaudio
+torch==2.1.1+cpu
+torchvision==0.16.1+cpu
+torchaudio==2.3.2+cpu
+-f https://download.pytorch.org/whl/cpu/torch_stable.html
+
+# Transformers (CLIP)
+transformers==4.40.0

@@ -13,7 +13,6 @@ from product_generator import generator_service
 from remove_bg import remove_background_from_qr
 
 # 추천 엔진 imports
-from recommendation_engine import recommendation_engine
 from image_recommendation import image_recommendation_engine  # 🆕 추가
 
 load_dotenv()
@@ -126,61 +125,6 @@ async def generate_product_description(request: ProductRequest):
 async def remove_background(request: ProductImageRequest):
     image_base64 = remove_background_from_qr(request.product_id)
     return {"image_base64": image_base64, "message": "배경 제거 완료"}
-
-
-# ============ 기존 추천 시스템 엔드포인트 ============
-
-@app.post("/recommendations")
-async def get_recommendations(request: RecommendationRequest):
-    """
-    사용자 맞춤 상품 추천
-
-    - **user_id**: 사용자 ID
-    - **limit**: 반환할 상품 수 (기본: 10)
-    - **exclude_viewed**: 이미 본 상품 제외 (기본: True)
-    """
-    try:
-        recommendations = recommendation_engine.get_recommendations(
-            user_id=request.user_id,
-            limit=request.limit,
-            exclude_viewed=request.exclude_viewed
-        )
-
-        return {
-            "success": True,
-            "user_id": request.user_id,
-            "recommendations": recommendations,
-            "count": len(recommendations)
-        }
-    except Exception as e:
-        print(f"❌ 추천 생성 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"추천 생성 실패: {str(e)}")
-
-
-@app.post("/recommendations/similar")
-async def get_similar_products(request: SimilarProductRequest):
-    """
-    특정 상품과 유사한 상품 추천
-
-    - **product_id**: 기준 상품 ID
-    - **limit**: 반환할 상품 수 (기본: 6)
-    """
-    try:
-        similar_products = recommendation_engine.get_similar_products(
-            product_id=request.product_id,
-            limit=request.limit
-        )
-
-        return {
-            "success": True,
-            "product_id": request.product_id,
-            "similar_products": similar_products,
-            "count": len(similar_products)
-        }
-    except Exception as e:
-        print(f"❌ 유사 상품 추천 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"유사 상품 추천 실패: {str(e)}")
-
 
 # ============ 🆕 이미지 기반 추천 엔드포인트 ============
 

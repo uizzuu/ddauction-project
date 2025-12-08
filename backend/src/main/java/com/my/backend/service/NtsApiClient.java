@@ -1,4 +1,4 @@
-package com.my.backend.business;
+package com.my.backend.service;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
