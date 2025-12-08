@@ -120,6 +120,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/autocomplete/**").permitAll()
                         .requestMatchers("/api/search/log").permitAll()
                         .requestMatchers("/api/chats/**").permitAll()
+                        .requestMatchers("/api/business/verify").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()

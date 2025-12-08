@@ -73,7 +73,7 @@ public class Users {
     private LocalDate birthday;
 
     @Pattern(regexp = "^\\d{10}$", message = "사업자번호는 숫자 10자리여야 합니다.")
-    @Column(name = "business_number", unique = true)
+    @Column(name = "business_number", unique = true, nullable = true)
     private String businessNumber;
 
     @CreatedDate
