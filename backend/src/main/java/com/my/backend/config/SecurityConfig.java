@@ -113,6 +113,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/search/log").permitAll()
                         .requestMatchers("/api/chats/**").permitAll()
                         .requestMatchers("/api/business/verify").permitAll()
+                        .requestMatchers("/api/sms/send", "/api/sms/verify").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
