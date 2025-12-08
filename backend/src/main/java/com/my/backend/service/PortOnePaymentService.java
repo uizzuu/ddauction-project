@@ -1,23 +1,35 @@
 package com.my.backend.service;
 
-import com.my.backend.config.PaymentProperties;
-import com.my.backend.dto.portone.PortOnePaymentResponse;
-import com.my.backend.dto.portone.PortOneTokenResponse;
-import com.my.backend.entity.*;
-import com.my.backend.enums.PaymentMethodType;
-import com.my.backend.enums.PaymentStatus;
-import com.my.backend.enums.ProductStatus;
-import com.my.backend.repository.*;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
+import com.my.backend.config.PaymentProperties;
+import com.my.backend.dto.portone.PortOnePaymentResponse;
+import com.my.backend.dto.portone.PortOneTokenResponse;
+import com.my.backend.entity.Bid;
+import com.my.backend.entity.Payment;
+import com.my.backend.entity.Product;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.PaymentMethodType;
+import com.my.backend.enums.PaymentStatus;
+import com.my.backend.enums.ProductStatus;
+import com.my.backend.repository.BidRepository;
+import com.my.backend.repository.PaymentRepository;
+import com.my.backend.repository.ProductRepository;
+import com.my.backend.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -402,5 +414,68 @@ public class PortOnePaymentService {
                 p.getProductId(), buyer.getUserId(), expectedAmount);
 
         return paymentInfo;
+    }
+    // ============================
+    //  배송 정보 입력 (판매자)
+    // ============================
+    public void updateShippingInfo(Long paymentId, Long sellerId, String courier, String trackingNumber) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다."));
+
+        // 판매자 본인 검증
+        if (payment.getProduct() == null ||
+            payment.getProduct().getSeller() == null ||
+            !payment.getProduct().getSeller().getUserId().equals(sellerId)) {
+            throw new SecurityException("판매자 본인만 배송 정보를 입력할 수 있습니다.");
+        }
+
+        try {
+            payment.setCourierName(com.my.backend.enums.CourierType.valueOf(courier));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("유효하지 않은 택배사입니다.");
+        }
+        payment.setTrackingNumber(trackingNumber);
+        paymentRepository.save(payment);
+    }
+
+    // ============================
+    //  구매/판매 내역 조회
+    // ============================
+    @Transactional(readOnly = true)
+    public java.util.List<com.my.backend.dto.PaymentHistoryResponse> getBuyingHistory(Long userId) {
+        return paymentRepository.findByUser_UserId(userId).stream()
+                .map(com.my.backend.dto.PaymentHistoryResponse::fromEntity)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.List<com.my.backend.dto.PaymentHistoryResponse> getSellingHistory(Long userId) {
+        return paymentRepository.findByProduct_Seller_UserId(userId).stream()
+                .map(com.my.backend.dto.PaymentHistoryResponse::fromEntity)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    // ============================
+    //  구매 확정 (구매자)
+    // ============================
+    @Transactional
+    public void confirmPurchase(Long paymentId, Long buyerId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalArgumentException("결제 정보를 찾을 수 없습니다."));
+
+        // 구매자 본인 검증
+        if (!payment.getUser().getUserId().equals(buyerId)) {
+            throw new SecurityException("구매자만 구매 확정을 할 수 있습니다.");
+        }
+
+        // 상태 검증 (PAID 상태에서만 확정 가능)
+        if (payment.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new IllegalStateException("결제 완료 상태의 상품만 구매 확정할 수 있습니다.");
+        }
+
+        payment.setPaymentStatus(PaymentStatus.CONFIRMED);
+        paymentRepository.save(payment);
+        
+        log.info("[Confirm] 구매 확정 완료: paymentId={}, userId={}", paymentId, buyerId);
     }
 }

@@ -1,10 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { User as UserIcon, Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText } from "lucide-react";
+import { COURIER_OPTIONS } from "../../common/enums";
 import type { User, Product, Report, ProductQna, Inquiry, Review, } from "../../common/types";
 import * as API from "../../common/api";
+import type { PaymentHistoryResponse } from "../../common/api";
 import ProductCard from "../../components/ui/ProductCard";
 import BusinessVerify from "../../components/mypage/BusinessVerify";
+import ShippingModal from "../../components/ui/ShippingModal";
+import ReviewModal from "../../components/ui/ReviewModal";
+import { ConfirmModal } from "../../components/ui/ConfirmModal";
 
 type TabId = "selling" | "buying" | "community" | "settings";
 
@@ -24,12 +29,21 @@ export default function MyPage({ user, setUser }: Props) {
 
   // Data states
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
+  const [sellingHistory, setSellingHistory] = useState<PaymentHistoryResponse[]>([]);
+  const [buyingHistory, setBuyingHistory] = useState<PaymentHistoryResponse[]>([]);
   const [myLikes, setMyLikes] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [myQnas, setMyQnas] = useState<ProductQna[]>([]);
   const [myInquiries, setMyInquiries] = useState<Inquiry[]>([]);
   const [myReviews, setMyReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
+  const [shippingModalOpen, setShippingModalOpen] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
+  const [modalDefaults, setModalDefaults] = useState({ courier: "CJ", trackingNumber: "" });
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewTarget, setReviewTarget] = useState<{ sellerId: number; refId: number; productType?: string } | null>(null);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [confirmTargetId, setConfirmTargetId] = useState<number | null>(null);
 
   // Profile edit state
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -135,14 +149,27 @@ export default function MyPage({ user, setUser }: Props) {
     try {
       switch (tab) {
         case "selling":
-          const selling = await API.fetchSellingProducts(user.userId);
-          setSellingProducts(selling);
-          const qnas = await API.fetchUserQnas(user.userId);
-          setMyQnas(qnas);
+          const [sellingResult, qnasResult, sHistoryResult] = await Promise.allSettled([
+            API.fetchSellingProducts(user.userId),
+            API.fetchUserQnas(user.userId),
+            API.fetchSellingHistory()
+          ]);
+
+          if (sellingResult.status === "fulfilled") setSellingProducts(sellingResult.value);
+          else console.error("Failed to load selling products", sellingResult.reason);
+
+          if (qnasResult.status === "fulfilled") setMyQnas(qnasResult.value);
+
+          if (sHistoryResult.status === "fulfilled") setSellingHistory(sHistoryResult.value);
+          else console.error("Failed to load selling history", sHistoryResult.reason);
           break;
         case "buying":
-          const likes = await API.fetchMyLikes(token);
+          const [likes, bHistory] = await Promise.all([
+            API.fetchMyLikes(token),
+            API.fetchBuyingHistory()
+          ]);
           setMyLikes(likes);
+          setBuyingHistory(bHistory);
           break;
         case "community":
           const [reviews, inquiries, reportsData] = await Promise.all([
@@ -209,6 +236,72 @@ export default function MyPage({ user, setUser }: Props) {
       alert("회원탈퇴가 완료되었습니다.");
     } catch (err: any) {
       alert(err.message || "회원 탈퇴 실패");
+    }
+  };
+
+  const handleShippingSubmit = async (courier: string, trackingNumber: string) => {
+    if (!selectedPaymentId) return;
+
+    try {
+      await API.updateShippingInfo(selectedPaymentId, courier, trackingNumber);
+      alert("배송 정보가 등록되었습니다.");
+      setShippingModalOpen(false);
+      setSelectedPaymentId(null);
+      loadTabContent("selling");
+    } catch (err: any) {
+      alert(err.message || "배송 정보 등록 실패");
+    }
+  };
+
+  const openShippingModal = (paymentId: number, courier = "CJ", trackingNumber = "") => {
+    setSelectedPaymentId(paymentId);
+    setModalDefaults({ courier, trackingNumber });
+    setShippingModalOpen(true);
+  };
+
+  const handleConfirmPurchase = (paymentId: number) => {
+    setConfirmTargetId(paymentId);
+    setConfirmModalOpen(true);
+  };
+
+  const executeConfirmPurchase = async () => {
+    if (!confirmTargetId) throw new Error("결제 ID가 없습니다.");
+
+    // API call will throw if it fails (e.g., 401)
+    await API.confirmPurchase(confirmTargetId);
+
+    // If successful:
+    // 1. Close modal
+    setConfirmModalOpen(false);
+
+    // 2. Refresh data
+    await new Promise(resolve => setTimeout(resolve, 500));
+    await loadTabContent("buying");
+  };
+
+  const openReviewModal = (sellerId: number, refId: number, productType?: string) => {
+    setReviewTarget({ sellerId, refId, productType });
+    setReviewModalOpen(true);
+  };
+
+  const handleReviewSubmit = async (rating: number, comments: string) => {
+    if (!reviewTarget) return;
+    try {
+      await API.submitReview(
+        reviewTarget.sellerId,
+        {
+          rating,
+          comments,
+          refId: reviewTarget.refId,
+          productType: reviewTarget.productType ?? "AUCTION" // Fallback or strict?
+        },
+        localStorage.getItem("token") || ""
+      );
+      alert("리뷰가 등록되었습니다.");
+      setReviewModalOpen(false);
+      setReviewTarget(null);
+    } catch (err: any) {
+      alert(err.message || "리뷰 등록 실패");
     }
   };
 
@@ -356,6 +449,8 @@ export default function MyPage({ user, setUser }: Props) {
             </div>
           ) : (
             <>
+
+
               {/* Selling Tab */}
               {activeTab === "selling" && (
                 <div className="space-y-8">
@@ -379,6 +474,60 @@ export default function MyPage({ user, setUser }: Props) {
                       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                         {sellingProducts.map((product) => (
                           <ProductCard key={product.productId} product={product} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Sold History & Shipping */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                      <ShoppingBag size={20} />
+                      판매 완료 및 배송 관리
+                    </h3>
+                    {sellingHistory.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 rounded-lg">
+                        <p className="text-gray-500">판매 내역이 없습니다.</p>
+                      </div>
+                    ) : (
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        {sellingHistory.map((item) => (
+                          <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                            <div className="flex gap-4">
+                              <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                {item.productImage && <img src={item.productImage} alt="product" className="w-full h-full object-cover" />}
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">{item.productTitle}</div>
+                                <div className="text-sm text-gray-500">구매자: {item.buyerName}</div>
+                                <div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div>
+                                <div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-2 min-w-[200px]">
+                              <div className="text-sm font-bold text-blue-600">{item.status}</div>
+                              {item.courier && item.trackingNumber ? (
+                                <div className="text-sm text-gray-600 text-right">
+                                  <div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div>
+                                  <div className="text-xs mb-1">{item.trackingNumber}</div>
+                                  <button
+                                    onClick={() => openShippingModal(item.paymentId, item.courier!, item.trackingNumber!)}
+                                    className="text-xs text-gray-400 underline hover:text-gray-600"
+                                  >
+                                    수정
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => openShippingModal(item.paymentId)}
+                                  className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800"
+                                >
+                                  배송 정보 입력
+                                </button>
+                              )}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     )}
@@ -472,10 +621,69 @@ export default function MyPage({ user, setUser }: Props) {
                       구매 내역
                     </h3>
 
-                    <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]">
-                      <ShoppingBag size={40} className="mx-auto text-[#ddd] mb-2" />
-                      <p className="text-[#666]">구매 내역이 없습니다.</p>
-                    </div>
+                    {buyingHistory.length === 0 ? (
+                      <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]">
+                        <ShoppingBag size={40} className="mx-auto text-[#ddd] mb-2" />
+                        <p className="text-[#666]">구매 내역이 없습니다.</p>
+                      </div>
+                    ) : (
+                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        {buyingHistory.map((item) => (
+                          <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                            <div className="flex gap-4">
+                              <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                {item.productImage && <img src={item.productImage} alt="product" className="w-full h-full object-cover" />}
+                              </div>
+                              <div>
+                                <div className="font-medium text-gray-900">{item.productTitle}</div>
+                                <div className="text-sm text-gray-500">판매자: {item.sellerNickName}</div>
+                                <div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div>
+                                <div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-2 text-right">
+                              <div className="text-sm font-bold text-blue-600">{item.status}</div>
+
+                              {/* Buyer Action Buttons */}
+                              {item.status === "PAID" && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleConfirmPurchase(item.paymentId);
+                                  }}
+                                  className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 font-medium"
+                                >
+                                  구매 확정
+                                </button>
+                              )}
+                              {item.status === "CONFIRMED" && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    openReviewModal(item.sellerId, item.productId, item.productType);
+                                  }}
+                                  className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 font-medium"
+                                >
+                                  리뷰 작성
+                                </button>
+                              )}
+
+                              {item.courier && item.trackingNumber && (
+                                <div className="text-sm text-gray-600">
+                                  <div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div>
+                                  <div className="text-xs">{item.trackingNumber}</div>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -690,6 +898,28 @@ export default function MyPage({ user, setUser }: Props) {
           )}
         </div>
       </div>
+
+      <ShippingModal
+        isOpen={shippingModalOpen}
+        onClose={() => setShippingModalOpen(false)}
+        onSubmit={handleShippingSubmit}
+        defaultCourier={modalDefaults.courier}
+        defaultTrackingNumber={modalDefaults.trackingNumber}
+      />
+      <ReviewModal
+        isOpen={reviewModalOpen}
+        onClose={() => setReviewModalOpen(false)}
+        onSubmit={handleReviewSubmit}
+      />
+      <ConfirmModal
+        isOpen={confirmModalOpen}
+        onClose={() => setConfirmModalOpen(false)}
+        onConfirm={executeConfirmPurchase}
+        title="구매 확정"
+        message="구매를 확정하시겠습니까? 구매 확정 후에는 취소가 불가능합니다."
+        confirmText="확인"
+        cancelText="취소"
+      />
     </div>
   );
 }

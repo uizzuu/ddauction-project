@@ -1,16 +1,19 @@
 package com.my.backend.myjwt;
 
-import com.my.backend.enums.Role;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.Jwts;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Map;
+
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import com.my.backend.enums.Role;
+
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
 
 @Component
 public class JWTUtil {
@@ -23,7 +26,7 @@ public class JWTUtil {
 
     public Long getUserId(String token) {
         return Jwts.parser().verifyWith(secretKey).build().
-            parseSignedClaims(token).getPayload().get("userId", Long.class);
+            parseSignedClaims(token).getPayload().get("userId", Number.class).longValue();
     }
 
     public String getEmail(String token) {
