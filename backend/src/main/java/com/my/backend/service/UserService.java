@@ -58,7 +58,6 @@ public class UserService {
         if (dto.getUserId() == null) throw new RuntimeException("수정할 사용자 ID가 필요합니다.");
         Users user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
-
         if (dto.getUserName() != null && !dto.getUserName().isBlank()) {
             user.setUserName(dto.getUserName());
         }
@@ -66,14 +65,14 @@ public class UserService {
             user.setNickName(dto.getNickName());
         }
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
-            validatePassword(dto.getPassword()); // 비밀번호 유효성 검사
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
         if (dto.getPhone() != null && !dto.getPhone().isBlank()) {
-            if (!dto.getPhone().matches("\\d{10,11}")) {
-                throw new RuntimeException("전화번호는 숫자만 10~11자리여야 합니다.");
+            String normalizedPhone = dto.getPhone().replaceAll("[^0-9]", "");
+            if (!normalizedPhone.matches("^01[0-9]\\d{7,8}$")) {
+                throw new RuntimeException("올바른 전화번호 형식이 아닙니다. (예: 01012345678)");
             }
-            user.setPhone(dto.getPhone());
+            user.setPhone(normalizedPhone);
         }
         if (dto.getEmail() != null && !dto.getEmail().isBlank()) {
             user.setEmail(dto.getEmail());

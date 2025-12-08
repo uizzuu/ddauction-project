@@ -1,10 +1,17 @@
-import { Users, Package, AlertCircle, TrendingUp, ShoppingCart, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Users, Package, AlertCircle, TrendingUp, ShoppingCart, Clock, RefreshCw } from "lucide-react";
+import * as API from "../../common/api";
 
 type Props = {
   stats: { userCount?: number; productCount?: number; reportCount?: number };
+  onRefresh?: () => void | Promise<void>;
 };
 
-export default function AdminDashboard({ stats }: Props) {
+export default function AdminDashboard({ stats: initialStats, onRefresh }: Props) {
+  const [stats, setStats] = useState(initialStats);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
   // Calculate some derived stats
   const totalUsers = stats.userCount ?? 0;
   const totalProducts = stats.productCount ?? 0;
@@ -14,6 +21,65 @@ export default function AdminDashboard({ stats }: Props) {
   const activeProducts = Math.floor(totalProducts * 0.7);
   const soldProducts = Math.floor(totalProducts * 0.25);
   const estimatedRevenue = totalProducts * 15000; // 평균 상품가 * 개수
+
+  // 통계 새로고침 함수
+  const refreshStats = async () => {
+    setIsRefreshing(true);
+    try {
+      const newStats = await API.fetchStatsApi();
+      setStats(newStats);
+      setLastUpdate(new Date());
+      console.log(" 관리자 통계 업데이트 완료:", newStats);
+      
+      if (onRefresh) {
+        await onRefresh();
+      }
+    } catch (err) {
+      console.error(" 통계 업데이트 실패:", err);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
+  // 초기 로드 시 통계 가져오기
+  useEffect(() => {
+    refreshStats();
+  }, []);
+
+  // Props 변경 시 동기화
+  useEffect(() => {
+    setStats(initialStats);
+  }, [initialStats]);
+
+  // 실시간 이벤트 리스너
+  useEffect(() => {
+    const handleAdminUpdate = () => {
+      console.log(" 관리자 업데이트 이벤트 감지");
+      refreshStats();
+    };
+
+    window.addEventListener("admin-stats-updated", handleAdminUpdate);
+    window.addEventListener("user-updated", handleAdminUpdate);
+    window.addEventListener("product-updated", handleAdminUpdate);
+    window.addEventListener("report-updated", handleAdminUpdate);
+
+    return () => {
+      window.removeEventListener("admin-stats-updated", handleAdminUpdate);
+      window.removeEventListener("user-updated", handleAdminUpdate);
+      window.removeEventListener("product-updated", handleAdminUpdate);
+      window.removeEventListener("report-updated", handleAdminUpdate);
+    };
+  }, []);
+
+  // 마지막 업데이트 시간 표시
+  const formatLastUpdate = () => {
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - lastUpdate.getTime()) / 1000);
+    
+    if (diff < 60) return `${diff}초 전`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
+    return `${Math.floor(diff / 3600)}시간 전`;
+  };
 
   const statCards = [
     {
@@ -61,8 +127,6 @@ export default function AdminDashboard({ stats }: Props) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-[#111] mb-6">대시보드</h2>
-
       {/* Stat Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((card, index) => {
@@ -70,7 +134,9 @@ export default function AdminDashboard({ stats }: Props) {
           return (
             <div
               key={index}
-              className={`border ${card.borderColor} rounded-lg p-5 hover:shadow-sm transition-shadow`}
+              className={`border ${card.borderColor} rounded-lg p-5 hover:shadow-sm transition-all ${
+                isRefreshing ? "animate-pulse" : ""
+              }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className={`p-2 rounded-lg ${card.color}`}>
@@ -101,7 +167,7 @@ export default function AdminDashboard({ stats }: Props) {
               <div className="w-full bg-gray-100 rounded-full h-2">
                 <div
                   className="bg-green-500 h-2 rounded-full transition-all"
-                  style={{ width: `${(activeProducts / totalProducts) * 100}%` }}
+                  style={{ width: `${(activeProducts / totalProducts) * 100 || 0}%` }}
                 />
               </div>
             </div>
@@ -113,7 +179,7 @@ export default function AdminDashboard({ stats }: Props) {
               <div className="w-full bg-gray-100 rounded-full h-2">
                 <div
                   className="bg-gray-400 h-2 rounded-full transition-all"
-                  style={{ width: `${(soldProducts / totalProducts) * 100}%` }}
+                  style={{ width: `${(soldProducts / totalProducts) * 100 || 0}%` }}
                 />
               </div>
             </div>
@@ -128,7 +194,7 @@ export default function AdminDashboard({ stats }: Props) {
                 <div
                   className="bg-red-400 h-2 rounded-full transition-all"
                   style={{
-                    width: `${((totalProducts - activeProducts - soldProducts) / totalProducts) * 100}%`,
+                    width: `${((totalProducts - activeProducts - soldProducts) / totalProducts) * 100 || 0}%`,
                   }}
                 />
               </div>

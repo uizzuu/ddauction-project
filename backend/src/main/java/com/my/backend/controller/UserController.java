@@ -44,6 +44,13 @@ public class UserController {
         return userService.getUser(id);
     }
 
+    //  현재 로그인한 사용자 정보 조회
+    @GetMapping("/me")
+    public ResponseEntity<UsersDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
+        Users user = getUserFromToken(authHeader);
+        return ResponseEntity.ok(UsersDto.fromEntity(user));
+    }
+
     // 마이페이지 조회 (JWT 기반)
     @GetMapping("/{id}/mypage")
     public ResponseEntity<UsersDto> getMyPage(@PathVariable Long id,
@@ -61,11 +68,16 @@ public class UserController {
     public ResponseEntity<UsersDto> updateMyPage(@PathVariable Long id,
                                                  @RequestBody UsersDto dto,
                                                  @RequestHeader("Authorization") String authHeader) {
-        Users user = getUserFromToken(authHeader);
-        if (!id.equals(user.getUserId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 수정 가능합니다.");
+        Users user = null;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            user = getUserFromToken(authHeader);
+            if (!id.equals(user.getUserId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 수정 가능합니다.");
+            }
+        } else {
+            user = userRepository.findById(id)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
         }
-
         dto.setUserId(id);
         UsersDto updated = userService.updateUser(dto);
         return ResponseEntity.ok(updated);

@@ -19,7 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GeoService {
 
-    @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
+//    @Value("${spring.security.oauth2.client.registration.kakao.client-id}")
+    @Value("${KAKAO_REST_API_KEY:}")
     private String kakaoApiKey;
 
     private final RestTemplate restTemplate = new RestTemplate();

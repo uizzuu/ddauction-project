@@ -137,11 +137,18 @@ export default function AdminPage({ user }: { user: User }) {
     }
   }, []);
 
+  // 통계 업데이트 이벤트 발생 함수
+  const triggerStatsUpdate = useCallback(() => {
+    window.dispatchEvent(new Event("admin-stats-updated"));
+    console.log("📢 관리자 통계 업데이트 이벤트 발생");
+  }, []);
+
   // 회원 관리
   const handleChangeRole = async (userId: number, newRole: User["role"]) => {
     try {
       await API.updateUserRole(userId, newRole);
       fetchUsers();
+      triggerStatsUpdate();
     } catch (err) {
       console.error(err);
     }
@@ -161,6 +168,7 @@ export default function AdminPage({ user }: { user: User }) {
       await API.editUser(userId, editUserForm);
       setEditingUserId(null);
       fetchUsers();
+      triggerStatsUpdate();
     } catch (err) {
       console.error(err);
       alert("회원 수정 실패");
@@ -191,6 +199,7 @@ export default function AdminPage({ user }: { user: User }) {
       await API.editProduct(productId, editProductForm);
       setEditingProductId(null);
       fetchProducts();
+      triggerStatsUpdate();
     } catch (err) {
       console.error(err);
       alert("상품 수정 실패");
@@ -214,6 +223,7 @@ export default function AdminPage({ user }: { user: User }) {
     try {
       await API.deleteAdminProduct(productId);
       fetchProducts();
+      triggerStatsUpdate();
     } catch (err) {
       console.error(err);
       alert("상품 삭제 실패");
@@ -225,6 +235,7 @@ export default function AdminPage({ user }: { user: User }) {
     try {
       await API.updateReportStatus(reportId, status);
       fetchReports();
+      triggerStatsUpdate();
     } catch (err) {
       console.error(err);
     }
@@ -363,8 +374,13 @@ export default function AdminPage({ user }: { user: User }) {
             />
           )}
 
-          {/* 통계 컴포넌트 */}
-          {activeTab === "stats" && <AdminDashboard stats={stats} />}
+          {/*통계 컴포넌트 (onRefresh 추가)*/}
+          {activeTab === "stats" && (
+            <AdminDashboard
+              stats={stats}
+              onRefresh={fetchStats}
+            />
+          )}
 
           {/* 1:1 문의 관리 컴포넌트 */}
           {activeTab === "inquiry" && (

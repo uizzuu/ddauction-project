@@ -124,6 +124,20 @@ export default function MyPage({ user, setUser }: Props) {
     };
 
     loadStats();
+
+
+    //  찜 업데이트 이벤트 리스너 (loadStats 밖에 위치)
+    const handleWishlistUpdate = () => {
+      console.log("📢 찜 업데이트 이벤트 감지");
+      loadStats();
+    };
+
+    window.addEventListener("wishlist-updated", handleWishlistUpdate);
+
+    //  Cleanup 
+    return () => {
+      window.removeEventListener("wishlist-updated", handleWishlistUpdate);
+    };
   }, [user]);
 
   // Tab content loader
@@ -143,6 +157,7 @@ export default function MyPage({ user, setUser }: Props) {
         case "buying":
           const likes = await API.fetchMyLikes(token);
           setMyLikes(likes);
+          setStats(prev => ({ ...prev, likesCount: likes.length }));
           break;
         case "community":
           const [reviews, inquiries, reportsData] = await Promise.all([
