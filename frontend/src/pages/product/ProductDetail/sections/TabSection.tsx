@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import ProductQnA from "../../../../components/product/ProductQnA";
-import AuctionBidGraph from "../../../../components/product/AuctionBidGraph";
+import { AuctionBidGraph } from "../../../../components/product/AuctionBidGraph";
 import type { Product, User, ProductQna, EditProductForm, Bid } from "../../../../common/types";
 
 interface TabSectionProps {
@@ -94,19 +94,22 @@ export const TabSection: React.FC<TabSectionProps> = ({
                                         {product.content || "작성된 상세 내용이 없습니다."}
                                     </div>
 
-                                    {/* Product Images as Banner */}
-                                    {product.images && product.images.length > 0 && (
-                                        <div className="flex flex-col gap-4">
-                                            {product.images.map((img, idx) => (
+                                    {/* Store Detail Banners (Detail Images) */}
+                                    {product.productBanners && product.productBanners.length > 0 && (
+                                        <div className="flex flex-col gap-0 border-t border-gray-100 pt-8 mt-8">
+                                            <h4 className="font-bold text-gray-900 mb-4">상품 상세 이미지</h4>
+                                            {product.productBanners.map((url, idx) => (
                                                 <img
                                                     key={idx}
-                                                    src={img.imagePath}
-                                                    alt={`${product.title} detailed view ${idx + 1}`}
-                                                    className="w-full h-auto object-cover rounded-lg"
+                                                    src={url}
+                                                    alt={`Detailed Banner ${idx + 1}`}
+                                                    className="w-full h-auto object-cover"
                                                 />
                                             ))}
                                         </div>
                                     )}
+
+
                                 </div>
                             )}
                         </div>
@@ -125,22 +128,21 @@ export const TabSection: React.FC<TabSectionProps> = ({
                         </div>
                     )}
 
-                    {/* Bid History (Auction Only) */}
-                    {activeTab === 'bid_history' && product.productType === 'AUCTION' && (
-                        <div className="min-h-[300px]">
-                            <div className="h-[300px]">
-                                <AuctionBidGraph
-                                    bids={mergedBids}
-                                    startingPrice={product.startingPrice || 0}
-                                />
-                            </div>
-                        </div>
-                    )}
-
                     {/* 4. Review */}
                     {activeTab === 'review' && (
                         <div className="text-center">
                             아직 등록된 후기가 없습니다.
+                        </div>
+                    )}
+
+                    {/* Bid History (Auction Only) */}
+                    {activeTab === 'bid_history' && (
+                        <div className="p-4 sm:p-6 bg-white rounded-xl shadow-sm border border-gray-100 animate-fade-in-up">
+                            <div className="flex items-center gap-2 mb-6">
+                                <h3 className="text-lg font-bold text-gray-900">입찰 추이</h3>
+                                <span className="px-2 py-0.5 bg-red-50 text-red-600 text-xs font-medium rounded-full">Live</span>
+                            </div>
+                            <AuctionBidGraph bids={mergedBids} />
                         </div>
                     )}
 

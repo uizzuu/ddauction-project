@@ -99,86 +99,155 @@ export default function AuctionSection({
                 * 경매 종료 시 가장 높은 가격을 제시한 입찰자에게 낙찰됩니다.
             </p>
 
-            {/* Address & GPS */}
-            <div className="col-span-1 md:col-span-2 mt-4">
+            {/* Delivery Methods & Logic */}
+            <div className="col-span-1 md:col-span-2 mt-6 space-y-6">
                 <label className="block text-sm font-bold text-[#333] mb-2">
-                    거래 희망 장소 (주소) <span className="text-red-500">*</span>
+                    거래 방식 선택 <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-2">
-                    <input
-                        type="text"
-                        placeholder="예: 서울시 강남구 역삼동"
-                        value={form.address || ""}
-                        onChange={(e) => updateForm("address", e.target.value)}
-                        className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-white text-sm placeholder:text-gray-400"
-                        disabled={uploading}
-                    />
-                    <button
-                        type="button"
-                        onClick={async () => {
-                            if (!navigator.geolocation) {
-                                alert("GPS를 지원하지 않는 브라우저입니다.");
-                                return;
-                            }
-                            const { reverseGeocode } = await import("../../../../common/api");
-                            navigator.geolocation.getCurrentPosition(
-                                async (pos) => {
-                                    const { latitude, longitude } = pos.coords;
-                                    updateForm("latitude", latitude);
-                                    updateForm("longitude", longitude);
 
-                                    try {
-                                        const addr = await reverseGeocode(latitude, longitude);
-                                        if (addr && !addr.startsWith("주소")) {
-                                            updateForm("address", addr);
-                                            alert(`현재 위치가 입력되었습니다: ${addr}`);
-                                        } else {
-                                            updateForm("address", addr || "주소 변환 실패");
-                                            alert(`주소 변환에 실패했습니다: ${addr}`);
+                {/* 1. 직거래 (Direct) */}
+                <div className="border border-gray-200 rounded-xl p-4">
+                    <label className="flex items-center gap-2 cursor-pointer mb-2">
+                        <input
+                            type="checkbox"
+                            checked={(form.deliveryAvailable || []).includes("직거래")}
+                            onChange={() => handleDeliveryChange("직거래")}
+                            disabled={uploading}
+                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                        />
+                        <span className="font-bold text-gray-800">직거래</span>
+                    </label>
+
+                    {(form.deliveryAvailable || []).includes("직거래") && (
+                        <div className="mt-3 pl-6">
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                                거래 희망 장소 <span className="text-red-500">*</span>
+                            </label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="예: 서울시 강남구 역삼동"
+                                    value={form.address || ""}
+                                    onChange={(e) => updateForm("address", e.target.value)}
+                                    className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                    disabled={uploading}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (!navigator.geolocation) {
+                                            alert("GPS를 지원하지 않는 브라우저입니다.");
+                                            return;
                                         }
-                                    } catch (e: any) {
-                                        console.error(e);
-                                        updateForm("address", "위치 정보 저장됨 (주소 변환 실패)");
-                                        alert(`위치 정보는 저장되었으나 주소를 가져오지 못했습니다.\n오류: ${e.message || e}`);
-                                    }
-                                },
-                                (err) => {
-                                    console.error(err);
-                                    alert("위치 정보를 가져올 수 없습니다.");
-                                }
-                            );
-                        }}
-                        className="px-4 py-3 bg-gray-100 rounded-xl font-bold text-sm text-gray-600 hover:bg-gray-200 transition-colors whitespace-nowrap"
-                        disabled={uploading}
-                    >
-                        📍 현위치
-                    </button>
+                                        const { reverseGeocode } = await import("../../../../common/api");
+                                        navigator.geolocation.getCurrentPosition(
+                                            async (pos) => {
+                                                const { latitude, longitude } = pos.coords;
+                                                updateForm("latitude", latitude);
+                                                updateForm("longitude", longitude);
+                                                try {
+                                                    const addr = await reverseGeocode(latitude, longitude);
+                                                    if (addr && !addr.startsWith("주소")) {
+                                                        updateForm("address", addr);
+                                                    } else {
+                                                        alert(`주소 변환 실패: ${addr}`);
+                                                    }
+                                                } catch (e: any) {
+                                                    console.error(e);
+                                                    alert("위치 정보 가져오기 실패");
+                                                }
+                                            },
+                                            () => alert("위치 정보를 가져올 수 없습니다.")
+                                        );
+                                    }}
+                                    className="px-3 py-2 bg-gray-100 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-200"
+                                    disabled={uploading}
+                                >
+                                    📍 현위치
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-                {form.latitude && form.longitude && (
-                    <p className="text-xs text-green-600 mt-1 pl-1">✓ 위치 정보가 등록되었습니다.</p>
-                )}
+
+                {/* 2. 반값택배 (Half Delivery) */}
+                <div className="border border-gray-200 rounded-xl p-4">
+                    <label className="flex items-center gap-2 cursor-pointer mb-2">
+                        <input
+                            type="checkbox"
+                            checked={(form.deliveryAvailable || []).some((m: string) => m.includes("반택"))}
+                            onChange={() => {
+                                // Toggle logic for parent category
+                                const hasHalf = (form.deliveryAvailable || []).some((m: string) => m.includes("반택"));
+                                if (hasHalf) {
+                                    // Remove all half types
+                                    updateForm("deliveryAvailable", (form.deliveryAvailable || []).filter((m: string) => !m.includes("반택")));
+                                } else {
+                                    // Add default GS
+                                    updateForm("deliveryAvailable", [...(form.deliveryAvailable || []), "반택(GS)"]);
+                                }
+                            }}
+                            disabled={uploading}
+                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                        />
+                        <span className="font-bold text-gray-800">반값택배</span>
+                    </label>
+
+                    {(form.deliveryAvailable || []).some((m: string) => m.includes("반택")) && (
+                        <div className="mt-3 pl-6 flex gap-4">
+                            {["반택(GS)", "반택(CU)"].map((type) => (
+                                <label key={type} className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={(form.deliveryAvailable || []).includes(type)}
+                                        onChange={() => {
+                                            const current = form.deliveryAvailable || [];
+                                            if (current.includes(type)) {
+                                                updateForm("deliveryAvailable", current.filter((m: string) => m !== type));
+                                            } else {
+                                                updateForm("deliveryAvailable", [...current, type]);
+                                            }
+                                        }}
+                                        className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                                    />
+                                    <span className="text-sm text-gray-700">{type.replace("반택", "")}</span>
+                                </label>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* 3. 일반택배 (Parcel) */}
+                <div className="border border-gray-200 rounded-xl p-4">
+                    <label className="flex items-center gap-2 cursor-pointer mb-2">
+                        <input
+                            type="checkbox"
+                            checked={(form.deliveryAvailable || []).includes("택배")}
+                            onChange={() => handleDeliveryChange("택배")}
+                            disabled={uploading}
+                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                        />
+                        <span className="font-bold text-gray-800">일반택배</span>
+                    </label>
+
+                    {(form.deliveryAvailable || []).includes("택배") && (
+                        <div className="mt-3 pl-6">
+                            <label className="block text-sm font-medium text-gray-600 mb-1">
+                                배송비 (원)
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="3500"
+                                value={form.deliveryPrice || ""}
+                                onChange={(e) => updateForm("deliveryPrice", e.target.value.replace(/[^0-9]/g, ''))}
+                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                                disabled={uploading}
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
 
-            {/* Delivery Methods (Checkbox) */}
-            <div className="col-span-1 md:col-span-2 mt-4">
-                <label className="block text-sm font-bold text-[#333] mb-2">
-                    가능한 배송방법 <span className="text-red-500">*</span>
-                </label>
-                <div className="flex flex-wrap gap-3">
-                    {["직거래", "반택", "준등기", "택배"].map((label) => (
-                        <label key={label} className="flex items-center gap-2 cursor-pointer bg-white px-3 py-2 rounded-lg border border-gray-200 hover:bg-gray-50">
-                            <input
-                                type="checkbox"
-                                checked={(form.deliveryAvailable || []).includes(label)}
-                                onChange={() => handleDeliveryChange(label)}
-                                disabled={uploading}
-                                className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
-                            />
-                            <span className="text-sm text-gray-700">{label}</span>
-                        </label>
-                    ))}
-                </div>
-            </div>
         </div>
     );
 }

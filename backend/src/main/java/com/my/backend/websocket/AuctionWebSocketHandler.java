@@ -108,9 +108,20 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
                 bidHistory.sort((a, b) -> b.getBidPrice().compareTo(a.getBidPrice()));
             }
 
+            // DTO 변환 (Frontend Bid 인터페이스와 일치오류 수정)
+            List<Map<String, Object>> bidDtoList = bidHistory.stream().map(b -> {
+                Map<String, Object> map = new HashMap<>();
+                map.put("bidId", b.getBidId());
+                map.put("userId", b.getUser() != null ? b.getUser().getUserId() : 0L);
+                map.put("bidPrice", b.getBidPrice());
+                map.put("isWinning", b.isWinning());
+                map.put("createdAt", b.getCreatedAt().toString()); // ISO String
+                return map;
+            }).collect(Collectors.toList());
+
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.registerModule(new JavaTimeModule());
-            String json = objectMapper.writeValueAsString(bidHistory);
+            String json = objectMapper.writeValueAsString(bidDtoList);
 
             Set<WebSocketSession> sessions = productSessions.getOrDefault(productId, Set.of());
             for (WebSocketSession session : sessions) {
@@ -128,9 +139,20 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
     }
 
     private void sendBidHistory(WebSocketSession session, List<Bid> bidHistory) throws IOException {
+        // DTO 변환
+        List<Map<String, Object>> bidDtoList = bidHistory.stream().map(b -> {
+            Map<String, Object> map = new HashMap<>();
+            map.put("bidId", b.getBidId());
+            map.put("userId", b.getUser() != null ? b.getUser().getUserId() : 0L);
+            map.put("bidPrice", b.getBidPrice());
+            map.put("isWinning", b.isWinning());
+            map.put("createdAt", b.getCreatedAt().toString());
+            return map;
+        }).collect(Collectors.toList());
+
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
-        String json = objectMapper.writeValueAsString(bidHistory);
+        String json = objectMapper.writeValueAsString(bidDtoList);
         if (session.isOpen()) {
             session.sendMessage(new TextMessage(json));
         }

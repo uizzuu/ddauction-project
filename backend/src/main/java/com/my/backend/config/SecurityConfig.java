@@ -120,6 +120,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/product-qnas/product/*").permitAll()  // 상품별 QnA 목록만
                         .requestMatchers(HttpMethod.GET, "/api/qna-reviews/product-qna/*").permitAll()  // 특정 QnA의 답변 목록만
                         .requestMatchers(HttpMethod.GET, "/api/bookmarks/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/bid/*/bids").permitAll() // 입찰 내역 공개
+                        .requestMatchers(HttpMethod.GET, "/api/bid/*/chart").permitAll() // 입찰 그래프 공개
 
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()

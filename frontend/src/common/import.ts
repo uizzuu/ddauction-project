@@ -1,6 +1,6 @@
 // components
 import Header from "../components/layout/Header";
-import AuctionBidGraph from "../components/product/AuctionBidGraph";
+import { AuctionBidGraph } from "../components/product/AuctionBidGraph";
 import { AuctionBidding } from "../components/product/AuctionBidding";
 import ImageSearchPage from "../components/modal/ImageSearchPage";
 
