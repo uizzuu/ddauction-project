@@ -30,7 +30,8 @@ import {
   RankPage,
   WishlistPage,
   UserProfilePage,
-  ReviewWritePage
+  ReviewWritePage,
+  ImageSearchPage
 } from "./common/import";
 import type { User } from "./common/types";
 
@@ -58,6 +59,7 @@ const VALID_PATHS = [
   "/verify",
   "/cart",
   "/rank",
+  "/image-search"
 ];
 
 // 동적 경로 패턴 (예: /products/123, /articles/456 등)
@@ -215,6 +217,7 @@ export default function App() {
         <Route path="/reviews/write/:productId" element={user ? <ReviewWritePage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
         <Route path="/rank" element={<RankPage />} />
         <Route path="/users/:userId" element={<UserProfilePage />} />
+        <Route path="/image-search" element={<ImageSearchPage />} />
 
         {/* 에러 페이지 - 마지막에 정의 (와일드카드는 마지막!) */}
         <Route path="/error" element={<ErrorPage />} />

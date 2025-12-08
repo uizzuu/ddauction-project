@@ -30,6 +30,7 @@ export interface User {
   role?: Role;
   token?: string;
   isWinner?: boolean;
+  businessNumber?: string;
 }
 
 export interface Bid {
@@ -398,4 +399,10 @@ export interface AiDescriptionRequest {
 
 export interface AiDescriptionResponse {
   description: string;
+}
+
+export interface BusinessVerifyProps {
+  userId: number;
+  onVerified: () => void;
+  onCancel?: () => void; // <- 여기 추가
 }

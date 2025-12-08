@@ -30,3 +30,17 @@ PyMuPDF==1.23.25
 #--- Text Splitting (process_embeddings.py에 필수) ---
 
 langchain-text-splitters
+
+# 추천 시스템용 추가
+scikit-learn>=1.3.2
+numpy>=1.26.2
+pandas>=2.1.4
+requests>=2.31.0
+scipy>=1.11.4
+
+# 이미지 기반 추천 시스템용 추가
+pillow>=10.0.0
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+python-multipart>=0.0.6

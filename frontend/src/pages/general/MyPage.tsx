@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { User as UserIcon, Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText } from "lucide-react";
-import type { User, Product, Report, ProductQna, Inquiry, Review } from "../../common/types";
+import type { User, Product, Report, ProductQna, Inquiry, Review, } from "../../common/types";
 import * as API from "../../common/api";
 import ProductCard from "../../components/ui/ProductCard";
+import BusinessVerify from "../../components/mypage/BusinessVerify";
 
 type TabId = "selling" | "buying" | "community" | "settings";
 
@@ -19,6 +20,7 @@ export default function MyPage({ user, setUser }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("selling");
   const tabRefs = useRef<{ [key in TabId]?: HTMLButtonElement }>({});
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
+  const [showBusinessVerify, setShowBusinessVerify] = useState(false);
 
   // Data states
   const [sellingProducts, setSellingProducts] = useState<Product[]>([]);
@@ -242,6 +244,8 @@ export default function MyPage({ user, setUser }: Props) {
               <p className="text-sm text-[#666]">{user.email}</p>
             </div>
 
+
+
             {/* Edit Button */}
             <button
               onClick={() => {
@@ -253,6 +257,37 @@ export default function MyPage({ user, setUser }: Props) {
               프로필 수정
             </button>
           </div>
+
+
+          {/* 사업자 */}
+          <div className="mt-4">
+            {user.businessNumber ? (
+              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                사업자 인증 완료
+              </span>
+            ) : (
+              <>
+                <button
+                  onClick={() => setShowBusinessVerify(!showBusinessVerify)}
+                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors mt-2"
+                >
+                  사업자 번호 등록
+                </button>
+
+                {showBusinessVerify && (
+                  <BusinessVerify
+                    userId={user.userId}
+                    onVerified={(verifiedNumber) => {
+                      setUser({ ...user, businessNumber: verifiedNumber }); // 여기서 API에서 받은 번호 사용
+                      setShowBusinessVerify(false); // 완료되면 폼 숨김
+                    }}
+                    onCancel={() => setShowBusinessVerify(false)} // 취소 버튼
+                  />
+                )}
+              </>
+            )}
+          </div>
+
 
           {/* Stats */}
           <div className="flex gap-8 mt-6 pt-6 border-t border-[#eee]">

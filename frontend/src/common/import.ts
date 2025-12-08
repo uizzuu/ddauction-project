@@ -2,6 +2,7 @@
 import Header from "../components/layout/Header";
 import AuctionBidGraph from "../components/product/AuctionBidGraph";
 import { AuctionBidding } from "../components/product/AuctionBidding";
+import ImageSearchPage from "../components/modal/ImageSearchPage";
 
 // admin
 import UserManage from "../components/admin/UserManage";
@@ -52,10 +53,12 @@ import SearchPage from "../pages/product/ProductList"; // Alias for readability
 import UserProfilePage from "../pages/user/UserProfilePage";
 import ReviewWritePage from "../pages/user/ReviewWritePage";
 
+
 export {
   Header,
   AuctionBidGraph,
   AuctionBidding,
+  ImageSearchPage,
 
   UserManage,
   ProductManage,

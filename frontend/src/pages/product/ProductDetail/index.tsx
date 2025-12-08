@@ -7,6 +7,7 @@ import { InfoSection } from "./sections/InfoSection";
 import { ActionBox } from "./sections/ActionBox";
 import { TabSection } from "./sections/TabSection";
 import type { User } from "../../../common/types";
+import VisualSimilarProducts from "../../../pages/product/ProductDetail/VisualSimilarProducts";
 
 // 임시 Edit Handler (UI상 연결을 위해) - 실제 로직은 Hook이나 API 호출 필요
 // 여기서는 Hook에서 반환하지 않았으므로 Props 전달용으로 간단히 구성하거나 Hook 업데이트 필요
@@ -147,6 +148,8 @@ export default function ProductDetail({ user }: Props) {
                 editingProductId={editingProductId}
                 mergedBids={mergedBids} // Added mergedBids
             />
+            {/* 🆕 시각적 유사 상품 섹션 */}
+            <VisualSimilarProducts productId={product.productId} />
 
             {/* AR Modal */}
             {
