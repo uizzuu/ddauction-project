@@ -54,7 +54,10 @@ public class JWTFilter extends OncePerRequestFilter {
             return;
         }
 
-        // 2. 헤더가 없으면 통과 (비로그인 요청 허용)
+        // 2. Get Authorization header
+        String authorization = request.getHeader("Authorization");
+
+        // 3. 헤더가 없으면 통과 (비로그인 요청 허용)
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;

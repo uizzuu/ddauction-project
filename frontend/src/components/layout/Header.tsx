@@ -62,46 +62,51 @@ export default function Header({ user, setUser }: Props) {
     }, [location.pathname]);
 
     useEffect(() => {
+        let ticking = false;
+
         const handleScroll = () => {
-            const currentScrollY = window.scrollY;
-            const docHeight = document.documentElement.scrollHeight;
-            const winHeight = window.innerHeight;
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    const currentScrollY = window.scrollY;
 
-            // 1. Prevent Top Overscroll (iOS/Mac bounce)
-            if (currentScrollY <= 0) {
-                setIsSticky(false);
-                setIsScrollDown(false);
-                lastScrollY.current = 0;
-                return;
-            }
+                    // 1. At top - always show header
+                    if (currentScrollY <= 0) {
+                        setIsSticky(false);
+                        setIsScrollDown(false);
+                        lastScrollY.current = 0;
+                        ticking = false;
+                        return;
+                    }
 
-            // 2. Logic for Sticky (Shadow)
-            setIsSticky(currentScrollY > 0);
+                    // 2. Calculate delta and direction
+                    const delta = Math.abs(currentScrollY - lastScrollY.current);
+                    const isScrollingDown = currentScrollY > lastScrollY.current;
 
-            // 3. Prevent Bottom Overscroll / Jitter
-            // If near bottom, always show header (prevents "scroll up" detection from rubber band)
-            /* 
-            if (currentScrollY + winHeight >= docHeight - 20) {
-                setIsScrollDown(false);
-                return;
-            }
-            */
+                    // 3. Update lastScrollY first (prevent accumulation)
+                    lastScrollY.current = currentScrollY;
 
-            // 4. Main Scroll Direction Logic
-            const delta = Math.abs(currentScrollY - lastScrollY.current);
-            if (delta > 10) { // Threshold 10px
-                if (currentScrollY > lastScrollY.current && currentScrollY > 60) {
-                    setIsScrollDown(true); // Hide
-                } else if (currentScrollY < lastScrollY.current) {
-                    setIsScrollDown(false); // Show
-                }
-                lastScrollY.current = currentScrollY;
+                    // 4. Different thresholds: higher for down (prevent jitter)
+                    const threshold = isScrollingDown ? 15 : 5;
+                    if (delta < threshold) {
+                        ticking = false;
+                        return;
+                    }
+
+                    // 5. Update states
+                    if (currentScrollY > 60) {
+                        setIsScrollDown(isScrollingDown);
+                        setIsSticky(true);
+                    } else {
+                        setIsScrollDown(false);
+                        setIsSticky(true);
+                    }
+
+                    ticking = false;
+                });
+                ticking = true;
             }
         };
 
-        // Use requestAnimationFrame for smoother performance if needed, 
-        // but simple throttling via logic above is usually sufficient for React updates.
-        // Adding passive listener for performance
         window.addEventListener("scroll", handleScroll, { passive: true });
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
@@ -350,7 +355,7 @@ export default function Header({ user, setUser }: Props) {
         <div className={`sticky top-0 z-50 bg-white transition-shadow duration-300 ${isSticky ? "shadow-sm" : ""}`}>
             {/* 상단 네비 */}
             <div
-                className={`w-full max-w-[1280px] mx-auto flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0" : "max-h-[40px] opacity-100 pt-2"}`}
+                className={`w-full max-w-[1280px] mx-auto flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${isSticky ? "max-h-0 opacity-0" : "max-h-[40px] opacity-100 pt-2"}`}
             >
                 <nav className="flex gap-4 text-sm text-[#aaa]">
                     {user ? (
