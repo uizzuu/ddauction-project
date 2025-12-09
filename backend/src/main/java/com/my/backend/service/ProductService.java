@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -78,12 +79,6 @@ public class ProductService {
                 .stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
-    }
-
-    // 단일 상품 조회
-    public ProductDto getProduct(Long productId) {
-        Product product = findProductOrThrow(productId);
-        return convertToDto(product);
     }
 
     // 이미지 조회 (기존 헬퍼 - 삭제 가능)
@@ -372,4 +367,15 @@ public class ProductService {
         product.setBid(bid);
         product.setPayment(payment);
     }
+    @Transactional
+    public ProductDto getProduct(Long productId) {
+
+        // 🔥 동시성 안전하게 증가
+        productRepository.incrementViewCount(productId);
+
+        // 증가시킨 뒤 엔티티 다시 조회
+        Product product = findProductOrThrow(productId);
+        return convertToDto(product);
+    }
+
 }
