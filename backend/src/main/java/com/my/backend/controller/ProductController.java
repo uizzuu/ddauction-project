@@ -2,6 +2,7 @@ package com.my.backend.controller;
 
 import java.util.List;
 
+import com.my.backend.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -89,6 +90,10 @@ public class ProductController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
 
+        if (userDetails.getUser().getRole() == Role.ADMIN) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
         dto.setSellerId(userDetails.getUser().getUserId());
         ProductDto created = productService.createProduct(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
@@ -108,10 +113,17 @@ public class ProductController {
         return ResponseEntity.noContent().build();
     }
 
+//     특정 사용자 판매 상품 조회 (로그인 불필요)
+//    @GetMapping("/seller/{userId}")
+//    public ResponseEntity<List<ProductDto>> getProductsBySeller(@PathVariable Users seller) {
+//        List<ProductDto> products = productService.getProductsBySeller(seller);
+//        return ResponseEntity.ok(products);
+//    }
+
     // 특정 사용자 판매 상품 조회 (로그인 불필요)
     @GetMapping("/seller/{userId}")
-    public ResponseEntity<List<ProductDto>> getProductsBySeller(@PathVariable Users seller) {
-        List<ProductDto> products = productService.getProductsBySeller(seller);
+    public ResponseEntity<List<ProductDto>> getProductsBySeller(@PathVariable("userId") Long userId) {
+        List<ProductDto> products = productService.getProductsBySeller(userId);
         return ResponseEntity.ok(products);
     }
 

@@ -92,7 +92,8 @@ public class ProductService {
     }
 
     // 특정 사용자의 판매 상품 조회
-    public List<ProductDto> getProductsBySeller(Users seller) {
+    public List<ProductDto> getProductsBySeller(Long sellerId) {
+        Users seller = findUserOrThrow(sellerId);
         return productRepository.findBySeller(seller)
                 .stream()
                 .map(this::convertToDto)

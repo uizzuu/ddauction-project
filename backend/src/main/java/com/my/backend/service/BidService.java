@@ -272,4 +272,37 @@ public class BidService {
         product.setPaymentStatus(PaymentStatus.PENDING);
         productRepository.save(product);
     }
+
+    public ResponseEntity<?> getUserBidHistory(Long userId) {
+        try {
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+            // 유저 기준 입찰 내역 (최근순)
+            List<Bid> bids = bidRepository.findByUserOrderByCreatedAtDesc(user);
+
+            // 프론트에서 바로 써먹기 편한 형태로 가볍게 매핑
+            List<Map<String, Object>> resp = bids.stream()
+                    .map(b -> Map.<String, Object>of(
+                            "bidId", b.getBidId(),
+                            "userId", b.getUser() != null ? b.getUser().getUserId() : null,
+                            "bidPrice", b.getBidPrice(),
+                            "createdAt", b.getCreatedAt() != null
+                                    ? b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                                    : null,
+                            "productId", b.getProduct() != null ? b.getProduct().getProductId() : null,
+                            "productTitle", b.getProduct() != null ? b.getProduct().getTitle() : null,
+                            "isWinning", b.isWinning()
+                    ))
+                    .toList();
+
+            return ResponseEntity.ok(resp);
+        } catch (Exception e) {
+            log.error("유저 입찰 내역 조회 중 오류", e);
+            return ResponseEntity.status(500)
+                    .body(Map.of("error", "입찰 내역 조회 중 오류가 발생했습니다."));
+        }
+    }
+
+
 }
