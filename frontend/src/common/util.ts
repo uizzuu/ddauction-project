@@ -118,7 +118,8 @@ export const normalizeProduct = (
     title: p.title ?? "제목 없음",
     content: p.content ?? "",
     startingPrice: p.startingPrice ?? 0,
-    imageUrl: p.images?.[0]?.imagePath ?? "",
+    images: p.images ? [...p.images] : [], // Copy the images array
+    imageUrl: p.images?.[0]?.imagePath ?? "", // Set imageUrl from the first image
     auctionEndTime: p.auctionEndTime ?? defaultDateTime,
     productStatus: p.productStatus ?? PRODUCT_STATUS[0],
     paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],

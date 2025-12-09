@@ -23,6 +23,7 @@ public class BookMarkService {
     private final BookMarkRepository bookMarkRepository;
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
+    private final ProductService productService;
 
     // 로그인 유저 기준으로 찜/해제 토글
     @Transactional
@@ -70,13 +71,13 @@ public class BookMarkService {
 
         List<BookMark> bookmarks = bookMarkRepository.findAllByUser(user);
         return bookmarks.stream()
-                .map(b -> ProductDto.fromEntity(b.getProduct()))
+                .map(b -> productService.convertToDto(b.getProduct()))
                 .collect(Collectors.toList());
     }
 
     public List<ProductDto> getTopBookmarkedProducts(int topN) {
         Pageable pageable = PageRequest.of(0, topN);
         List<Product> products = bookMarkRepository.findTopBookmarkedProducts(pageable);
-        return products.stream().map(ProductDto::fromEntity).collect(Collectors.toList());
+        return products.stream().map(productService::convertToDto).collect(Collectors.toList());
     }
 }

@@ -49,7 +49,7 @@ public class ProductService {
     // ========================================
     // 🔹 헬퍼 메서드: Product → ProductDto 변환 + 이미지 추가
     // ========================================
-    private ProductDto convertToDto(Product product) {
+    public ProductDto convertToDto(Product product) {
         ProductDto dto = ProductDto.fromEntity(product);
 
         // 이미지 조회 및 추가

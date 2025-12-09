@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Heart, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { fetchMyLikes, API_BASE_URL } from "../../common/api";
+import * as API from "../../common/api";
 import type { Product } from "../../common/types";
 import ProductCard from "../../components/ui/ProductCard";
 
@@ -20,7 +20,7 @@ export default function WishlistPage() {
             }
 
             try {
-                const products = await fetchMyLikes(token);
+                const products = await API.fetchMyLikes(token);
                 // 중복 제거 (productId 기준)
                 const uniqueProducts = Array.from(
                     new Map(products.map((item) => [item.productId, item])).values()
@@ -64,23 +64,7 @@ export default function WishlistPage() {
         if (!confirm(`선택한 ${selectedItems.length}개 상품을 찜 목록에서 삭제하시겠습니까?`)) return;
 
         try {
-            await Promise.all(
-                selectedItems.map(id =>
-                    fetch(`${API_BASE_URL}/api/bookmarks/toggle?productId=${id}`, { // toggle API 사용 or DELETE API 확인 필요. 기존 코드는 DELETE /api/bookmarks/{id} 였음.
-                        // api.ts에는 toggleBookmark가 POST /bookmarks/toggle 로 정의됨.
-                        // 기존 WishlistPage.tsx의 handleRemove는 DELETE /api/bookmarks/{id}를 호출했었음.
-                        // 하지만 api.ts에는 toggleBookmark만 보임.
-                        // 확인 결과: api.ts에 toggleBookmark만 있고 DELETE /bookmarks/{id}는 없음.
-                        // 기존 코드가 직접 fetch를 썼던 것 같음.
-                        // 안전하게 toggleBookmark 사용 (이미 찜 상태니까 toggle하면 삭제됨)
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            Authorization: `Bearer ${token}`,
-                        },
-                    })
-                )
-            );
+            await API.removeWishlistItems(selectedItems, token);
             setWishlistItems(prev => prev.filter(item => !selectedItems.includes(item.productId)));
             setSelectedItems([]);
             // 이벤트 발생 (헤더 업데이트용 - 만약 찜 카운트가 있다면)
@@ -140,11 +124,11 @@ export default function WishlistPage() {
                     </div>
 
                     {/* Grid Layout */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-4 gap-y-8">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
                         {wishlistItems.map((item) => (
                             <div key={item.productId} className="relative group/wish">
                                 {/* Checkbox Overlay - Moved outside/above card as requested */}
-                                <div className="absolute -top-2 -left-2 z-30">
+                                <div>
                                     <input
                                         type="checkbox"
                                         checked={selectedItems.includes(item.productId)}
@@ -156,13 +140,8 @@ export default function WishlistPage() {
 
                                 {/* Product Card */}
                                 <div className={selectedItems.includes(item.productId) ? "opacity-100" : ""}>
-                                    <ProductCard product={item} />
+                                    <ProductCard key={item.productId} product={item} />
                                 </div>
-
-                                {/* Selection Border Effect (Optional) */}
-                                {selectedItems.includes(item.productId) && (
-                                    <div className="absolute inset-0 border-2 border-black rounded-[10px] pointer-events-none z-20"></div>
-                                )}
                             </div>
                         ))}
                     </div>

@@ -46,6 +46,7 @@ public class JWTFilter extends OncePerRequestFilter {
                 path.startsWith("/ai/") ||
                 path.startsWith("/api/autocomplete?") ||
                 path.equals("/api/auth/verify-email") ||
+                path.startsWith("/api/articles/") ||
                 path.equals("/api/auth/register")
 
         ){
