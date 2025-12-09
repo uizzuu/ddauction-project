@@ -2085,3 +2085,17 @@ export async function verifyBusiness(userId: number, businessNumber: string): Pr
 
   return res.json();
 }
+
+
+// 랭킹 조회 (조회수 기반)
+export async function fetchRanking(category?: string): Promise<TYPE.Product[]> {
+  const url = category 
+    ? `${API_BASE_URL}${SPRING_API}/products/rank?category=${category}`
+    : `${API_BASE_URL}${SPRING_API}/products/rank`;
+  
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("랭킹 조회 실패");
+  
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
+}

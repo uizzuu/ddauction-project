@@ -235,4 +235,14 @@ public class ProductController {
         List<ProductDto> purchasedProducts = productService.getPurchasedProducts(userId);
         return ResponseEntity.ok(purchasedProducts);
     }
+    //랭킹조회
+    @GetMapping("/rank")
+    public ResponseEntity<List<ProductDto>> getRank(
+            @RequestParam(required = false) String category
+    ) {
+        List<ProductDto> list = productService.getRank(category);
+        return ResponseEntity.ok(list);
+    }
+
+
 }

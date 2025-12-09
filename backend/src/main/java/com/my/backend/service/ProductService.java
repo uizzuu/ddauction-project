@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -377,5 +378,26 @@ public class ProductService {
         Product product = findProductOrThrow(productId);
         return convertToDto(product);
     }
+    //랭킹
+    public List<ProductDto> getRank(String category) {
+
+        Pageable limit = PageRequest.of(0, 100);
+
+        List<Product> products;
+
+        if (category == null) {
+            products = productRepository.findTopByViewCount(limit);
+        } else {
+            products = productRepository.findTopByCategoryAndViewCount(
+                    ProductCategoryType.valueOf(category.toUpperCase()),
+                    limit
+            );
+        }
+
+        return products.stream()
+                .map(ProductDto::fromEntity)
+                .toList();
+    }
+
 
 }

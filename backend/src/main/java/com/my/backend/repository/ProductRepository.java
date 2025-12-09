@@ -108,6 +108,28 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 """)
     List<String> findTopKeywordsByViewCount(Pageable pageable);
 
+//랭킹
+    @Query("""
+SELECT p
+FROM Product p
+WHERE p.productStatus = com.my.backend.enums.ProductStatus.ACTIVE
+ORDER BY p.viewCount DESC
+""")
+    List<Product> findTopByViewCount(Pageable pageable);
+
+    @Query("""
+SELECT p
+FROM Product p
+WHERE p.productStatus = com.my.backend.enums.ProductStatus.ACTIVE
+  AND p.productCategoryType = :category
+ORDER BY p.viewCount DESC
+""")
+    List<Product> findTopByCategoryAndViewCount(
+            @Param("category") ProductCategoryType category,
+            Pageable pageable
+    );
+
+
 
     static Specification<Product> createSpecification(
             String keyword,
