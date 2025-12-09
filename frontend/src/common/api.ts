@@ -500,6 +500,10 @@ export async function createProduct(
     if (response.status === 401) {
       throw new Error("상품 등록 실패: 인증이 만료되었거나 유효하지 않습니다.");
     }
+    // 403: 관리자 등록 금지
+    if (response.status === 403) {
+      throw new Error("관리자는 상품을 등록할 수 없습니다.");
+    }
     throw new Error(`상품 등록 실패: ${response.status}: ${response.statusText}`);
   }
 
@@ -1439,6 +1443,14 @@ export async function fetchSellingProducts(userId: number): Promise<TYPE.Product
   return data.map(normalizeProduct);
 }
 
+// 입찰 내역
+export async function fetchMyBids(userId: number): Promise<TYPE.Bid[]> {
+  const res = await authFetch(`${API_BASE_URL}${SPRING_API}/bid/user/${userId}`);
+  if (!res.ok) throw new Error("입찰 내역 조회 실패");
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
 // 찜 상품
 export async function fetchMyLikes(token: string): Promise<TYPE.Product[]> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/mypage?t=${Date.now()}`, {
@@ -1785,13 +1797,11 @@ export async function updateUserProfile(userId: number, data: { nickName: string
 }
 
 export async function fetchUserQnas(userId: number): Promise<TYPE.ProductQna[]> {
-  const res = await fetch(`${API_BASE_URL}${SPRING_API}/qna/user/${userId}`);
+  const res = await authFetch(`${API_BASE_URL}${SPRING_API}/qna/user/${userId}`);
   if (!res.ok) throw new Error("Q&A 조회 실패");
   const text = await res.text();
   return text ? JSON.parse(text) : [];
 }
-
-
 
 export async function fetchUserInquiries(token: string): Promise<any[]> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/inquiry/user`, {
