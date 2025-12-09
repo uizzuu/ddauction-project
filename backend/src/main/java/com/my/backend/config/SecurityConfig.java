@@ -105,7 +105,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
+                        .requestMatchers("/api/articles/**").permitAll() // Moved to top
                         .requestMatchers("/ai/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
@@ -117,7 +117,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
+                        .requestMatchers("/api/articles/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/product-qnas/product/*").permitAll()  // 상품별 QnA 목록만
                         .requestMatchers(HttpMethod.GET, "/api/qna-reviews/product-qna/*").permitAll()  // 특정 QnA의 답변 목록만
                         .requestMatchers(HttpMethod.GET, "/api/bookmarks/**").permitAll()

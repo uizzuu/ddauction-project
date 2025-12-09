@@ -132,6 +132,21 @@ export const toggleBookmark = async (productId: number, token?: string) => {
   return res.text();
 };
 
+// 찜 목록 다중 삭제 (bulk remove)
+export const removeWishlistItems = async (productIds: number[], token?: string) => {
+  const t = ensureToken(token);
+  // toggle API는 이미 찜한 상태일 때 호출하면 삭제가 됨 (찜 해제)
+  // 따라서 선택한 항목들에 대해 각각 toggle API를 호출
+  await Promise.all(
+    productIds.map(id =>
+      fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      })
+    )
+  );
+};
+
 // 모든 입찰 내역 조회
 export const fetchAllBids = (productId: number, token?: string) =>
   fetchJson<TYPE.Bid[]>(`${API_BASE_URL}${SPRING_API}/bid/${productId}/bids`, {
