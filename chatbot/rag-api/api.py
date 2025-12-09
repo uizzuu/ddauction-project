@@ -84,7 +84,7 @@ def health():
     return {"status": "All systems operational"}
 
 
-@app.post("/chat")
+@app.post("/ai/chat/query")
 async def chat_endpoint(request: ChatRequest):
     try:
         result = run_langgraph_rag(request.query)
