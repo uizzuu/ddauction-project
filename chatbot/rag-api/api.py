@@ -104,6 +104,7 @@ async def chat_endpoint(request: ChatRequest):
 
 
 @app.post("/generate-description")
+@app.post("/ai/generate-description")
 async def generate_product_description(request: ProductRequest):
     if not request.product_name:
         raise HTTPException(status_code=400, detail="상품명은 필수입니다.")

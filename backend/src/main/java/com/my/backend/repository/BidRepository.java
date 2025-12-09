@@ -29,4 +29,6 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
     List<Bid> findByProductAndUserAndBidPriceAndCreatedAtAfter(
             Product product, Users user, Long bidPrice, LocalDateTime createdAt
     );
+    List<Bid> findByUserOrderByCreatedAtDesc(Users user);
+
 }

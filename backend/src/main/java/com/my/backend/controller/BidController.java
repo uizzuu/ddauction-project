@@ -84,4 +84,26 @@ public class BidController {
         Long userId = principal.getUser().getUserId();
         return bidService.getWinningInfo(productId, userId);
     }
+
+    // 유저별 입찰 내역 조회 (마이페이지용)
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getUserBids(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable Long userId
+    ) {
+        if (principal == null || principal.getUser() == null) {
+            return ResponseEntity.status(401).body(Map.of(
+                    "error", "인증이 필요합니다.",
+                    "details", "JWT 인증 정보가 없습니다."
+            ));
+        }
+        Long loginUserId = principal.getUser().getUserId();
+        // 내 것만 보게 하고 싶으면 이 체크 유지
+        if (!loginUserId.equals(userId)) {
+            return ResponseEntity.status(403).body(Map.of(
+                    "error", "본인의 입찰 내역만 조회할 수 있습니다."
+            ));
+        }
+        return bidService.getUserBidHistory(userId);
+    }
 }
