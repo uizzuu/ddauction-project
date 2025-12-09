@@ -2,6 +2,9 @@ package com.my.backend.entity;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -12,18 +15,6 @@ import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
 import com.my.backend.enums.ProductType;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -49,7 +40,8 @@ public class Product {
     @Column(nullable = false)
     private String title;
 
-    @Column(length = 300)
+    @Lob
+    @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     private String content;
 
     @Column(unique = true)
