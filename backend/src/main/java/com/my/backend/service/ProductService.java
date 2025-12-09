@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.my.backend.entity.*;
+import com.my.backend.repository.*;
 import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -17,21 +19,10 @@ import org.springframework.web.server.ResponseStatusException;
 import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ImageDto;
 import com.my.backend.dto.ProductDto;
-import com.my.backend.entity.Bid;
-import com.my.backend.entity.Image;
-import com.my.backend.entity.Payment;
-import com.my.backend.entity.Product;
-import com.my.backend.entity.Users;
 import com.my.backend.enums.ImageType;
 import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
-import com.my.backend.repository.BidRepository;
-import com.my.backend.repository.BookMarkRepository;
-import com.my.backend.repository.ImageRepository;
-import com.my.backend.repository.PaymentRepository;
-import com.my.backend.repository.ProductRepository;
-import com.my.backend.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +38,7 @@ public class ProductService {
     private final BookMarkRepository bookMarkRepository;
     private final ImageRepository imageRepository;
     private final EntityManager em;
+    private final ProductViewLogRepository productViewLogRepository;
 
     // ========================================
     // 🔹 헬퍼 메서드: Product → ProductDto 변환 + 이미지 추가
@@ -368,16 +360,16 @@ public class ProductService {
         product.setBid(bid);
         product.setPayment(payment);
     }
-    @Transactional
-    public ProductDto getProduct(Long productId) {
-
-        // 🔥 동시성 안전하게 증가
-        productRepository.incrementViewCount(productId);
-
-        // 증가시킨 뒤 엔티티 다시 조회
-        Product product = findProductOrThrow(productId);
-        return convertToDto(product);
-    }
+//    @Transactional
+//    public ProductDto getProduct(Long productId) {
+//
+//        // 🔥 동시성 안전하게 증가
+//        productRepository.incrementViewCount(productId);
+//
+//        // 증가시킨 뒤 엔티티 다시 조회
+//        Product product = findProductOrThrow(productId);
+//        return convertToDto(product);
+//    }
     //랭킹
     public List<ProductDto> getRank(String category) {
 
@@ -397,6 +389,58 @@ public class ProductService {
         return products.stream()
                 .map(this::convertToDto)
                 .toList();
+    }
+    /**
+     * 상품 상세 조회 (조회수 로직 포함)
+     * @param productId 상품 ID
+     * @param userId 조회하는 유저 ID (비로그인일 경우 null 허용)
+     */
+    @Transactional
+    public ProductDto getProduct(Long productId, Long userId) {
+        Product product = findProductOrThrow(productId);
+
+        // 유저가 로그인한 상태라면 '1시간 1회' 제한 로직 적용
+        if (userId != null) {
+            Users user = findUserOrThrow(userId);
+
+            // 1. 해당 유저가 이 상품을 본 기록이 있는지 확인
+            ProductViewLog viewLog = productViewLogRepository.findByUserAndProduct(user, product)
+                    .orElse(null);
+
+            if (viewLog == null) {
+                // 2-1. 기록이 없으면 -> 처음 본 것임
+                // 조회수 증가
+                productRepository.incrementViewCount(productId);
+
+                // 기록 생성
+                productViewLogRepository.save(ProductViewLog.builder()
+                        .user(user)
+                        .product(product)
+                        .viewedAt(LocalDateTime.now())
+                        .build());
+            } else {
+                // 2-2. 기록이 있으면 -> 시간 차이 계산
+                LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+
+                // 마지막으로 본 시간이 1시간 전보다 이전이면 (즉, 1시간이 지났으면)
+                if (viewLog.getViewedAt().isBefore(oneHourAgo)) {
+                    // 조회수 증가
+                    productRepository.incrementViewCount(productId);
+
+                    // 본 시간 업데이트 (Dirty Checking으로 자동 update 쿼리 나감)
+                    viewLog.setViewedAt(LocalDateTime.now());
+                }
+                // 1시간이 안 지났으면 조회수 증가 안 함
+            }
+        } else {
+            // 비로그인 유저의 경우 처리 (선택 사항)
+            // 1. 그냥 무조건 증가시킨다 OR
+            // 2. 쿠키를 사용해서 제한한다.
+            // 여기서는 일단 무조건 증가로 둡니다.
+            productRepository.incrementViewCount(productId);
+        }
+
+        return convertToDto(product);
     }
 
 

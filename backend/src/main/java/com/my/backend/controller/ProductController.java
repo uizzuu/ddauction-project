@@ -50,9 +50,22 @@ public class ProductController {
     }
 
     // 특정 상품 조회 (로그인 불필요)
+//    @GetMapping("/{id}")
+//    public ResponseEntity<ProductDto> getProduct(@PathVariable Long id) {
+//        ProductDto product = productService.getProduct(id);
+//        return ResponseEntity.ok(product);
+//    }
     @GetMapping("/{id}")
-    public ResponseEntity<ProductDto> getProduct(@PathVariable Long id) {
-        ProductDto product = productService.getProduct(id);
+    public ResponseEntity<ProductDto> getProduct(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails // 👈 추가
+    ) {
+        // 비로그인 상태면 userId는 null
+        Long userId = (userDetails != null) ? userDetails.getUser().getUserId() : null;
+
+        // Service에 userId도 같이 전달 (1시간 제한 로직 활성화)
+        ProductDto product = productService.getProduct(id, userId);
+
         return ResponseEntity.ok(product);
     }
 
