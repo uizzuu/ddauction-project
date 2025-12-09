@@ -213,7 +213,6 @@ export default function ArticleDetail({ user }: Props) {
         title: editTitle,
         content: editContent,
         userId: user.userId,
-        boardId: article.boardId,
         articleType: article.articleType,
       };
       await updateArticle(Number(id), articleForm);
