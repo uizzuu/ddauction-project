@@ -133,6 +133,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-email").permitAll() // 이메일 인증
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()// 확인 허용
 
+                        .requestMatchers(HttpMethod.POST, "/api/articles/*/comments").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/comments/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/comments/*").authenticated()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/geo/**").permitAll() // 주소 변환 허용
 

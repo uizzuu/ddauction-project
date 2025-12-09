@@ -1,6 +1,7 @@
 import type * as TYPE from "./types";
 import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
+import type { ArticleType } from './types';
 
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
@@ -200,17 +201,43 @@ export async function queryRAG(query: string): Promise<TYPE.RAGResponse> {
   if (!text) throw new Error("AI 응답이 없습니다.");
   return JSON.parse(text);
 }
-
+//게시판 및 댓글
 export async function getArticles(params?: {
-  boardId?: number;
+  userId?: number;
+  articleType?: ArticleType;
 }): Promise<TYPE.ArticleDto[]> {
-  const query = params?.boardId ? `?boardId=${params.boardId}` : "";
-  const response = await authFetch(
-    `${API_BASE_URL}${SPRING_API}/articles${query}`
-  );
+  let url = `${API_BASE_URL}${SPRING_API}/articles`;
+  
+  if (params?.userId) {
+    url = `${API_BASE_URL}${SPRING_API}/articles/user/${params.userId}`;
+  } else if (params?.articleType) {
+    url = `${API_BASE_URL}${SPRING_API}/articles/type/${params.articleType}`;
+  }
+  
+  const response = await authFetch(url);
   if (!response.ok) throw new Error("게시글 목록 조회 실패");
   const text = await response.text();
   return text ? JSON.parse(text) : [];
+}
+
+export async function getArticlePage(params?: {
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: 'ASC' | 'DESC';
+}): Promise<{ content: TYPE.ArticleDto[]; totalPages: number; totalElements: number }> {
+  const page = params?.page ?? 0;
+  const size = params?.size ?? 10;
+  const sort = params?.sort ?? 'createdAt';
+  const direction = params?.direction ?? 'DESC';
+  
+  const query = `?page=${page}&size=${size}&sort=${sort},${direction}`;
+  const response = await authFetch(
+    `${API_BASE_URL}${SPRING_API}/articles/page${query}`
+  );
+  if (!response.ok) throw new Error("게시글 페이지 조회 실패");
+  const text = await response.text();
+  return text ? JSON.parse(text) : { content: [], totalPages: 0, totalElements: 0 };
 }
 
 export async function getArticleById(id: number): Promise<TYPE.ArticleDto> {
@@ -247,8 +274,8 @@ export async function updateArticle(
   );
   if (!response.ok) throw new Error("게시글 수정 실패");
   const text = await response.text();
-  if (!text) throw new Error("게시글 수정 후 응답이 없습니다.");
-  return JSON.parse(text);
+  const result = text ? JSON.parse(text) : {};
+  return result.data; // Extract data from wrapper
 }
 
 export async function deleteArticle(id: number): Promise<void> {
@@ -270,6 +297,16 @@ export async function getCommentsByArticleId(
   if (!response.ok) throw new Error("댓글 목록 조회 실패");
   const text = await response.text();
   return text ? JSON.parse(text) : [];
+}
+
+export async function getCommentById(commentId: number): Promise<TYPE.CommentDto> {
+  const response = await authFetch(
+    `${API_BASE_URL}${SPRING_API}/comments/${commentId}`
+  );
+  if (!response.ok) throw new Error("댓글 조회 실패");
+  const text = await response.text();
+  if (!text) throw new Error("댓글이 존재하지 않습니다.");
+  return JSON.parse(text);
 }
 
 export async function createComment(

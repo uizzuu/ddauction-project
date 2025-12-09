@@ -176,13 +176,11 @@ export interface CreateProductRequest {
   deliveryIncluded?: boolean;
 }
 
-//게시판
+// 게시판
 export interface ArticleDto {
   articleId: number;
   userId: number;
   nickName: string;
-  boardId: number;
-  boardName: string;
   title: string;
   content: string;
   createdAt: string;
@@ -193,7 +191,6 @@ export interface ArticleDto {
 export interface ArticleForm {
   title: string;
   content: string;
-  boardId: number;
   userId?: number;
   articleType: ArticleType;
 }
@@ -210,7 +207,7 @@ export interface CommentDto {
 
 export interface CommentForm {
   content: string;
-  articleId: number;
+  articleId?: number; // POST 시에는 URL에 포함되므로 optional
   userId: number;
 }
 
