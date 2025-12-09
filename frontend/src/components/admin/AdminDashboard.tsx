@@ -30,7 +30,7 @@ export default function AdminDashboard({ stats: initialStats, onRefresh }: Props
       setStats(newStats);
       setLastUpdate(new Date());
       console.log(" 관리자 통계 업데이트 완료:", newStats);
-      
+
       if (onRefresh) {
         await onRefresh();
       }
@@ -75,7 +75,7 @@ export default function AdminDashboard({ stats: initialStats, onRefresh }: Props
   const formatLastUpdate = () => {
     const now = new Date();
     const diff = Math.floor((now.getTime() - lastUpdate.getTime()) / 1000);
-    
+
     if (diff < 60) return `${diff}초 전`;
     if (diff < 3600) return `${Math.floor(diff / 60)}분 전`;
     return `${Math.floor(diff / 3600)}시간 전`;
@@ -127,6 +127,20 @@ export default function AdminDashboard({ stats: initialStats, onRefresh }: Props
 
   return (
     <div>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-[#111]">관리자 대시보드</h2>
+        <div className="flex items-center gap-2 text-sm text-[#999]">
+          <Clock size={14} />
+          <span>마지막 업데이트: {formatLastUpdate()}</span>
+          <button
+            onClick={refreshStats}
+            disabled={isRefreshing}
+            className="ml-2 p-1 hover:bg-gray-100 rounded"
+          >
+            <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+          </button>
+        </div>
+      </div>
       {/* Stat Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((card, index) => {
@@ -134,9 +148,8 @@ export default function AdminDashboard({ stats: initialStats, onRefresh }: Props
           return (
             <div
               key={index}
-              className={`border ${card.borderColor} rounded-lg p-5 hover:shadow-sm transition-all ${
-                isRefreshing ? "animate-pulse" : ""
-              }`}
+              className={`border ${card.borderColor} rounded-lg p-5 hover:shadow-sm transition-all ${isRefreshing ? "animate-pulse" : ""
+                }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className={`p-2 rounded-lg ${card.color}`}>
