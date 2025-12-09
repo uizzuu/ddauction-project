@@ -1146,16 +1146,23 @@ export const fetchQrCodeImage = async (productId: number): Promise<string> => {
   return URL.createObjectURL(blob);
 };
 
-// 배경 제거 (Python FastAPI) 스프링 거칠필요없음 로컬에서 테스트 안함
+// 배경 제거 (Python FastAPI) - AI 서버 필요
 export const removeProductBackground = async (productId: number): Promise<string> => {
-  const res = await fetch(`${AI_BASE_URL}/remove-bg`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ product_id: productId }),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  return `data:image/png;base64,${data.image_base64}`;
+  try {
+    const res = await fetch(`${AI_BASE_URL}/remove-bg`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ product_id: productId }),
+      signal: AbortSignal.timeout(5000), // 5초 타임아웃
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return `data:image/png;base64,${data.image_base64}`;
+  } catch (error) {
+    // AI 서버가 꺼져있거나 응답이 없을 경우
+    console.warn("AI 서버 연결 실패, 배경 제거 기능을 사용할 수 없습니다:", error);
+    throw new Error("배경 제거 기능은 현재 사용할 수 없습니다.\n(AI 서버가 실행되지 않았습니다)");
+  }
 };
 
 // 상품 데이터 가져오기
