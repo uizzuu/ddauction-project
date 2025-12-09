@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { fetchProductById, getWinningInfo, preparePayment, completePayment, fetchUserAddress } from "../../common/api";
+import { fetchProductById, getWinningInfo, preparePayment, completePayment, fetchUserAddress, fetchMe, updateUserAddress } from "../../common/api";
 
 
 // PortOne Global Type
@@ -88,7 +88,7 @@ export default function PaymentPage() {
             productImage: (product.images && product.images.length > 0) ? product.images[0].imagePath : null,
             sellerName: product.sellerNickName || "판매자",
             price: salePrice,
-            shippingFee: shippingFee 
+            shippingFee: shippingFee
           });
         } else if (product.productType === 'AUCTION') {
           // Auction Product: Check Winning Info
@@ -126,29 +126,108 @@ export default function PaymentPage() {
     return () => { document.body.removeChild(script); };
   }, []);
 
+  // const handleLoadAddress = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) {
+  //       alert("로그인이 필요합니다.");
+  //       return;
+  //     }
+
+  //     const userId = JSON.parse(localStorage.getItem("loginUser") || "{}").userId;
+  //     if (!userId) {
+  //       alert("사용자 정보를 찾을 수 없습니다.");
+  //       return;
+  //     }
+
+  //     const userData = await fetchUserAddress(userId);
+  //     setName(userData.userName);
+  //     setPhone(userData.phone);
+  //     setAddress(userData.address + (userData.detailAddress ? " " + userData.detailAddress : ""));
+  //     setPostcode(userData.zipCode);
+
+  //   } catch (error) {
+  //     console.error(error);
+  //     alert("사용자 정보를 불러오는데 실패했습니다.");
+  //   }
+  // };
+
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [saveForNextTime, setSaveForNextTime] = useState(false);
+
   const handleLoadAddress = async () => {
     try {
+      setIsLoadingAddress(true);
+
       const token = localStorage.getItem("token");
+      console.log("🔑 Token exists:", !!token);
+
       if (!token) {
         alert("로그인이 필요합니다.");
         return;
       }
 
-      const userId = JSON.parse(localStorage.getItem("loginUser") || "{}").userId;
+      const currentUser = await fetchMe(token);
+      const userId = currentUser.userId;
+
       if (!userId) {
-        alert("사용자 정보를 찾을 수 없습니다.");
+        alert("사용자 ID를 찾을 수 없습니다.");
         return;
       }
 
+      console.log("📡 API 호출 시작:", userId);
       const userData = await fetchUserAddress(userId);
-      setName(userData.userName);
-      setPhone(userData.phone);
-      setAddress(userData.address + (userData.detailAddress ? " " + userData.detailAddress : ""));
-      setPostcode(userData.zipCode);
+      console.log(" 받아온 userData:", userData);
+
+      setName(userData.userName || "");
+      setPhone(userData.phone || "");
+      setPostcode(userData.zipCode || "");
+
+      const fullAddress = [
+        userData.address,
+        userData.detailAddress
+      ].filter(Boolean).join(" ");
+      setAddress(fullAddress);
+
+      if (!userData.address && !userData.zipCode) {
+        alert("이름과 연락처를 불러왔습니다.\n주소 정보는 등록되어 있지 않습니다.");
+      } else {
+        alert("내 정보를 불러왔습니다.");
+      }
+    } catch (error) {
+      alert("사용자 정보를 불러오는데 실패했습니다.");
+    } finally {
+      setIsLoadingAddress(false);
+    }
+  };
+
+  // ✅ 주소 정보 저장 함수 추가
+  const handleSaveAddress = async () => {
+    if (!saveForNextTime) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      const currentUser = await fetchMe(token);
+      const userId = currentUser.userId;
+
+      if (!userId) return;
+
+      // 주소를 기본 주소와 상세 주소로 분리
+      const addressParts = address.split(" ");
+      const detailAddress = addressParts.length > 3 ? addressParts.slice(3).join(" ") : "";
+      const baseAddress = addressParts.slice(0, 3).join(" ");
+
+      await updateUserAddress(userId, {
+        address: baseAddress,
+        detailAddress: detailAddress,
+        zipCode: postcode,
+        phone: phone,
+      });
 
     } catch (error) {
-      console.error(error);
-      alert("사용자 정보를 불러오는데 실패했습니다.");
+      console.error("주소 저장 실패:", error);
     }
   };
 
@@ -160,6 +239,8 @@ export default function PaymentPage() {
       alert("배송지 정보와 구매자 정보를 모두 입력해주세요.");
       return;
     }
+
+    await handleSaveAddress();
 
     try {
       // 1. Prepare
@@ -257,11 +338,18 @@ export default function PaymentPage() {
                       placeholder="이름"
                       className="flex-1 border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
                     />
-                    <button
+                    {/* <button
                       onClick={handleLoadAddress}
                       className="px-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 whitespace-nowrap"
                     >
                       내 정보 불러오기
+                    </button> */}
+                    <button
+                      onClick={handleLoadAddress}
+                      disabled={isLoadingAddress}
+                      className="px-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isLoadingAddress ? "불러오는 중..." : "내 정보 불러오기"}
                     </button>
                   </div>
                 </div>
@@ -292,6 +380,15 @@ export default function PaymentPage() {
                       placeholder="기본 주소 + 상세 주소"
                       className="w-full border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
                     />
+                    <label className="flex items-center gap-2 text-sm text-gray-600 mt-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={saveForNextTime}
+                        onChange={(e) => setSaveForNextTime(e.target.checked)}
+                        className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      />
+                      <span>이 정보를 다음 결제에도 사용하기</span>
+                    </label>
                   </div>
                 </div>
               </div>
