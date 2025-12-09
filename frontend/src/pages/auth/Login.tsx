@@ -9,6 +9,10 @@ type Props = {
 
 export default function Login({ setUser }: Props) {
   const navigate = useNavigate();
+
+  // 🔥 로그인 방식 선택 (email 또는 phone)
+  const [loginType, setLoginType] = useState<"email" | "phone">("email");
+
   const [form, setForm] = useState<LoginForm>({ email: "", password: "" });
   const [errors, setErrors] = useState({
     email: "",
@@ -19,12 +23,21 @@ export default function Login({ setUser }: Props) {
   const isEmailValid = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
+  const isPhoneValid = (phone: string) =>
+    /^\d{10,11}$/.test(phone);
+
   const validateAll = () => {
     const newErrors = { email: "", password: "", submit: "" };
 
-    if (!form.email) newErrors.email = "이메일을 입력해주세요";
-    else if (!isEmailValid(form.email))
-      newErrors.email = "올바른 이메일 형식이 아닙니다";
+    if (loginType === "email") {
+      if (!form.email) newErrors.email = "이메일을 입력해주세요";
+      else if (!isEmailValid(form.email))
+        newErrors.email = "올바른 이메일 형식이 아닙니다";
+    } else {
+      if (!form.email) newErrors.email = "전화번호를 입력해주세요";
+      else if (!isPhoneValid(form.email))
+        newErrors.email = "올바른 전화번호 형식이 아닙니다 (10-11자리 숫자)";
+    }
 
     if (!form.password) newErrors.password = "비밀번호를 입력해주세요";
     else if (form.password.length < 8)
@@ -35,17 +48,50 @@ export default function Login({ setUser }: Props) {
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
+    console.log("▶ handleSubmit called");
     if (e) e.preventDefault();
-    if (!validateAll()) return;
+
+    console.log("▶ loginType:", loginType, "form:", form);
+
+    if (!validateAll()) {
+      console.log("▶ validateAll failed", errors);
+      return;
+    }
 
     try {
-      const userData = await loginAPI(form);
+      console.log("▶ before loginAPI call");
+
+      let submitForm;
+
+      if (loginType === "phone") {
+        submitForm = {
+          phone: form.email,   // ★ 전화번호는 phone 필드로 보내야 함
+          password: form.password,
+        };
+      } else {
+        submitForm = {
+          email: form.email,   // ★ email 로그인은 email 필드로 보내야 함
+          password: form.password,
+        };
+      }
+
+      console.log("▶ submitForm:", submitForm);
+
+      const userData = await loginAPI(submitForm, loginType);
+
+      console.log("▶ loginAPI returned:", userData);
       setUser(userData);
       navigate("/");
     } catch (err: any) {
-      setErrors((prev) => ({ ...prev, submit: err.message || "로그인 실패" }));
+      console.error("▶ login error:", err);
+      setErrors((prev) => ({
+        ...prev,
+        submit: err.message || "로그인 실패",
+      }));
     }
   };
+
+
 
   const handleSocialLogin = (provider: "google" | "naver" | "kakao") => {
     window.location.href = getSocialLoginURL(provider);
@@ -66,25 +112,72 @@ export default function Login({ setUser }: Props) {
         />
       </a>
 
-      <div className="bg-white p-10 md:p-14 border border-gray-200 shadow-sm  w-full max-w-[460px]">
+      <div className="bg-white p-10 md:p-14 border border-gray-200 shadow-sm w-full max-w-[460px]">
+        {/* 🔥 로그인 방식 선택 탭 */}
+        <div className="flex border-b border-gray-200 mb-6">
+          <button
+            onClick={() => {
+              setLoginType("email");
+              setForm({ email: "", password: "" });
+              setErrors({ email: "", password: "", submit: "" });
+            }}
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${loginType === "email"
+              ? "border-b-2 border-[#333] text-[#333]"
+              : "text-gray-400 hover:text-gray-600"
+              }`}
+          >
+            이메일 로그인
+          </button>
+          <button
+            onClick={() => {
+              setLoginType("phone");
+              setForm({ email: "", password: "" });
+              setErrors({ email: "", password: "", submit: "" });
+            }}
+            className={`flex-1 py-3 text-sm font-medium transition-colors ${loginType === "phone"
+              ? "border-b-2 border-[#333] text-[#333]"
+              : "text-gray-400 hover:text-gray-600"
+              }`}
+          >
+            전화번호 로그인
+          </button>
+        </div>
+
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          {/* Email */}
+          {/* Email or Phone */}
           <div className="flex flex-col gap-1">
-            <input
-              type="email"
-              placeholder="이메일"
-              value={form.email}
-              onChange={(e) => {
-                const val = e.target.value;
-                setForm((prev) => ({ ...prev, email: val }));
-                setErrors((prev) => ({
-                  ...prev,
-                  email: val && !isEmailValid(val) ? "올바른 이메일 형식이 아닙니다" : "",
-                }));
-              }}
-              className={`w-full px-4 py-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-[4px] focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors`}
-            />
+            {loginType === "email" ? (
+              <input
+                type="email"
+                placeholder="이메일"
+                value={form.email}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣\s]/g, "");
+                  setForm((prev) => ({ ...prev, email: val }));
+                  setErrors((prev) => ({
+                    ...prev,
+                    email: val && !isEmailValid(val) ? "올바른 이메일 형식이 아닙니다" : "",
+                  }));
+                }}
+                className={`w-full px-4 py-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-[4px] focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors`}
+              />
+            ) : (
+              <input
+                type="tel"
+                placeholder="전화번호 (숫자만 입력)"
+                value={form.email}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+                  setForm((prev) => ({ ...prev, email: val }));
+                  setErrors((prev) => ({
+                    ...prev,
+                    email: val && !isPhoneValid(val) ? "올바른 전화번호 형식이 아닙니다 (10-11자리)" : "",
+                  }));
+                }}
+                className={`w-full px-4 py-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} rounded-[4px] focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors`}
+              />
+            )}
             {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
           </div>
 
@@ -111,7 +204,7 @@ export default function Login({ setUser }: Props) {
 
           <button
             type="submit"
-            className="w-full text-white font-bold py-4 mt-4 hover:bg-[#333] transition-colors flex justify-center items-center rounded-[4px] bg-gray-300"
+            className="w-full text-white font-bold py-4 mt-4 bg-[#888] hover:bg-[#333] transition-colors flex justify-center items-center rounded-[4px]"
           >
             로그인
           </button>
@@ -128,7 +221,6 @@ export default function Login({ setUser }: Props) {
 
         {/* Social Login */}
         <div className="mt-10 pt-10 border-t border-gray-100 flex flex-col items-center">
-          {/* <span className="text-xs text-gray-400 mb-4">SNS 계정으로 로그인</span> */}
           <div className="flex gap-4">
             <button
               onClick={() => handleSocialLogin("naver")}
@@ -162,7 +254,6 @@ export default function Login({ setUser }: Props) {
             </button>
           </div>
         </div>
-
       </div>
       <div className="mt-8 text-xs text-gray-400">
         &copy; DDAUCTION Corp.

@@ -92,6 +92,7 @@ export interface Product {
 
 export interface LoginForm {
   email: string;
+  phone?: string;
   password: string;
 }
 

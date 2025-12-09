@@ -314,37 +314,61 @@ export async function deleteComment(commentId: number): Promise<void> {
 }
 
 // 로그인
-export async function loginAPI(form: TYPE.LoginForm) {
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/auth/login`, {
+export async function loginAPI(
+  form: TYPE.LoginForm | { phone: string; password: string },
+  type: "email" | "phone" = "email"   // 👈 추가
+) {
+  const url =
+    type === "phone"
+      ? `${API_BASE_URL}${SPRING_API}/auth/login/phone` // 👈 전화번호 로그인
+      : `${API_BASE_URL}${SPRING_API}/auth/login`;      // 👈 이메일 로그인
+
+  // 1. 로그인 요청
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(form),
   });
 
+  // 2. 오류 응답 처리 (4xx, 5xx)
   if (!response.ok) {
     const text = await response.text();
     let message = "로그인 실패";
     try {
       const data = JSON.parse(text);
+      // 서버 응답에 'message' 필드가 있으면 사용 (AuthService에서 정의한 401 응답)
       message = data.message || message;
-    } catch { }
+    } catch (e) {
+      // JSON 파싱 실패 시, text 본문을 그대로 메시지로 사용하거나 기본 메시지 사용
+    }
     throw new Error(message);
   }
 
-  // body에서 token 받기 (백엔드가 이미 JSON으로 보냄)
+  // 3. 성공 응답 처리 (200 OK)
   const text = await response.text();
   const data = text ? JSON.parse(text) : {};
-  const token = data.token;
 
-  if (!token) throw new Error("토큰을 받지 못했습니다");
+  // ✅ 수정된 부분: 'token' 또는 'accessToken' 필드 중 유효한 것을 찾음
+  const token = data.token || data.accessToken;
+  // 서버에서 'token'으로 보내거나, 'accessToken'으로 보낼 경우 모두 대응
+
+  // 4. 토큰 존재 여부 확인
+  if (!token) {
+    // 서버가 200 OK를 보냈지만, 토큰 필드가 없는 경우
+    console.error("서버 응답 데이터:", data);
+    throw new Error("토큰을 받지 못했습니다. 서버 응답 필드를 확인하세요.");
+  }
 
   localStorage.setItem("token", token);
 
+  // 5. 사용자 정보 요청
   const userResponse = await fetch(`${API_BASE_URL}${SPRING_API}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!userResponse.ok) throw new Error("사용자 정보를 가져오지 못했습니다");
+
+  // 6. 사용자 정보 파싱 및 반환
   const userText = await userResponse.text();
   const userData: TYPE.User = userText ? JSON.parse(userText) : null;
   return userData;

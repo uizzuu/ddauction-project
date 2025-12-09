@@ -4,6 +4,7 @@ package com.my.backend.controller;
 import com.my.backend.dto.EmailRequest;
 import com.my.backend.dto.UsersDto;
 import com.my.backend.dto.auth.LoginRequest;
+import com.my.backend.dto.auth.PhoneLoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.entity.Users;
 import com.my.backend.myjwt.JWTUtil;
@@ -47,13 +48,19 @@ public class AuthController {
         return authService.register(request); // 주석: 새로운 register 메서드
     }
 
-    // 로그인
+    // 이메일 로그인
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
         System.out.println("Received email: " + request.getEmail()); // 디버깅 로그
         System.out.println("Email type: " + request.getEmail().getClass().getName());
         return authService.login(request);
     }
+    // 전화번호 로그인
+    @PostMapping("/login/phone")
+    public ResponseEntity<?> loginByPhone(@RequestBody PhoneLoginRequest request) {
+        return authService.loginByPhone(request);
+    }
+
 
     // 로그아웃
     @PostMapping("/logout")
