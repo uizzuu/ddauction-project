@@ -20,6 +20,9 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     // 닉네임 존재 확인
     boolean existsByNickName(String nickName);
 
+    // 폰 여부 확인
+    boolean existsByPhone(String phone);
+
     // 이메일 포함 검색
     List<Users> findByEmailContaining(String email);
 

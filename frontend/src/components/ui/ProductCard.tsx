@@ -57,6 +57,8 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
             await toggleBookmark(product.productId, token);
             // 헤더 카운트 즉시 업데이트
             window.dispatchEvent(new Event("cart-updated"));
+             // 찜 업데이트 이벤트 발생
+        window.dispatchEvent(new Event("wishlist-updated"));
             console.log("Like toggled, event dispatched");
         } catch (err) {
             console.error(err);

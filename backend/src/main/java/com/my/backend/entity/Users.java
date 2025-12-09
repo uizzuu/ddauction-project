@@ -3,24 +3,13 @@ package com.my.backend.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import jakarta.persistence.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.my.backend.enums.Role;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -91,17 +80,23 @@ public class Users {
     @JoinColumn(name = "address_id")
     private Address address;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "email_verification_id")
     private EmailVerification emailVerification;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JoinColumn(name = "phone_verification_id")
     private PhoneVerification phoneVerification;
 
-    public boolean isVerified() {
-        // 이메일 또는 핸드폰 인증 중 하나라도 완료면 true
-        return (emailVerification != null && emailVerification.isVerified())
-                || (phoneVerification != null && phoneVerification.isVerified());
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean verified = false;
+
+    // 인증 완료 처리 메서드 추가
+    public void completeVerification() {
+        if ((emailVerification != null && emailVerification.isVerified())
+                || (phoneVerification != null && phoneVerification.isVerified())) {
+            this.verified = true;
+        }
     }
 }

@@ -1687,7 +1687,7 @@ export async function fetchCurrentUser(token: string): Promise<TYPE.User> {
 }
 
 export async function updateUserProfile(userId: number, data: { nickName: string; password: string; phone: string }): Promise<TYPE.User> {
-  const res = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`, {
+  const res = await authFetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),

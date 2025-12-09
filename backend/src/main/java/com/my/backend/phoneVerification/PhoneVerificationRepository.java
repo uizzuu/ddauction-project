@@ -12,7 +12,9 @@ public interface PhoneVerificationRepository extends JpaRepository<PhoneVerifica
 
     Optional<PhoneVerification> findTopByUserPhoneOrderByCreatedAtDesc(String userPhone);
 
-    PhoneVerification findByUserPhoneAndVerifiedTrue(String userPhone);
+    Optional<PhoneVerification> findByUserPhoneAndVerifiedTrue(String userPhone);
 
     List<PhoneVerification> findByUserPhoneAndVerifiedFalse(String userPhone);
+
+
 }
