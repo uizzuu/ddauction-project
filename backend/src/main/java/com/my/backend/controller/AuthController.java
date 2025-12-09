@@ -2,21 +2,27 @@ package com.my.backend.controller;
 
 
 import com.my.backend.dto.EmailRequest;
+import com.my.backend.dto.ImageDto;
 import com.my.backend.dto.UsersDto;
 import com.my.backend.dto.auth.LoginRequest;
 import com.my.backend.dto.auth.PhoneLoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.entity.Users;
+import com.my.backend.enums.ImageType;
 import com.my.backend.myjwt.JWTUtil;
+import com.my.backend.repository.ImageRepository;
 import com.my.backend.repository.UserRepository;
 import com.my.backend.service.AuthService;
+import com.my.backend.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -27,6 +33,15 @@ public class AuthController {
     private final AuthService authService;
     private final UserRepository userRepository;
     private final JWTUtil jwtUtil;
+    private final UserService userService;
+    private final ImageRepository imageRepository;
+
+    public List<ImageDto> getUserImages(Long userId) {
+        return imageRepository.findByRefIdAndImageType(userId, ImageType.USER)
+                .stream()
+                .map(ImageDto::fromEntity)
+                .collect(Collectors.toList());
+    }
 
     // 회원가입
     @PostMapping("/signup")
@@ -78,7 +93,12 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UsersDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         Users user = getUserFromToken(authHeader);
-        return ResponseEntity.ok(UsersDto.fromEntity(user));
+
+        // 프로필 이미지 URL 가져오기
+        String profileImageUrl = userService.getProfileImageUrl(user.getUserId());
+
+        // DTO 생성 시 profileImageUrl 전달
+        return ResponseEntity.ok(UsersDto.fromEntity(user, profileImageUrl));
     }
 
     // 이메일 찾기

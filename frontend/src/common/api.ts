@@ -2109,7 +2109,7 @@ export async function verifyBusiness(userId: number, businessNumber: string): Pr
 
 // 사용자 주소 업데이트 (결제 페이지용)
 export async function updateUserAddress(
-  userId: number, 
+  userId: number,
   data: {
     address: string;
     detailAddress: string;
@@ -2118,7 +2118,7 @@ export async function updateUserAddress(
   }
 ): Promise<void> {
   const token = localStorage.getItem("token");
-  
+
   const response = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/address`, {
     method: "PUT",
     headers: {
@@ -2134,13 +2134,65 @@ export async function updateUserAddress(
 }
 //랭킹조회
 export async function fetchRanking(category?: string): Promise<TYPE.Product[]> {
-  const url = category 
+  const url = category
     ? `${API_BASE_URL}${SPRING_API}/products/rank?category=${category}`
     : `${API_BASE_URL}${SPRING_API}/products/rank`;
-  
+
   const response = await fetch(url);
   if (!response.ok) throw new Error("랭킹 조회 실패");
-  
+
   const text = await response.text();
   return text ? JSON.parse(text) : [];
 }
+
+// 프로필 이미지 업로드
+export const uploadProfileImage = async (userId: number, file: File): Promise<string> => {
+  const token = localStorage.getItem("token");
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`/api/users/${userId}/profile-image`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "이미지 업로드 실패");
+  }
+
+  const data = await response.json();
+  return data.imageUrl || data.profileImage;
+};
+
+// 프로필 이미지 삭제
+export const deleteProfileImage = async (userId: number): Promise<void> => {
+  const token = localStorage.getItem("token");
+
+  const response = await fetch(`/api/users/${userId}/profile-image`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || "이미지 삭제 실패");
+  }
+};
+
+// 프로필 이미지 조회
+export const getProfileImage = async (userId: number): Promise<string | null> => {
+  const response = await fetch(`/api/users/${userId}/profile-image`);
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const data = await response.json();
+  return data.imageUrl || data.profileImage || null;
+};

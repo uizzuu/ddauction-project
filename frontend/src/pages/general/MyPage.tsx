@@ -10,6 +10,7 @@ import BusinessVerify from "../../components/mypage/BusinessVerify";
 import ShippingModal from "../../components/ui/ShippingModal";
 import ReviewModal from "../../components/ui/ReviewModal";
 import { ConfirmModal } from "../../components/ui/ConfirmModal";
+import ProfileImageUploader from "../../components/mypage/ProfileImageUploader";
 
 type TabId = "selling" | "buying" | "community" | "settings";
 
@@ -45,6 +46,7 @@ export default function MyPage({ user, setUser }: Props) {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [confirmTargetId, setConfirmTargetId] = useState<number | null>(null);
   const [myBids, setMyBids] = useState<Bid[]>([]);
+  const [showProfileUploader, setShowProfileUploader] = useState(false);
 
   // Profile edit state
   const [isEditingProfile, setIsEditingProfile] = useState(false);

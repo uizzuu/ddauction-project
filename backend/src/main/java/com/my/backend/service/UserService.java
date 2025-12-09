@@ -2,15 +2,21 @@ package com.my.backend.service;
 
 import com.my.backend.dto.UsersDto;
 import com.my.backend.entity.Address;
+import com.my.backend.entity.Image;
 import com.my.backend.entity.Users;
+import com.my.backend.enums.ImageType;
 import com.my.backend.repository.AddressRepository;
+import com.my.backend.repository.ImageRepository;
 import com.my.backend.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -22,12 +28,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AddressRepository addressRepository;
+    private final ImageRepository imageRepository;
+    private final S3Uploader s3Uploader;
+
+
 
     // 모든 유저 조회
     public List<UsersDto> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(UsersDto::fromEntity)
+                .map(user -> UsersDto.fromEntity(user, getProfileImageUrl(user.getUserId())))
                 .collect(Collectors.toList());
     }
 
@@ -35,22 +45,28 @@ public class UserService {
     public UsersDto getUser(Long id) {
         Users user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
-        return UsersDto.fromEntity(user);
+        String profileImageUrl = getProfileImageUrl(id); // 프로필 이미지 URL 가져오기
+        return UsersDto.fromEntity(user, profileImageUrl);
     }
 
 
     // 로그인
     public UsersDto login(String email, String password) {
-        Optional<Users> user = userRepository.findByEmail(email);
-        if(user.isEmpty()) {
+        Optional<Users> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty()) {
             throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
         }
 
-        if (!passwordEncoder.matches(password, user.get().getPassword())) {
+        Users user = userOpt.get();
+        if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
         }
 
-        return UsersDto.fromEntity(user.orElse(null));
+        // 프로필 이미지 URL 가져오기
+        String profileImageUrl = getProfileImageUrl(user.getUserId());
+
+        // DTO 변환
+        return UsersDto.fromEntity(user, profileImageUrl);
     }
 
     // 유저 정보 수정
@@ -58,6 +74,7 @@ public class UserService {
         if (dto.getUserId() == null) throw new RuntimeException("수정할 사용자 ID가 필요합니다.");
         Users user = userRepository.findById(dto.getUserId())
                 .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+
         if (dto.getUserName() != null && !dto.getUserName().isBlank()) {
             user.setUserName(dto.getUserName());
         }
@@ -79,7 +96,6 @@ public class UserService {
             user.setEmail(dto.getEmail());
         }
 
-        // Role 처리 추가
         if (dto.getRole() != null) {
             user.setRole(dto.getRole());
         }
@@ -87,8 +103,16 @@ public class UserService {
             Address address = findAddressOrNull(dto.getAddressId());
             user.setAddress(address);
         }
-        return UsersDto.fromEntity(userRepository.save(user));
+
+
+        Users savedUser = userRepository.save(user);
+
+        // 프로필 이미지 URL 가져오기
+        String profileImageUrl = getProfileImageUrl(savedUser.getUserId());
+
+        return UsersDto.fromEntity(savedUser, profileImageUrl);
     }
+
 
     // 주소 정보 업데이트 (결제 페이지용)
     public void updateUserAddress(Long userId, String address, String detailAddress, String zipCode, String phone) {
@@ -139,5 +163,68 @@ public class UserService {
         if (id == null) return null;
         return addressRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "주소 정보가 존재하지 않습니다."));
+    }
+
+    // 프로필 이미지 URL 조회
+    public String getProfileImageUrl(Long userId) {
+        List<Image> images = imageRepository.findByRefIdAndImageType(userId, ImageType.USER);
+        if (images.isEmpty()) {
+            return null;
+        }
+        return images.get(0).getImagePath();
+    }
+
+    // 프로필 이미지 등록/수정
+    @Transactional
+    public String updateProfileImage(Long userId, MultipartFile file) throws IOException {
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 기존 프로필 이미지 삭제
+        List<Image> existingImages = imageRepository.findByRefIdAndImageType(userId, ImageType.USER);
+        if (!existingImages.isEmpty()) {
+            Image existingImage = existingImages.get(0);
+            // S3에서 삭제
+            try {
+                s3Uploader.delete(existingImage.getImagePath());
+            } catch (Exception e) {
+                // S3 삭제 실패해도 DB는 삭제
+                System.err.println("S3 이미지 삭제 실패: " + e.getMessage());
+            }
+            imageRepository.delete(existingImage);
+        }
+
+        // S3 업로드
+        String imageUrl = s3Uploader.upload(file, "profile");
+
+        // 새 이미지 저장
+        Image newImage = Image.builder()
+                .imagePath(imageUrl)
+                .imageType(ImageType.USER)
+                .refId(userId)
+                .build();
+
+        imageRepository.save(newImage);
+
+        return imageUrl;
+    }
+
+    // 프로필 이미지 삭제
+    @Transactional
+    public void deleteProfileImage(Long userId) {
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        List<Image> existingImages = imageRepository.findByRefIdAndImageType(userId, ImageType.USER);
+        if (!existingImages.isEmpty()) {
+            Image existingImage = existingImages.get(0);
+            // S3에서 삭제
+            try {
+                s3Uploader.delete(existingImage.getImagePath());
+            } catch (Exception e) {
+                System.err.println("S3 이미지 삭제 실패: " + e.getMessage());
+            }
+            imageRepository.delete(existingImage);
+        }
     }
 }

@@ -14,8 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -48,7 +50,11 @@ public class UserController {
     @GetMapping("/me")
     public ResponseEntity<UsersDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         Users user = getUserFromToken(authHeader);
-        return ResponseEntity.ok(UsersDto.fromEntity(user));
+
+        // 프로필 이미지 URL 가져오기
+        String profileImageUrl = userService.getProfileImageUrl(user.getUserId());
+
+        return ResponseEntity.ok(UsersDto.fromEntity(user, profileImageUrl));
     }
 
     // 마이페이지 조회 (JWT 기반)
@@ -171,5 +177,70 @@ public class UserController {
         if (!"ADMIN".equals(user.getRole().name())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "관리자 권한이 필요합니다.");
         }
+    }
+
+    // 프로필 이미지 업로드
+    @PostMapping("/{id}/profile-image")
+    public ResponseEntity<Map<String, String>> uploadProfileImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader("Authorization") String authHeader) throws IOException {
+
+        Users user = getUserFromToken(authHeader);
+        if (!id.equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 수정 가능합니다.");
+        }
+
+        // 파일 검증
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일이 비어있습니다.");
+        }
+
+        // 파일 크기 검증 (5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "파일 크기는 5MB 이하여야 합니다.");
+        }
+
+        // 파일 타입 검증
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미지 파일만 업로드 가능합니다.");
+        }
+
+        String imageUrl = userService.updateProfileImage(user.getUserId(), file);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "프로필 이미지가 업데이트되었습니다.",
+                "imageUrl", imageUrl,
+                "profileImage", imageUrl
+        ));
+    }
+
+    // 프로필 이미지 삭제
+    @DeleteMapping("/{id}/profile-image")
+    public ResponseEntity<Map<String, String>> deleteProfileImage(
+            @PathVariable Long id,
+            @RequestHeader("Authorization") String authHeader) {
+
+        Users user = getUserFromToken(authHeader);
+        if (!id.equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 수정 가능합니다.");
+        }
+
+        userService.deleteProfileImage(user.getUserId());
+
+        return ResponseEntity.ok(Map.of("message", "프로필 이미지가 삭제되었습니다."));
+    }
+
+    // 프로필 이미지 조회
+    @GetMapping("/{id}/profile-image")
+    public ResponseEntity<Map<String, String>> getProfileImage(@PathVariable Long id) {
+        String imageUrl = userService.getProfileImageUrl(id);
+
+        if (imageUrl == null) {
+            return ResponseEntity.ok(Map.of("imageUrl", "", "profileImage", ""));
+        }
+
+        return ResponseEntity.ok(Map.of("imageUrl", imageUrl, "profileImage", imageUrl));
     }
 }

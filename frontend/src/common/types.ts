@@ -31,6 +31,7 @@ export interface User {
   token?: string;
   isWinner?: boolean;
   businessNumber?: string;
+  profileImage?: string; // 이 줄 추가
 }
 
 export interface Bid {
