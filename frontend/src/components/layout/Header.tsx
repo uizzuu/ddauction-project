@@ -354,9 +354,7 @@ export default function Header({ user, setUser }: Props) {
     return (
         <div className={`sticky top-0 z-50 bg-white transition-shadow duration-300 ${isSticky ? "shadow-sm" : ""}`}>
             {/* 상단 네비 */}
-            <div
-                className={`w-full max-w-[1280px] mx-auto flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${isSticky ? "max-h-0 opacity-0" : "max-h-[40px] opacity-100 pt-2"}`}
-            >
+            <div className={`w-full max-w-[1280px] mx-auto flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0" : "max-h-[40px] opacity-100 pt-2"}`}>
                 <nav className="flex gap-4 text-sm text-[#aaa]">
                     {user ? (
                         <>

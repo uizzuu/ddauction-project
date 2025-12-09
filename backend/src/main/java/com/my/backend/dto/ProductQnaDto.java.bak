@@ -1,16 +1,11 @@
 package com.my.backend.dto;
 
-import java.time.LocalDateTime;
-
-import com.my.backend.entity.ProductQna; // 엔티티 기준 ProductType import
+import com.my.backend.entity.ProductQna;
 import com.my.backend.entity.Users;
-import com.my.backend.enums.ProductType;
+import com.my.backend.enums.ProductType; // 엔티티 기준 ProductType import
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -28,8 +23,6 @@ public class ProductQnaDto {
     private LocalDateTime updatedAt;
     private Long refId;
     private ProductType productType;
-    private Boolean isSecret;
-    private Boolean isSecretComment;
 
     public void setQuestion(String question) { this.content = question; }
     public void setProductId(Long productId) { this.refId = productId; }
@@ -41,15 +34,12 @@ public class ProductQnaDto {
         return ProductQnaDto.builder()
                 .productQnaId(productQna.getProductQnaId())
                 .userId(productQna.getUser() != null ? productQna.getUser().getUserId() : null)
-                .nickName(productQna.getUser() != null ? productQna.getUser().getNickName() : "익명") // 닉네임 추가
                 .title(productQna.getTitle())
                 .content(productQna.getContent())
                 .createdAt(productQna.getCreatedAt())
                 .updatedAt(productQna.getUpdatedAt())
                 .refId(productQna.getRefId())
                 .productType(productQna.getProductType())
-                .isSecret(productQna.getIsSecret())
-                .isSecretComment(productQna.getIsSecretComment())
                 .build();
     }
 
@@ -62,8 +52,6 @@ public class ProductQnaDto {
                 .content(this.content)
                 .refId(this.refId)
                 .productType(this.productType)
-                .isSecret(this.isSecret != null ? this.isSecret : false)
-                .isSecretComment(this.isSecretComment != null ? this.isSecretComment : false)
                 .build();
     }
 }

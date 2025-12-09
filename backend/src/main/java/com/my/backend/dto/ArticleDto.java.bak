@@ -21,7 +21,6 @@ public class ArticleDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private ArticleType articleType;
-    private Boolean isSecret;
 
     // Entity → DTO
     public static ArticleDto fromEntity(Article article) {
@@ -36,7 +35,6 @@ public class ArticleDto {
                 .createdAt(article.getCreatedAt())
                 .updatedAt(article.getUpdatedAt())
                 .articleType(article.getArticleType())
-                .isSecret(article.getIsSecret())
                 .build();
     }
 
@@ -48,7 +46,6 @@ public class ArticleDto {
                 .title(this.title)
                 .content(this.content)
                 .articleType(this.articleType)
-                .isSecret(this.isSecret != null ? this.isSecret : false)
                 .build();
     }
 }

@@ -126,12 +126,6 @@ public class ProductQnaService {
         if (productQnaDto.getRefId() != null) {
             productQna.setRefId(productQnaDto.getRefId());
         }
-        if (productQnaDto.getIsSecret() != null) {
-            productQna.setIsSecret(productQnaDto.getIsSecret());
-        }
-        if (productQnaDto.getIsSecretComment() != null) {
-            productQna.setIsSecretComment(productQnaDto.getIsSecretComment());
-        }
 
         ProductQna updated = productQnaRepository.save(productQna);
         return ProductQnaDto.fromEntity(updated);
