@@ -33,6 +33,9 @@ public class UsersDto {
     private Long phoneVerificationId;
     private LocalDate birthday;
     private String businessNumber;
+    private String address;
+    private String zipCode;
+    private String detailAddress;
     @Builder.Default
     private List<ImageDto> images = new ArrayList<>();
 
@@ -52,6 +55,9 @@ public class UsersDto {
                 .updatedAt(user.getUpdatedAt())
                 .role(user.getRole())
                 .addressId(user.getAddress() != null ? user.getAddress().getAddressId() : null)
+                .address(user.getAddress() != null ? user.getAddress().getAddress() : null)
+                .zipCode(user.getAddress() != null ? user.getAddress().getZipCode() : null)
+                .detailAddress(user.getAddress() != null ? user.getAddress().getDetailAddress() : null)
                 .emailVerificationId(user.getEmailVerification() != null ? user.getEmailVerification().getEmailVerificationId() : null)
                 .phoneVerificationId(user.getPhoneVerification() != null ? user.getPhoneVerification().getPhoneVerificationId() : null)
                 .birthday(user.getBirthday())

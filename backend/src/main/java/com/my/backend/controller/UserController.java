@@ -92,6 +92,29 @@ public class UserController {
         return ResponseEntity.ok(updated);
     }
 
+    // 주소 정보 업데이트 (결제 페이지용)
+    @PutMapping("/{userId}/address")
+    public ResponseEntity<?> updateUserAddress(
+            @PathVariable Long userId,
+            @RequestBody Map<String, String> request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        Users user = getUserFromToken(authHeader);
+        if (!userId.equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 수정 가능합니다.");
+        }
+
+        userService.updateUserAddress(
+                userId,
+                request.get("address"),
+                request.get("detailAddress"),
+                request.get("zipCode"),
+                request.get("phone")
+        );
+
+        return ResponseEntity.ok(Map.of("message", "주소 정보가 저장되었습니다."));
+    }
+
     // 유저 삭제 (관리자용)
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id,

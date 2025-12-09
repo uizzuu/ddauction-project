@@ -87,9 +87,38 @@ public class UserService {
             Address address = findAddressOrNull(dto.getAddressId());
             user.setAddress(address);
         }
-
-
         return UsersDto.fromEntity(userRepository.save(user));
+    }
+
+    // 주소 정보 업데이트 (결제 페이지용)
+    public void updateUserAddress(Long userId, String address, String detailAddress, String zipCode, String phone) {
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+        Address addressEntity = user.getAddress();
+        if (addressEntity == null) {
+            addressEntity = Address.builder()
+                    .address(address)
+                    .detailAddress(detailAddress)
+                    .zipCode(zipCode)
+                    .build();
+            addressEntity = addressRepository.save(addressEntity);
+            user.setAddress(addressEntity);
+        } else {
+            // 기존 주소 업데이트
+            addressEntity.setAddress(address);
+            addressEntity.setDetailAddress(detailAddress);
+            addressEntity.setZipCode(zipCode);
+            addressRepository.save(addressEntity);
+        }
+        // 전화번호 업데이트
+        if (phone != null && !phone.isBlank()) {
+            String normalizedPhone = phone.replaceAll("[^0-9]", "");
+            if (!normalizedPhone.matches("^01[0-9]\\d{7,8}$")) {
+                throw new RuntimeException("올바른 전화번호 형식이 아닙니다. (예: 01012345678)");
+            }
+            user.setPhone(normalizedPhone);
+        }
+        userRepository.save(user);
     }
 
     // 유저 삭제
