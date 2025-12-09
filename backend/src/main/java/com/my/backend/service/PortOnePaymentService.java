@@ -279,10 +279,50 @@ public class PortOnePaymentService {
             throw new IllegalStateException("결제가 가능한 상태의 상품이 아닙니다.");
         }
 
-        // 결제 금액 결정 (일반 판매 기준)
-        Long amount = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
+//        // 결제 금액 결정 (일반 판매 기준)
+//        Long amount = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
+//        if (amount == null || amount <= 0) {
+//            throw new IllegalStateException("상품 결제 금액이 설정되어 있지 않습니다.");
+//        }
+
+        // 결제 금액 계산 (상품 타입별 분기)
+        Long amount;
+
+        if (p.getProductType() == com.my.backend.enums.ProductType.STORE) {
+            // STORE: 정가 - 할인 + 배송비
+            Long originalPrice = p.getOriginalPrice();
+            if (originalPrice == null || originalPrice <= 0) {
+                throw new IllegalStateException("일반판매 상품의 정가가 설정되지 않았습니다.");
+            }
+
+            Long discountRate = p.getDiscountRate() != null ? p.getDiscountRate() : 0L;
+            Long salePrice = originalPrice * (100 - discountRate) / 100;
+            Long shippingFee = p.isDeliveryIncluded() ? 0L :
+                    (p.getDeliveryPrice() != null ? p.getDeliveryPrice() : 0L);
+
+            amount = salePrice + shippingFee;
+
+            log.info("[STORE] 정가={}, 할인={}%, 판매가={}, 배송비={}, 최종={}",
+                    originalPrice, discountRate, salePrice, shippingFee, amount);
+
+        } else if (p.getProductType() == com.my.backend.enums.ProductType.USED) {
+            // USED: 판매가 + 배송비
+            Long usedPrice = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
+            if (usedPrice == null || usedPrice <= 0) {
+                throw new IllegalStateException("중고상품의 가격이 설정되지 않았습니다.");
+            }
+            Long shippingFee = p.isDeliveryIncluded() ? 0L :
+                    (p.getDeliveryPrice() != null ? p.getDeliveryPrice() : 0L);
+            amount = usedPrice + shippingFee;
+            log.info("[USED] 판매가={}, 배송비={}, 최종={}", usedPrice, shippingFee, amount);
+        } else {
+            amount = p.getOriginalPrice();
+            if (amount == null || amount <= 0) {
+                throw new IllegalStateException("상품 가격이 설정되지 않았습니다.");
+            }
+        }
         if (amount == null || amount <= 0) {
-            throw new IllegalStateException("상품 결제 금액이 설정되어 있지 않습니다.");
+            throw new IllegalStateException("결제 금액이 유효하지 않습니다.");
         }
 
         String merchantUid = "ORDER-DIRECT-" + p.getProductId() + "-" + buyer.getUserId() + "-" + System.currentTimeMillis();
@@ -372,8 +412,39 @@ public class PortOnePaymentService {
             throw new IllegalStateException("이미 판매 완료된 상품입니다.");
         }
 
-        // 3) 우리 시스템 기준 기대 금액
-        Long expectedAmountLong = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
+//        // 3) 우리 시스템 기준 기대 금액
+//        Long expectedAmountLong = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
+//        if (expectedAmountLong == null || expectedAmountLong <= 0) {
+//            throw new IllegalStateException("상품 결제 금액이 설정되어 있지 않습니다.");
+//        }
+//        int expectedAmount = expectedAmountLong.intValue();
+
+        //  3) 우리 시스템 기준 기대 금액 계산
+        Long expectedAmountLong;
+        if (p.getProductType() == com.my.backend.enums.ProductType.STORE) {
+            // STORE: 정가 - 할인 + 배송비
+            Long originalPrice = p.getOriginalPrice();
+            if (originalPrice == null || originalPrice <= 0) {
+                throw new IllegalStateException("일반판매 상품의 정가가 설정되지 않았습니다.");
+            }
+            Long discountRate = p.getDiscountRate() != null ? p.getDiscountRate() : 0L;
+            Long salePrice = originalPrice * (100 - discountRate) / 100;
+            Long shippingFee = p.isDeliveryIncluded() ? 0L :
+                    (p.getDeliveryPrice() != null ? p.getDeliveryPrice() : 0L);
+            expectedAmountLong = salePrice + shippingFee;
+        } else if (p.getProductType() == com.my.backend.enums.ProductType.USED) {
+
+            // USED: 판매가 + 배송비
+            Long usedPrice = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
+            if (usedPrice == null || usedPrice <= 0) {
+                throw new IllegalStateException("중고상품의 가격이 설정되지 않았습니다.");
+            }
+            Long shippingFee = p.isDeliveryIncluded() ? 0L :
+                    (p.getDeliveryPrice() != null ? p.getDeliveryPrice() : 0L);
+            expectedAmountLong = usedPrice + shippingFee;
+        } else {
+            expectedAmountLong = p.getOriginalPrice();
+        }
         if (expectedAmountLong == null || expectedAmountLong <= 0) {
             throw new IllegalStateException("상품 결제 금액이 설정되어 있지 않습니다.");
         }
@@ -415,6 +486,7 @@ public class PortOnePaymentService {
 
         return paymentInfo;
     }
+
     // ============================
     //  배송 정보 입력 (판매자)
     // ============================
@@ -424,8 +496,8 @@ public class PortOnePaymentService {
 
         // 판매자 본인 검증
         if (payment.getProduct() == null ||
-            payment.getProduct().getSeller() == null ||
-            !payment.getProduct().getSeller().getUserId().equals(sellerId)) {
+                payment.getProduct().getSeller() == null ||
+                !payment.getProduct().getSeller().getUserId().equals(sellerId)) {
             throw new SecurityException("판매자 본인만 배송 정보를 입력할 수 있습니다.");
         }
 
@@ -475,7 +547,7 @@ public class PortOnePaymentService {
 
         payment.setPaymentStatus(PaymentStatus.CONFIRMED);
         paymentRepository.save(payment);
-        
+
         log.info("[Confirm] 구매 확정 완료: paymentId={}, userId={}", paymentId, buyerId);
     }
 }

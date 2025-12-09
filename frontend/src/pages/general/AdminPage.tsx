@@ -143,16 +143,20 @@ export default function AdminPage({ user }: { user: User }) {
     console.log("📢 관리자 통계 업데이트 이벤트 발생");
   }, []);
 
-  // 회원 관리
-  const handleChangeRole = async (userId: number, newRole: User["role"]) => {
-    try {
-      await API.updateUserRole(userId, newRole);
-      fetchUsers();
-      triggerStatsUpdate();
-    } catch (err) {
-      console.error(err);
-    }
-  };
+ // 회원 관리
+const handleChangeRole = async (userId: number, newRole: User["role"]) => {
+  if (userId === user.userId) {
+    alert("자기 자신의 권한은 변경할 수 없습니다.");
+    return;
+  }
+  try {
+    await API.updateUserRole(userId, newRole);
+    fetchUsers();
+    triggerStatsUpdate();
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const handleEditUserClick = (user: User) => {
     setEditingUserId(user.userId);
