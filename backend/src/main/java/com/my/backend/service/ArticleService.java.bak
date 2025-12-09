@@ -84,9 +84,6 @@ public class ArticleService {
         if (articleDto.getArticleType() != null) {
             article.setArticleType(articleDto.getArticleType());
         }
-        if (articleDto.getIsSecret() != null) {
-            article.setIsSecret(articleDto.getIsSecret());
-        }
 
         Article updated = articleRepository.save(article);
         return ArticleDto.fromEntity(updated);

@@ -222,13 +222,13 @@ export async function getArticles(params?: {
   articleType?: ArticleType;
 }): Promise<TYPE.ArticleDto[]> {
   let url = `${API_BASE_URL}${SPRING_API}/articles`;
-  
+
   if (params?.userId) {
     url = `${API_BASE_URL}${SPRING_API}/articles/user/${params.userId}`;
   } else if (params?.articleType) {
     url = `${API_BASE_URL}${SPRING_API}/articles/type/${params.articleType}`;
   }
-  
+
   const response = await authFetch(url);
   if (!response.ok) throw new Error("게시글 목록 조회 실패");
   const text = await response.text();
@@ -245,7 +245,7 @@ export async function getArticlePage(params?: {
   const size = params?.size ?? 10;
   const sort = params?.sort ?? 'createdAt';
   const direction = params?.direction ?? 'DESC';
-  
+
   const query = `?page=${page}&size=${size}&sort=${sort},${direction}`;
   const response = await authFetch(
     `${API_BASE_URL}${SPRING_API}/articles/page${query}`
@@ -270,7 +270,17 @@ export async function createArticle(
     method: "POST",
     body: JSON.stringify(articleData),
   });
-  if (!response.ok) throw new Error("게시글 생성 실패");
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = "게시글 생성 실패";
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorJson.error || errorMessage;
+    } catch {
+      errorMessage = errorText || errorMessage;
+    }
+    throw new Error(errorMessage);
+  }
   const text = await response.text();
   const result = text ? JSON.parse(text) : {};
   return result.data; // Extract data from wrapper
@@ -287,7 +297,17 @@ export async function updateArticle(
       body: JSON.stringify(articleData),
     }
   );
-  if (!response.ok) throw new Error("게시글 수정 실패");
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = "게시글 수정 실패";
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorJson.error || errorMessage;
+    } catch {
+      errorMessage = errorText || errorMessage;
+    }
+    throw new Error(errorMessage);
+  }
   const text = await response.text();
   const result = text ? JSON.parse(text) : {};
   return result.data; // Extract data from wrapper
@@ -734,6 +754,7 @@ export async function createQna(data: {
   productType: string;
   title: string;
   content: string;
+  isSecret?: boolean;
 }): Promise<void> {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");
@@ -759,7 +780,7 @@ export async function createQna(data: {
 // QnA 질문 수정
 export async function updateQna(
   qnaId: number,
-  data: { title: string; content: string }
+  data: { title: string; content: string; isSecret?: boolean }
 ): Promise<void> {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("인증 토큰이 없습니다. 다시 로그인해주세요.");

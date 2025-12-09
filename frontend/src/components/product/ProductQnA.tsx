@@ -37,6 +37,8 @@ export default function ProductQnA({
   const [editingAnswerId, setEditingAnswerId] = useState<number | null>(null);
   const [editingAnswerContent, setEditingAnswerContent] = useState("");
   const [openQnaIds, setOpenQnaIds] = useState<number[]>([]);
+  const [isSecretQuestion, setIsSecretQuestion] = useState(false);
+  const [editingQuestionIsSecret, setEditingQuestionIsSecret] = useState(false);
 
   const fetchQnaList = useCallback(async () => {
     try {
@@ -69,8 +71,10 @@ export default function ProductQnA({
         productType: product?.productType || "AUCTION",
         title: newQuestion.title,
         content: newQuestion.content,
+        isSecret: isSecretQuestion,
       });
       setNewQuestion({ title: "", content: "" });
+      setIsSecretQuestion(false);
       fetchQnaList();
       alert("질문이 등록되었습니다.");
     } catch (error) {
@@ -97,7 +101,10 @@ export default function ProductQnA({
     if (!editingQuestion.title.trim() || !editingQuestion.content.trim())
       return alert("제목과 내용을 모두 입력해주세요.");
     try {
-      await updateQna(qnaId, editingQuestion);
+      await updateQna(qnaId, {
+        ...editingQuestion,
+        isSecret: editingQuestionIsSecret
+      });
       setEditingQuestionId(null);
       setEditingQuestion({ title: "", content: "" });
       fetchQnaList();
@@ -110,9 +117,21 @@ export default function ProductQnA({
 
   // 토글 버튼
   const toggleQna = (qnaId: number) => {
-    setOpenQnaIds((prev) =>
-      prev.includes(qnaId) ? prev.filter((id) => id !== qnaId) : [...prev, qnaId]
-    );
+    setOpenQnaIds((prev) => {
+      const isOpen = prev.includes(qnaId);
+      if (!isOpen) {
+        // 열릴 때 스크롤 이동 (DOM 렌더링 후 실행)
+        setTimeout(() => {
+          const el = document.getElementById(`qna-${qnaId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 100);
+        return [...prev, qnaId];
+      } else {
+        return prev.filter((id) => id !== qnaId);
+      }
+    });
   };
 
   // 답변 권한 확인 함수
@@ -171,19 +190,13 @@ export default function ProductQnA({
   };
 
   return (
-    <div style={{ marginTop: 40 }}>
-      <h3 className="title-20 mb-[10px]">상품 Q&A</h3>
-      <div
-        style={{
-          backgroundColor: "#fff",
-          padding: 16,
-          borderRadius: 12,
-          boxShadow: "0 1px 6px rgba(0,0,0,0.06)",
-        }}
-      >
+    <div className="mt-10">
+      <h3 className="text-xl font-bold text-[#111] mb-4">상품 Q&A</h3>
+      <div className="bg-white border border-[#ddd] rounded-lg p-6 shadow-sm">
         {/* 질문 작성 */}
         {user && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3 mb-8 pb-8 border-b border-gray-100">
+            <h4 className="text-sm font-bold text-[#333]">질문 작성</h4>
             <input
               type="text"
               placeholder="질문 제목"
@@ -191,7 +204,7 @@ export default function ProductQnA({
               onChange={(e) =>
                 setNewQuestion({ ...newQuestion, title: e.target.value })
               }
-              className="article-input article-review"
+              className="w-full px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm"
             />
             <textarea
               placeholder="질문 내용"
@@ -199,10 +212,23 @@ export default function ProductQnA({
               onChange={(e) =>
                 setNewQuestion({ ...newQuestion, content: e.target.value })
               }
-              className="article-textarea article-review"
+              rows={3}
+              className="w-full px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm resize-none"
             />
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button onClick={handleCreateQuestion} className="article-btn">
+            <div className="flex justify-between items-center">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isSecretQuestion}
+                  onChange={(e) => setIsSecretQuestion(e.target.checked)}
+                  className="w-4 h-4 accent-[#111]"
+                />
+                <span className="text-sm text-[#333]">비밀글</span>
+              </label>
+              <button
+                onClick={handleCreateQuestion}
+                className="px-6 py-2.5 bg-[#111] text-white rounded-lg font-bold text-sm hover:bg-[#333] transition-colors shadow-sm"
+              >
                 질문 등록
               </button>
             </div>
@@ -214,259 +240,269 @@ export default function ProductQnA({
           {qnaList.length === 0 ? (
             <p style={{ color: "#888" }}>아직 등록된 질문이 없습니다.</p>
           ) : (
-            qnaList.map((q, index) => (
-              <div key={q.productQnaId}>
-                {/* 질문 제목 + 토글 버튼 */}
-                {index !== 0 && <div className="top-line mb-[10px]"></div>}
-                <div className="flex justify-center justify-between w-full">
-                  <p className="title-16 color-333 whitespace-nowrap w-full">
-                    {q.title}
-                  </p>
-                  <button
-                    onClick={() => toggleQna(q.productQnaId)}
-                    className="top-4 right-2 transition-all duration-300"
-                  >
-                    <span
-                      className={`custom-select-arrow ${openQnaIds.includes(q.productQnaId) ? "open" : ""
-                        }`}
-                    />
-                  </button>
-                </div>
+            qnaList.map((q, index) => {
+              const isSecret = q.isSecret;
+              // 비밀글 조회 권한: 작성자 본인, 판매자, 관리자
+              const canViewSecret =
+                !isSecret ||
+                (user && (user.userId === q.userId || user.userId === product?.sellerId || user.role === 'ADMIN'));
 
-                {/* 토글 열렸을 때 전체 내용 */}
-                {openQnaIds.includes(q.productQnaId) && (
-                  <div className="flex flex-col gap-1" style={{ marginTop: 8 }}>
-                    {/* 질문 수정 모드 */}
-                    {editingQuestionId === q.productQnaId ? (
-                      <div className="flex flex-col gap-2">
-                        <input
-                          type="text"
-                          value={editingQuestion.title}
-                          onChange={(e) =>
-                            setEditingQuestion({
-                              ...editingQuestion,
-                              title: e.target.value,
-                            })
-                          }
-                          className="article-input article-review"
-                        />
-                        <textarea
-                          value={editingQuestion.content}
-                          onChange={(e) =>
-                            setEditingQuestion({
-                              ...editingQuestion,
-                              content: e.target.value,
-                            })
-                          }
-                          className="article-textarea article-review"
-                        />
-                        <div style={{ display: "flex", gap: 8 }}>
-                          <button
-                            onClick={() => saveEditingQuestion(q.productQnaId)}
-                            className="article-btn"
-                          >
-                            저장
-                          </button>
-                          <button
-                            onClick={() => setEditingQuestionId(null)}
-                            className="article-btn"
-                          >
-                            취소
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-1">
-                        <p className="text-16 color-777 text-nowrap after-wrap">
-                          <span className="after">
-                            {q.userId === product?.sellerId
-                              ? "판매자"
-                              : q.nickName || "알 수 없음"}
-                          </span>
-                          <span className="after">
-                            {q.createdAt
-                              ? formatDateTime(q.createdAt)
-                              : "작성일 없음"}
-                          </span>
-                        </p>
-                        <p className="text-16 color-333 mb-4" style={{ whiteSpace: "pre-wrap" }}>
-                          {q.content}
-                        </p>
-
-                        {/* 질문 수정/삭제 버튼 */}
-                        {user?.userId === q.userId && (
-                          <div
-                            style={{ display: "flex", gap: 8, marginBottom: 6 }}
-                          >
-                            <button
-                              onClick={() => {
-                                setEditingQuestionId(q.productQnaId);
-                                setEditingQuestion({
-                                  title: q.title,
-                                  content: q.content,
-                                });
-                              }}
-                              className="article-btn"
-                            >
-                              수정
-                            </button>
-                            <button
-                              onClick={() => handleQuestionDelete(q.productQnaId)}
-                              className="article-btn"
-                            >
-                              삭제
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* 답변 목록 */}
-                    {q.answers && q.answers.length > 0 && (
-                      <div
-                        style={{
-                          marginTop: 8,
-                          paddingLeft: 12,
-                          borderLeft: "3px solid #111",
-                        }}
-                      >
-                        {q.answers.map((a) => (
-                          <div key={a.qnaReviewId} style={{ marginBottom: 8 }}>
-                            {editingAnswerId === a.qnaReviewId ? (
-                              <div>
-                                <textarea
-                                  value={editingAnswerContent}
-                                  onChange={(e) =>
-                                    setEditingAnswerContent(e.target.value)
-                                  }
-                                  className="article-textarea article-review"
-                                />
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    gap: 8,
-                                    marginTop: 4,
-                                  }}
-                                >
-                                  <button
-                                    onClick={() =>
-                                      saveEditingAnswer(a.qnaReviewId)
-                                    }
-                                    className="article-btn"
-                                  >
-                                    저장
-                                  </button>
-                                  <button
-                                    onClick={() => {
-                                      setEditingAnswerId(null);
-                                      setEditingAnswerContent("");
-                                    }}
-                                    className="article-btn"
-                                  >
-                                    취소
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              <>
-                                {/* 답변 내용 */}
-                                <p
-                                  className="text-16 color-333 mb-4"
-                                  style={{ whiteSpace: "pre-wrap" }}
-                                >
-                                  {a.content}
-                                </p>
-
-                                {/* 작성자 / 날짜 */}
-                                <p
-                                  style={{
-                                    fontSize: "0.8rem",
-                                    color: "#777",
-                                    margin: 0,
-                                  }}
-                                >
-                                  {product && a.qnaUserId === product.sellerId
-                                    ? "판매자"
-                                    : "관리자"}{" "}
-                                  |{" "}
-                                  {a.createdAt ? formatDateTime(a.createdAt) : ""}
-                                </p>
-
-                                {/* 수정/삭제 버튼 */}
-                                {user &&
-                                  (user.role === "ADMIN" ||
-                                    user.userId === a.qnaUserId) && (
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        gap: 6,
-                                        marginTop: 4,
-                                      }}
-                                    >
-                                      <button
-                                        onClick={() =>
-                                          startEditingAnswer(
-                                            a.qnaReviewId,
-                                            a.content
-                                          )
-                                        }
-                                        className="article-btn"
-                                      >
-                                        수정
-                                      </button>
-                                      <button
-                                        onClick={() =>
-                                          handleAnswerDelete(a.qnaReviewId)
-                                        }
-                                        className="article-btn"
-                                      >
-                                        삭제
-                                      </button>
-                                    </div>
-                                  )}
-                              </>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* 답변 입력 */}
-                    {canAnswer() && (
-                      <div
-                        className="flex flex-col gap-2"
-                        style={{ marginTop: 8 }}
-                      >
-                        <textarea
-                          placeholder="답변 입력"
-                          value={answers[q.productQnaId] || ""}
-                          onChange={(e) =>
-                            setAnswers({
-                              ...answers,
-                              [q.productQnaId]: e.target.value,
-                            })
-                          }
-                          className="article-textarea article-review"
-                        />
-                        <div
-                          style={{
-                            display: "flex",
-                            justifyContent: "flex-end",
-                          }}
-                        >
-                          <button
-                            onClick={() => handleAnswerSubmit(q.productQnaId)}
-                            className="article-btn"
-                          >
-                            답변 등록
-                          </button>
-                        </div>
-                      </div>
-                    )}
+              return (
+                <div
+                  key={q.productQnaId}
+                  id={`qna-${q.productQnaId}`}
+                  className="scroll-mt-32 transition-all duration-300"
+                >
+                  {/* 질문 제목 + 토글 버튼 */}
+                  {index !== 0 && <div className="top-line mb-[10px]"></div>}
+                  <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center gap-2 w-full cursor-pointer py-2" onClick={() => {
+                      if (canViewSecret) {
+                        toggleQna(q.productQnaId);
+                      } else {
+                        alert("비밀글입니다.");
+                      }
+                    }}>
+                      {isSecret && <span className="text-xs text-gray-500 border border-gray-300 rounded px-1.5 py-0.5 flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                        </svg>
+                        비밀</span>}
+                      <p className={`text-base ${canViewSecret ? 'text-[#333]' : 'text-gray-400'} font-medium`}>
+                        {canViewSecret ? q.title : "비밀글입니다."}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (canViewSecret) {
+                          toggleQna(q.productQnaId);
+                        } else {
+                          alert("비밀글입니다.");
+                        }
+                      }}
+                      className="text-gray-400 hover:text-[#111] transition-colors p-2"
+                    >
+                      <span
+                        className={`custom-select-arrow ${openQnaIds.includes(q.productQnaId) ? "open" : ""
+                          }`}
+                      />
+                    </button>
                   </div>
-                )}
-              </div>
-            ))
+
+                  {/* 토글 열렸을 때 전체 내용 */}
+                  {openQnaIds.includes(q.productQnaId) && canViewSecret && (
+                    <div className="flex flex-col gap-1" style={{ marginTop: 8 }}>
+                      {/* 질문 수정 모드 */}
+                      {editingQuestionId === q.productQnaId ? (
+                        <div className="flex flex-col gap-2">
+                          <input
+                            type="text"
+                            value={editingQuestion.title}
+                            onChange={(e) =>
+                              setEditingQuestion({
+                                ...editingQuestion,
+                                title: e.target.value,
+                              })
+                            }
+                            className="w-full px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm mb-2"
+                          />
+                          <textarea
+                            value={editingQuestion.content}
+                            onChange={(e) =>
+                              setEditingQuestion({
+                                ...editingQuestion,
+                                content: e.target.value,
+                              })
+                            }
+                            className="w-full px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm resize-none"
+                          />
+                          <label className="flex items-center gap-2 cursor-pointer mb-2">
+                            <input
+                              type="checkbox"
+                              checked={editingQuestionIsSecret}
+                              onChange={(e) => setEditingQuestionIsSecret(e.target.checked)}
+                              className="w-4 h-4 accent-[#111]"
+                            />
+                            <span className="text-sm text-[#333]">비밀글</span>
+                          </label>
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => saveEditingQuestion(q.productQnaId)}
+                              className="px-4 py-1.5 text-xs bg-[#111] text-white rounded hover:bg-[#333] transition-colors"
+                            >
+                              저장
+                            </button>
+                            <button
+                              onClick={() => setEditingQuestionId(null)}
+                              className="px-4 py-1.5 text-xs border border-[#ddd] rounded text-[#666] hover:bg-gray-50 transition-colors"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col gap-3 py-4 bg-gray-50 rounded-lg px-4">
+                          <div className="flex items-center gap-2 text-sm text-gray-500 border-b border-gray-200 pb-2">
+                            <span className="font-bold text-[#333]">
+                              {q.userId === product?.sellerId
+                                ? "판매자"
+                                : (isSecret && !canViewSecret) ? "익명" : (q.nickName || "익명")}
+                            </span>
+                            <span>|</span>
+                            <span>
+                              {q.createdAt ? formatDateTime(q.createdAt) : "작성일 없음"}
+                            </span>
+                          </div>
+                          <p className="text-sm text-[#333] leading-relaxed whitespace-pre-wrap">
+                            {q.content}
+                          </p>
+
+                          {/* 질문 수정/삭제 버튼 */}
+                          {user?.userId === q.userId && (
+                            <div className="flex gap-2 border-t border-gray-200 pt-3 mt-2">
+                              <button
+                                onClick={() => {
+                                  setEditingQuestionId(q.productQnaId);
+                                  setEditingQuestion({
+                                    title: q.title,
+                                    content: q.content,
+                                  });
+                                  setEditingQuestionIsSecret(q.isSecret);
+                                }}
+                                className="text-xs px-3 py-1 border border-[#ddd] rounded text-[#666] hover:bg-gray-50 transition-colors"
+                              >
+                                수정
+                              </button>
+                              <button
+                                onClick={() => handleQuestionDelete(q.productQnaId)}
+                                className="text-xs px-3 py-1 border border-red-200 rounded text-red-500 hover:bg-red-50 transition-colors"
+                              >
+                                삭제
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* 답변 목록 */}
+                      {q.answers && q.answers.length > 0 && (
+                        <div className="mt-4 pl-4 border-l-2 border-gray-200 space-y-4">
+                          {q.answers.map((a) => (
+                            <div key={a.qnaReviewId} style={{ marginBottom: 8 }}>
+                              {editingAnswerId === a.qnaReviewId ? (
+                                <div>
+                                  <textarea
+                                    value={editingAnswerContent}
+                                    onChange={(e) =>
+                                      setEditingAnswerContent(e.target.value)
+                                    }
+                                    className="w-full px-4 py-2 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm resize-none"
+                                  />
+                                  <div className="flex gap-2 mt-2">
+                                    <button
+                                      onClick={() =>
+                                        saveEditingAnswer(a.qnaReviewId)
+                                      }
+                                      className="px-3 py-1 text-xs bg-[#111] text-white rounded hover:bg-[#333]"
+                                    >
+                                      저장
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setEditingAnswerId(null);
+                                        setEditingAnswerContent("");
+                                      }}
+                                      className="px-3 py-1 text-xs border border-[#ddd] rounded text-[#666] hover:bg-gray-50"
+                                    >
+                                      취소
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  {/* 답변 내용 */}
+                                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                                    <div className="flex items-center gap-2 mb-2 text-xs text-gray-500">
+                                      <span className="font-bold text-[#111]">
+                                        {product && a.qnaUserId === product.sellerId
+                                          ? "판매자"
+                                          : "관리자"}
+                                      </span>
+                                      <span>|</span>
+                                      <span>{a.createdAt ? formatDateTime(a.createdAt) : ""}</span>
+                                    </div>
+                                    <p className="text-sm text-[#333] leading-relaxed whitespace-pre-wrap">
+                                      {a.content}
+                                    </p>
+
+                                    {/* 수정/삭제 버튼 */}
+                                    {user &&
+                                      (user.role === "ADMIN" ||
+                                        user.userId === a.qnaUserId) && (
+                                        <div className="flex gap-2 mt-3 justify-end">
+                                          <button
+                                            onClick={() =>
+                                              startEditingAnswer(
+                                                a.qnaReviewId,
+                                                a.content
+                                              )
+                                            }
+                                            className="text-xs text-gray-500 hover:text-[#111] underline"
+                                          >
+                                            수정
+                                          </button>
+                                          <button
+                                            onClick={() =>
+                                              handleAnswerDelete(a.qnaReviewId)
+                                            }
+                                            className="text-xs text-red-400 hover:text-red-600 underline"
+                                          >
+                                            삭제
+                                          </button>
+                                        </div>
+                                      )}
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* 답변 입력 */}
+                      {canAnswer() && (
+                        <div
+                          className="flex flex-col gap-2"
+                          style={{ marginTop: 8 }}
+                        >
+                          <textarea
+                            placeholder="답변 입력"
+                            value={answers[q.productQnaId] || ""}
+                            onChange={(e) =>
+                              setAnswers({
+                                ...answers,
+                                [q.productQnaId]: e.target.value,
+                              })
+                            }
+                            rows={3}
+                            className="w-full px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm resize-none"
+                          />
+                          <div className="flex justify-end mt-2">
+                            <button
+                              onClick={() => handleAnswerSubmit(q.productQnaId)}
+                              className="px-4 py-2 bg-[#111] text-white rounded-lg font-bold text-xs hover:bg-[#333] transition-colors shadow-sm"
+                            >
+                              답변 등록
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
           )}
         </div>
       </div>

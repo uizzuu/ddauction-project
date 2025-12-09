@@ -164,11 +164,6 @@ export interface CreateProductRequest {
   address?: string; // "AddressString"
   deliveryAvailable?: string; // "GS,CU"
   productBanners?: string[]; // URLs after upload 
-  // Need to check if `productBanner` file is handled separate or standard.
-  // For now, let's assume it's part of the request payload or separate logic.
-  // Actually, `registerProductWithImages` sends JSON + Files. 
-  // If `productBanner` is a file, it needs special handling in API.
-  // Let's stick to base fields first.
   originalPrice?: number;
   discountRate?: number;
   deliveryPrice?: number;
@@ -186,6 +181,7 @@ export interface ArticleDto {
   createdAt: string;
   updatedAt: string;
   articleType: ArticleType;
+  isSecret: boolean;
 }
 
 export interface ArticleForm {
@@ -193,6 +189,7 @@ export interface ArticleForm {
   content: string;
   userId?: number;
   articleType: ArticleType;
+  isSecret: boolean;
 }
 
 export interface CommentDto {
@@ -261,6 +258,8 @@ export interface ProductQna {
   refId: number;
   productType: ProductType;
   answers?: QnaReview[];
+  isSecret: boolean;
+  isSecretComment: boolean;
 }
 
 // QnA 리뷰 타입

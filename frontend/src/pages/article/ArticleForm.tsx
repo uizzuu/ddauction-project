@@ -17,6 +17,7 @@ export default function ArticleForm({ user }: Props) {
     title: "",
     content: "",
     articleType: ArticleType.COMMUNITY, // 기본값: COMMUNITY
+    isSecret: false,
   });
 
   const [loading, setLoading] = useState(false);
@@ -33,6 +34,7 @@ export default function ArticleForm({ user }: Props) {
             content: article.content,
             userId: article.userId,
             articleType: article.articleType,
+            isSecret: article.isSecret || false,
           });
         })
         .catch(() => alert("게시글을 불러오지 못했습니다."))
@@ -110,7 +112,7 @@ export default function ArticleForm({ user }: Props) {
       }
     } catch (error) {
       console.error("게시글 등록 오류:", error);
-      alert("오류가 발생했습니다. 다시 시도해주세요.");
+      alert(error instanceof Error ? error.message : "오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setLoading(false);
     }
@@ -135,35 +137,48 @@ export default function ArticleForm({ user }: Props) {
 
       <form onSubmit={handleSubmit} className="bg-white border border-[#ddd] rounded-lg p-6 shadow-sm">
         {/* 게시글 유형 선택 (관리자만) */}
-        {isAdmin && (
-          <div className="mb-6">
-            <label className="block text-sm font-bold text-[#333] mb-2">
-              게시글 유형 <span className="text-red-500">*</span>
-            </label>
-            <div className="flex gap-2">
-              {[
-                { value: ArticleType.COMMUNITY, label: "커뮤니티" },
-                { value: ArticleType.NOTICE, label: "공지사항" },
-                { value: ArticleType.FAQ, label: "FAQ" }
-              ].map((type) => (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => setForm(prev => ({ ...prev, articleType: type.value }))}
-                  className={`
+        <div className="mb-6">
+          <label className="block text-sm font-bold text-[#333] mb-2">
+            게시글 유형 <span className="text-red-500">*</span>
+          </label>
+          <div className="flex gap-2">
+            {[
+              { value: ArticleType.COMMUNITY, label: "자유" },
+              ...(isAdmin ? [{ value: ArticleType.NOTICE, label: "공지사항" }] : []),
+              { value: ArticleType.FAQ, label: "FAQ" }
+            ].map((type) => (
+              <button
+                key={type.value}
+                type="button"
+                onClick={() => setForm(prev => ({ ...prev, articleType: type.value }))}
+                className={`
                     flex items-center justify-center px-4 py-2 rounded-[18px] text-[14px] font-medium whitespace-nowrap border transition-all
                     ${form.articleType === type.value
-                      ? "bg-[#333] text-white border-[#333]"
-                      : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"}
+                    ? "bg-[#333] text-white border-[#333]"
+                    : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"}
                   `}
-                >
-                  {type.label}
-                </button>
-              ))}
-            </div>
-            <p className="text-xs text-gray-500 mt-2">
-              게시글의 성격에 맞는 유형을 선택해주세요
-            </p>
+              >
+                {type.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">
+            게시글의 성격에 맞는 유형을 선택해주세요
+          </p>
+        </div>
+
+        {/* 비밀글 설정 (FAQ일 때만 표시) */}
+        {form.articleType === ArticleType.FAQ && (
+          <div className="mb-6">
+            <label className="flex items-center gap-2 cursor-pointer w-fit">
+              <input
+                type="checkbox"
+                checked={form.isSecret}
+                onChange={(e) => setForm(prev => ({ ...prev, isSecret: e.target.checked }))}
+                className="w-4 h-4 accent-[#111]"
+              />
+              <span className="text-sm text-[#333]">비밀글 설정 (작성자와 관리자만 볼 수 있습니다)</span>
+            </label>
           </div>
         )}
 
