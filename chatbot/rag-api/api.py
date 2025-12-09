@@ -31,7 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
+print(f"DEBUG: FINAL ALLOWED_ORIGINS USED BY CORS: {ALLOWED_ORIGINS}")
 # ============ 기존 모델 ============
 
 class ChatRequest(BaseModel):
@@ -123,49 +123,9 @@ async def remove_background(request: ProductImageRequest):
     image_base64 = remove_background_from_qr(request.product_id)
     return {"image_base64": image_base64, "message": "배경 제거 완료"}
 
-
-# ============ 기존 추천 시스템 엔드포인트 ============
-
-@app.post("/recommendations")
-async def get_recommendations(request: RecommendationRequest):
-    try:
-        recommendations = recommendation_engine.get_recommendations(
-            user_id=request.user_id,
-            limit=request.limit,
-            exclude_viewed=request.exclude_viewed
-        )
-        return {
-            "success": True,
-            "user_id": request.user_id,
-            "recommendations": recommendations,
-            "count": len(recommendations)
-        }
-    except Exception as e:
-        print(f"❌ 추천 생성 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"추천 생성 실패: {str(e)}")
-
-
-@app.post("/recommendations/similar")
-async def get_similar_products(request: SimilarProductRequest):
-    try:
-        similar_products = recommendation_engine.get_similar_products(
-            product_id=request.product_id,
-            limit=request.limit
-        )
-        return {
-            "success": True,
-            "product_id": request.product_id,
-            "similar_products": similar_products,
-            "count": len(similar_products)
-        }
-    except Exception as e:
-        print(f"❌ 유사 상품 추천 실패: {e}")
-        raise HTTPException(status_code=500, detail=f"유사 상품 추천 실패: {str(e)}")
-
-
 # ============ 🆕 색상 기반 이미지 추천 엔드포인트 ============
 
-@app.post("/recommendations/color")
+@app.post("/ai/recommendations/color")
 async def recommend_by_color(request: ColorSearchRequest):
     """
     색상 기반 유사 상품 추천
@@ -194,7 +154,7 @@ async def recommend_by_color(request: ColorSearchRequest):
         raise HTTPException(status_code=500, detail=f"색상 기반 추천 실패: {str(e)}")
 
 
-@app.post("/recommendations/color/upload")
+@app.post("/ai/recommendations/color/upload")
 async def recommend_by_color_upload(
         file: UploadFile = File(...),
         limit: int = 10,
@@ -234,7 +194,7 @@ async def recommend_by_color_upload(
         raise HTTPException(status_code=500, detail=f"색상 기반 업로드 추천 실패: {str(e)}")
 
 
-@app.post("/image/quality-check")
+@app.post("/ai/image/quality-check")
 async def check_image_quality(request: ImageRequest):
     """
     이미지 품질 분석
@@ -252,7 +212,7 @@ async def check_image_quality(request: ImageRequest):
         raise HTTPException(status_code=500, detail=f"이미지 품질 체크 실패: {str(e)}")
 
 
-@app.post("/image/optimize")
+@app.post("/ai/image/optimize")
 async def optimize_image(request: ImageRequest):
     """
     이미지 자동 최적화
@@ -270,7 +230,7 @@ async def optimize_image(request: ImageRequest):
         raise HTTPException(status_code=500, detail=f"이미지 최적화 실패: {str(e)}")
 
 
-@app.post("/image/metadata")
+@app.post("/ai/image/metadata")
 async def extract_image_metadata(request: ImageRequest):
     """
     이미지 메타데이터 추출

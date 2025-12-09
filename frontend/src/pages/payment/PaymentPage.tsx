@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { fetchProductById, getWinningInfo, preparePayment, completePayment } from "../../common/api";
+import { fetchProductById, getWinningInfo, preparePayment, completePayment, fetchUserAddress } from "../../common/api";
 
 
 // PortOne Global Type
@@ -111,6 +111,32 @@ export default function PaymentPage() {
     return () => { document.body.removeChild(script); };
   }, []);
 
+  const handleLoadAddress = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      const userId = JSON.parse(localStorage.getItem("loginUser") || "{}").userId;
+      if (!userId) {
+        alert("사용자 정보를 찾을 수 없습니다.");
+        return;
+      }
+
+      const userData = await fetchUserAddress(userId);
+      setName(userData.userName);
+      setPhone(userData.phone);
+      setAddress(userData.address + (userData.detailAddress ? " " + userData.detailAddress : ""));
+      setPostcode(userData.zipCode);
+
+    } catch (error) {
+      console.error(error);
+      alert("사용자 정보를 불러오는데 실패했습니다.");
+    }
+  };
+
   const handlePayment = async () => {
     if (!paymentInfo) return;
 
@@ -209,12 +235,20 @@ export default function PaymentPage() {
               <div className="space-y-4">
                 <div className="flex gap-4">
                   <div className="w-24 pt-3 font-medium text-gray-500">받는 분</div>
-                  <input
-                    type="text"
-                    value={name} onChange={(e) => setName(e.target.value)}
-                    placeholder="이름"
-                    className="flex-1 border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
-                  />
+                  <div className="flex-1 flex gap-2">
+                    <input
+                      type="text"
+                      value={name} onChange={(e) => setName(e.target.value)}
+                      placeholder="이름"
+                      className="flex-1 border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
+                    />
+                    <button
+                      onClick={handleLoadAddress}
+                      className="px-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 whitespace-nowrap"
+                    >
+                      내 정보 불러오기
+                    </button>
+                  </div>
                 </div>
                 <div className="flex gap-4">
                   <div className="w-24 pt-3 font-medium text-gray-500">연락처</div>

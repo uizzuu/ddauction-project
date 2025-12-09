@@ -1,5 +1,18 @@
 package com.my.backend.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.dto.portone.PortOnePaymentResponse;
@@ -10,19 +23,12 @@ import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.UserRepository;
 import com.my.backend.service.PortOnePaymentService;
 import com.my.backend.util.AuthUtil;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @RestController
@@ -298,5 +304,78 @@ public class PortOnePaymentController {
     @PostMapping("/webhook")
     public ResponseEntity<String> webhook(@RequestBody Map<String, Object> payload) {
         return callback(payload);
+    }
+
+    // ============================
+    //  구매/판매 내역 조회
+    // ============================
+    @GetMapping("/history/buy")
+    public ResponseEntity<java.util.List<com.my.backend.dto.PaymentHistoryResponse>> getBuyingHistory(
+            Authentication authentication
+    ) {
+        Long userId = resolveUserId(authentication);
+        if (userId == null) {
+            throw new IllegalStateException("로그인이 필요합니다.");
+        }
+        return ResponseEntity.ok(portonePaymentService.getBuyingHistory(userId));
+    }
+
+    @GetMapping("/history/sell")
+    public ResponseEntity<java.util.List<com.my.backend.dto.PaymentHistoryResponse>> getSellingHistory(
+            Authentication authentication
+    ) {
+        Long userId = resolveUserId(authentication);
+        if (userId == null) {
+            throw new IllegalStateException("로그인이 필요합니다.");
+        }
+        return ResponseEntity.ok(portonePaymentService.getSellingHistory(userId));
+    }
+
+    // ============================
+    //  배송 정보 입력
+    // ============================
+    @PostMapping("/shipping")
+    public ResponseEntity<String> updateShippingInfo(
+            @RequestBody ShippingReq req,
+            Authentication authentication
+    ) {
+        Long userId = resolveUserId(authentication);
+        if (userId == null) {
+            throw new IllegalStateException("로그인이 필요합니다.");
+        }
+
+        portonePaymentService.updateShippingInfo(req.getPaymentId(), userId, req.getCourier(), req.getTrackingNumber());
+        return ResponseEntity.ok("배송 정보가 등록되었습니다.");
+    }
+
+    @Getter
+    @Setter
+    public static class ShippingReq {
+        private Long paymentId;
+        private String courier;
+        private String trackingNumber;
+    }
+
+    // ============================
+    //  구매 확정
+    // ============================
+    @PostMapping("/confirm")
+    public ResponseEntity<String> confirmPurchase(
+            @RequestBody ConfirmReq req,
+            Authentication authentication
+    ) {
+        Long userId = resolveUserId(authentication);
+        if (userId == null) {
+            throw new IllegalStateException("로그인이 필요합니다.");
+        }
+
+        portonePaymentService.confirmPurchase(req.getPaymentId(), userId);
+        return ResponseEntity.ok("구매 확정되었습니다.");
+    }
+
+    @Getter
+    @Setter
+    public static class ConfirmReq {
+        private Long paymentId;
     }
 }

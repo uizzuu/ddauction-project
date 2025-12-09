@@ -63,7 +63,8 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
       throw new Error(text);
     }
   }
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : ({} as T);
 }
 
 // ===================== API =====================
@@ -71,13 +72,21 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
 // 인증 헤더를 포함한 fetch Wrapper
 async function authFetch(url: string, options: RequestInit = {}) {
   const token = localStorage.getItem("token");
+  console.log(`[AuthFetch] ${options.method || 'GET'} ${url} | Token exists: ${!!token}`);
+
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 
-  return fetch(url, { ...options, headers });
+  const finalOptions = {
+    ...options,
+    headers,
+    credentials: "include" as RequestCredentials, // Ensure credentials are sent (for CORS alignment)
+  };
+
+  return fetch(url, finalOptions);
 }
 
 // 입찰 등록
@@ -184,7 +193,9 @@ export async function queryRAG(query: string): Promise<TYPE.RAGResponse> {
     throw new Error(`RAG 질의 실패: ${errorText || response.statusText}`);
   }
 
-  return response.json();
+  const text = await response.text();
+  if (!text) throw new Error("AI 응답이 없습니다.");
+  return JSON.parse(text);
 }
 
 export async function getArticles(params?: {
@@ -195,13 +206,16 @@ export async function getArticles(params?: {
     `${API_BASE_URL}${SPRING_API}/articles${query}`
   );
   if (!response.ok) throw new Error("게시글 목록 조회 실패");
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
 }
 
 export async function getArticleById(id: number): Promise<TYPE.ArticleDto> {
   const response = await authFetch(`${API_BASE_URL}${SPRING_API}/articles/${id}`);
   if (!response.ok) throw new Error("게시글 조회 실패");
-  return response.json();
+  const text = await response.text();
+  if (!text) throw new Error("게시글이 존재하지 않습니다.");
+  return JSON.parse(text);
 }
 
 export async function createArticle(
@@ -212,7 +226,8 @@ export async function createArticle(
     body: JSON.stringify(articleData),
   });
   if (!response.ok) throw new Error("게시글 생성 실패");
-  const result = await response.json();
+  const text = await response.text();
+  const result = text ? JSON.parse(text) : {};
   return result.data; // Extract data from wrapper
 }
 
@@ -228,7 +243,9 @@ export async function updateArticle(
     }
   );
   if (!response.ok) throw new Error("게시글 수정 실패");
-  return response.json();
+  const text = await response.text();
+  if (!text) throw new Error("게시글 수정 후 응답이 없습니다.");
+  return JSON.parse(text);
 }
 
 export async function deleteArticle(id: number): Promise<void> {
@@ -248,7 +265,8 @@ export async function getCommentsByArticleId(
     `${API_BASE_URL}${SPRING_API}/articles/${articleId}/comments`
   );
   if (!response.ok) throw new Error("댓글 목록 조회 실패");
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
 }
 
 export async function createComment(
@@ -301,12 +319,18 @@ export async function loginAPI(form: TYPE.LoginForm) {
   });
 
   if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.message || "로그인 실패");
+    const text = await response.text();
+    let message = "로그인 실패";
+    try {
+      const data = JSON.parse(text);
+      message = data.message || message;
+    } catch { }
+    throw new Error(message);
   }
 
   // body에서 token 받기 (백엔드가 이미 JSON으로 보냄)
-  const data = await response.json();
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
   const token = data.token;
 
   if (!token) throw new Error("토큰을 받지 못했습니다");
@@ -318,7 +342,8 @@ export async function loginAPI(form: TYPE.LoginForm) {
   });
 
   if (!userResponse.ok) throw new Error("사용자 정보를 가져오지 못했습니다");
-  const userData: TYPE.User = await userResponse.json();
+  const userText = await userResponse.text();
+  const userData: TYPE.User = userText ? JSON.parse(userText) : null;
   return userData;
 }
 
@@ -362,7 +387,8 @@ export async function getProducts(): Promise<TYPE.Product[]> {
   const response = await authFetch(`${API_BASE_URL}${SPRING_API}/products`);
   if (!response.ok) throw new Error("상품 목록 조회 실패");
 
-  const data: unknown = await response.json();
+  const text = await response.text();
+  const data: unknown = text ? JSON.parse(text) : [];
   if (!isProductArray(data))
     throw new Error("API 반환값이 Product[] 타입과 일치하지 않음");
   return data;
@@ -398,7 +424,8 @@ export async function createProduct(
     throw new Error(`상품 등록 실패: ${response.status}: ${response.statusText}`);
   }
 
-  const data: unknown = await response.json();
+  const text = await response.text();
+  const data: unknown = text ? JSON.parse(text) : null;
   if (!isProduct(data))
     throw new Error("API 반환값이 Product 타입과 일치하지 않음");
   return data;
@@ -416,10 +443,17 @@ export async function getWinningInfo(productId: number): Promise<{
     `${API_BASE_URL}${SPRING_API}/bid/${productId}/winning-info`
   );
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || "낙찰 정보 조회 실패");
+    const text = await response.text();
+    try {
+      const error = JSON.parse(text);
+      throw new Error(error.error || "낙찰 정보 조회 실패");
+    } catch {
+      throw new Error("낙찰 정보 조회 실패");
+    }
   }
-  return response.json();
+  const text = await response.text();
+  if (!text) throw new Error("낙찰 정보가 없습니다.");
+  return JSON.parse(text);
 }
 
 // 결제 준비 25.11.05 수정
@@ -468,6 +502,83 @@ export async function preparePayment(productId: number): Promise<{
 }
 
 // 결제 완료 검증
+
+// ============================
+//  배송 및 결제 내역 (추가)
+// ============================
+
+export interface PaymentHistoryResponse {
+  paymentId: number;
+  productId: number;
+  productTitle: string;
+  productImage: string | null;
+  price: number;
+  status: string;
+  paidAt: string;
+  courier: string | null;
+  trackingNumber: string | null;
+  buyerName: string;
+  buyerNickName: string;
+  buyerPhone: string;
+  buyerAddress: string;
+  sellerNickName: string;
+  sellerId: number;
+  productType: string;
+}
+
+// 판매 내역 조회
+export async function fetchSellingHistory(): Promise<PaymentHistoryResponse[]> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/payments/portone/history/sell`);
+  if (!response.ok) throw new Error("판매 내역 조회 실패");
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// 구매 내역 조회
+// 구매 내역 조회
+export async function fetchBuyingHistory(): Promise<PaymentHistoryResponse[]> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/payments/portone/history/buy`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("구매 내역 조회 실패");
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// 배송 정보 입력
+export async function updateShippingInfo(
+  paymentId: number,
+  courier: string,
+  trackingNumber: string
+): Promise<void> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/payments/portone/shipping`, {
+    method: "POST",
+    body: JSON.stringify({ paymentId, courier, trackingNumber }),
+  });
+  if (!response.ok) throw new Error("배송 정보 등록 실패");
+}
+
+// 사용자 주소 조회 (결제 페이지용)
+export async function fetchUserAddress(userId: number): Promise<{
+  address: string;
+  zipCode: string;
+  detailAddress: string;
+  phone: string;
+  userName: string;
+}> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`);
+  if (!response.ok) throw new Error("사용자 정보 조회 실패");
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
+  return {
+    address: data.address || "",
+    zipCode: data.zipCode || "",
+    detailAddress: data.detailAddress || "",
+    phone: data.phone || "",
+    userName: data.userName || "",
+  };
+}
+
 
 export async function completePayment(data: {
   imp_uid: string;
@@ -520,7 +631,8 @@ export async function checkWinner(productId: number): Promise<{
     `${API_BASE_URL}${SPRING_API}/bid/${productId}/winner`
   );
   if (!response.ok) throw new Error("낙찰자 확인 실패");
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : { isWinner: false };
 }
 
 // QnA 목록 조회 (인증 불필요)
@@ -529,7 +641,8 @@ export async function getQnaList(productId: number): Promise<TYPE.ProductQna[]> 
     `${API_BASE_URL}${SPRING_API}/product-qnas/product/${productId}`
   );
   if (!response.ok) return [];
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
 }
 
 // QnA 질문 등록
@@ -686,6 +799,7 @@ export interface PaymentProduct extends TYPE.Product {
 }
 
 // 결제 완료 상품 목록 조회
+// 결제 완료 상품 목록 조회
 export async function getPaymentProducts(): Promise<PaymentProduct[]> {
   const response = await authFetch(
     `${API_BASE_URL}${SPRING_API}/products/purchases`
@@ -694,7 +808,8 @@ export async function getPaymentProducts(): Promise<PaymentProduct[]> {
     if (response.status === 401) throw new Error("로그인이 필요합니다.");
     throw new Error("결제 완료 상품 조회 실패");
   }
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
 }
 
 // AI 상품 설명 생성
@@ -718,7 +833,8 @@ export async function generateAiDescription(
 
   if (!response.ok) throw new Error("AI 생성 실패");
 
-  const data: TYPE.AiDescriptionResponse = await response.json();
+  const text = await response.text();
+  const data: TYPE.AiDescriptionResponse = text ? JSON.parse(text) : { description: "" };
   return data.description;
 }
 
@@ -738,7 +854,8 @@ export async function uploadImageToS3(file: File): Promise<string> {
 
   if (!response.ok) throw new Error("이미지 업로드 실패");
 
-  const data = await response.json();
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
   return data.url;
 }
 
@@ -1229,9 +1346,10 @@ export async function fetchMe(token: string): Promise<TYPE.User> {
 
 // 판매 상품
 export async function fetchSellingProducts(userId: number): Promise<TYPE.Product[]> {
-  const res = await fetch(`${API_BASE_URL}${SPRING_API}/products/seller/${userId}`);
+  const res = await authFetch(`${API_BASE_URL}${SPRING_API}/products/seller/${userId}`);
   if (!res.ok) throw new Error("판매 상품 조회 실패");
-  const data: Partial<TYPE.Product>[] = await res.json();
+  const text = await res.text();
+  const data: Partial<TYPE.Product>[] = text ? JSON.parse(text) : [];
   return data.map(normalizeProduct);
 }
 
@@ -1246,7 +1364,8 @@ export async function fetchMyLikes(token: string): Promise<TYPE.Product[]> {
     error.status = res.status;
     throw error;
   }
-  const data: Partial<TYPE.Product>[] = await res.json();
+  const text = await res.text();
+  const data: Partial<TYPE.Product>[] = text ? JSON.parse(text) : [];
   return data.map(normalizeProduct);
 }
 
@@ -1256,14 +1375,16 @@ export async function fetchReports(token: string): Promise<TYPE.Report[]> {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("신고 내역 조회 실패");
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
 }
 
 // QnA
 export async function fetchMyQnas(userId: number): Promise<TYPE.ProductQna[]> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/qna/user/${userId}`);
   if (!res.ok) throw new Error("Q&A 조회 실패");
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
 }
 
 // 1:1 문의
@@ -1272,7 +1393,8 @@ export async function fetchMyInquiries(token: string): Promise<TYPE.Inquiry[]> {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error("문의 내역 조회 실패");
-  const dataFromServer: any[] = await res.json();
+  const text = await res.text();
+  const dataFromServer: any[] = text ? JSON.parse(text) : [];
   return dataFromServer.map((i) => ({
     inquiryId: i.inquiryId,
     title: i.title,
@@ -1301,16 +1423,20 @@ export async function fetchMyReviews(userId: number): Promise<{ reviews: TYPE.Re
 // 리뷰 등록
 export async function submitReview(
   targetUserId: number,
-  data: { rating: number; comments: string },
+  data: { rating: number; comments: string; refId?: number; productType?: string; content?: string },
   token: string
 ): Promise<void> {
+  const payload = {
+    ...data,
+    content: data.comments, // Backend expects 'content'
+  };
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/reviews/${targetUserId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
@@ -1432,7 +1558,8 @@ export async function updateProductWithImages(
     throw new Error(errorText || "상품 수정 실패");
   }
 
-  return normalizeProduct(await res.json());
+  const text = await res.text();
+  return normalizeProduct(text ? JSON.parse(text) : {});
 }
 
 // 신고 내역 조회 (이미 fetchReports가 있지만 명확성을 위해 이름 변경)
@@ -1444,7 +1571,8 @@ export async function fetchMyReports(token: string): Promise<TYPE.Report[]> {
     },
   });
   if (!res.ok) throw new Error("신고 내역 조회 실패");
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
 }
 
 // 자동완성 API
@@ -1455,7 +1583,8 @@ export const fetchSuggestions = async (keyword: string) => {
       `${API_BASE_URL}${SPRING_API}/autocomplete?keyword=${encodeURIComponent(keyword)}&limit=10`
     );
     if (!response.ok) return [];
-    const data = await response.json();
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
     return data.success && data.suggestions ? data.suggestions : [];
   } catch {
     return [];
@@ -1469,7 +1598,8 @@ export const fetchPopularKeywords = async (limit: number = 10): Promise<string[]
       `${API_BASE_URL}${SPRING_API}/autocomplete/popular?limit=${limit}`
     );
     if (!response.ok) return [];
-    const data = await response.json();
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
     return data.success && data.keywords ? data.keywords : [];
   } catch {
     return [];
@@ -1490,6 +1620,15 @@ export const saveSearchLog = async (keyword: string): Promise<void> => {
     throw new Error("검색 로그 저장 실패");
   }
 };
+
+// 구매 확정
+export async function confirmPurchase(paymentId: number): Promise<void> {
+  const res = await authFetch(`${API_BASE_URL}${SPRING_API}/payments/portone/confirm`, {
+    method: "POST",
+    body: JSON.stringify({ paymentId }),
+  });
+  if (!res.ok) throw new Error("구매 확정 실패");
+}
 
 // ===================== 채팅 관리 (Admin) =====================
 
@@ -1539,7 +1678,9 @@ export async function fetchCurrentUser(token: string): Promise<TYPE.User> {
     error.status = res.status;
     throw error;
   }
-  return res.json();
+  const text = await res.text();
+  if (!text) throw new Error("유저 정보가 비어있습니다.");
+  return JSON.parse(text);
 }
 
 export async function updateUserProfile(userId: number, data: { nickName: string; password: string; phone: string }): Promise<TYPE.User> {
@@ -1552,13 +1693,16 @@ export async function updateUserProfile(userId: number, data: { nickName: string
     const errorText = await res.text();
     throw new Error("정보 수정 실패: " + errorText);
   }
-  return res.json();
+  const text = await res.text();
+  if (!text) throw new Error("수정된 정보가 없습니다.");
+  return JSON.parse(text);
 }
 
 export async function fetchUserQnas(userId: number): Promise<TYPE.ProductQna[]> {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/qna/user/${userId}`);
   if (!res.ok) throw new Error("Q&A 조회 실패");
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
 }
 
 
@@ -1571,7 +1715,8 @@ export async function fetchUserInquiries(token: string): Promise<any[]> {
     },
   });
   if (!res.ok) throw new Error("문의 내역 조회 실패");
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
 }
 
 // -------------------------------------------------------------------------
@@ -1579,7 +1724,7 @@ export async function fetchUserInquiries(token: string): Promise<any[]> {
 // -------------------------------------------------------------------------
 
 // 1. Public User Profile
-export async function fetchUserProfile(userId: number): Promise<TYPE.User> {
+export async function fetchUserProfile(userId: number): Promise<TYPE.User | null> {
   // Use public endpoint if available, otherwise fallback to known pattern
   // Assuming /users/{userId} exposes public info
   const response = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}`, {
@@ -1601,7 +1746,8 @@ export async function fetchUserProfile(userId: number): Promise<TYPE.User> {
     }
     throw new Error("유저 프로필 조회 실패");
   }
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : null;
 }
 
 // 2. User's Selling Products
@@ -1615,7 +1761,8 @@ export async function fetchUserSellingProducts(userId: number): Promise<TYPE.Pro
     if (import.meta.env.DEV) return []; // Return empty if not ready
     throw new Error("판매 상품 조회 실패");
   }
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
 }
 
 // 3. User's Received Reviews
@@ -1629,7 +1776,8 @@ export async function fetchUserReviews(userId: number): Promise<TYPE.Review[]> {
     if (import.meta.env.DEV) return [];
     throw new Error("리뷰 목록 조회 실패");
   }
-  return response.json();
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
 }
 
 // 4. Create Product Review
@@ -1661,7 +1809,8 @@ export async function createProductReview(data: {
 export async function fetchAverageRating(userId: number): Promise<{ averageRating: number }> {
   const res = await fetch(`${API_BASE_URL}/reviews/user/${userId}/average`);
   if (!res.ok) throw new Error("평균 평점 조회 실패");
-  return res.json();
+  const text = await res.text();
+  return text ? JSON.parse(text) : { averageRating: 0 };
 }
 
 // ===================== 색상 기반 이미지 추천 API =====================
@@ -1676,7 +1825,7 @@ export async function searchByColor(params: {
   min_similarity?: number;
 }): Promise<TYPE.Product[]> {
   const response = await fetch(
-    `${AI_BASE_URL}/recommendations/color`,
+    `${AI_BASE_URL}${PYTHON_API}/recommendations/color`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1719,7 +1868,7 @@ export async function searchByImageFile(params: {
   }
 
   const response = await fetch(
-    `${AI_BASE_URL}/recommendations/color/upload?${queryParams}`,
+    `${AI_BASE_URL}${PYTHON_API}/recommendations/color/upload?${queryParams}`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       body: formData,
@@ -1748,7 +1897,7 @@ export async function checkImageQuality(imageBase64: string): Promise<{
   recommendation: string;
 }> {
   const response = await fetch(
-    `${AI_BASE_URL}/image/quality-check`,
+    `${AI_BASE_URL}${PYTHON_API}/image/quality-check`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1760,7 +1909,8 @@ export async function checkImageQuality(imageBase64: string): Promise<{
     throw new Error("이미지 품질 체크 실패");
   }
 
-  const data = await response.json();
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
   return data.analysis;
 }
 
@@ -1769,7 +1919,7 @@ export async function checkImageQuality(imageBase64: string): Promise<{
  */
 export async function optimizeImage(imageBase64: string): Promise<string> {
   const response = await fetch(
-    `${AI_BASE_URL}/image/optimize`,
+    `${AI_BASE_URL}${PYTHON_API}/image/optimize`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1781,7 +1931,8 @@ export async function optimizeImage(imageBase64: string): Promise<string> {
     throw new Error("이미지 최적화 실패");
   }
 
-  const data = await response.json();
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
   return data.optimized_image;
 }
 
@@ -1797,7 +1948,7 @@ export async function extractImageMetadata(imageBase64: string): Promise<{
   color_names: string[];
 }> {
   const response = await fetch(
-    `${AI_BASE_URL}/image/metadata`,
+    `${AI_BASE_URL}${PYTHON_API}/image/metadata`,  // Updated with ${PYTHON_API}
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1809,9 +1960,11 @@ export async function extractImageMetadata(imageBase64: string): Promise<{
     throw new Error("메타데이터 추출 실패");
   }
 
-  const data = await response.json();
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
   return data.metadata;
 }
+
 
 
 

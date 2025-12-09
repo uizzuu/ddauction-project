@@ -119,6 +119,10 @@ jobs:
             MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
             # NTS API KEY 
             NTS_API_KEY=${{ secrets.NTS_API_KEY }}
+            # SOL API KEY 
+            SOL_API_KEY=${{ secrets.SOL_API_KEY }}
+            SOL_API_SECRET=${{ secrets.SOL_API_SECRET }}
+            SOL_API_FROM_NUMBER=${{ secrets.SOL_API_FROM_NUMBER }}
             ENVEOF
 
             echo "=== Docker 로그인 ==="

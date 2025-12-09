@@ -80,3 +80,14 @@ export const DELIVERY_TYPES = {
 
 export type DeliveryType = keyof typeof DELIVERY_TYPES;
 export const DELIVERY_TYPE_KEYS = Object.keys(DELIVERY_TYPES) as DeliveryType[];
+
+// 택배사 옵션
+export const COURIER_OPTIONS = [
+  { value: "CJ", label: "CJ대한통운" },
+  { value: "POST", label: "우체국택배" },
+  { value: "HANJIN", label: "한진택배" },
+  { value: "LOTTE", label: "롯데택배" },
+  { value: "LOGEN", label: "로젠택배" },
+] as const;
+
+export type CourierType = (typeof COURIER_OPTIONS)[number]["value"];

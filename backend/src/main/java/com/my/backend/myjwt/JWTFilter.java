@@ -1,12 +1,8 @@
 package com.my.backend.myjwt;
 
-import com.my.backend.dto.auth.CustomUserDetails;
-import com.my.backend.entity.Users;
-import com.my.backend.enums.Role;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.List;
+
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -14,8 +10,14 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.io.IOException;
-import java.util.List;
+import com.my.backend.dto.auth.CustomUserDetails;
+import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class JWTFilter extends OncePerRequestFilter {
     private final JWTUtil jwtUtil;
@@ -28,8 +30,6 @@ public class JWTFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
-        System.out.println("🔹 JWTFilter request: " + request.getMethod() + " " + request.getRequestURI() +
-                " Authorization: " + request.getHeader("Authorization"));
         String path = request.getRequestURI();
 
         // 1. JWT 검사 제외 경로 (필요 시 수정)
@@ -54,9 +54,10 @@ public class JWTFilter extends OncePerRequestFilter {
             return;
         }
 
+        // 2. Get Authorization header
         String authorization = request.getHeader("Authorization");
 
-        // 2. 헤더가 없으면 통과 (비로그인 요청 허용)
+        // 3. 헤더가 없으면 통과 (비로그인 요청 허용)
         if (authorization == null || !authorization.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
@@ -69,9 +70,10 @@ public class JWTFilter extends OncePerRequestFilter {
             // 토큰 만료 여부 확인
             if (jwtUtil.isExpired(token)) {
                 System.out.println("⚠️ 토큰 만료됨");
-                // 만료된 경우라도 401을 던지지 않고, 인증 정보 없이 필터 진행
-                // -> SecurityConfig에서 permitAll()이면 통과, 아니면 401 됨
-                filterChain.doFilter(request, response);
+                // 만료된 경우 명시적 401 응답
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write("{\"error\": \"Token Expired\", \"message\": \"Access token has expired.\"}");
                 return;
             }
 
@@ -94,9 +96,12 @@ public class JWTFilter extends OncePerRequestFilter {
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
         } catch (Exception e) {
-            // 🚨 토큰이 잘못되었거나 파싱 에러가 나도 여기서 잡아서 넘겨줘야 함
-            // 그래야 permitAll 경로인 경우 401이 안 뜨고 접속 가능함
-            System.out.println("❌ JWT 검증 실패 (유효하지 않은 토큰): " + e.getMessage());
+            // 🚨 토큰 파싱 에러 시 401 응답에 메시지 포함
+            System.out.println("❌ JWT 검증 실패: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write("{\"error\": \"JWT Error\", \"message\": \"" + e.getMessage() + "\"}");
+            return; // 필터 체인 중단
         }
 
         // 4. 다음 필터로 진행
