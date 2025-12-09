@@ -65,6 +65,7 @@ public class UserService {
             user.setNickName(dto.getNickName());
         }
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
+            validatePassword(dto.getPassword());
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
         if (dto.getPhone() != null && !dto.getPhone().isBlank()) {
