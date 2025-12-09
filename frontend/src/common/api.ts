@@ -183,7 +183,7 @@ export const deleteProduct = (productId: number, token?: string) => {
 export async function queryRAG(query: string): Promise<TYPE.RAGResponse> {
   const request: TYPE.RAGRequest = { query };
 
-  const response = await fetch(`${API_BASE_URL}${PYTHON_API}/chat/query`, {
+  const response = await fetch(`${AI_BASE_URL}${PYTHON_API}/chat/query`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -1149,7 +1149,7 @@ export const fetchQrCodeImage = async (productId: number): Promise<string> => {
 // 배경 제거 (Python FastAPI) - AI 서버 필요
 export const removeProductBackground = async (productId: number): Promise<string> => {
   try {
-    const res = await fetch(`${AI_BASE_URL}/remove-bg`, {
+    const res = await fetch(`${AI_BASE_URL}${PYTHON_API}/remove-bg`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ product_id: productId }),
