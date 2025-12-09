@@ -395,7 +395,7 @@ public class ProductService {
         }
 
         return products.stream()
-                .map(ProductDto::fromEntity)
+                .map(this::convertToDto)
                 .toList();
     }
 
