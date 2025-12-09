@@ -63,20 +63,29 @@ public class UserController {
         return ResponseEntity.ok(userDto);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<UsersDto> updateUserProfile(@PathVariable Long id,
+                                                      @RequestBody UsersDto dto,
+                                                      @RequestHeader("Authorization") String authHeader) {
+        Users user = getUserFromToken(authHeader);
+
+        if (!id.equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 수정 가능합니다.");
+        }
+        dto.setUserId(id);
+        UsersDto updated = userService.updateUser(dto);
+        return ResponseEntity.ok(updated);
+    }
+
     // 마이페이지 업데이트
     @PutMapping("/{id}/mypage")
     public ResponseEntity<UsersDto> updateMyPage(@PathVariable Long id,
                                                  @RequestBody UsersDto dto,
                                                  @RequestHeader("Authorization") String authHeader) {
-        Users user = null;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            user = getUserFromToken(authHeader);
-            if (!id.equals(user.getUserId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 수정 가능합니다.");
-            }
-        } else {
-            user = userRepository.findById(id)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
+
+        Users user = getUserFromToken(authHeader);
+        if (!id.equals(user.getUserId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "본인 계정만 수정 가능합니다.");
         }
         dto.setUserId(id);
         UsersDto updated = userService.updateUser(dto);
