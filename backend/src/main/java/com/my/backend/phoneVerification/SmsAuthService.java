@@ -17,10 +17,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional
@@ -92,10 +89,10 @@ public class SmsAuthService {
      */
     public SmsVerificationResponse sendVerificationCode(String phone) {
         // 1. 이미 인증된 번호인지 확인
-        PhoneVerification existingVerification = phoneVerificationRepository
+        Optional<PhoneVerification> existingVerification = phoneVerificationRepository
                 .findByUserPhoneAndVerifiedTrue(phone);
 
-        if (existingVerification != null) {
+        if (existingVerification.isPresent()) {
             throw new IllegalStateException("이미 인증된 전화번호입니다.");
         }
 

@@ -39,8 +39,21 @@ export default function Signup() {
     address: "",
   });
 
+  // 🔥 인증 방식 선택 (email 또는 phone)
+  const [verificationType, setVerificationType] = useState<"email" | "phone">("email");
+
+  // 이메일 인증 상태
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [emailVerificationCode, setEmailVerificationCode] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+
+  // 핸드폰 인증 상태
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [phoneVerificationCode, setPhoneVerificationCode] = useState("");
+  const [phoneMessage, setPhoneMessage] = useState("");
+
   const isEmailValid = (email: string) =>
-    /^[^\s@]+@[^\s@]+.[^\s@]+$/.test(email);
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const validateAll = () => {
     const newErrors = {
@@ -56,7 +69,6 @@ export default function Signup() {
       zipCode: "",
       detailAddress: "",
     };
-
 
     if (!form.userName) newErrors.userName = "이름을 입력해주세요";
     if (!form.nickName) newErrors.nickName = "닉네임을 입력해주세요";
@@ -82,13 +94,9 @@ export default function Signup() {
 
     setErrors(newErrors);
     return Object.values(newErrors).every((err) => !err);
-
   };
 
-  const [isEmailVerified, setIsEmailVerified] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [emailMessage, setEmailMessage] = useState("");
-
+  // 🔥 이메일 인증 메일 발송
   const sendVerificationEmail = async () => {
     if (!isEmailValid(form.email)) {
       setEmailMessage("올바른 이메일을 입력해주세요");
@@ -107,11 +115,13 @@ export default function Signup() {
     }
   };
 
+  // 🔥 이메일 인증 코드 확인
   const verifyEmailCode = async () => {
     try {
-      const res = await fetch(`/api/auth/verify-email?email=${encodeURIComponent(form.email)}&code=${encodeURIComponent(verificationCode)}`, {
-        method: "POST",
-      });
+      const res = await fetch(
+        `/api/auth/verify-email?email=${encodeURIComponent(form.email)}&code=${encodeURIComponent(emailVerificationCode)}`,
+        { method: "POST" }
+      );
       if (!res.ok) throw new Error(await res.text());
       setIsEmailVerified(true);
       setEmailMessage("이메일 인증 완료!");
@@ -120,6 +130,42 @@ export default function Signup() {
     }
   };
 
+  // 🔥 핸드폰 인증 SMS 발송
+  const sendVerificationSms = async () => {
+    if (form.phone.length < 10) {
+      setPhoneMessage("올바른 전화번호를 입력해주세요");
+      return;
+    }
+    try {
+      const res = await fetch("/api/sms/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: form.phone }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setPhoneMessage(data.message || "인증 문자가 발송되었습니다.");
+    } catch (err: any) {
+      setPhoneMessage(err.message || "인증 문자 발송 실패");
+    }
+  };
+
+  // 🔥 핸드폰 인증 코드 확인
+  const verifyPhoneCode = async () => {
+    try {
+      const res = await fetch("/api/sms/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: form.phone, code: phoneVerificationCode }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const data = await res.json();
+      setIsPhoneVerified(true);
+      setPhoneMessage(data.message || "핸드폰 인증 완료!");
+    } catch (err: any) {
+      setPhoneMessage(err.message || "인증 실패");
+    }
+  };
 
   const handleSearchAddress = () => {
     // @ts-ignore
@@ -137,6 +183,15 @@ export default function Signup() {
 
   const handleSubmit = async () => {
     if (!validateAll()) return;
+
+    // 🔥 이메일 또는 핸드폰 중 하나는 인증되어야 함
+    if (!isEmailVerified && !isPhoneVerified) {
+      setErrors((prev) => ({
+        ...prev,
+        submit: "이메일 또는 핸드폰 인증을 먼저 완료해주세요.",
+      }));
+      return;
+    }
 
     try {
       const res = await fetch("/api/auth/register", {
@@ -158,7 +213,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-[#f5f6f7] flex flex-col justify-center items-center py-10 px-4">
       {/* Logo Area */}
-      <a
+      <a  
         href="/"
         className="relative block w-32 h-8 flex flex-shrink-0 mb-6"
         aria-label="DDANG 홈으로 이동"
@@ -216,9 +271,144 @@ export default function Signup() {
             </div>
           </div>
 
-          {/* --- 이메일 & 인증 --- */}
-          <div className="flex flex-col gap-2">
-            <div className="flex gap-2">
+          {/* 🔥 인증 방식 선택 탭 */}
+          <div className="flex border-b border-gray-200">
+            <button
+              onClick={() => {
+                setVerificationType("email");
+                setIsPhoneVerified(false);
+                setPhoneMessage("");
+              }}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                verificationType === "email"
+                  ? "border-b-2 border-[#333] text-[#333]"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              이메일 인증
+            </button>
+            <button
+              onClick={() => {
+                setVerificationType("phone");
+                setIsEmailVerified(false);
+                setEmailMessage("");
+              }}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                verificationType === "phone"
+                  ? "border-b-2 border-[#333] text-[#333]"
+                  : "text-gray-400 hover:text-gray-600"
+              }`}
+            >
+              핸드폰 인증
+            </button>
+          </div>
+
+          {/* 🔥 이메일 인증 */}
+          {verificationType === "email" && (
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="이메일"
+                  value={form.email}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣\s]/g, "");
+                    setForm((prev) => ({ ...prev, email: val }));
+                    setIsEmailVerified(false);
+                    setErrors((prev) => ({ ...prev, email: "" }));
+                  }}
+                  className={`flex-1 min-w-0 px-4 py-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
+                />
+                <button
+                  onClick={sendVerificationEmail}
+                  className="px-4 py-3 bg-[#333] text-white text-sm whitespace-nowrap hover:bg-black transition-colors rounded-[4px]"
+                >
+                  인증 메일
+                </button>
+              </div>
+              {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
+              {emailMessage && (
+                <p className={`text-xs ${isEmailVerified ? 'text-green-500' : 'text-blue-500'}`}>
+                  {emailMessage}
+                </p>
+              )}
+
+              {!isEmailVerified && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="인증 코드"
+                    value={emailVerificationCode}
+                    onChange={(e) => setEmailVerificationCode(e.target.value)}
+                    className="flex-1 min-w-0 px-4 py-3 border border-gray-300 focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]"
+                  />
+                  <button
+                    onClick={verifyEmailCode}
+                    className="flex-shrink-0 px-4 py-3 border border-solid border-gray-300 text-[#333] text-sm whitespace-nowrap hover:bg-gray-50 transition-colors rounded-[4px]"
+                  >
+                    확인
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 🔥 핸드폰 인증 */}
+          {verificationType === "phone" && (
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                <input
+                  type="tel"
+                  placeholder="전화번호 (숫자만 입력)"
+                  value={form.phone}
+                  onChange={(e) => {
+                    const filtered = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+                    setForm((prev) => ({ ...prev, phone: filtered }));
+                    setIsPhoneVerified(false);
+                    let msg = "";
+                    if (!filtered) msg = "전화번호를 입력해주세요";
+                    else if (filtered.length < 10) msg = "전화번호는 10~11자리 숫자여야 합니다";
+                    setErrors((prev) => ({ ...prev, phone: msg }));
+                  }}
+                  className={`flex-1 min-w-0 px-4 py-3 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
+                />
+                <button
+                  onClick={sendVerificationSms}
+                  className="px-4 py-3 bg-[#333] text-white text-sm whitespace-nowrap hover:bg-black transition-colors rounded-[4px]"
+                >
+                  인증 문자
+                </button>
+              </div>
+              {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
+              {phoneMessage && (
+                <p className={`text-xs ${isPhoneVerified ? 'text-green-500' : 'text-blue-500'}`}>
+                  {phoneMessage}
+                </p>
+              )}
+
+              {!isPhoneVerified && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="인증 코드"
+                    value={phoneVerificationCode}
+                    onChange={(e) => setPhoneVerificationCode(e.target.value)}
+                    className="flex-1 min-w-0 px-4 py-3 border border-gray-300 focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]"
+                  />
+                  <button
+                    onClick={verifyPhoneCode}
+                    className="flex-shrink-0 px-4 py-3 border border-solid border-gray-300 text-[#333] text-sm whitespace-nowrap hover:bg-gray-50 transition-colors rounded-[4px]"
+                  >
+                    확인
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* --- 이메일 & 전화번호 (인증 안한 쪽도 입력 필요) --- */}
+          {verificationType === "phone" && (
+            <div className="flex flex-col">
               <input
                 type="text"
                 placeholder="이메일"
@@ -226,67 +416,43 @@ export default function Signup() {
                 onChange={(e) => {
                   const val = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣\s]/g, "");
                   setForm((prev) => ({ ...prev, email: val }));
-                  setIsEmailVerified(false);
                   setErrors((prev) => ({ ...prev, email: "" }));
                 }}
-                className={`flex-1 min-w-0 px-4 py-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
+                className={`w-full px-4 py-3 border ${errors.email ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
               />
-              <button
-                onClick={sendVerificationEmail}
-                className="px-4 py-3 bg-[#333] text-white text-sm whitespace-nowrap hover:bg-black transition-colors rounded-[4px]"
-              >
-                인증 메일
-              </button>
+              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
             </div>
-            {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
-            {emailMessage && <p className="text-xs text-blue-500">{emailMessage}</p>}
+          )}
 
-            {!isEmailVerified && (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="인증 코드"
-                  value={verificationCode}
-                  onChange={(e) => setVerificationCode(e.target.value)}
-                  className={`flex-1 min-w-0 px-4 py-3 border border-gray-300 focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
-                />
-                <button
-                  onClick={verifyEmailCode}
-                  className="flex-shrink-0 px-4 py-3 border border-solid border-gray-300 text-[#333] text-sm whitespace-nowrap hover:bg-gray-50 transition-colors rounded-[4px]"
-                >
-                  확인
-                </button>
-              </div>
-            )}
-          </div>
+          {verificationType === "email" && (
+            <div className="flex flex-col">
+              <input
+                type="tel"
+                placeholder="전화번호 (숫자만 입력)"
+                value={form.phone}
+                onChange={(e) => {
+                  const filtered = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
+                  setForm((prev) => ({ ...prev, phone: filtered }));
+                  let msg = "";
+                  if (!filtered) msg = "전화번호를 입력해주세요";
+                  else if (filtered.length < 10) msg = "전화번호는 10~11자리 숫자여야 합니다";
+                  setErrors((prev) => ({ ...prev, phone: msg }));
+                }}
+                className={`w-full px-4 py-3 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
+              />
+              {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
+            </div>
+          )}
 
-          {/* --- 전화번호 & 생일 --- */}
-          <div className="flex flex-col gap-2">
-            <input
-              type="tel"
-              placeholder="전화번호 (숫자만 입력)"
-              value={form.phone}
-              onChange={(e) => {
-                const filtered = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
-                setForm((prev) => ({ ...prev, phone: filtered }));
-                let msg = "";
-                if (!filtered) msg = "전화번호를 입력해주세요";
-                else if (filtered.length < 10) msg = "전화번호는 10~11자리 숫자여야 합니다";
-                setErrors((prev) => ({ ...prev, phone: msg }));
-              }}
-              className={`w-full px-4 py-3 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
-            />
-            {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
-
-            <input
-              type="date"
-              placeholder="생일"
-              value={form.birthday}
-              onChange={(e) => setForm((prev) => ({ ...prev, birthday: e.target.value }))}
-              className={`w-full px-4 py-3 border ${errors.birthday ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors bg-white rounded-[4px]`}
-            />
-            {errors.birthday && <p className="text-xs text-red-500">{errors.birthday}</p>}
-          </div>
+          {/* --- 생일 --- */}
+          <input
+            type="date"
+            placeholder="생일"
+            value={form.birthday}
+            onChange={(e) => setForm((prev) => ({ ...prev, birthday: e.target.value }))}
+            className={`w-full px-4 py-3 border ${errors.birthday ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors bg-white rounded-[4px]`}
+          />
+          {errors.birthday && <p className="text-xs text-red-500">{errors.birthday}</p>}
 
           {/* --- 주소 --- */}
           <div className="flex flex-col gap-2">
@@ -368,8 +534,12 @@ export default function Signup() {
 
           <button
             onClick={handleSubmit}
-            disabled={!isEmailVerified}
-            className={`w-full py-4 mt-4 font-bold text-white transition-colors ${!isEmailVerified ? 'bg-gray-300 cursor-not-allowed' : 'bg-[#888] hover:bg-[#333]'} rounded-[4px]`}
+            disabled={!isEmailVerified && !isPhoneVerified}
+            className={`w-full py-4 mt-4 font-bold text-white transition-colors ${
+              !isEmailVerified && !isPhoneVerified
+                ? 'bg-gray-300 cursor-not-allowed'
+                : 'bg-[#888] hover:bg-[#333]'
+            } rounded-[4px]`}
           >
             가입하기
           </button>
@@ -384,6 +554,6 @@ export default function Signup() {
       <div className="mt-8 text-xs text-gray-400">
         &copy; DDAUCTION Corp.
       </div>
-    </div>
+    </div >
   );
 }
