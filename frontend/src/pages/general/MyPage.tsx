@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { User as UserIcon, Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText } from "lucide-react";
 import { COURIER_OPTIONS } from "../../common/enums";
-import type { User, Product, Report, ProductQna, Inquiry, Review, Bid } from "../../common/types";
+import type { User, Product, Report, ProductQna, Inquiry, Review, } from "../../common/types";
 import * as API from "../../common/api";
 import type { PaymentHistoryResponse } from "../../common/api";
 import ProductCard from "../../components/ui/ProductCard";
@@ -45,7 +45,6 @@ export default function MyPage({ user, setUser }: Props) {
   const [reviewTarget, setReviewTarget] = useState<{ sellerId: number; refId: number; productType?: string } | null>(null);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [confirmTargetId, setConfirmTargetId] = useState<number | null>(null);
-  const [myBids, setMyBids] = useState<Bid[]>([]);
   const [showProfileUploader, setShowProfileUploader] = useState(false);
 
   // Profile edit state
@@ -116,14 +115,10 @@ export default function MyPage({ user, setUser }: Props) {
     const loadStats = async () => {
       try {
         const token = localStorage.getItem("token")!;
-        const [selling, likes, bids] = await Promise.all([
+        const [selling, likes] = await Promise.all([
           API.fetchSellingProducts(user.userId),
           API.fetchMyLikes(token),
-          API.fetchMyBids(user.userId),
         ]);
-
-        console.log("💡 fetchMyBids result:", bids);
-        console.log("💡 bids.length:", (bids as any).length);
 
         let rating = 0;
         try {
@@ -136,42 +131,16 @@ export default function MyPage({ user, setUser }: Props) {
         setStats({
           sellingCount: selling.length,
           likesCount: likes.length,
-          bidsCount: bids.length,  // TODO: Add bid count API
+          bidsCount: 0, // TODO: Add bid count API
           rating,
         });
-        setSellingProducts(selling);
-        setMyBids(bids);
-        setMyLikes(likes);
       } catch (err) {
         console.error("Failed to load stats", err);
       }
     };
+
     loadStats();
   }, [user]);
-
-  // 좋아요 카운팅
-  useEffect(() => {
-    setStats(prev => ({
-      ...prev,
-      likesCount: myLikes.length,
-    }));
-  }, [myLikes.length]);
-
-  // 판매중 카운팅
-  useEffect(() => {
-    setStats(prev => ({
-      ...prev,
-      sellingCount: sellingProducts.length,
-    }));
-  }, [sellingProducts.length]);
-
-  // 입찰 카운팅
-  useEffect(() => {
-    setStats(prev => ({
-      ...prev,
-      bidsCount: myBids.length,
-    }));
-  }, [myBids.length]);
 
   // Tab content loader
   const loadTabContent = async (tab: TabId) => {
@@ -384,6 +353,24 @@ export default function MyPage({ user, setUser }: Props) {
             </button>
           </div>
 
+          {/* 프로필 이미지 띄우는 버튼 */}
+          <div className="mt-4">
+            <button
+              onClick={() => setShowProfileUploader(!showProfileUploader)}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              프로필 이미지 {user.profileImage ? "변경" : "등록"}
+            </button>
+
+            {showProfileUploader && (
+              <ProfileImageUploader
+                user={user}
+                isEditing={true}
+                onUpload={(url: string) => setUser({ ...user, profileImage: url })} // 업로드 후 상태 업데이트
+                onDelete={() => setUser({ ...user, profileImage: undefined })} // 삭제 후 상태 업데이트
+              />
+            )}
+          </div>
 
           {/* 사업자 */}
           <div className="mt-4">
