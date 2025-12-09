@@ -117,11 +117,16 @@ async def generate_product_description(request: ProductRequest):
     )
     return {"description": description}
 
-
 @app.post("/ai/remove-bg")
 async def remove_background(request: ProductImageRequest):
-    image_base64 = remove_background_from_qr(request.product_id)
-    return {"image_base64": image_base64, "message": "배경 제거 완료"}
+    try:
+        image_base64 = remove_background_from_qr(request.product_id)
+        return {"image_base64": image_base64, "message": "배경 제거 완료"}
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return {"error": str(e)}
+
 
 # ============ 🆕 색상 기반 이미지 추천 엔드포인트 ============
 

@@ -105,7 +105,7 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-
+                        .requestMatchers("/api/articles/**").permitAll() // Moved to top
                         .requestMatchers("/ai/**").permitAll()
                         .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                         .requestMatchers("/ws/**").permitAll()
@@ -117,7 +117,7 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/articles/**").permitAll()
+                        .requestMatchers("/api/articles/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/product-qnas/product/*").permitAll()  // 상품별 QnA 목록만
                         .requestMatchers(HttpMethod.GET, "/api/qna-reviews/product-qna/*").permitAll()  // 특정 QnA의 답변 목록만
                         .requestMatchers(HttpMethod.GET, "/api/bookmarks/**").permitAll()
@@ -126,12 +126,16 @@ public class SecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login/phone").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/email-find").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/password-reset").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/email/send").permitAll() // 이메일 인증 발송 허용
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-email").permitAll() // 이메일 인증
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()// 확인 허용
 
+                        .requestMatchers(HttpMethod.POST, "/api/articles/*/comments").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/comments/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/comments/*").authenticated()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/geo/**").permitAll() // 주소 변환 허용
 

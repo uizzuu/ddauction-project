@@ -11,14 +11,11 @@ interface Props {
 export default function ArticleForm({ user }: Props) {
   const { id } = useParams(); // 게시글 ID (수정 모드일 경우)
   const navigate = useNavigate();
-
-  const fixedBoardId = 1; // 고정 게시판 ID (예: 커뮤니티)
   const isAdmin = user?.role === "ADMIN";
 
   const [form, setForm] = useState<ArticleFormType>({
     title: "",
     content: "",
-    boardId: fixedBoardId,
     articleType: ArticleType.COMMUNITY, // 기본값: COMMUNITY
   });
 
@@ -34,7 +31,6 @@ export default function ArticleForm({ user }: Props) {
           setForm({
             title: article.title,
             content: article.content,
-            boardId: article.boardId,
             userId: article.userId,
             articleType: article.articleType,
           });

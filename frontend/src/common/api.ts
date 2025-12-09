@@ -1,6 +1,7 @@
 import type * as TYPE from "./types";
 import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
+import type { ArticleType } from './types';
 
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
@@ -131,6 +132,21 @@ export const toggleBookmark = async (productId: number, token?: string) => {
   return res.text();
 };
 
+// 찜 목록 다중 삭제 (bulk remove)
+export const removeWishlistItems = async (productIds: number[], token?: string) => {
+  const t = ensureToken(token);
+  // toggle API는 이미 찜한 상태일 때 호출하면 삭제가 됨 (찜 해제)
+  // 따라서 선택한 항목들에 대해 각각 toggle API를 호출
+  await Promise.all(
+    productIds.map(id =>
+      fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+      })
+    )
+  );
+};
+
 // 모든 입찰 내역 조회
 export const fetchAllBids = (productId: number, token?: string) =>
   fetchJson<TYPE.Bid[]>(`${API_BASE_URL}${SPRING_API}/bid/${productId}/bids`, {
@@ -200,17 +216,43 @@ export async function queryRAG(query: string): Promise<TYPE.RAGResponse> {
   if (!text) throw new Error("AI 응답이 없습니다.");
   return JSON.parse(text);
 }
-
+//게시판 및 댓글
 export async function getArticles(params?: {
-  boardId?: number;
+  userId?: number;
+  articleType?: ArticleType;
 }): Promise<TYPE.ArticleDto[]> {
-  const query = params?.boardId ? `?boardId=${params.boardId}` : "";
-  const response = await authFetch(
-    `${API_BASE_URL}${SPRING_API}/articles${query}`
-  );
+  let url = `${API_BASE_URL}${SPRING_API}/articles`;
+  
+  if (params?.userId) {
+    url = `${API_BASE_URL}${SPRING_API}/articles/user/${params.userId}`;
+  } else if (params?.articleType) {
+    url = `${API_BASE_URL}${SPRING_API}/articles/type/${params.articleType}`;
+  }
+  
+  const response = await authFetch(url);
   if (!response.ok) throw new Error("게시글 목록 조회 실패");
   const text = await response.text();
   return text ? JSON.parse(text) : [];
+}
+
+export async function getArticlePage(params?: {
+  page?: number;
+  size?: number;
+  sort?: string;
+  direction?: 'ASC' | 'DESC';
+}): Promise<{ content: TYPE.ArticleDto[]; totalPages: number; totalElements: number }> {
+  const page = params?.page ?? 0;
+  const size = params?.size ?? 10;
+  const sort = params?.sort ?? 'createdAt';
+  const direction = params?.direction ?? 'DESC';
+  
+  const query = `?page=${page}&size=${size}&sort=${sort},${direction}`;
+  const response = await authFetch(
+    `${API_BASE_URL}${SPRING_API}/articles/page${query}`
+  );
+  if (!response.ok) throw new Error("게시글 페이지 조회 실패");
+  const text = await response.text();
+  return text ? JSON.parse(text) : { content: [], totalPages: 0, totalElements: 0 };
 }
 
 export async function getArticleById(id: number): Promise<TYPE.ArticleDto> {
@@ -247,8 +289,8 @@ export async function updateArticle(
   );
   if (!response.ok) throw new Error("게시글 수정 실패");
   const text = await response.text();
-  if (!text) throw new Error("게시글 수정 후 응답이 없습니다.");
-  return JSON.parse(text);
+  const result = text ? JSON.parse(text) : {};
+  return result.data; // Extract data from wrapper
 }
 
 export async function deleteArticle(id: number): Promise<void> {
@@ -270,6 +312,16 @@ export async function getCommentsByArticleId(
   if (!response.ok) throw new Error("댓글 목록 조회 실패");
   const text = await response.text();
   return text ? JSON.parse(text) : [];
+}
+
+export async function getCommentById(commentId: number): Promise<TYPE.CommentDto> {
+  const response = await authFetch(
+    `${API_BASE_URL}${SPRING_API}/comments/${commentId}`
+  );
+  if (!response.ok) throw new Error("댓글 조회 실패");
+  const text = await response.text();
+  if (!text) throw new Error("댓글이 존재하지 않습니다.");
+  return JSON.parse(text);
 }
 
 export async function createComment(
@@ -314,37 +366,61 @@ export async function deleteComment(commentId: number): Promise<void> {
 }
 
 // 로그인
-export async function loginAPI(form: TYPE.LoginForm) {
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/auth/login`, {
+export async function loginAPI(
+  form: TYPE.LoginForm | { phone: string; password: string },
+  type: "email" | "phone" = "email"   // 👈 추가
+) {
+  const url =
+    type === "phone"
+      ? `${API_BASE_URL}${SPRING_API}/auth/login/phone` // 👈 전화번호 로그인
+      : `${API_BASE_URL}${SPRING_API}/auth/login`;      // 👈 이메일 로그인
+
+  // 1. 로그인 요청
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(form),
   });
 
+  // 2. 오류 응답 처리 (4xx, 5xx)
   if (!response.ok) {
     const text = await response.text();
     let message = "로그인 실패";
     try {
       const data = JSON.parse(text);
+      // 서버 응답에 'message' 필드가 있으면 사용 (AuthService에서 정의한 401 응답)
       message = data.message || message;
-    } catch { }
+    } catch (e) {
+      // JSON 파싱 실패 시, text 본문을 그대로 메시지로 사용하거나 기본 메시지 사용
+    }
     throw new Error(message);
   }
 
-  // body에서 token 받기 (백엔드가 이미 JSON으로 보냄)
+  // 3. 성공 응답 처리 (200 OK)
   const text = await response.text();
   const data = text ? JSON.parse(text) : {};
-  const token = data.token;
 
-  if (!token) throw new Error("토큰을 받지 못했습니다");
+  // ✅ 수정된 부분: 'token' 또는 'accessToken' 필드 중 유효한 것을 찾음
+  const token = data.token || data.accessToken;
+  // 서버에서 'token'으로 보내거나, 'accessToken'으로 보낼 경우 모두 대응
+
+  // 4. 토큰 존재 여부 확인
+  if (!token) {
+    // 서버가 200 OK를 보냈지만, 토큰 필드가 없는 경우
+    console.error("서버 응답 데이터:", data);
+    throw new Error("토큰을 받지 못했습니다. 서버 응답 필드를 확인하세요.");
+  }
 
   localStorage.setItem("token", token);
 
+  // 5. 사용자 정보 요청
   const userResponse = await fetch(`${API_BASE_URL}${SPRING_API}/auth/me`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!userResponse.ok) throw new Error("사용자 정보를 가져오지 못했습니다");
+
+  // 6. 사용자 정보 파싱 및 반환
   const userText = await userResponse.text();
   const userData: TYPE.User = userText ? JSON.parse(userText) : null;
   return userData;

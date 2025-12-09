@@ -3,6 +3,7 @@ package com.my.backend.service;
 import java.time.LocalDateTime;
 import java.util.Map;
 
+import com.my.backend.dto.auth.PhoneLoginRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -192,7 +193,7 @@ public class AuthService {
         return String.valueOf(code);
     }
 
-    // ========== 로그인 ==========
+    // ========== 이메일 로그인 ==========
     @Transactional(readOnly = true)
     public ResponseEntity<?> login(LoginRequest request) {
         try {
@@ -218,6 +219,39 @@ public class AuthService {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
+    // ========== 전화번호 로그인 ==========
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> loginByPhone(PhoneLoginRequest request) {
+        try {
+            String phone = request.getPhone().trim();
+
+            if (!phone.matches("^\\d{10,11}$"))
+                throw new IllegalArgumentException("전화번호 형식이 올바르지 않습니다.");
+
+            Users user = userRepository.findByPhone(phone)
+                    .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+            if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
+                throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
+
+            String token = jwtUtil.createJwt(
+                    user.getUserId(),
+                    user.getEmail() != null ? user.getEmail() : "",
+                    user.getRole(),
+                    user.getNickName(),
+                    24 * 60 * 60 * 1000L
+            );
+
+            return ResponseEntity.ok(new TokenResponse(token, null));
+
+        } catch (IllegalArgumentException e) {
+            log.warn("전화번호 로그인 실패: {}", e.getMessage());
+            // 인증 실패는 401(Unauthorized)로 응답하는 것이 RESTful 원칙에 더 적합합니다.
+            return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
+        }
+    }
+
 
     // ========== 토큰 갱신 ==========
     public ResponseEntity<?> refreshToken(String token) {

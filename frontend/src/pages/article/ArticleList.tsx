@@ -15,7 +15,7 @@ export default function ArticleList({ user }: Props) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    getArticles({ boardId: 1 }) // 1번 게시판 글만 조회
+    getArticles({}) 
       .then(setArticles)
       .catch(() => console.log("게시글 목록을 불러오지 못했습니다."))
       .finally(() => setLoading(false));

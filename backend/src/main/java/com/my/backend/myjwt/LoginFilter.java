@@ -3,6 +3,7 @@ package com.my.backend.myjwt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.dto.auth.LoginRequest;
+import com.my.backend.dto.auth.PhoneLoginRequest;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,29 +33,36 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException {
 
-        //클라이언트 요청에서 username, password 추출 -> username을 사용할 경우
-        // String username = obtainUsername(request);
-        // String password = obtainPassword(request);
-
         System.out.println("==== LoginFilter: attemptAuthentication START ====");
         System.out.println("[DEBUG] 요청 URI: " + request.getRequestURI());
         System.out.println("[DEBUG] 요청 Method: " + request.getMethod());
         System.out.println("[DEBUG] Content-Type: " + request.getContentType());
-        System.out.println("[DEBUG] 요청 헤더 Authorization: " + request.getHeader("Authorization"));
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            LoginRequest loginRequest = objectMapper.readValue(
-                    request.getInputStream(), LoginRequest.class);
+            UsernamePasswordAuthenticationToken authToken;
 
-            String email = loginRequest.getEmail();
-            String password = loginRequest.getPassword();
+            if (request.getRequestURI().contains("/phone")) {
+                // 📱 핸드폰 로그인 처리
+                PhoneLoginRequest loginRequest = objectMapper.readValue(
+                        request.getInputStream(), PhoneLoginRequest.class);
+                String phone = loginRequest.getPhone();
+                String password = loginRequest.getPassword();
+                System.out.println("[DEBUG] 파싱된 phone: " + phone);
+                System.out.println("[DEBUG] 파싱된 password: " + (password != null ? "******" : null));
 
-            System.out.println("[DEBUG] 파싱된 email: " + email);
-            System.out.println("[DEBUG] 파싱된 password: " + (password != null ? "******" : null));
+                authToken = new UsernamePasswordAuthenticationToken(phone, password, null);
+            } else {
+                // 📧 이메일 로그인 처리
+                LoginRequest loginRequest = objectMapper.readValue(
+                        request.getInputStream(), LoginRequest.class);
+                String email = loginRequest.getEmail();
+                String password = loginRequest.getPassword();
+                System.out.println("[DEBUG] 파싱된 email: " + email);
+                System.out.println("[DEBUG] 파싱된 password: " + (password != null ? "******" : null));
 
-            UsernamePasswordAuthenticationToken authToken =
-                    new UsernamePasswordAuthenticationToken(email, password, null);
+                authToken = new UsernamePasswordAuthenticationToken(email, password, null);
+            }
 
             Authentication auth = authenticationManager.authenticate(authToken);
             System.out.println("[DEBUG] Authentication 객체 생성 성공: " + auth);
@@ -81,31 +89,22 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
         System.out.println("[INFO] 로그인 성공");
 
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
-        System.out.println("[DEBUG] customUserDetails = " + customUserDetails);
-        System.out.println("[DEBUG] userEmail = " + customUserDetails.getEmail());
-
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
-        System.out.println("[DEBUG] authorities = " + authorities);
 
-        // 🔹 한 번만 선언
         String roleStr = authorities.stream()
                 .findFirst()
                 .map(GrantedAuthority::getAuthority)
                 .orElse("ROLE_USER");
 
-        // ROLE_ 제거 후 소문자·공백 제거
         String normalizedRole = roleStr.replace("ROLE_", "").trim().toUpperCase();
 
-        // Role enum으로 변환 (실패 시 기본값 USER)
         Role roleEnum;
         try {
             roleEnum = Role.valueOf(normalizedRole);
         } catch (IllegalArgumentException e) {
             roleEnum = Role.USER;
         }
-        System.out.println("[DEBUG] roleEnum = " + roleEnum);
 
-        // JWT 생성
         long expiredMs = 24 * 60 * 60 * 1000L; // 24시간
         String token = jwtUtil.createJwt(
                 customUserDetails.getUser().getUserId(),
@@ -114,12 +113,10 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
                 customUserDetails.getNickName(),
                 expiredMs
         );
-        System.out.println("[DEBUG] token = " + token);
 
         if (token != null) {
             response.setContentType("application/json;charset=UTF-8");
             response.setStatus(HttpServletResponse.SC_OK);
-            // 헤더와 body 모두 전송
             response.addHeader("Authorization", "Bearer " + token);
             response.getWriter().write("{\"token\":\"" + token + "\"}");
             response.getWriter().flush();
