@@ -75,7 +75,9 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
             <div className="w-full bg-[#f8f8f8] overflow-hidden relative aspect-square rounded-[10px] border border-[#f0f0f0]">
                 {product.images && product.images.length > 0 ? (
                     <img
-                        src={product.images[0].imagePath}
+                        src={product.images[0].imagePath.startsWith('http')
+                            ? product.images[0].imagePath
+                            : `http://localhost:8080${product.images[0].imagePath}`}
                         alt={product.title}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {

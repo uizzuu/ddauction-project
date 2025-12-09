@@ -28,7 +28,9 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ product, setShowARMo
                             {product.images.map((img, idx) => (
                                 <div key={idx} className="h-full flex items-center justify-center outline-none">
                                     <img
-                                        src={img.imagePath}
+                                        src={img.imagePath.startsWith('http')
+                                            ? img.imagePath
+                                            : `http://localhost:8080${img.imagePath}`}
                                         alt={`${product.title} - ${idx + 1}`}
                                         className="w-full h-full object-contain"
                                         onError={(e) => {
