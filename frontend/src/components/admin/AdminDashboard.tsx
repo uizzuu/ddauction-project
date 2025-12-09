@@ -127,6 +127,20 @@ export default function AdminDashboard({ stats: initialStats, onRefresh }: Props
 
   return (
     <div>
+      <div className="flex items-center justify-between mb-4">
+  <h2 className="text-lg font-bold text-[#111]">관리자 대시보드</h2>
+  <div className="flex items-center gap-2 text-sm text-[#999]">
+    <Clock size={14} />
+    <span>마지막 업데이트: {formatLastUpdate()}</span>
+    <button
+      onClick={refreshStats}
+      disabled={isRefreshing}
+      className="ml-2 p-1 hover:bg-gray-100 rounded"
+    >
+      <RefreshCw size={14} className={isRefreshing ? "animate-spin" : ""} />
+    </button>
+  </div>
+</div>
       {/* Stat Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {statCards.map((card, index) => {
