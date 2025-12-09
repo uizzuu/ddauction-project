@@ -118,7 +118,7 @@ async def generate_product_description(request: ProductRequest):
     return {"description": description}
 
 
-@app.post("/remove-bg")
+@app.post("/ai/remove-bg")
 async def remove_background(request: ProductImageRequest):
     image_base64 = remove_background_from_qr(request.product_id)
     return {"image_base64": image_base64, "message": "배경 제거 완료"}
