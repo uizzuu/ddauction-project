@@ -113,9 +113,12 @@ export const fetchBookmarkCheck = (productId: number, token?: string) =>
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
 
-// 주소 변환 (Reverse Geocoding)
-export const reverseGeocode = (latitude: number, longitude: number) =>
-  fetchJson<string>(`${API_BASE_URL}${SPRING_API}/geo/reverse?latitude=${latitude}&longitude=${longitude}`);
+// 주소 변환 (Reverse Geocoding) - text/plain 응답 처리
+export async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/geo/reverse?latitude=${latitude}&longitude=${longitude}`);
+  if (!res.ok) throw new Error("주소 변환 API 호출 실패");
+  return res.text(); // JSON이 아닌 plain text 반환
+}
 
 // 찜 토글
 export const toggleBookmark = async (productId: number, token?: string) => {

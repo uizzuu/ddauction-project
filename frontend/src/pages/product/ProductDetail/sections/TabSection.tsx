@@ -130,7 +130,7 @@ export const TabSection: React.FC<TabSectionProps> = ({
 
                     {/* 4. Review */}
                     {activeTab === 'review' && (
-                        <div className="text-center">
+                        <div className="text-center mt-6">
                             아직 등록된 후기가 없습니다.
                         </div>
                     )}
