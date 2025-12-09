@@ -298,5 +298,5 @@ class LightweightImageAnalyzer:
 
 
 # 싱글톤 인스턴스
-SPRING_API_BASE = os.getenv("SPRING_API_BASE", "http://localhost:8080")
+SPRING_API_BASE = os.getenv("SPRING_API_BASE", "http://backend:8080")
 image_analyzer = LightweightImageAnalyzer(SPRING_API_BASE)
