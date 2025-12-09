@@ -66,14 +66,29 @@ export default function PaymentPage() {
           return;
         }
 
+        // if (product.productType === 'STORE') {
+        //   // Store Product: Direct Purchase
+        //   setPaymentInfo({
+        //     productTitle: product.title,
+        //     productImage: (product.images && product.images.length > 0) ? product.images[0].imagePath : null,
+        //     sellerName: product.sellerNickName || "판매자",
+        //     price: Number(product.startingPrice), // Store uses startingPrice as fixed price
+        //     shippingFee: 0 // Free shipping for now based on previous UI
+        //   });
+        // } 
+
         if (product.productType === 'STORE') {
-          // Store Product: Direct Purchase
+          const originalPrice = Number(product.originalPrice || 0);
+          const discountRate = Number(product.discountRate || 0);
+          const salePrice = Math.round(originalPrice * (100 - discountRate) / 100);
+          const shippingFee = product.deliveryIncluded ? 0 : Number(product.deliveryPrice || 0);
+
           setPaymentInfo({
             productTitle: product.title,
             productImage: (product.images && product.images.length > 0) ? product.images[0].imagePath : null,
             sellerName: product.sellerNickName || "판매자",
-            price: Number(product.startingPrice), // Store uses startingPrice as fixed price
-            shippingFee: 0 // Free shipping for now based on previous UI
+            price: salePrice,
+            shippingFee: shippingFee 
           });
         } else if (product.productType === 'AUCTION') {
           // Auction Product: Check Winning Info
