@@ -2106,3 +2106,29 @@ export async function verifyBusiness(userId: number, businessNumber: string): Pr
 
   return res.json();
 }
+
+// 사용자 주소 업데이트 (결제 페이지용)
+export async function updateUserAddress(
+  userId: number, 
+  data: {
+    address: string;
+    detailAddress: string;
+    zipCode: string;
+    phone: string;
+  }
+): Promise<void> {
+  const token = localStorage.getItem("token");
+  
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/address`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("주소 정보 저장 실패");
+  }
+}
