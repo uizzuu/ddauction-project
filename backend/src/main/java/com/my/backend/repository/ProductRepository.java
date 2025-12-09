@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import com.my.backend.entity.Bid;
@@ -59,6 +60,10 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
 
     // 구매 완료 상품 조회
     List<Product> findByPaymentUserUserIdAndPaymentStatus(Long userId, PaymentStatus paymentStatus);
+
+    @Modifying
+    @Query("UPDATE Product p SET p.viewCount = p.viewCount + 1 WHERE p.productId = :id")
+    void incrementViewCount(@Param("id") Long id);
 
     // ========================================
     //  자동완성용 메서드 추가
