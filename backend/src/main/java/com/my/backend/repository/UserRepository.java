@@ -42,4 +42,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
     Optional<Users> findByEmailAndPhoneAndUserName(String email, String phone, String userName);
 
     Optional<Users> findByPhone(String phone);
+
+    // 이메일 + 이름 사용자 조회
+    Optional<Users> findByEmailAndUserName(String email, String userName);
 }

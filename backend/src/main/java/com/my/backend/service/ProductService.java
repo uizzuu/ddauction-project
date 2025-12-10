@@ -4,9 +4,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.my.backend.entity.*;
-import com.my.backend.repository.*;
-import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,12 +16,26 @@ import org.springframework.web.server.ResponseStatusException;
 import com.my.backend.dto.BidDto;
 import com.my.backend.dto.ImageDto;
 import com.my.backend.dto.ProductDto;
+import com.my.backend.entity.Bid;
+import com.my.backend.entity.Image;
+import com.my.backend.entity.Payment;
+import com.my.backend.entity.Product;
+import com.my.backend.entity.ProductViewLog;
+import com.my.backend.entity.Users;
 import com.my.backend.enums.ImageType;
 import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
+import com.my.backend.repository.BidRepository;
+import com.my.backend.repository.BookMarkRepository;
+import com.my.backend.repository.ImageRepository;
+import com.my.backend.repository.PaymentRepository;
+import com.my.backend.repository.ProductRepository;
+import com.my.backend.repository.ProductViewLogRepository;
+import com.my.backend.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -53,6 +64,17 @@ public class ProductService {
                 .map(ImageDto::fromEntity)
                 .collect(Collectors.toList());
         dto.setImages(images);
+
+        // 판매자 프로필 이미지 조회 및 추가
+        if (product.getSeller() != null) {
+            List<Image> profileImages = imageRepository.findByRefIdAndImageType(
+                    product.getSeller().getUserId(),
+                    ImageType.USER
+            );
+            if (!profileImages.isEmpty()) {
+                dto.setSellerProfileImage(profileImages.get(0).getImagePath());
+            }
+        }
 
         return dto;
     }
@@ -432,6 +454,7 @@ public class ProductService {
         product.setPaymentStatus(dto.getPaymentStatus());
         product.setDeliveryType(dto.getDeliveryType());
         product.setProductCategoryType(dto.getProductCategoryType());
+        product.setProductBanners(dto.getProductBanners()); // ✅ 배너(상세이미지) 업데이트 추가
         product.setSeller(seller);
         product.setBid(bid);
         product.setPayment(payment);

@@ -99,8 +99,6 @@ export default function ProductSearchPage() {
       return;
     }
 
-    // Pass current state values explicitly for clarity, though closure captures them.
-    // Use `undefined` for prices here as we rely on the state (or pass updated state if available)
     fetchProducts(kw, catCode, activeOnly, sortOption, {
       min: minPrice, max: maxPrice, minStart: minStartPrice, maxStart: maxStartPrice
     }, productType);
@@ -126,7 +124,6 @@ export default function ProductSearchPage() {
       setMinStartPrice(min);
       setMaxStartPrice(max);
     }
-    // Effect will trigger fetch
   };
 
   const handleDeliveryChange = (types: DeliveryType[]) => setSelectedDeliveryTypes(types);

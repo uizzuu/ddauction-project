@@ -138,6 +138,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/*").authenticated()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/geo/**").permitAll() // 주소 변환 허용
+                        .requestMatchers(HttpMethod.GET, "/reviews/**").permitAll() // 리뷰 조회 허용
 
                         .anyRequest().authenticated()
                 )

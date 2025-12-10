@@ -103,7 +103,7 @@ export default function AuctionSection({
             {/* Delivery Methods & Logic */}
             <div className="col-span-1 md:col-span-2 mt-6">
                 <label className="block text-sm font-bold text-[#333] mb-2">
-                    거래 방식 선택 <span className="text-red-500">*</span>
+                    희망 배송 방법 <span className="text-red-500">*</span> <span className="text-[14px] text-[#ccc]">(중복선택 가능)</span>
                 </label>
 
                 {/* Simple inline checkboxes */}
@@ -134,7 +134,7 @@ export default function AuctionSection({
                             disabled={uploading}
                             className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
                         />
-                        <span className="text-sm text-gray-700">반택</span>
+                        <span className="text-sm text-gray-700">편의점택배</span>
                     </label>
 
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -227,32 +227,35 @@ export default function AuctionSection({
                             {/* 반택 */}
                             {(form.deliveryAvailable || []).some((m: string) => m.includes("반택")) && (
                                 <div className="grid grid-cols-[100px_1fr] gap-3 items-start">
-                                    <label className="text-sm font-medium text-gray-600 pt-2">📦 반택 옵션</label>
+                                    <label className="text-sm font-medium text-gray-600 pt-2">편의점택배</label>
                                     <div className="space-y-2">
-                                        {["반택(GS)", "반택(CU)"].map((type) => (
-                                            <div key={type} className="flex items-center gap-3">
+                                        {[
+                                            { label: "GS25 반값택배", value: "반택(GS)", priceKey: "반택(GS)_price", defaultPrice: "1900" },
+                                            { label: "CU 알뜰택배", value: "반택(CU)", priceKey: "반택(CU)_price", defaultPrice: "1900" }
+                                        ].map((option) => (
+                                            <div key={option.value} className="flex items-center gap-3">
                                                 <label className="flex items-center gap-2 cursor-pointer min-w-[80px]">
                                                     <input
                                                         type="checkbox"
-                                                        checked={(form.deliveryAvailable || []).includes(type)}
+                                                        checked={(form.deliveryAvailable || []).includes(option.value)}
                                                         onChange={() => {
                                                             const current = form.deliveryAvailable || [];
-                                                            if (current.includes(type)) {
-                                                                updateForm("deliveryAvailable", current.filter((m: string) => m !== type));
+                                                            if (current.includes(option.value)) {
+                                                                updateForm("deliveryAvailable", current.filter((m: string) => m !== option.value));
                                                             } else {
-                                                                updateForm("deliveryAvailable", [...current, type]);
+                                                                updateForm("deliveryAvailable", [...current, option.value]);
                                                             }
                                                         }}
                                                         className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
                                                     />
-                                                    <span className="text-sm text-gray-700">{type.replace("반택", "")}</span>
+                                                    <span className="text-sm text-gray-700">{option.label}</span>
                                                 </label>
-                                                {(form.deliveryAvailable || []).includes(type) && (
+                                                {(form.deliveryAvailable || []).includes(option.value) && (
                                                     <input
                                                         type="text"
-                                                        placeholder={type.includes("GS") ? "1800" : "1500"}
-                                                        value={form[`${type}_price`] || ""}
-                                                        onChange={(e) => updateForm(`${type}_price`, e.target.value.replace(/[^0-9]/g, ''))}
+                                                        placeholder={option.defaultPrice}
+                                                        value={form[option.priceKey] || ""}
+                                                        onChange={(e) => updateForm(option.priceKey, e.target.value.replace(/[^0-9]/g, ''))}
                                                         className="w-28 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white"
                                                         disabled={uploading}
                                                     />

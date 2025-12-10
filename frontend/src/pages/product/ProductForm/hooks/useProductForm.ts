@@ -175,16 +175,13 @@ export default function useProductForm(user: User | null) {
             };
 
             // Handle Product Banners (Detail Images)
-            let bannerUrls: string[] = [];
-            if (form.productBanners && form.productBanners.length > 0) {
-                const { uploadImageToS3 } = await import("../../../../common/api");
-                bannerUrls = await Promise.all(
-                    form.productBanners.map((file) => uploadImageToS3(file))
-                );
-                (productData as any).productBanners = bannerUrls;
-            }
+            // 상세 이미지는 registerProductWithImages 내부에서 상품 생성 후 업로드됨 (파일명에 productId 포함 위해)
 
-            await registerProductWithImages(productData, Array.from(form.images || []));
+            await registerProductWithImages(
+                productData,
+                Array.from(form.images || []),
+                form.productBanners || [] // Pass banner files directly
+            );
 
             alert("물품 등록 성공!");
             navigate("/search");

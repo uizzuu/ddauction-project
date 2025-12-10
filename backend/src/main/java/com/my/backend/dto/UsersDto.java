@@ -41,7 +41,7 @@ public class UsersDto {
 
 
     // Entity → DTO
-    public static UsersDto fromEntity(Users user, String profileImageUrl) {
+    public static UsersDto fromEntity(Users user) {
         if (user == null) return null;
 
         return UsersDto.builder()

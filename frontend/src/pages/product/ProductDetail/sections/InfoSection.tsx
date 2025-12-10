@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { formatDateTime } from "../../../../common/util";
 import { PRODUCT_CATEGORIES } from "../../../../common/enums";
 import type { Product, User, EditProductForm, Bid } from "../../../../common/types";
+import Avatar from "../../../../components/ui/Avatar";
 
 interface InfoSectionProps {
     product: Product;
@@ -95,8 +96,13 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
 
                 <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                     <Link to={`/users/${product.sellerId}`} className="flex items-center gap-1.5 hover:underline decoration-gray-400 underline-offset-2">
-                        <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center text-[10px] text-gray-500">
-                            {sellerNickName.slice(0, 1)}
+                        <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                            <Avatar
+                                src={product.sellerProfileImage || null}
+                                alt={sellerNickName}
+                                className="w-full h-full text-[10px]"
+                                fallbackText={sellerNickName}
+                            />
                         </span>
                         <span className="font-medium text-gray-900">{sellerNickName}</span>
                     </Link>

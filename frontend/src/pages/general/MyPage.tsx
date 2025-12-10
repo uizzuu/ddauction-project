@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { User as UserIcon, Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText } from "lucide-react";
+import { Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText } from "lucide-react";
 import { COURIER_OPTIONS } from "../../common/enums";
 import type { User, Product, Report, ProductQna, Inquiry, Review, Bid } from "../../common/types";
 import * as API from "../../common/api";
+import { API_BASE_URL } from "../../common/api";
 import type { PaymentHistoryResponse } from "../../common/api";
 import ProductCard from "../../components/ui/ProductCard";
 import BusinessVerify from "../../components/mypage/BusinessVerify";
@@ -11,8 +12,9 @@ import ShippingModal from "../../components/ui/ShippingModal";
 import ReviewModal from "../../components/ui/ReviewModal";
 import { ConfirmModal } from "../../components/ui/ConfirmModal";
 import ProfileImageUploader from "../../components/mypage/ProfileImageUploader";
+import Avatar from "../../components/ui/Avatar";
 
-type TabId = "selling" | "buying" | "community" | "settings";
+type TabId = "selling" | "buying" | "reviews" | "community" | "profile_edit";
 
 type Props = {
   user: User | null;
@@ -23,7 +25,7 @@ export default function MyPage({ user, setUser }: Props) {
   const navigate = useNavigate();
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<TabId>("selling");
+  const [activeTab, setActiveTab] = useState<TabId>("profile_edit");
   const tabRefs = useRef<{ [key in TabId]?: HTMLButtonElement }>({});
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const [showBusinessVerify, setShowBusinessVerify] = useState(false);
@@ -46,14 +48,21 @@ export default function MyPage({ user, setUser }: Props) {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [myBids, setMyBids] = useState<Bid[]>([]);
   const [confirmTargetId, setConfirmTargetId] = useState<number | null>(null);
-  const [showProfileUploader, setShowProfileUploader] = useState(false);
 
   // Profile edit state
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
     nickName: user?.nickName || "",
     password: "",
     phone: user?.phone || "",
+    address: user?.address || "", // Add address
+    detailAddress: "", // Note: User type might not have detailAddress explicitly mapped in frontend type yet? Check User type.
+    zipCode: "",
+  });
+
+  const [addressForm, setAddressForm] = useState({
+    address: "",
+    detailAddress: "",
+    zipCode: "",
   });
 
   // Stats
@@ -105,6 +114,9 @@ export default function MyPage({ user, setUser }: Props) {
         nickName: user.nickName || "",
         password: "",
         phone: user.phone || "",
+        address: user.address || "",
+        detailAddress: "",
+        zipCode: "",
       });
     }
   }, [user]);
@@ -204,13 +216,17 @@ export default function MyPage({ user, setUser }: Props) {
           setMyLikes(likes);
           setBuyingHistory(bHistory);
           break;
+        case "reviews":
+          const reviews = await API.fetchUserReviews(user.userId);
+          setMyReviews(reviews);
+          break;
         case "community":
-          const [reviews, inquiries, reportsData] = await Promise.all([
-            API.fetchUserReviews(user.userId),
+          // Removed reviews from here. Keep inquiries.
+          const [inquiries, reportsData] = await Promise.all([
             API.fetchUserInquiries(token),
             API.fetchReports(token),
           ]);
-          setMyReviews(reviews);
+
           setMyInquiries(inquiries.map((i: any) => ({
             inquiryId: i.inquiryId,
             title: i.title,
@@ -225,8 +241,8 @@ export default function MyPage({ user, setUser }: Props) {
           })));
           setReports(reportsData);
           break;
-        case "settings":
-          // Settings don't need additional data loading
+        case "profile_edit":
+          // No data load needed
           break;
       }
     } catch (err) {
@@ -246,9 +262,20 @@ export default function MyPage({ user, setUser }: Props) {
     if (!user) return;
 
     try {
-      const updatedUser = await API.updateUserProfile(user.userId, profileForm);
+      // 1. Update basic info
+      const updatedUser = await API.updateUserProfile(user.userId, {
+        nickName: profileForm.nickName,
+        password: profileForm.password,
+        phone: profileForm.phone
+      });
+
+      // 2. Update address if provided (Need separate API or use updatedUser?)
+      // If user inputs address, we call updateAddress API
+      if (addressForm.address) {
+        await API.updateUserAddress(user.userId, { ...addressForm, phone: profileForm.phone });
+      }
+
       setUser(updatedUser);
-      setIsEditingProfile(false);
       alert("프로필이 수정되었습니다.");
     } catch (err: any) {
       alert(err.message || "프로필 수정 실패");
@@ -347,10 +374,11 @@ export default function MyPage({ user, setUser }: Props) {
   }
 
   const tabs = [
+    { id: "profile_edit" as TabId, label: "회원 정보", icon: Settings },
     { id: "selling" as TabId, label: "판매 관리", icon: Package },
     { id: "buying" as TabId, label: "구매 활동", icon: ShoppingBag },
+    { id: "reviews" as TabId, label: "받은 리뷰", icon: Star },
     { id: "community" as TabId, label: "커뮤니티", icon: MessageSquare },
-    { id: "settings" as TabId, label: "설정", icon: Settings },
   ];
 
   return (
@@ -360,105 +388,50 @@ export default function MyPage({ user, setUser }: Props) {
         <div className="py-8 mb-8 border-b border-[#eee]">
           <div className="flex items-center gap-6">
             {/* Avatar */}
-            <div className="w-24 h-24 rounded-lg bg-[#333] flex items-center justify-center text-white text-3xl font-bold">
-              {user.nickName?.charAt(0).toUpperCase() || "U"}
+            <div className="w-24 h-24 rounded-lg bg-[#333] flex items-center justify-center overflow-hidden">
+              <Avatar
+                src={user.images && user.images.length > 0 ? user.images[0].imagePath : null}
+                alt="Profile"
+                className="w-full h-full text-3xl"
+                fallbackText={user.nickName || user.userName}
+              />
             </div>
 
             {/* User Info */}
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-[#111] mb-1">{user.nickName || user.userName}</h2>
               <p className="text-sm text-[#666]">{user.email}</p>
+
+              {/* Stats - moved below user info as requested */}
+              <div className="flex gap-8 mt-6 pt-6 border-t border-[#eee]">
+                <div className="flex items-center gap-2">
+                  <Package size={18} className="text-[#666]" />
+                  <span className="text-sm text-[#666]">
+                    판매중 <span className="font-bold text-[#111]">{stats.sellingCount}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Heart size={18} className="text-[#666]" />
+                  <span className="text-sm text-[#666]">
+                    찜 <span className="font-bold text-[#111]">{stats.likesCount}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Gavel size={18} className="text-[#666]" />
+                  <span className="text-sm text-[#666]">
+                    입찰 <span className="font-bold text-[#111]">{stats.bidsCount}</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Star size={18} className="text-[#666]" />
+                  <span className="text-sm text-[#666]">
+                    평점 <span className="font-bold text-[#111]">{stats.rating.toFixed(1)}</span>
+                  </span>
+                </div>
+              </div>
             </div>
 
 
-
-            {/* Edit Button */}
-            <button
-              onClick={() => {
-                setActiveTab("settings");
-                setIsEditingProfile(true);
-              }}
-              className="px-6 py-2.5 bg-[#111] text-white rounded-lg font-medium hover:bg-[#333] transition-colors"
-            >
-              프로필 수정
-            </button>
-          </div>
-
-          {/* 프로필 이미지 띄우는 버튼 */}
-          <div className="mt-4">
-            <button
-              onClick={() => setShowProfileUploader(!showProfileUploader)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-            >
-              프로필 이미지 {user.profileImage ? "변경" : "등록"}
-            </button>
-
-            {showProfileUploader && (
-              <ProfileImageUploader
-                user={user}
-                isEditing={true}
-                onUpload={(url: string) => setUser({ ...user, profileImage: url })} // 업로드 후 상태 업데이트
-                onDelete={() => setUser({ ...user, profileImage: undefined })} // 삭제 후 상태 업데이트
-              />
-            )}
-          </div>
-
-          {/* 사업자 */}
-          <div className="mt-4">
-            {user.businessNumber ? (
-              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
-                사업자 인증 완료
-              </span>
-            ) : (
-              <>
-                <button
-                  onClick={() => setShowBusinessVerify(!showBusinessVerify)}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors mt-2"
-                >
-                  사업자 번호 등록
-                </button>
-
-                {showBusinessVerify && (
-                  <BusinessVerify
-                    userId={user.userId}
-                    onVerified={(verifiedNumber) => {
-                      setUser({ ...user, businessNumber: verifiedNumber }); // 여기서 API에서 받은 번호 사용
-                      setShowBusinessVerify(false); // 완료되면 폼 숨김
-                    }}
-                    onCancel={() => setShowBusinessVerify(false)} // 취소 버튼
-                  />
-                )}
-              </>
-            )}
-          </div>
-
-
-          {/* Stats */}
-          <div className="flex gap-8 mt-6 pt-6 border-t border-[#eee]">
-            <div className="flex items-center gap-2">
-              <Package size={18} className="text-[#666]" />
-              <span className="text-sm text-[#666]">
-                판매중 <span className="font-bold text-[#111]">{stats.sellingCount}</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Heart size={18} className="text-[#666]" />
-              <span className="text-sm text-[#666]">
-                찜 <span className="font-bold text-[#111]">{stats.likesCount}</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Gavel size={18} className="text-[#666]" />
-              <span className="text-sm text-[#666]">
-                입찰 <span className="font-bold text-[#111]">{stats.bidsCount}</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Star size={18} className="text-[#666]" />
-              <span className="text-sm text-[#666]">
-                평점 <span className="font-bold text-[#111]">{stats.rating.toFixed(1)}</span>
-              </span>
-            </div>
           </div>
         </div>
 
@@ -739,45 +712,50 @@ export default function MyPage({ user, setUser }: Props) {
                 </div>
               )}
 
+
+
+              {/* Reviews Tab */}
+              {activeTab === "reviews" && (
+                <div className="space-y-8">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    <Star size={20} className="text-yellow-600" />
+                    받은 리뷰
+                  </h3>
+                  {myReviews.length === 0 ? (
+                    <div className="text-center py-12 bg-gray-50 rounded-lg">
+                      <p className="text-gray-500">받은 리뷰가 없습니다.</p>
+                    </div>
+                  ) : (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      {myReviews.map((review, idx) => (
+                        <div
+                          key={review.reviewId}
+                          className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""}`}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  size={16}
+                                  className={i < review.rating ? "text-yellow-500" : "text-gray-300"}
+                                  fill={i < review.rating ? "currentColor" : "none"}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-sm text-gray-700">{review.content}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Community Tab */}
               {activeTab === "community" && (
                 <div className="space-y-8">
-                  <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <Star size={20} className="text-yellow-600" />
-                      리뷰
-                    </h3>
-                    {myReviews.length === 0 ? (
-                      <div className="text-center py-12 bg-gray-50 rounded-lg">
-                        <p className="text-gray-500">작성한 리뷰가 없습니다.</p>
-                      </div>
-                    ) : (
-                      <div className="border border-gray-200 rounded-lg overflow-hidden">
-                        {myReviews.map((review, idx) => (
-                          <div
-                            key={review.reviewId}
-                            className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""}`}
-                          >
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="flex items-center">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    size={16}
-                                    className={i < review.rating ? "text-yellow-500" : "text-gray-300"}
-                                    fill={i < review.rating ? "currentColor" : "none"}
-                                  />
-                                ))}
-                              </div>
-                              <span className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</span>
-                            </div>
-                            <p className="text-sm text-gray-700">{review.content}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
                   <div>
                     <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                       <FileText size={20} />
@@ -847,97 +825,179 @@ export default function MyPage({ user, setUser }: Props) {
                 </div>
               )}
 
-              {/* Settings Tab */}
-              {activeTab === "settings" && (
-                <div className="space-y-8 max-w-2xl">
+              {/* Profile Edit Tab */}
+              {activeTab === "profile_edit" && (
+                <div className="space-y-8 max-w-2xl mx-auto">
+                  {/* Profile Image */}
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <UserIcon size={20} />
-                      프로필 정보
-                    </h3>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">닉네임</label>
-                        <input
-                          type="text"
-                          value={profileForm.nickName}
-                          onChange={(e) => setProfileForm({ ...profileForm, nickName: e.target.value })}
-                          disabled={!isEditingProfile}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">전화번호</label>
-                        <input
-                          type="tel"
-                          value={profileForm.phone}
-                          onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                          disabled={!isEditingProfile}
-                          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-50"
-                        />
-                      </div>
-                      {isEditingProfile && (
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">프로필 이미지</h3>
+                    <ProfileImageUploader
+                      user={user}
+                      isEditing={true}
+                      onUpload={(url: string) => setUser({
+                        ...user,
+                        images: [{ imageId: 0, refId: user.userId, imagePath: url, imageType: "USER" }]
+                      })}
+                      onDelete={() => setUser({ ...user, images: [] })}
+                    />
+                  </div>
+
+                  {/* Account Info Form */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">회원 정보 수정</h3>
+                    <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200">
+
+                      {/* Read-Only Fields */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            비밀번호 <span className="text-gray-500">(변경 시에만 입력)</span>
+                          <label className="block text-sm font-medium text-gray-500 mb-1">아이디 (이메일)</label>
+                          <div className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
+                            {user.email}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-500 mb-1">이름</label>
+                          <div className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
+                            {user.userName}
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-500 mb-1">생년월일</label>
+                          <div className="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-gray-600">
+                            {user.birthday ? new Date(user.birthday).toLocaleDateString() : '-'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="h-px bg-gray-100 my-4"></div>
+
+                      {/* Editable Fields */}
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">닉네임</label>
+                            <input
+                              type="text"
+                              value={profileForm.nickName}
+                              onChange={(e) => setProfileForm({ ...profileForm, nickName: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">전화번호</label>
+                            <input
+                              type="tel"
+                              value={profileForm.phone}
+                              onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            비밀번호 <span className="text-gray-400 text-xs font-normal">(변경 시에만 입력)</span>
                           </label>
                           <input
                             type="password"
                             value={profileForm.password}
                             onChange={(e) => setProfileForm({ ...profileForm, password: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="새 비밀번호"
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-transparent"
+                            placeholder="새 비밀번호 입력"
                           />
                         </div>
-                      )}
-                      <div className="flex gap-3">
-                        {isEditingProfile ? (
-                          <>
-                            <button
-                              onClick={handleUpdateProfile}
-                              className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                            >
-                              저장
-                            </button>
-                            <button
-                              onClick={() => {
-                                setIsEditingProfile(false);
-                                setProfileForm({
-                                  nickName: user.nickName || "",
-                                  password: "",
-                                  phone: user.phone || "",
-                                });
-                              }}
-                              className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
-                            >
-                              취소
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            onClick={() => setIsEditingProfile(true)}
-                            className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                          >
-                            수정하기
-                          </button>
-                        )}
+                      </div>
+
+                      {/* Address Section */}
+                      <div className="pt-4 border-t border-gray-100">
+                        <label className="block text-sm font-medium text-gray-700 mb-3">주소 관리</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div className="md:col-span-2">
+                            <input
+                              type="text"
+                              placeholder="우편번호"
+                              value={addressForm.zipCode}
+                              onChange={(e) => setAddressForm({ ...addressForm, zipCode: e.target.value })}
+                              className="w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black mb-2"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="도로명 주소"
+                            value={addressForm.address}
+                            onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black"
+                          />
+                          <input
+                            type="text"
+                            placeholder="상세 주소"
+                            value={addressForm.detailAddress}
+                            onChange={(e) => setAddressForm({ ...addressForm, detailAddress: e.target.value })}
+                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-4">
+                        <button
+                          onClick={handleUpdateProfile}
+                          className="px-6 py-2.5 bg-[#333] text-white rounded-lg hover:bg-black transition-colors font-medium shadow-sm"
+                        >
+                          회원 정보 수정 저장
+                        </button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-gray-200 pt-8">
-                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                      <Settings size={20} />
-                      계정 관리
-                    </h3>
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                      <h4 className="font-medium text-red-900 mb-2">회원 탈퇴</h4>
-                      <p className="text-sm text-red-700 mb-4">
-                        회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
-                      </p>
+
+
+                  {/* Business Verification */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">사업자 인증</h3>
+                    <div className="bg-white p-6 rounded-lg border border-gray-200">
+                      {user.businessNumber ? (
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm text-gray-500 mb-1">사업자 등록번호</p>
+                            <p className="font-medium text-gray-900">{user.businessNumber}</p>
+                          </div>
+                          <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full">인증됨</span>
+                        </div>
+                      ) : (
+                        showBusinessVerify ? (
+                          <BusinessVerify
+                            userId={user.userId}
+                            onVerified={(bn) => {
+                              setUser({ ...user, businessNumber: bn });
+                              setShowBusinessVerify(false);
+                            }}
+                            onCancel={() => setShowBusinessVerify(false)}
+                          />
+                        ) : (
+                          <button
+                            onClick={() => setShowBusinessVerify(true)}
+                            className="px-4 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-medium transition-colors"
+                          >
+                            사업자 인증하기
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Account Management */}
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">계정 관리</h3>
+                    <div className="bg-red-50 border border-red-100 rounded-lg p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                      <div>
+                        <h4 className="font-bold text-red-900 mb-1">회원 탈퇴</h4>
+                        <p className="text-sm text-red-700">
+                          회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.
+                        </p>
+                      </div>
                       <button
                         onClick={handleDeleteAccount}
-                        className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                        className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium whitespace-nowrap"
                       >
                         회원 탈퇴
                       </button>
@@ -949,7 +1009,6 @@ export default function MyPage({ user, setUser }: Props) {
           )}
         </div>
       </div>
-
       <ShippingModal
         isOpen={shippingModalOpen}
         onClose={() => setShippingModalOpen(false)}
