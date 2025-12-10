@@ -15,7 +15,7 @@ public class ProductViewLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long ProductViewLogId;
+    private Long productViewLogId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")

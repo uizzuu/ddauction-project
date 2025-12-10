@@ -2193,10 +2193,16 @@ export async function fetchProductDetail(productId: number): Promise<TYPE.Produc
   // 로그인 상태: incrementView는 항상 true (백엔드가 알아서 처리)
 
   const url = `${API_BASE_URL}${SPRING_API}/products/${productId}?incrementView=${incrementView}`;
+   console.log("📌 요청 URL:", url);
+  console.log("📌 incrementView:", incrementView);
+  console.log("📌 token:", token);
 
-  const response = await fetch(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {}
-  });
+  const headers: Record<string, string> = {
+  "Content-Type": "application/json",
+};
+
+const response = await fetch(url, { headers });
+
 
   if (!response.ok) throw new Error("상품 조회 실패");
   return response.json();

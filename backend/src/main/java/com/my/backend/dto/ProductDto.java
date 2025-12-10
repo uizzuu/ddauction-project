@@ -117,7 +117,7 @@ public class ProductDto {
     // DTO → Entity
     public Product toEntity(Users seller, Bid bid, Payment payment) {
         return Product.builder()
-                .productId(this.productId)
+//                .productId(this.productId)
                 .seller(seller)
                 .title(this.title)
                 .content(this.content)
