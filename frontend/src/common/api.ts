@@ -1,7 +1,7 @@
 import type * as TYPE from "./types";
 import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
-import type { ArticleType } from './types';
+import type { ArticleType,Notification } from './types';
 
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
@@ -2344,9 +2344,72 @@ export async function fetchRanking(category?: string): Promise<TYPE.Product[]> {
   return text ? JSON.parse(text) : [];
 }
 
+// // ===================== 상품 조회수 제어 =====================
+
+// // 조회수 증가 여부를 판단하는 함수
+// function shouldIncrementView(productId: number): boolean {
+//   const STORAGE_KEY = `product_view_${productId}`;
+//   const ONE_HOUR = 60 * 60 * 1000; // 1시간 (밀리초)
+
+//   try {
+//     const lastViewedStr = localStorage.getItem(STORAGE_KEY);
+
+//     if (!lastViewedStr) {
+//       // 처음 보는 경우
+//       localStorage.setItem(STORAGE_KEY, Date.now().toString());
+//       return true;
+//     }
+
+//     const lastViewed = parseInt(lastViewedStr, 10);
+//     const now = Date.now();
+
+//     if (now - lastViewed >= ONE_HOUR) {
+//       // 1시간이 지난 경우
+//       localStorage.setItem(STORAGE_KEY, now.toString());
+//       return true;
+//     }
+
+//     // 1시간이 안 지난 경우
+//     return false;
+//   } catch (error) {
+//     console.warn("localStorage 접근 실패:", error);
+//     return true; // 기본적으로 조회수 증가
+//   }
+// }
+
+// // 🔥 상품 상세 조회 (조회수 제어 포함)
+// export async function fetchProductDetail(productId: number): Promise<TYPE.Product> {
+//   const token = localStorage.getItem("token");
+
+//   // 🔥 비로그인 유저만 프론트에서 1시간 체크
+//   // 로그인 유저는 백엔드에서 자동으로 체크함
+//   let incrementView = true;
+
+//   if (!token) {
+//     // 비로그인 상태: localStorage로 1시간 체크
+//     incrementView = shouldIncrementView(productId);
+//   }
+//   // 로그인 상태: incrementView는 항상 true (백엔드가 알아서 처리)
+
+//   const url = `${API_BASE_URL}${SPRING_API}/products/${productId}?incrementView=${incrementView}`;
+//   console.log("📌 요청 URL:", url);
+//   console.log("📌 incrementView:", incrementView);
+//   console.log("📌 token:", token);
+
+//   const headers: Record<string, string> = {
+//     "Content-Type": "application/json",
+//   };
+
+//   const response = await fetch(url, { headers });
+
+
+//   if (!response.ok) throw new Error("상품 조회 실패");
+//   return response.json();
+// }
+
 // ===================== 상품 조회수 제어 =====================
 
-// 조회수 증가 여부를 판단하는 함수
+// ✅ 비로그인 유저용: 1시간에 1번만 조회수 증가
 function shouldIncrementView(productId: number): boolean {
   const STORAGE_KEY = `product_view_${productId}`;
   const ONE_HOUR = 60 * 60 * 1000; // 1시간 (밀리초)
@@ -2377,36 +2440,63 @@ function shouldIncrementView(productId: number): boolean {
   }
 }
 
-// 🔥 상품 상세 조회 (조회수 제어 포함)
+// ✅ 로그인 유저용: 같은 토큰은 해당 상품 조회수 한 번만 올림
+function shouldIncrementViewForToken(productId: number, token: string): boolean {
+  // 토큰을 키에 그대로 쓰면 너무 길 수 있으니 일부만 잘라 써도 됨
+  const safeToken = token.trim();
+  const STORAGE_KEY = `product_view_${productId}_${safeToken}`;
+
+  try {
+    const alreadyViewed = localStorage.getItem(STORAGE_KEY);
+
+    if (!alreadyViewed) {
+      // 이 토큰으로는 처음 보는 상품
+      localStorage.setItem(STORAGE_KEY, "true");
+      return true;
+    }
+
+    // 이미 이 토큰으로 본 적 있음 → 더 이상 조회수 안 올림
+    return false;
+  } catch (error) {
+    console.warn("localStorage 접근 실패:", error);
+    // localStorage 못 쓰는 환경이면 그냥 한 번은 올려주자
+    return true;
+  }
+}
+
+// 🔥 상품 상세 조회 (조회수 제어 + 토큰 포함)
 export async function fetchProductDetail(productId: number): Promise<TYPE.Product> {
   const token = localStorage.getItem("token");
 
-  // 🔥 비로그인 유저만 프론트에서 1시간 체크
-  // 로그인 유저는 백엔드에서 자동으로 체크함
-  let incrementView = true;
+  let incrementView: boolean;
 
-  if (!token) {
-    // 비로그인 상태: localStorage로 1시간 체크
+  if (token) {
+    // ✅ 로그인 유저: 같은 토큰은 한 번만 증가
+    incrementView = shouldIncrementViewForToken(productId, token);
+  } else {
+    // ✅ 비로그인 유저: 1시간 기준으로 증가
     incrementView = shouldIncrementView(productId);
   }
-  // 로그인 상태: incrementView는 항상 true (백엔드가 알아서 처리)
 
   const url = `${API_BASE_URL}${SPRING_API}/products/${productId}?incrementView=${incrementView}`;
   console.log("📌 요청 URL:", url);
   console.log("📌 incrementView:", incrementView);
-  console.log("📌 token:", token);
+  console.log("📌 token exists:", !!token);
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
   };
 
-  const response = await fetch(url, { headers });
+  // ✅ 토큰이 있으면 Authorization 헤더에 실어서 백엔드로 전달
+  if (token) {
+    headers.Authorization = `Bearer ${token.trim()}`;
+  }
 
+  const response = await fetch(url, { headers });
 
   if (!response.ok) throw new Error("상품 조회 실패");
   return response.json();
 }
-
 
 // 프로필 이미지 업로드
 export const uploadProfileImage = async (userId: number, file: File): Promise<string> => {
@@ -2458,4 +2548,33 @@ export const getProfileImage = async (userId: number): Promise<string | null> =>
 
   const data = await response.json();
   return data.imageUrl || data.profileImage || null;
+};
+
+//알림 조회
+export const getNotifications = async (userId: number): Promise<Notification[]> => {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/notifications/${userId}`, {
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("알림 조회 실패");
+  }
+
+  return response.json();
+};
+
+// 알림 읽음 처리
+export const markNotificationAsRead = async (notificationId: number): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/notifications/${notificationId}/read`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("읽음 처리 실패");
+  }
 };

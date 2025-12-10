@@ -1,16 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { X, Bell } from "lucide-react";
-import { API_BASE_URL } from "../../common/api";
-import type { NotificationStatus } from "../../common/enums";
-
-export type Notification = {
-  notificationId: number;
-  userId?: number;
-  notificationStatus?: NotificationStatus;
-  content: string;
-  isRead: boolean;
-  createdAt: string;
-};
+import { API_BASE_URL, getNotifications, markNotificationAsRead } from "../../common/api";
+import type { Notification } from "../../common/types";
 
 type Props = {
   isOpen: boolean;
@@ -22,36 +13,73 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
   const modalRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
 
-  // 사용자 ID 가져오기 (최초 1회만)
-  const userIdRef = useRef<number | undefined>(propsUserId);
-
-  useEffect(() => {
-    if (!userIdRef.current) {
-      const userInfo = localStorage.getItem("userInfo");
-      if (userInfo) {
-        userIdRef.current = JSON.parse(userInfo).userId;
+  // 사용자 ID 가져오기
+  const getUserId = (): number | null => {
+    if (propsUserId) return propsUserId;
+    
+    const userInfo = localStorage.getItem("userInfo");
+    if (userInfo) {
+      try {
+        return JSON.parse(userInfo).userId;
+      } catch (e) {
+        console.error("userInfo 파싱 실패:", e);
       }
     }
-  }, []);
+    return null;
+  };
 
-  // WebSocket 연결 (최초 1회)
+  // 기존 알림 불러오기
   useEffect(() => {
-    const userId = userIdRef.current;
-    if (!userId) return;
+    const userId = getUserId();
+    if (!userId) {
+      console.error("❌ userId를 찾을 수 없습니다.");
+      return;
+    }
 
-    const wsUrl =
-      API_BASE_URL.replace("http", "ws").replace("/api", "") +
-      `/ws/notifications?userId=${userId}`;
+    // ✅ api.ts 함수 사용
+    getNotifications(userId)
+      .then(data => {
+        console.log("📥 기존 알림 로드:", data);
+        setNotifications(data);
+      })
+      .catch(err => console.error("알림 로드 실패:", err));
+  }, [propsUserId]);
 
+  // WebSocket 연결
+  useEffect(() => {
+    const userId = getUserId();
+    if (!userId) {
+      console.error("❌ WebSocket 연결 실패: userId 없음");
+      return;
+    }
+
+    const wsUrl = API_BASE_URL.replace("http", "ws").replace("/api", "") + 
+                  `/ws/notifications?userId=${userId}`;
+
+    console.log("🔗 WebSocket 연결 시도:", wsUrl);
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
 
-    ws.onopen = () => console.log("🔗 WebSocket Connected:", userId);
-    ws.onerror = (error) => console.error("❌ WebSocket error:", error);
+    ws.onopen = () => {
+      console.log("✅ WebSocket 연결 성공! userId:", userId);
+      setIsConnected(true);
+    };
+
+    ws.onerror = (error) => {
+      console.error("❌ WebSocket 에러:", error);
+      setIsConnected(false);
+    };
+
+    ws.onclose = () => {
+      console.log("🔌 WebSocket 연결 종료");
+      setIsConnected(false);
+    };
 
     ws.onmessage = (event) => {
       try {
+        console.log("📩 새 알림 수신:", event.data);
         const newNoti: Notification = JSON.parse(event.data);
         setNotifications((prev) => [newNoti, ...prev]);
       } catch (e) {
@@ -60,12 +88,13 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
     };
 
     return () => {
-      ws.close();
-      console.log("🔌 WebSocket Closed");
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
     };
-  }, []);
+  }, [propsUserId]);
 
-  // ➤ 외부 클릭으로 모달 닫기 (버블링 방지)
+  // 외부 클릭으로 모달 닫기
   useEffect(() => {
     if (!isOpen) return;
 
@@ -79,15 +108,28 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
     return () => document.removeEventListener("mousedown", handleClick);
   }, [isOpen, onClose]);
 
-  // 읽음 처리
-  const handleNotificationClick = useCallback((id: number) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.notificationId === id ? { ...n, isRead: true } : n))
-    );
+  // ✅ 읽음 처리 - api.ts 함수 사용
+  const handleNotificationClick = useCallback(async (id: number) => {
+    try {
+      await markNotificationAsRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.notificationId === id ? { ...n, isRead: true } : n))
+      );
+    } catch (err) {
+      console.error("읽음 처리 실패:", err);
+    }
   }, []);
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+  // ✅ 전체 읽음 처리 - api.ts 함수 사용
+  const markAllAsRead = async () => {
+    const unreadIds = notifications.filter(n => !n.isRead).map(n => n.notificationId);
+    
+    try {
+      await Promise.all(unreadIds.map(id => markNotificationAsRead(id)));
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error("전체 읽음 처리 실패:", err);
+    }
   };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
@@ -104,7 +146,7 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
     return date.toLocaleDateString("ko-KR");
   };
 
-  const getTitle = (status?: NotificationStatus) => {
+  const getTitle = (status?: string) => {
     switch (status) {
       case "BID_WIN": return "🎉 낙찰 성공";
       case "BID_LOSE": return "📢 낙찰 실패";
@@ -116,7 +158,7 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
     }
   };
 
-  const getBg = (status?: NotificationStatus) => {
+  const getBg = (status?: string) => {
     switch (status) {
       case "BID_WIN": return "bg-green-50 border-l-4 border-green-500";
       case "BID_LOSE": return "bg-red-50 border-l-4 border-red-500";
@@ -143,6 +185,9 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
             <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" />
           )}
           <span className="font-bold text-gray-800 ml-5">알림</span>
+          <span className={`ml-2 text-xs ${isConnected ? 'text-green-500' : 'text-red-500'}`}>
+            {isConnected ? '●' : '○'}
+          </span>
         </div>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
           <X size={18} />
@@ -177,14 +222,16 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
       </div>
 
       {/* 전체 읽음 처리 */}
-      <div className="p-3 border-t bg-gray-50 text-center">
-        <button
-          onClick={markAllAsRead}
-          className="text-xs text-gray-500 hover:text-[#111] font-medium"
-        >
-          전체 읽음 처리
-        </button>
-      </div>
+      {unreadCount > 0 && (
+        <div className="p-3 border-t bg-gray-50 text-center">
+          <button
+            onClick={markAllAsRead}
+            className="text-xs text-gray-500 hover:text-[#111] font-medium"
+          >
+            전체 읽음 처리 ({unreadCount})
+          </button>
+        </div>
+      )}
     </div>
   );
 }
