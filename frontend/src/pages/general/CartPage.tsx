@@ -161,10 +161,25 @@ export default function CartPage() {
                                 <span className="font-bold text-xl text-[#111]">{formatPrice(totalPrice)}</span>
                             </div>
 
-                            <button
+                            {/* <button
                                 className="w-full py-3 bg-[#111] text-white rounded-lg font-bold hover:bg-[#666] transition-colors flex items-center justify-center gap-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
                                 disabled={selectedItems.length === 0}
                                 onClick={() => alert("주문 기능은 준비 중입니다.")}
+                            >
+                                주문하기 <ArrowRight size={16} />
+                            </button> */}
+                            <button
+                                className="w-full py-3 bg-[#111] text-white rounded-lg font-bold hover:bg-[#666] transition-colors flex items-center justify-center gap-2 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                                disabled={selectedItems.length === 0}
+                                onClick={() => {
+                                    if (selectedItems.length === 0) {
+                                        alert("결제할 상품을 선택해주세요.");
+                                        return;
+                                    }
+                                    // 장바구니 결제 페이지로 이동
+                                    const itemIds = selectedItems.join(",");
+                                    navigate(`/payment?cart=true&items=${itemIds}`);
+                                }}
                             >
                                 주문하기 <ArrowRight size={16} />
                             </button>
