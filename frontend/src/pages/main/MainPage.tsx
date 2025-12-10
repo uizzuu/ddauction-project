@@ -59,27 +59,29 @@ function CategoryPrevArrow({ onClick, visible }: { onClick: () => void; visible:
   );
 }
 
-// 배너용 화살표 (Hover Zone 방식 - 독립적인 hover)
+// 배너용 화살표 (Hover Zone 방식 - 독립적인 hover - 50% Split)
 function BannerNextArrow(props: any) {
-  const { onClick } = props;
+  const { onClick, visible } = props;
   return (
     <div
       onClick={onClick}
-      className="absolute top-0 bottom-0 right-2 w-[40px] z-10 flex items-center justify-center transition-opacity opacity-0 hover:opacity-100 cursor-pointer"
+      className={`absolute top-0 bottom-0 right-0 w-[50%] z-10 flex items-center justify-end pr-4 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"
+        }`}
     >
-      <ChevronRight size={48} className="text-white drop-shadow-lg" />
+      <ChevronRight size={48} className="text-white mix-blend-difference" />
     </div>
   );
 }
 
 function BannerPrevArrow(props: any) {
-  const { onClick } = props;
+  const { onClick, visible } = props;
   return (
     <div
       onClick={onClick}
-      className="absolute top-0 bottom-0 left-2 w-[40px] z-10 flex items-center justify-center transition-opacity opacity-0 hover:opacity-100 cursor-pointer"
+      className={`absolute top-0 bottom-0 left-0 w-[50%] z-10 flex items-center justify-start pl-4 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"
+        }`}
     >
-      <ChevronLeft size={48} className="text-white drop-shadow-lg" />
+      <ChevronLeft size={48} className="text-white mix-blend-difference" />
     </div>
   );
 }
@@ -141,6 +143,23 @@ export default function Main() {
     loadData();
   }, []);
 
+  // Mouse Move Handler for Split Hover
+  const [hoverSide, setHoverSide] = useState<"left" | "right" | null>(null);
+
+  const handleBannerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const { left, width } = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - left;
+    if (x < width / 2) {
+      setHoverSide("left");
+    } else {
+      setHoverSide("right");
+    }
+  };
+
+  const handleBannerMouseLeave = () => {
+    setHoverSide(null);
+  };
+
   const bannerSettings = {
     dots: false,
     infinite: true,
@@ -149,8 +168,8 @@ export default function Main() {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 5000,
-    nextArrow: <BannerNextArrow />,
-    prevArrow: <BannerPrevArrow />,
+    nextArrow: <BannerNextArrow visible={hoverSide === "right"} />,
+    prevArrow: <BannerPrevArrow visible={hoverSide === "left"} />,
     beforeChange: (_: number, next: number) => setCurrentSlide(next),
   };
 
@@ -158,7 +177,11 @@ export default function Main() {
     <div className="w-full bg-white pb-20">
       {/* 1. Banner Section (Fixed Size, Rounded) */}
       <div className="w-full mb-10 mt-10">
-        <div className="w-full max-w-[1280px] mx-auto h-[400px] relative group rounded-[12px] overflow-hidden bg-[#f4f4f4]">
+        <div
+          className="w-full max-w-[1280px] mx-auto h-[400px] relative group rounded-[12px] overflow-hidden bg-[#f4f4f4]"
+          onMouseMove={handleBannerMouseMove}
+          onMouseLeave={handleBannerMouseLeave}
+        >
           {banners.length > 0 ? (
             <>
               <Slider {...bannerSettings} className="h-full">
@@ -209,7 +232,7 @@ export default function Main() {
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto md:px-0 mt-0">
+      <div className="containerr mx-auto md:px-0 mt-0">
 
         {/* 2. Category Shortcuts (Slider) */}
         <section className="mb-20 relative w-fit mx-auto max-w-full">

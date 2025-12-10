@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import CheckboxStyle from "../ui/CheckboxStyle";
 import type { User, ProductQna, Product } from "../../common/types";
 import { ROLE } from "../../common/enums";
 import {
@@ -216,15 +217,13 @@ export default function ProductQnA({
               className="w-full px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm resize-none"
             />
             <div className="flex justify-between items-center">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
+              <div className="flex items-center gap-2">
+                <CheckboxStyle
                   checked={isSecretQuestion}
-                  onChange={(e) => setIsSecretQuestion(e.target.checked)}
-                  className="w-4 h-4 accent-[#111]"
+                  onChange={(checked) => setIsSecretQuestion(checked)}
+                  label="비밀글"
                 />
-                <span className="text-sm text-[#333]">비밀글</span>
-              </label>
+              </div>
               <button
                 onClick={handleCreateQuestion}
                 className="px-6 py-2.5 bg-[#111] text-white rounded-lg font-bold text-sm hover:bg-[#333] transition-colors shadow-sm"
@@ -317,15 +316,13 @@ export default function ProductQnA({
                             }
                             className="w-full px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm resize-none"
                           />
-                          <label className="flex items-center gap-2 cursor-pointer mb-2">
-                            <input
-                              type="checkbox"
+                          <div className="mt-2 flex items-center gap-2">
+                            <CheckboxStyle
                               checked={editingQuestionIsSecret}
-                              onChange={(e) => setEditingQuestionIsSecret(e.target.checked)}
-                              className="w-4 h-4 accent-[#111]"
+                              onChange={(checked) => setEditingQuestionIsSecret(checked)}
+                              label="비밀글"
                             />
-                            <span className="text-sm text-[#333]">비밀글</span>
-                          </label>
+                          </div>
                           <div className="flex gap-2 mt-2">
                             <button
                               onClick={() => saveEditingQuestion(q.productQnaId)}

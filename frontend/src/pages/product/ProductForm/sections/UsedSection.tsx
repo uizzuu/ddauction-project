@@ -1,3 +1,5 @@
+import CheckboxStyle from "../../../../components/ui/CheckboxStyle";
+
 type Props = {
     price: string;
     onChangePrice: (val: string) => void;
@@ -67,16 +69,11 @@ export default function UsedSection({ price, onChangePrice, uploading, form, upd
 
                 {/* Simple inline checkboxes */}
                 <div className="flex flex-wrap gap-4 mb-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
+                        <CheckboxStyle
                             checked={(form.deliveryAvailable || []).includes("직거래")}
                             onChange={() => handleDeliveryChange("직거래")}
-                            disabled={uploading}
-                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                            label="직거래"
                         />
-                        <span className="text-sm text-gray-700">직거래</span>
-                    </label>
 
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input
@@ -95,39 +92,39 @@ export default function UsedSection({ price, onChangePrice, uploading, form, upd
                         />
                         <span className="text-sm text-gray-700">편의점택배</span>
                     </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
+                        <CheckboxStyle
                             checked={(form.deliveryAvailable || []).includes("준등기")}
                             onChange={() => handleDeliveryChange("준등기")}
-                            disabled={uploading}
-                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                            label="준등기"
                         />
-                        <span className="text-sm text-gray-700">준등기</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
+                        <CheckboxStyle
                             checked={(form.deliveryAvailable || []).includes("등기")}
                             onChange={() => handleDeliveryChange("등기")}
-                            disabled={uploading}
-                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                            label="등기"
                         />
-                        <span className="text-sm text-gray-700">등기</span>
-                    </label>
 
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
+                        <CheckboxStyle
                             checked={(form.deliveryAvailable || []).includes("택배")}
                             onChange={() => handleDeliveryChange("택배")}
-                            disabled={uploading}
-                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                            label="택배"
                         />
-                        <span className="text-sm text-gray-700">택배</span>
-                    </label>
+                        {/* <CheckboxStyle
+                            checked={form.deliveryIncluded}
+                            onChange={(checked) => updateForm("deliveryIncluded", checked)}
+                            label="만원 이상 무료배송"
+                        /> */}
+                </div>
+
+                <div className="flex flex-wrap gap-4 mb-3">
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <CheckboxStyle
+                            checked={true}
+                            disabled={true}
+                            onChange={() => { }}
+                            label="안전결제 (필수)"
+                        />
+                        <p className="text-xs text-gray-500 mt-1 ml-7">구매자가 물품 수령 후 구매확정을 해야 정산됩니다.</p>
+                    </div>
                 </div>
 
                 {/* Compact detail inputs - grid layout */}

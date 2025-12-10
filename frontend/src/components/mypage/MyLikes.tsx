@@ -61,12 +61,12 @@ export default function MyLikes({
                       const parent = e.currentTarget.parentElement;
                       if (parent) {
                         parent.innerHTML =
-                          '<div class="no-image-txt">이미지 없음</div>';
+                          '<></>';
                       }
                     }}
                   />
                 ) : (
-                  <div className="no-image-txt">이미지 없음</div>
+                  <></>
                 )}
               </div>
 

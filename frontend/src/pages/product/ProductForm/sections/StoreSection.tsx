@@ -1,4 +1,4 @@
-
+import CheckboxStyle from "../../../../components/ui/CheckboxStyle";
 
 type Props = {
     price: string; // This is 'startingPrice' (Sale Price)
@@ -10,7 +10,6 @@ type Props = {
 
 export default function StoreSection({ price, onChangePrice, uploading, form, updateForm }: Props) {
 
-    // 1. Forward Calc: Original + Discount -> Sale
     // 1. Forward Calc: Original + Discount -> Sale
     const calculateSalePrice = (originalStr: string, discountStr: string) => {
         const original = Number(originalStr.replace(/[^0-9]/g, ''));
@@ -141,17 +140,12 @@ export default function StoreSection({ price, onChangePrice, uploading, form, up
                 </div>
             </div>
 
-            <div className="flex items-center gap-2">
-                <input
-                    type="checkbox"
-                    id="deliveryIncluded"
+            <div className="flex items-center gap-3 bg-gray-50 p-4 rounded-lg">
+                <CheckboxStyle
                     checked={form.deliveryIncluded || false}
-                    onChange={(e) => updateForm("deliveryIncluded", e.target.checked)}
-                    className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black cursor-pointer"
+                    onChange={(checked) => updateForm("deliveryIncluded", checked)}
+                    label="배송비 포함"
                 />
-                <label htmlFor="deliveryIncluded" className="text-sm text-gray-700 cursor-pointer">
-                    배송비 포함 (무료배송)
-                </label>
             </div>
         </div>
     );

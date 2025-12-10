@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { UserChatProps, PrivateChat, ChatMessagePayload, User } from "../../common/types";
-import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages } from "../../common/api";
+import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages, API_BASE_URL } from "../../common/api";
+import { getCategoryName } from "../../common/util";
 
 // -----------------------------
 // UserChat 컴포넌트
@@ -111,6 +112,7 @@ export default function UserChat({ user }: UserChatProps) {
   // Product Info Fetching
   // -----------------------------
   const [product, setProduct] = useState<any>(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     if (!selectedProductId) {
@@ -288,23 +290,31 @@ export default function UserChat({ user }: UserChatProps) {
               )}
             </div>
 
-            {/* Sticky Product Header */}
             {product && (
               <div
                 className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-3 flex items-center gap-3 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => navigate(`/products/${product.productId}`)}
               >
-                <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0">
-                  <img
-                    src={product.images?.[0]?.imagePath || "/placeholder.png"}
-                    alt={product.title}
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                  {product.images?.[0]?.imagePath && !imageError ? (
+                    <img
+                      src={
+                        product.images[0].imagePath.startsWith("http")
+                          ? product.images[0].imagePath
+                          : `${API_BASE_URL}${product.images[0].imagePath}`
+                      }
+                      alt={product.title}
+                      className="w-full h-full object-cover"
+                      onError={() => setImageError(true)}
+                    />
+                  ) : (
+                    <></>
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-xs font-bold text-[#333] bg-blue-50 px-1.5 py-0.5 rounded">
-                      {product.productCategoryType || "기타"}
+                      {getCategoryName(product.productCategoryType)}
                     </span>
                     <h3 className="text-sm font-medium text-gray-900 truncate">{product.title}</h3>
                   </div>

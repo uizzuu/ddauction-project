@@ -1,4 +1,6 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
+import CheckboxStyle from "../../components/ui/CheckboxStyle";
+import { useRef, useCallback } from "react";
 import { useParams, useNavigate, NavLink } from "react-router-dom";
 import {
   getArticleById,
@@ -472,15 +474,11 @@ export default function ArticleDetail({ user }: Props) {
               className="w-full text-2xl font-bold text-[#111] mb-2 px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111]"
               placeholder="제목을 입력하세요"
             />
-            <label className="flex items-center gap-2 mb-4 cursor-pointer w-fit">
-              <input
-                type="checkbox"
-                checked={isSecret}
-                onChange={(e) => setIsSecret(e.target.checked)}
-                className="w-4 h-4 accent-[#111]"
-              />
-              <span className="text-sm text-[#333]">비밀글 설정</span>
-            </label>
+            <CheckboxStyle
+              checked={isSecret}
+              onChange={(checked) => setIsSecret(checked)}
+              label="비밀글 설정"
+            />
           </>
         ) : (
           <h1 className="text-2xl font-bold text-[#111] mb-4 flex items-center gap-2">

@@ -57,8 +57,8 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
             await toggleBookmark(product.productId, token);
             // 헤더 카운트 즉시 업데이트
             window.dispatchEvent(new Event("cart-updated"));
-             // 찜 업데이트 이벤트 발생
-        window.dispatchEvent(new Event("wishlist-updated"));
+            // 찜 업데이트 이벤트 발생
+            window.dispatchEvent(new Event("wishlist-updated"));
             console.log("Like toggled, event dispatched");
         } catch (err) {
             console.error(err);
@@ -84,11 +84,11 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {
                             const parent = e.currentTarget.parentElement;
-                            if (parent) parent.innerHTML = '<div class="flex justify-center items-center w-full h-full text-[#aaa] text-xs">이미지 없음</div>';
+                            if (parent) parent.innerHTML = '<div class="flex justify-center items-center w-full h-full text-[#aaa] text-xs"></div>';
                         }}
                     />
                 ) : (
-                    <div className="flex justify-center items-center w-full h-full text-[#aaa] text-xs">이미지 없음</div>
+                    <div className="flex justify-center items-center w-full h-full text-[#aaa] text-xs"></div>
                 )}
 
                 {/* Status Overlay (Sold/Closed) */}
@@ -114,7 +114,9 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                 >
                     <Heart
                         size={20}
-                        className={isLiked ? "fill-[#111] text-[#111]" : "text-[#333] hover:fill-[#111] hover:text-[#111]"}
+                        className={isLiked
+                            ? "fill-red-500 text-red-500 drop-shadow-sm"
+                            : "text-white mix-blend-difference hover:opacity-80"}
                     />
                 </button>
             </div>

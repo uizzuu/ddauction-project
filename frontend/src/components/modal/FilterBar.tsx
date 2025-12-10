@@ -1,5 +1,6 @@
 import { Menu, ChevronDown, Check } from "lucide-react";
-import { useState, useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
+import CheckboxStyle from "../ui/CheckboxStyle";
 import { PRODUCT_CATEGORIES, type ProductCategoryType, DELIVERY_TYPES, type DeliveryType } from "../../common/enums";
 
 const BENEFITS = [
@@ -324,14 +325,12 @@ export default function FilterBar({
                             ))
                         ) : (
                             BENEFITS.map((b) => (
-                                <label key={b.id} className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="accent-black w-4 h-4"
+                                <label key={b.id} className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                    <CheckboxStyle
                                         checked={tempBenefits.includes(b.id)}
-                                        onChange={(e) => {
-                                            if (e.target.checked) setTempBenefits([...tempBenefits, b.id]);
-                                            else setTempBenefits(tempBenefits.filter(id => id !== b.id));
+                                        onChange={(checked) => {
+                                            if (checked) setTempBenefits([...tempBenefits, b.id]);
+                                            else setTempBenefits(tempBenefits.filter((id) => id !== b.id));
                                         }}
                                     />
                                     <span className="text-sm text-[#333]">{b.label}</span>

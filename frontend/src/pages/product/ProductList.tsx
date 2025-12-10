@@ -141,7 +141,7 @@ export default function ProductSearchPage() {
   };
 
   return (
-    <div className="container">
+    <div className="containerr">
 
       {/* Filter Bar & Modal */}
       <div className="mb-6">

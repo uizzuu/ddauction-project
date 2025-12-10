@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import DatePickerStyle from "../../components/ui/DatePickerStyle";
 import { useNavigate } from "react-router-dom";
 import { Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText, Search, Check, AlertCircle } from "lucide-react";
 import { COURIER_OPTIONS } from "../../common/enums";
@@ -121,7 +122,7 @@ export default function MyPage({ user, setUser }: Props) {
 
         if (data.addressType === "R") {
           if (data.bname !== "") extraAddress += data.bname;
-          if (data.buildingName !== "") extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
+          if (data.buildingName !== "") extraAddress += extraAddress !== "" ? `, ${data.buildingName} ` : data.buildingName;
           fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
         }
 
@@ -580,7 +581,18 @@ export default function MyPage({ user, setUser }: Props) {
                       {/* Birthday (New) */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">생년월일</label>
-                        <input type="date" value={profileForm.birthday} onChange={(e) => setProfileForm({ ...profileForm, birthday: e.target.value })} className="w-full px-4 py-2 border border-gray-300 rounded-lg" />
+                        <DatePickerStyle
+                          selected={profileForm.birthday ? new Date(profileForm.birthday) : null}
+                          onChange={(date) => {
+                            if (date) {
+                              const year = date.getFullYear();
+                              const month = String(date.getMonth() + 1).padStart(2, "0");
+                              const day = String(date.getDate()).padStart(2, "0");
+                              setProfileForm({ ...profileForm, birthday: `${year} -${month} -${day} ` });
+                            }
+                          }}
+                          placeholder="생년월일 선택"
+                        />
                       </div>
 
                       {/* Phone Field with Verification */}
@@ -691,7 +703,7 @@ export default function MyPage({ user, setUser }: Props) {
                 </div>
               )}
               {activeTab === "reviews" && (
-                <div className="space-y-8"><h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Star size={20} className="text-yellow-600" /> 받은 리뷰</h3>{myReviews.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">받은 리뷰가 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{myReviews.map((review, idx) => <div key={review.reviewId} className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""}`}><div className="flex items-center gap-2 mb-2"><div className="flex items-center">{[...Array(5)].map((_, i) => <Star key={i} size={16} className={i < review.rating ? "text-yellow-500" : "text-gray-300"} fill={i < review.rating ? "currentColor" : "none"} />)}</div><span className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</span></div><p className="text-sm text-gray-700">{review.content}</p></div>)}</div>}</div>
+                <div className="space-y-8"><h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2"><Star size={20} className="text-yellow-600" /> 받은 리뷰</h3>{myReviews.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">받은 리뷰가 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{myReviews.map((review, idx) => <div key={review.reviewId} className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""}`}><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><div className="flex items-center">{[...Array(5)].map((_, i) => <Star key={i} size={16} className={i < review.rating ? "text-yellow-500" : "text-gray-300"} fill={i < review.rating ? "currentColor" : "none"} />)}</div><span className="text-sm font-bold text-gray-900">{review.nickName}</span></div><span className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</span></div><p className="text-sm text-gray-700">{review.content}</p></div>)}</div>}</div>
               )}
               {activeTab === "community" && (
                 <div className="space-y-8">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import CheckboxStyle from "../../components/ui/CheckboxStyle";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchProductById, getWinningInfo, preparePayment, completePayment, fetchUserAddress, fetchMe, updateUserAddress } from "../../common/api";
 
@@ -380,15 +381,13 @@ export default function PaymentPage() {
                       placeholder="기본 주소 + 상세 주소"
                       className="w-full border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
                     />
-                    <label className="flex items-center gap-2 text-sm text-gray-600 mt-2 cursor-pointer">
-                      <input
-                        type="checkbox"
+                    <div className="mt-2">
+                      <CheckboxStyle
                         checked={saveForNextTime}
-                        onChange={(e) => setSaveForNextTime(e.target.checked)}
-                        className="w-4 h-4 rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        onChange={(checked) => setSaveForNextTime(checked)}
+                        label="이 정보를 다음 결제에도 사용하기"
                       />
-                      <span>이 정보를 다음 결제에도 사용하기</span>
-                    </label>
+                    </div>
                   </div>
                 </div>
               </div>

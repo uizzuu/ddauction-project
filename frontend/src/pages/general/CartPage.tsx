@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import CheckboxStyle from "../../components/ui/CheckboxStyle";
 import { Trash2, ShoppingBag, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatPrice, getCartItems, removeFromCart } from "../../common/util";
@@ -51,7 +52,7 @@ export default function CartPage() {
     }
 
     return (
-        <div className="container">
+        <div className="containerr">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
                 <ShoppingBag className="text-[#111]" />
                 장바구니
@@ -74,15 +75,13 @@ export default function CartPage() {
                     <div className="flex-1">
                         {/* Select All */}
                         <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-4">
-                            <label className="flex items-center gap-2 cursor-pointer select-none">
-                                <input
-                                    type="checkbox"
+                            <div className="flex items-center gap-2">
+                                <CheckboxStyle
                                     checked={selectedItems.length === cartItems.length && cartItems.length > 0}
-                                    onChange={handleSelectAll}
-                                    className="w-4 h-4 text-[#111] rounded border-gray-300 focus:ring-[#111]"
+                                    onChange={() => handleSelectAll()}
+                                    label={`전체 선택 (${selectedItems.length}/${cartItems.length})`}
                                 />
-                                <span className="text-sm text-gray-600">전체 선택 ({selectedItems.length}/{cartItems.length})</span>
-                            </label>
+                            </div>
                             <button
                                 onClick={() => setCartItems(prev => prev.filter(item => !selectedItems.includes(item.productId)))}
                                 className="text-xs text-gray-500 hover:text-red-500"
@@ -96,12 +95,12 @@ export default function CartPage() {
                             {cartItems.map((item) => (
                                 <div key={item.productId} className="flex gap-4 p-4 bg-white border border-gray-100 rounded-lg hover:border-gray-200 transition-colors">
                                     <div className="pt-1">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedItems.includes(item.productId)}
-                                            onChange={() => handleSelect(item.productId)}
-                                            className="w-4 h-4 text-[#111] rounded border-gray-300 focus:ring-[#111]"
-                                        />
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <CheckboxStyle
+                                                checked={selectedItems.includes(item.productId)}
+                                                onChange={() => handleSelect(item.productId)}
+                                            />
+                                        </div>
                                     </div>
                                     <div className="w-24 h-24 bg-gray-100 rounded overflow-hidden flex-shrink-0 cursor-pointer" onClick={() => navigate(`/products/${item.productId}`)}>
                                         {item.images && item.images.length > 0 ? (

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import * as API from "../../common/api";
 import type { Product } from "../../common/types";
 import ProductCard from "../../components/ui/ProductCard";
+import CheckboxStyle from "../../components/ui/CheckboxStyle";
 
 export default function WishlistPage() {
     const navigate = useNavigate();
@@ -76,11 +77,11 @@ export default function WishlistPage() {
     };
 
     if (loading) {
-        return <div className="container px-4 py-8 flex justify-center">로딩 중...</div>;
+        return <div className="containerr px-4 py-8 flex justify-center">로딩 중...</div>;
     }
 
     return (
-        <div className="container px-4 py-8">
+        <div className="containerr px-4 py-8">
             <h2 className="text-2xl font-bold text-[#111] mb-8 flex items-center gap-2">
                 <Heart className="text-[#666]" />
                 찜 목록
@@ -101,15 +102,13 @@ export default function WishlistPage() {
                 <div>
                     {/* Select All Tool Bar */}
                     <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-                        <label className="flex items-center gap-2 cursor-pointer select-none">
-                            <input
-                                type="checkbox"
+                        <div className="flex items-center gap-2">
+                            <CheckboxStyle
                                 checked={selectedItems.length === wishlistItems.length && wishlistItems.length > 0}
-                                onChange={handleSelectAll}
-                                className="w-5 h-5 accent-black rounded border-gray-300"
+                                onChange={() => handleSelectAll()}
+                                label={`전체 선택 (${selectedItems.length}/${wishlistItems.length})`}
                             />
-                            <span className="text-sm font-medium text-[#333]">전체 선택 ({selectedItems.length}/{wishlistItems.length})</span>
-                        </label>
+                        </div>
                         <button
                             onClick={handleRemoveSelected}
                             className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded transition-colors ${selectedItems.length > 0
@@ -129,13 +128,12 @@ export default function WishlistPage() {
                             <div key={item.productId} className="relative group/wish">
                                 {/* Checkbox Overlay - Moved outside/above card as requested */}
                                 <div>
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedItems.includes(item.productId)}
-                                        onChange={() => handleSelect(item.productId)}
-                                        className="w-5 h-5 accent-black rounded border-gray-300 shadow-sm cursor-pointer"
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
+                                    <div onClick={(e) => e.stopPropagation()}>
+                                        <CheckboxStyle
+                                            checked={selectedItems.includes(item.productId)}
+                                            onChange={() => handleSelect(item.productId)}
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Product Card */}

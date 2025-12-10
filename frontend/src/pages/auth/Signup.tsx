@@ -1,4 +1,5 @@
 import { useState } from "react";
+import DatePickerStyle from "../../components/ui/DatePickerStyle";
 import { useNavigate } from "react-router-dom";
 import type { SignupForm } from "../../common/types";
 import { signup, sendVerificationCode, checkVerificationCode, sendPhoneVerificationCode, verifyPhoneCode } from "../../common/api";
@@ -446,12 +447,21 @@ export default function Signup() {
             </div>
 
             <div className="flex flex-col">
-              <input
-                type="date"
+              <DatePickerStyle
+                selected={form.birthday ? new Date(form.birthday) : null}
+                onChange={(date) => {
+                  if (date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, "0");
+                    const day = String(date.getDate()).padStart(2, "0");
+                    setForm((prev) => ({ ...prev, birthday: `${year}-${month}-${day}` }));
+                  } else {
+                    setForm((prev) => ({ ...prev, birthday: "" }));
+                  }
+                }}
                 placeholder="생일"
-                value={form.birthday}
-                onChange={(e) => setForm((prev) => ({ ...prev, birthday: e.target.value }))}
-                className={`w-full px-4 py-3 border ${errors.birthday ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors bg-white rounded-[4px]`}
+                noDefaultStyle
+                className={`w-full px-4 py-3 border ${errors.birthday ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors bg-white rounded-[4px] text-left ${!form.birthday ? "text-gray-400" : "text-[#333]"}`}
               />
               {errors.birthday && <p className="text-xs text-red-500 mt-1">{errors.birthday}</p>}
             </div>

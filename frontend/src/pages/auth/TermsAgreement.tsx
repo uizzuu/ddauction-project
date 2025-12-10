@@ -1,4 +1,5 @@
 import { useState } from "react";
+import CheckboxStyle from "../../components/ui/CheckboxStyle";
 import { useNavigate } from "react-router-dom";
 
 export default function TermsAgreement() {
@@ -59,32 +60,22 @@ export default function TermsAgreement() {
                 <div className="space-y-4">
                     {/* 전체 동의 */}
                     <div className="flex items-center p-4 bg-gray-50 rounded-lg border border-gray-200">
-                        <input
-                            id="all-agree"
-                            type="checkbox"
+                        <CheckboxStyle
                             checked={allAgreed}
-                            onChange={(e) => handleAllCheck(e.target.checked)}
-                            className="h-5 w-5 text-black focus:ring-black border-gray-300 rounded cursor-pointer accent-black"
+                            onChange={(checked) => handleAllCheck(checked)}
+                            label="전체 동의하기"
                         />
-                        <label htmlFor="all-agree" className="ml-3 block text-sm font-bold text-gray-900 cursor-pointer select-none">
-                            전체 동의하기
-                        </label>
                     </div>
 
                     <div className="space-y-4 pl-1">
                         {/* 서비스 이용약관 */}
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center h-5 gap-2">
-                                <input
-                                    id="service"
-                                    type="checkbox"
+                                <CheckboxStyle
                                     checked={agreements.service}
                                     onChange={() => handleSingleCheck("service")}
-                                    className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded cursor-pointer accent-black"
+                                    label="(필수) 서비스 이용약관 동의"
                                 />
-                                <label htmlFor="service" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                                    (필수) 서비스 이용약관 동의
-                                </label>
                             </div>
                             <div className="mt-1 ml-6 text-xs text-gray-400 h-20 overflow-y-auto bg-gray-50 p-3 rounded border border-gray-100 leading-relaxed scrollbar-hide">
                                 제1조(목적) 본 약관은 땅땅옥션(이하 "회사")이 제공하는 경매 서비스 이용과 관련하여 회사와 회원의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
@@ -98,16 +89,11 @@ export default function TermsAgreement() {
                         {/* 개인정보 처리방침 */}
                         <div className="flex flex-col gap-1">
                             <div className="flex items-center h-5 gap-2">
-                                <input
-                                    id="privacy"
-                                    type="checkbox"
+                                <CheckboxStyle
                                     checked={agreements.privacy}
                                     onChange={() => handleSingleCheck("privacy")}
-                                    className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded cursor-pointer accent-black"
+                                    label="(필수) 개인정보 수집 및 이용 동의"
                                 />
-                                <label htmlFor="privacy" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                                    (필수) 개인정보 수집 및 이용 동의
-                                </label>
                             </div>
                             <div className="mt-1 ml-6 text-xs text-gray-400 h-20 overflow-y-auto bg-gray-50 p-3 rounded border border-gray-100 leading-relaxed scrollbar-hide">
                                 1. 수집하는 개인정보 항목: 이름, 이메일, 휴대전화번호, 주소 등
@@ -123,16 +109,11 @@ export default function TermsAgreement() {
                         {/* 만 14세 이상 */}
                         <div className="flex items-start pt-2">
                             <div className="flex items-center h-5 gap-2">
-                                <input
-                                    id="age"
-                                    type="checkbox"
+                                <CheckboxStyle
                                     checked={agreements.age}
                                     onChange={() => handleSingleCheck("age")}
-                                    className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded cursor-pointer accent-black"
+                                    label="(필수) 만 14세 이상입니다"
                                 />
-                                <label htmlFor="age" className="text-sm font-medium text-gray-700 cursor-pointer select-none">
-                                    (필수) 만 14세 이상입니다
-                                </label>
                             </div>
                         </div>
                     </div>
