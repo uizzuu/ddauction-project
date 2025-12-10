@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { API_BASE_URL, toggleBookmark } from "../../../../common/api";
+import { API_BASE_URL, toggleBookmark,fetchProductDetail } from "../../../../common/api";
 import type {
     Product,
     User,
@@ -127,16 +127,21 @@ export const useProductDetail = (user: User | null) => {
         }, 1000);
         return () => clearInterval(interval);
     }, [product]);
-
+    const viewedRef = useRef(false);
     useEffect(() => {
+       // 조회수 증가 한 번만 체크
+     if (viewedRef.current) return; //
+
         const fetchProduct = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
-                if (!res.ok) throw new Error("상품 정보를 가져올 수 없습니다.");
-                const data: Product = await res.json();
+                // const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
+                // if (!res.ok) throw new Error("상품 정보를 가져올 수 없습니다.");
+                // const data: Product = await res.json();
+                const data = await fetchProductDetail(Number(id));
                 setProduct(data);
                 setSellerNickName(data.sellerNickName ?? "알 수 없음");
                 setRemainingTime(calculateRemainingTime(data.auctionEndTime || ""));
+                viewedRef.current = true;
 
                 // Bookmark Check
                 try {
