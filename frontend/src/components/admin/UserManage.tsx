@@ -1,6 +1,6 @@
 import type { User } from "../../common/types";
 import { Search } from "lucide-react";
-import CustomSelect from "../common/CustomSelect";
+import CustomSelect from "../ui/CustomSelect";
 
 type Props = {
   users: User[];

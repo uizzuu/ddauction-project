@@ -1,7 +1,7 @@
 import type * as TYPE from "./types";
 import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
-import type { ArticleType,Notification } from './types';
+import type { ArticleType, Notification } from './types';
 
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";

@@ -18,7 +18,7 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
   // 사용자 ID 가져오기
   const getUserId = (): number | null => {
     if (propsUserId) return propsUserId;
-    
+
     const userInfo = localStorage.getItem("userInfo");
     if (userInfo) {
       try {
@@ -55,8 +55,8 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
       return;
     }
 
-    const wsUrl = API_BASE_URL.replace("http", "ws").replace("/api", "") + 
-                  `/ws/notifications?userId=${userId}`;
+    const wsUrl = API_BASE_URL.replace("http", "ws").replace("/api", "") +
+      `/ws/notifications?userId=${userId}`;
 
     console.log("🔗 WebSocket 연결 시도:", wsUrl);
     const ws = new WebSocket(wsUrl);
@@ -123,7 +123,7 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
   // ✅ 전체 읽음 처리 - api.ts 함수 사용
   const markAllAsRead = async () => {
     const unreadIds = notifications.filter(n => !n.isRead).map(n => n.notificationId);
-    
+
     try {
       await Promise.all(unreadIds.map(id => markNotificationAsRead(id)));
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
@@ -175,7 +175,7 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
     <div
       ref={modalRef}
       onClick={(e) => e.stopPropagation()}
-      className="absolute top-12 right-0 w-80 bg-white rounded-lg shadow-xl border border-gray-100 z-50 overflow-hidden animate-fadeIn"
+      className="absolute top-8 right-0 w-80 bg-white rounded-lg shadow-xl border border-gray-100 z-50 overflow-hidden animate-fadeIn"
     >
       {/* 헤더 */}
       <div className="flex items-center justify-between p-4 border-b bg-gray-50">
@@ -201,9 +201,8 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
             <div
               key={noti.notificationId}
               onClick={() => handleNotificationClick(noti.notificationId)}
-              className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${
-                noti.isRead ? "opacity-60" : ""
-              } ${getBg(noti.notificationStatus)}`}
+              className={`p-4 hover:bg-gray-50 transition-colors cursor-pointer ${noti.isRead ? "opacity-60" : ""
+                } ${getBg(noti.notificationStatus)}`}
             >
               <div className="flex justify-between items-start mb-1">
                 <h4 className="font-bold text-sm">{getTitle(noti.notificationStatus)}</h4>
