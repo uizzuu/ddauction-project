@@ -7,7 +7,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.my.backend.dto.auth.CustomOAuth2User;
 import com.my.backend.enums.Role;
 import com.my.backend.myjwt.JWTUtil;
@@ -21,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JWTUtil jwtUtil;
-    private final ObjectMapper objectMapper;
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
@@ -29,8 +27,8 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     public void onAuthenticationSuccess(HttpServletRequest request,
                                         HttpServletResponse response,
                                         Authentication authentication) throws IOException {
-        System.out.println("🟢 OAuth2SuccessHandler 실행됨!");  // ✅ 추가
-        System.out.println("Authentication Principal: " + authentication.getPrincipal());  // ✅ 추가
+        System.out.println("🟢 OAuth2SuccessHandler 실행됨!");
+        System.out.println("Authentication Principal: " + authentication.getPrincipal());
 
         try {
             CustomOAuth2User oauthUser = (CustomOAuth2User) authentication.getPrincipal();
@@ -65,10 +63,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             System.out.println("✅ 리다이렉트 완료");
 
         } catch (Exception e) {
-            System.err.println("❌ OAuth2SuccessHandler 에러: " + e.getMessage());  // ✅ 추가
-            e.printStackTrace();
-            throw e;
-        }
+            System.err.println("❌ OAuth2SuccessHandler 에러: " + e.getMessage());
+            throw new RuntimeException(e);
     }
 
+}
 }

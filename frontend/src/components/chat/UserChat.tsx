@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { UserChatProps, PrivateChat, ChatMessagePayload, User } from "../../common/types";
-import { deletePrivateChat, fetchProductById } from "../../common/api";
+import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages } from "../../common/api";
 
 // -----------------------------
 // UserChat 컴포넌트
@@ -29,7 +29,7 @@ export default function UserChat({ user }: UserChatProps) {
 
   const isAdmin = user?.role === "ADMIN";
   const isLocal = window.location.hostname === "localhost";
-  const backendHost = isLocal ? "http://localhost:8080" : "";
+
 
   // -----------------------------
   // 1. 유저 목록 불러오기 (Admin Only)
@@ -37,15 +37,13 @@ export default function UserChat({ user }: UserChatProps) {
   useEffect(() => {
     if (!user || !isAdmin) return;
 
-    fetch(`${backendHost}/api/chats/users`, { credentials: "include" })
-      .then((res) => res.json())
-      .then((data: User[]) => {
-        const filtered = data.filter((u) => u.userId !== user.userId);
-        setUsers(filtered);
-        setFilteredUsers(filtered);
+    fetchChatUsers(user.userId)
+      .then((data) => {
+        setUsers(data);
+        setFilteredUsers(data);
 
         if (state?.sellerId) {
-          const seller = filtered.find((u) => u.userId === state.sellerId);
+          const seller = data.find((u) => u.userId === state.sellerId);
           if (seller) setSelectedUser(seller);
         }
       })
@@ -70,13 +68,10 @@ export default function UserChat({ user }: UserChatProps) {
   // 2. 일반 유저 초기 설정 (Seller 자동 선택)
   // -----------------------------
   useEffect(() => {
+    if (!user) return;
     if (!isAdmin && state?.sellerId && !selectedUser) {
-      // 일반 유저는 목록을 불러오지 않고, 바로 state의 sellerId 정보를 이용해 채팅 세팅
-      // 단, 상대방 닉네임 등 정보가 없으므로 fetch 필요할 수 있음.
-      // 편의상 UserChat 진입 시 state에 seller 정보가 있다고 가정하거나 간단히 처리
-      fetch(`${backendHost}/api/chats/users`, { credentials: "include" }) // 임시: 내 채팅 상대방 찾기 위해 전체 로드 (최적화 필요)
-        .then(res => res.json())
-        .then((data: User[]) => {
+      fetchChatUsers(user.userId)
+        .then((data) => {
           const seller = data.find(u => u.userId === state?.sellerId);
           if (seller) setSelectedUser(seller);
         });
@@ -92,14 +87,11 @@ export default function UserChat({ user }: UserChatProps) {
 
     const loadPrivateMessages = async () => {
       try {
-        const msgRes = await fetch(
-          `${backendHost}/api/chats/private/messages?userId=${user.userId}&targetUserId=${selectedUser.userId}&productId=${selectedProductId}`,
-          { credentials: "include" }
+        const msgData = await fetchPrivateMessages(
+          user.userId,
+          selectedUser.userId,
+          selectedProductId
         );
-
-        if (!msgRes.ok) throw new Error("메시지 조회 실패");
-
-        const msgData = await msgRes.json();
         setMessages(msgData);
 
         if (msgData.length > 0 && msgData[0].chatRoomId) {

@@ -43,8 +43,8 @@ public class AuthController {
                 .collect(Collectors.toList());
     }
 
-    // 회원가입
-    @PostMapping("/signup")
+    // 회원가입 인증 코드 발송
+    @PostMapping("/send-code")
     public ResponseEntity<?> sendVerificationEmail(@RequestBody EmailRequest request) {
 
         return authService.sendVerificationEmail(request.getEmail());
@@ -56,7 +56,7 @@ public class AuthController {
         return authService.verifyEmailCode(email, code); // 이제 RegisterRequest 필요 없음
     }
 
-    @PostMapping("/register")
+    @PostMapping("/signup")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
         log.info("RegisterRequest: {}", request); // request로 바꿔야 함
 

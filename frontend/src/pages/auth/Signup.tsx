@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { SignupForm } from "../../common/types";
+import { signup, sendVerificationCode, checkVerificationCode, sendPhoneVerificationCode, verifyPhoneCode } from "../../common/api";
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -121,12 +122,7 @@ export default function Signup() {
       return;
     }
     try {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: form.email }),
-      });
-      if (!res.ok) throw new Error(await res.text());
+      await sendVerificationCode(form.email);
       setEmailMessage("인증 메일이 발송되었습니다.");
     } catch (err: any) {
       setEmailMessage(err.message || "인증 메일 발송 실패");
@@ -136,11 +132,7 @@ export default function Signup() {
   // 🔥 이메일 인증 코드 확인
   const verifyEmailCode = async () => {
     try {
-      const res = await fetch(
-        `/api/auth/verify-email?email=${encodeURIComponent(form.email)}&code=${encodeURIComponent(emailVerificationCode)}`,
-        { method: "POST" }
-      );
-      if (!res.ok) throw new Error(await res.text());
+      await checkVerificationCode(form.email, emailVerificationCode);
       setIsEmailVerified(true);
       setEmailMessage("이메일 인증 완료!");
     } catch (err: any) {
@@ -155,31 +147,19 @@ export default function Signup() {
       return;
     }
     try {
-      const res = await fetch("/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: form.phone }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
-      setPhoneMessage(data.message || "인증 문자가 발송되었습니다.");
+      const res = (await sendPhoneVerificationCode(form.phone)) as unknown as { message?: string };
+      setPhoneMessage(res?.message || "인증 문자가 발송되었습니다.");
     } catch (err: any) {
       setPhoneMessage(err.message || "인증 문자 발송 실패");
     }
   };
 
   // 🔥 핸드폰 인증 코드 확인
-  const verifyPhoneCode = async () => {
+  const handleVerifyPhone = async () => {
     try {
-      const res = await fetch("/api/sms/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: form.phone, code: phoneVerificationCode }),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      const data = await res.json();
+      await verifyPhoneCode(form.phone, phoneVerificationCode);
       setIsPhoneVerified(true);
-      setPhoneMessage(data.message || "핸드폰 인증 완료!");
+      setPhoneMessage("핸드폰 인증 완료!");
     } catch (err: any) {
       setPhoneMessage(err.message || "인증 실패");
     }
@@ -212,12 +192,7 @@ export default function Signup() {
     }
 
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error(await res.text());
+      await signup(form);
       alert("회원가입 성공!");
       navigate("/login");
     } catch (err: any) {
@@ -374,7 +349,7 @@ export default function Signup() {
                       className="flex-1 min-w-0 px-4 py-3 border border-gray-300 focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]"
                     />
                     <button
-                      onClick={verifyPhoneCode}
+                      onClick={handleVerifyPhone}
                       className="flex-shrink-0 px-4 py-3 border border-solid border-gray-300 text-[#333] text-sm whitespace-nowrap hover:bg-gray-50 transition-colors rounded-[4px]"
                     >
                       확인

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { fetchRecentPublicChats, deletePublicChat } from "../../common/api";
 import type { PublicChat, User, ChatMessagePayload } from "../../common/types";
 
 // -----------------------------
@@ -15,15 +16,13 @@ export default function PublicChat({ user }: Props) {
     const ws = useRef<WebSocket | null>(null);
 
     const isLocal = window.location.hostname === "localhost";
-    const backendHost = isLocal ? "http://localhost:8080" : "";
 
     // 1. 초기 메시지 불러오기
     useEffect(() => {
-        fetch(`${backendHost}/api/chats/public/recent`, { credentials: "include" })
-            .then((res) => res.json())
-            .then((data: PublicChat[]) => setMessages(data))
-            .catch((err) => console.error("공개 채팅 불러오기 실패", err));
-    }, [backendHost]);
+        fetchRecentPublicChats()
+            .then(data => setMessages(data))
+            .catch(err => console.error("공개 채팅 불러오기 실패", err));
+    }, []);
 
     // 2. WebSocket 연결
     useEffect(() => {
@@ -136,17 +135,11 @@ export default function PublicChat({ user }: Props) {
                                         onClick={() => {
                                             if (isAdmin) {
                                                 if (window.confirm("이 메시지를 삭제하시겠습니까?")) {
-                                                    const token = localStorage.getItem("token");
-                                                    fetch(`${backendHost}/api/chats/public/${msg.publicChatId}`, {
-                                                        method: "DELETE",
-                                                        headers: { Authorization: `Bearer ${token}` }
-                                                    }).then(res => {
-                                                        if (res.ok) {
+                                                    deletePublicChat(msg.publicChatId!)
+                                                        .then(() => {
                                                             setMessages(prev => prev.map(m => m.publicChatId === msg.publicChatId ? { ...m, isDeleted: true } : m));
-                                                        } else {
-                                                            alert("삭제 실패");
-                                                        }
-                                                    });
+                                                        })
+                                                        .catch(() => alert("삭제 실패"));
                                                 }
                                             }
                                         }}

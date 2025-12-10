@@ -1,5 +1,6 @@
 import type { Product, ProductCategoryType, ProductType, CartItem } from "./types";
 import { PRODUCT_STATUS, PAYMENT_STATUS, PRODUCT_CATEGORIES } from "./enums";
+import { fetchBookmarkCount } from "./api";
 
 // SortOption
 export type SortOption = "latest" | "oldest" | "priceAsc" | "priceDesc" | "timeLeft" | "popularity";
@@ -177,16 +178,12 @@ export const buildSearchQuery = (params: {
 
 export const sortProducts = async (
   data: Product[],
-  sort: SortOption,
-  apiBaseUrl: string
+  sort: SortOption
 ) => {
   if (sort === "popularity") {
     const withBookmark = await Promise.all(
       data.map(async (p) => {
-        const res = await fetch(
-          `${apiBaseUrl}/api/bookmarks/count?productId=${p.productId}`
-        );
-        const count = await res.json();
+        const count = await fetchBookmarkCount(p.productId);
         return { ...p, bookmarkCount: count };
       })
     );

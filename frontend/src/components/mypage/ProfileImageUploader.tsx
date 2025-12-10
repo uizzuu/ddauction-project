@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Camera, Trash2 } from "lucide-react";
 import Avatar from "../ui/Avatar";
 import type { User } from "../../common/types";
-import { API_BASE_URL } from "../../common/api";
+import { API_BASE_URL, uploadProfileImage, deleteProfileImage } from "../../common/api";
 
 type Props = {
   user: User;
@@ -36,34 +36,9 @@ export default function ProfileImageUploader({ user, isEditing, onUpload, onDele
     setUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const imageUrl = await uploadProfileImage(user.userId, file);
 
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/api/users/${user.userId}/profile-image`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${(token || "").trim()}`,
-        },
-        body: formData,
-      });
-
-      if (!response.ok) {
-        let errorMessage = "이미지 업로드에 실패했습니다.";
-        try {
-          const error = await response.json();
-          errorMessage = error.message || errorMessage;
-        } catch (e) {
-          if (response.status === 401) errorMessage = "로그인이 만료되었습니다. 다시 로그인해주세요.";
-          else if (response.status === 403) errorMessage = "권한이 없습니다.";
-        }
-        throw new Error(errorMessage);
-      }
-
-      const data = await response.json();
-      console.log("Upload response data:", data);
-
-      const imageUrl = data.imageUrl || data.profileImage;
+      console.log("Resolved imageUrl:", imageUrl);
       console.log("Resolved imageUrl:", imageUrl);
 
       const preview = URL.createObjectURL(file);
@@ -86,18 +61,7 @@ export default function ProfileImageUploader({ user, isEditing, onUpload, onDele
     setUploading(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/api/users/${user.userId}/profile-image`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "이미지 삭제에 실패했습니다.");
-      }
+      await deleteProfileImage(user.userId);
 
       setPreviewUrl(null);
       onDelete();

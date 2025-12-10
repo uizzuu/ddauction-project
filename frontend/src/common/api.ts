@@ -85,7 +85,7 @@ async function authFetch(url: string, options: RequestInit = {}) {
   const finalOptions = {
     ...options,
     headers,
-    credentials: "include" as RequestCredentials, // Ensure credentials are sent (for CORS alignment)
+    credentials: "include" as RequestCredentials,
   };
 
   return fetch(url, finalOptions);
@@ -115,29 +115,18 @@ export const fetchBookmarkCheck = (productId: number, token?: string) =>
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
   });
 
-// 주소 변환 (Reverse Geocoding) - text/plain 응답 처리
-export async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
-  const res = await fetch(`${API_BASE_URL}${SPRING_API}/geo/reverse?latitude=${latitude}&longitude=${longitude}`);
-  if (!res.ok) throw new Error("주소 변환 API 호출 실패");
-  return res.text(); // JSON이 아닌 plain text 반환
-}
-
 // 찜 토글
 export const toggleBookmark = async (productId: number, token?: string) => {
   const t = ensureToken(token);
-  const res = await fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${productId}`, {
+  return fetchJson<string>(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${productId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
   });
-  if (!res.ok) throw new Error("찜하기 실패");
-  return res.text();
 };
 
-// 찜 목록 다중 삭제 (bulk remove)
+// 찜 목록 다중 삭제
 export const removeWishlistItems = async (productIds: number[], token?: string) => {
   const t = ensureToken(token);
-  // toggle API는 이미 찜한 상태일 때 호출하면 삭제가 됨 (찜 해제)
-  // 따라서 선택한 항목들에 대해 각각 toggle API를 호출
   await Promise.all(
     productIds.map(id =>
       fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${id}`, {
@@ -174,6 +163,16 @@ export const reportSeller = (sellerId: number, reason: string, token?: string) =
   });
 };
 
+// 상품 신고
+export const reportProduct = (productId: number, reason: string, token?: string) => {
+  const t = ensureToken(token);
+  return fetchJson<string>(`${API_BASE_URL}${SPRING_API}/reports`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
+    body: JSON.stringify({ refId: productId, reason, reportType: "PRODUCT" }),
+  });
+};
+
 // 상품 수정
 export const editProduct = (productId: number, payload: any, token?: string) => {
   const t = ensureToken(token);
@@ -187,13 +186,10 @@ export const editProduct = (productId: number, payload: any, token?: string) => 
 // 상품 삭제
 export const deleteProduct = (productId: number, token?: string) => {
   const t = ensureToken(token);
-  return fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
+  return fetchJson(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
-  }).then(res => {
-    if (!res.ok) throw new Error("삭제 실패");
-    return true;
-  });
+  }).then(() => true);
 };
 
 // RAG 챗봇
@@ -389,12 +385,12 @@ export async function deleteComment(commentId: number): Promise<void> {
 // 로그인
 export async function loginAPI(
   form: TYPE.LoginForm | { phone: string; password: string },
-  type: "email" | "phone" = "email"   // 👈 추가
+  type: "email" | "phone" = "email"
 ) {
   const url =
     type === "phone"
-      ? `${API_BASE_URL}${SPRING_API}/auth/login/phone` // 👈 전화번호 로그인
-      : `${API_BASE_URL}${SPRING_API}/auth/login`;      // 👈 이메일 로그인
+      ? `${API_BASE_URL}${SPRING_API}/auth/login/phone`
+      : `${API_BASE_URL}${SPRING_API}/auth/login`;
 
   // 1. 로그인 요청
   const response = await fetch(url, {
@@ -427,7 +423,6 @@ export async function loginAPI(
 
   // 4. 토큰 존재 여부 확인
   if (!token) {
-    // 서버가 200 OK를 보냈지만, 토큰 필드가 없는 경우
     console.error("서버 응답 데이터:", data);
     throw new Error("토큰을 받지 못했습니다. 서버 응답 필드를 확인하세요.");
   }
@@ -443,8 +438,7 @@ export async function loginAPI(
 
   // 6. 사용자 정보 파싱 및 반환
   const userText = await userResponse.text();
-  const userData: TYPE.User = userText ? JSON.parse(userText) : null;
-  return userData;
+  return userText ? JSON.parse(userText) : null;
 }
 
 // 소셜 로그인 URL 반환
@@ -466,13 +460,13 @@ export async function logout(): Promise<void> {
   } catch (error) {
     console.warn("Logout API error (proceeding with local cleanup):", error);
   } finally {
-    // 🔹 항상 로컬 토큰 삭제 (서버 오류가 나도 클라이언트는 로그아웃 처리)
+    // 로컬 토큰 삭제
     localStorage.removeItem("token");
     localStorage.removeItem("loginUser");
   }
 }
 
-// 회원가입
+// 회원가입 (회원등록)
 export async function signup(form: TYPE.SignupForm): Promise<void> {
   const response = await fetch(`${API_BASE_URL}${SPRING_API}/auth/signup`, {
     method: "POST",
@@ -485,7 +479,7 @@ export async function signup(form: TYPE.SignupForm): Promise<void> {
 
 // 이메일 인증 코드 전송
 export async function sendVerificationCode(email: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/auth/signup`, {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/auth/send-code`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
@@ -577,13 +571,8 @@ export async function createProduct(
   });
 
   if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error("상품 등록 실패: 인증이 만료되었거나 유효하지 않습니다.");
-    }
-    // 403: 관리자 등록 금지
-    if (response.status === 403) {
-      throw new Error("관리자는 상품을 등록할 수 없습니다.");
-    }
+    if (response.status === 401) throw new Error("상품 등록 실패: 인증이 만료되었거나 유효하지 않습니다.");
+    if (response.status === 403) throw new Error("관리자는 상품을 등록할 수 없습니다.");
     throw new Error(`상품 등록 실패: ${response.status}: ${response.statusText}`);
   }
 
@@ -698,7 +687,6 @@ export async function fetchSellingHistory(): Promise<PaymentHistoryResponse[]> {
 }
 
 // 구매 내역 조회
-// 구매 내역 조회
 export async function fetchBuyingHistory(): Promise<PaymentHistoryResponse[]> {
   const response = await authFetch(`${API_BASE_URL}${SPRING_API}/payments/portone/history/buy`, {
     cache: "no-store",
@@ -797,6 +785,31 @@ export async function checkWinner(productId: number): Promise<{
   const text = await response.text();
   return text ? JSON.parse(text) : { isWinner: false };
 }
+
+// 비밀번호 찾기 (인증코드 전송 - 이메일)
+export const sendPasswordResetCode = (email: string) =>
+  fetchJson(`${API_BASE_URL}${SPRING_API}/auth/password-reset/send-code`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+// 비밀번호 찾기 (인증코드 전송 - 문자)
+export const sendPasswordResetSms = (phone: string) =>
+  fetchJson(`${API_BASE_URL}${SPRING_API}/sms/reset/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone }),
+  });
+
+// 공개 채팅 목록 조회 (최근)
+
+
+// 개인 채팅 메시지 조회
+export const fetchPrivateMessages = (userId: number, targetUserId: number, productId: number) =>
+  fetchJson<TYPE.PrivateChat[]>(
+    `${API_BASE_URL}${SPRING_API}/chats/private/messages?userId=${userId}&targetUserId=${targetUserId}&productId=${productId}`
+  );
 
 // QnA 목록 조회 (인증 불필요)
 export async function getQnaList(productId: number): Promise<TYPE.ProductQna[]> {
@@ -1355,10 +1368,17 @@ export async function saveInquiryAnswer(inquiryId: number, answer: string): Prom
   if (!res.ok) throw new Error("문의 답변 등록 실패");
 }
 
+// 주소 변환 (Reverse Geocoding)
+export async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/geo/reverse?latitude=${latitude}&longitude=${longitude}`);
+  if (!res.ok) throw new Error("주소 변환 API 호출 실패");
+  return res.text();
+}
+
 export async function fetchChatUsers(currentUserId: number) {
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/chats/users`, { credentials: "include" });
   if (!res.ok) throw new Error("유저 목록 가져오기 실패");
-  const data = (await res.json()) as { userId: number; nickName: string }[];
+  const data = (await res.json()) as TYPE.User[];
   return data.filter((u) => u.userId !== currentUserId);
 }
 
@@ -2344,7 +2364,7 @@ export const uploadProfileImage = async (userId: number, file: File): Promise<st
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`/api/users/${userId}/profile-image`, {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/profile-image`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -2365,7 +2385,7 @@ export const uploadProfileImage = async (userId: number, file: File): Promise<st
 export const deleteProfileImage = async (userId: number): Promise<void> => {
   const token = localStorage.getItem("token");
 
-  const response = await fetch(`/api/users/${userId}/profile-image`, {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/profile-image`, {
     method: "DELETE",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -2380,7 +2400,7 @@ export const deleteProfileImage = async (userId: number): Promise<void> => {
 
 // 프로필 이미지 조회
 export const getProfileImage = async (userId: number): Promise<string | null> => {
-  const response = await fetch(`/api/users/${userId}/profile-image`);
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/profile-image`);
 
   if (!response.ok) {
     return null;

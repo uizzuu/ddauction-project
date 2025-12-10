@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { API_BASE_URL, toggleBookmark,fetchProductDetail } from "../../../../common/api";
+import {
+    API_BASE_URL,
+    toggleBookmark,
+    fetchProductDetail,
+    fetchBookmarkCount,
+    fetchBookmarkCheck,
+    fetchAllBids,
+    checkWinner,
+    getQnaList,
+    reportProduct,
+    deleteProduct
+} from "../../../../common/api";
 import type {
     Product,
     User,
@@ -129,8 +140,8 @@ export const useProductDetail = (user: User | null) => {
     }, [product]);
     const viewedRef = useRef(false);
     useEffect(() => {
-       // 조회수 증가 한 번만 체크
-     if (viewedRef.current) return; //
+        // 조회수 증가 한 번만 체크
+        if (viewedRef.current) return; //
 
         const fetchProduct = async () => {
             try {
@@ -145,40 +156,32 @@ export const useProductDetail = (user: User | null) => {
 
                 // Bookmark Check
                 try {
-                    const countRes = await fetch(`${API_BASE_URL}/api/bookmarks/count?productId=${id}`);
-                    if (countRes.ok) setBookmarkCount(await countRes.json());
+                    const count = await fetchBookmarkCount(Number(id));
+                    setBookmarkCount(count);
 
                     if (user) {
                         const token = localStorage.getItem("token");
-                        const checkRes = await fetch(`${API_BASE_URL}/api/bookmarks/check?productId=${id}`, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        });
-                        if (checkRes.ok) setIsBookMarked(await checkRes.json());
+                        const isMarked = await fetchBookmarkCheck(Number(id), token || undefined);
+                        setIsBookMarked(isMarked);
                     }
 
                 } catch (e) { console.error("Bookmark fetch error", e); }
 
                 // Fetch Bids
                 if (data.productType === "AUCTION") {
-                    const bidsRes = await fetch(`${API_BASE_URL}/api/bid/${id}/bids`);
-                    if (bidsRes.ok) setAllBids(await bidsRes.json());
+                    const bids = await fetchAllBids(Number(id));
+                    setAllBids(bids);
 
                     // Check Winner
                     if (user) {
-                        const token = localStorage.getItem("token");
-                        const winRes = await fetch(`${API_BASE_URL}/api/bid/${id}/winner`, {
-                            headers: { Authorization: `Bearer ${token}` }
-                        });
-                        if (winRes.ok) {
-                            const winData = await winRes.json();
-                            setIsWinner(winData.isWinner);
-                        }
+                        const winData = await checkWinner(Number(id));
+                        setIsWinner(winData.isWinner);
                     }
                 }
 
                 // Fetch QnA
-                const qnaRes = await fetch(`${API_BASE_URL}/api/product-qnas/product/${id}`);
-                if (qnaRes.ok) setQnaList(await qnaRes.json());
+                const qnas = await getQnaList(Number(id));
+                setQnaList(qnas);
 
             } catch (err) {
                 console.error(err);
@@ -196,12 +199,8 @@ export const useProductDetail = (user: User | null) => {
             const resultMsg = await toggleBookmark(product.productId, token);
             setIsBookMarked(resultMsg === "찜 완료");
 
-            const countRes = await fetch(
-                `${API_BASE_URL}/api/bookmarks/count?productId=${product.productId}`
-            );
-            if (countRes.ok) {
-                setBookmarkCount(await countRes.json());
-            }
+            const count = await fetchBookmarkCount(product.productId);
+            setBookmarkCount(count);
         } catch (err) {
             console.error(err);
         }
@@ -224,13 +223,8 @@ export const useProductDetail = (user: User | null) => {
     const submitReport = async (reason: string) => {
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch(`${API_BASE_URL}/api/reports`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ refId: product?.productId, reason, reportType: "PRODUCT" }),
-            });
-            if (res.ok) alert("신고가 접수되었습니다.");
-            else alert("신고 접수 실패");
+            await reportProduct(product?.productId || 0, reason, token || undefined);
+            alert("신고가 접수되었습니다.");
         } catch (e) {
             console.error(e);
             alert("오류가 발생했습니다.");
@@ -241,11 +235,8 @@ export const useProductDetail = (user: User | null) => {
         if (!window.confirm("정말 삭제하시겠습니까?")) return;
         try {
             const token = localStorage.getItem("token");
-            const res = await fetch(`${API_BASE_URL}/api/products/${productId}`, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (res.ok) {
+            const success = await deleteProduct(productId, token || undefined);
+            if (success) {
                 alert("삭제되었습니다.");
                 navigate("/");
             } else {

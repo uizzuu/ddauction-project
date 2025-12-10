@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { resetPassword } from "../../common/api";
+import {
+  resetPassword,
+  sendPasswordResetCode,
+  sendPasswordResetSms,
+  checkVerificationCode,
+  verifyPhoneCode
+} from "../../common/api";
 
 export default function FindPassword() {
   const navigate = useNavigate();
@@ -23,26 +29,15 @@ export default function FindPassword() {
     setMessage("");
     setMessageType("info");
     try {
-      let res;
       if (tab === "email") {
         if (!email) { setMessage("이메일을 입력해주세요."); setMessageType("error"); return; }
-        // 백엔드: /api/auth/password-reset/send-code
-        res = await fetch("/api/auth/password-reset/send-code", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
+        await sendPasswordResetCode(email);
       } else {
         if (!phone) { setMessage("전화번호를 입력해주세요."); setMessageType("error"); return; }
-        // 백엔드: /api/sms/reset/send
-        res = await fetch("/api/sms/reset/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone }),
-        });
+        await sendPasswordResetSms(phone);
       }
 
-      if (!res.ok) throw new Error(await res.text());
+
       setMessage("인증 번호가 발송되었습니다.");
       setMessageType("success");
     } catch (err: any) {
@@ -57,23 +52,13 @@ export default function FindPassword() {
     setMessage("");
     setMessageType("info");
     try {
-      let res;
       if (tab === "email") {
-        // 기존 api/auth/verify-email?email=...&code=... 사용
-        res = await fetch(
-          `/api/auth/verify-email?email=${encodeURIComponent(email)}&code=${encodeURIComponent(verificationCode)}`,
-          { method: "POST" }
-        );
+        await checkVerificationCode(email, verificationCode);
       } else {
-        // 기존 api/sms/verify 사용
-        res = await fetch("/api/sms/verify", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone, code: verificationCode }),
-        });
+        await verifyPhoneCode(phone, verificationCode);
       }
 
-      if (!res.ok) throw new Error(await res.text());
+
 
       setIsVerified(true);
       setMessage("인증이 완료되었습니다. 새 비밀번호를 입력해주세요.");

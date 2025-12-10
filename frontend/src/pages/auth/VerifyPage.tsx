@@ -3,30 +3,8 @@ import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 // fetch 기반 verify-email 함수
-async function verifyEmail(email: string, code: string) {
-  const response = await fetch(
-    `/api/auth/verify-email?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    }
-  );
+import { checkVerificationCode } from "../../common/api";
 
-  if (!response.ok) {
-    // 서버에서 보낸 JSON 에러 메시지를 읽기
-    let errMsg = "인증 실패";
-    try {
-      const data = await response.json();
-      errMsg = data.message || errMsg;
-    } catch (_) {}
-
-    throw new Error(errMsg);
-  }
-
-  return response.json();
-}
 
 export default function VerifyPage() {
   const location = useLocation();
@@ -43,7 +21,7 @@ export default function VerifyPage() {
       return;
     }
 
-    verifyEmail(email, code)
+    checkVerificationCode(email, code)
       .then(() => {
         alert("이메일 인증 완료! 이제 회원가입을 진행할 수 있습니다.");
         navigate("/signup");
