@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.my.backend.entity.Product;
 import com.my.backend.enums.Role;
+import com.my.backend.service.ProductRecommendService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +43,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final BookMarkService bookMarkService;
+    private  final ProductRecommendService productRecommendService;
 
     // 전체 상품 조회 (로그인 불필요)
     @GetMapping
@@ -266,5 +268,20 @@ public class ProductController {
         // 수정포인트: 서비스 호출
         List<Product> products = productService.getTopRatedProducts();
         return ResponseEntity.ok(products);
+    }
+    @GetMapping("/{id}/also-viewed")
+    public ResponseEntity<?> getAlsoViewed(@PathVariable Long id) {
+        List<Product> products = productRecommendService.getPeopleAlsoViewed(id);
+
+        // DTO 변환 + 이미지 세팅
+        List<ProductDto> dtos = products.stream().map(product -> {
+            ProductDto dto = ProductDto.fromEntity(product);
+
+        
+
+            return dto;
+        }).toList();
+
+        return ResponseEntity.ok(dtos);
     }
 }
