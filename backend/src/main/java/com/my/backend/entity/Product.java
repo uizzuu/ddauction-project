@@ -44,7 +44,6 @@ public class Product {
     @JdbcTypeCode(SqlTypes.LONGVARCHAR)
     private String content;
 
-    @Column(unique = true)
     private String tag;
 
     private Long startingPrice;
