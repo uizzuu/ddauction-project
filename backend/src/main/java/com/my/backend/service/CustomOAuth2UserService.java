@@ -66,9 +66,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 registrationId, oAuth2User.getAttributes());
 
         String email = userInfo.getEmail();
+        if (email == null || email.isEmpty()) {
+             email = userInfo.getId() + "@" + registrationId + ".social";
+        }
+
         String baseNickName = userInfo.getName() != null ? userInfo.getName() : "OAuthUser";
         String password = UUID.randomUUID().toString(); // 임의 비밀번호
-        String phone = null; // 소셜 로그인은 전화번호 없음 (사용자가 추후 입력)
+        // 소셜 로그인은 전화번호 없음 (사용자가 추후 입력) -> DB NOT NULL 제약 회피용 더미 데이터
+        String phone = "000" + String.format("%08d", Math.abs(userInfo.getId().hashCode()) % 100000000);
         LocalDateTime now = LocalDateTime.now();
 
         // ✅ 랜덤 및 패턴 맞춘 닉네임

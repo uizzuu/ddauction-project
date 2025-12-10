@@ -5,7 +5,7 @@ import java.util.Map;
 public class NaverOAuth2UserInfo extends OAuth2UserInfo {
 
     public NaverOAuth2UserInfo(Map<String, Object> attributes) {
-        super((Map<String, Object>) attributes.get("response"));
+        super(attributes.get("response") != null ? (Map<String, Object>) attributes.get("response") : attributes);
     }
 
     @Override
