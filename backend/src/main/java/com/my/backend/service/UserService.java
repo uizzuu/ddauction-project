@@ -1,7 +1,17 @@
 package com.my.backend.service;
 
-import com.my.backend.dto.UsersDto;
+import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.my.backend.dto.ImageDto;
+import com.my.backend.dto.UsersDto;
 import com.my.backend.entity.Address;
 import com.my.backend.entity.Image;
 import com.my.backend.entity.Users;
@@ -9,18 +19,9 @@ import com.my.backend.enums.ImageType;
 import com.my.backend.repository.AddressRepository;
 import com.my.backend.repository.ImageRepository;
 import com.my.backend.repository.UserRepository;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
-
-import java.io.IOException;
-import java.util.List;
-
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -85,6 +86,9 @@ public class UserService {
             user.setUserName(dto.getUserName());
         }
         if (dto.getNickName() != null && !dto.getNickName().isBlank()) {
+            if (!dto.getNickName().matches("^[가-힣a-zA-Z0-9]{3,12}$")) {
+                throw new IllegalArgumentException("닉네임은 특수문자 없이 3~12자여야 합니다 (한글, 영문, 숫자).");
+            }
             user.setNickName(dto.getNickName());
         }
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
@@ -109,6 +113,20 @@ public class UserService {
             Address address = findAddressOrNull(dto.getAddressId());
             if (address != null) {
                 user.setAddress(address);
+            }
+        }
+        
+        // 생일 수정
+        if (dto.getBirthday() != null) {
+            user.setBirthday(dto.getBirthday());
+        }
+        
+        // 소셜 연동 해제 (provider = "NONE" 일 경우 null 로 설정)
+        if (dto.getProvider() != null) {
+            if ("NONE".equals(dto.getProvider())) {
+                user.setProvider(null);
+            } else {
+                user.setProvider(dto.getProvider());
             }
         }
 
@@ -152,9 +170,42 @@ public class UserService {
         userRepository.save(user);
     }
 
-    // 유저 삭제
+    // 유저 삭제 (Soft Delete)
+    @Transactional
     public void deleteUser(@org.springframework.lang.NonNull Long id) {
-        userRepository.deleteById(id);
+        Users user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+        
+        // 민감 정보 삭제 및 비식별화
+        // DB Not Null 제약조건 대응: null 대신 비식별 데이터 저장
+        user.setEmail("deleted-" + id + "@deleted.com"); 
+        user.setPassword("DELETED_user_" + id); 
+        
+        // 전화번호: 10~11자리 숫자. Unique 제약 대응을 위해 ID 활용
+        // 000 + ID (8자리 padding) -> 11자리
+        // 예: ID 1 -> 00000000001
+        String dummyPhone = String.format("000%08d", id);
+        user.setPhone(dummyPhone);
+        
+        user.setUserName("탈퇴");
+        
+        // 닉네임 설정 (Regex: ^[가-힣a-zA-Z0-9]{3,12}+$)
+        // "Del" + id. ID가 길어지면 앞에서부터 자르거나.. 
+        // ID는 unique하므로 "Del" + id 도 unique함.
+        // ID 최대 12글자 내로 맞추기. (Del: 3글자 + ID: 9글자) -> 10억 단위까지 OK.
+        String newNickName = "Del" + id;
+        if (newNickName.length() > 12) {
+             // 12자 초과 시 뒤에서 자름 (Unique 보장을 위해 ID 뒷자리 사용 권장)
+             newNickName = newNickName.substring(newNickName.length() - 12);
+        }
+        user.setNickName(newNickName);
+        
+        user.setProvider(null);
+        user.setBusinessNumber(null);
+        user.setAddress(null);
+        user.setDeletedAt(java.time.LocalDateTime.now());
+        
+        userRepository.save(user);
     }
 
 

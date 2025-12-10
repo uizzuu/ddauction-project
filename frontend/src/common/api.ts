@@ -482,6 +482,65 @@ export async function signup(form: TYPE.SignupForm): Promise<void> {
   if (!response.ok) throw new Error("회원가입 실패");
 }
 
+// 이메일 인증 코드 전송
+export async function sendVerificationCode(email: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "인증 코드 전송 실패");
+  }
+}
+
+// 이메일 인증 코드 확인
+export async function checkVerificationCode(email: string, code: string): Promise<void> {
+  const response = await fetch(
+    `${API_BASE_URL}${SPRING_API}/auth/verify-email?email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`,
+    { method: "POST" }
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "인증 실패");
+  }
+}
+
+// 휴대폰 인증 코드 전송
+export async function sendPhoneVerificationCode(phone: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/sms/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    let msg = "인증 번호 전송 실패";
+    try { msg = JSON.parse(text).message || msg; } catch { }
+    throw new Error(msg);
+  }
+}
+
+// 휴대폰 인증 코드 확인
+export async function verifyPhoneCode(phone: string, code: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/sms/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, code }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    let msg = "인증 실패";
+    try { msg = JSON.parse(text).message || msg; } catch { }
+    throw new Error(msg);
+  }
+}
+
 export async function getProducts(): Promise<TYPE.Product[]> {
   const response = await authFetch(`${API_BASE_URL}${SPRING_API}/products`);
   if (!response.ok) throw new Error("상품 목록 조회 실패");
@@ -2223,7 +2282,7 @@ function shouldIncrementView(productId: number): boolean {
 
   try {
     const lastViewedStr = localStorage.getItem(STORAGE_KEY);
-    
+
     if (!lastViewedStr) {
       // 처음 보는 경우
       localStorage.setItem(STORAGE_KEY, Date.now().toString());
@@ -2250,11 +2309,11 @@ function shouldIncrementView(productId: number): boolean {
 // 🔥 상품 상세 조회 (조회수 제어 포함)
 export async function fetchProductDetail(productId: number): Promise<TYPE.Product> {
   const token = localStorage.getItem("token");
-  
+
   // 🔥 비로그인 유저만 프론트에서 1시간 체크
   // 로그인 유저는 백엔드에서 자동으로 체크함
   let incrementView = true;
-  
+
   if (!token) {
     // 비로그인 상태: localStorage로 1시간 체크
     incrementView = shouldIncrementView(productId);

@@ -242,6 +242,11 @@ public class AuthService {
             String email = request.getEmail().trim().toLowerCase();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+            
+            // 탈퇴한 회원 체크
+            if (user.getDeletedAt() != null) {
+                throw new IllegalArgumentException("탈퇴한 회원입니다.");
+            }
 
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
@@ -273,6 +278,11 @@ public class AuthService {
 
             Users user = userRepository.findByPhone(phone)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+            // 탈퇴한 회원 체크
+            if (user.getDeletedAt() != null) {
+                throw new IllegalArgumentException("탈퇴한 회원입니다.");
+            }
 
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");

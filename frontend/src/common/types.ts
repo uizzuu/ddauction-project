@@ -31,6 +31,7 @@ export interface User {
   token?: string;
   isWinner?: boolean;
   businessNumber?: string;
+  provider?: string;
   images?: Image[];
   address?: string;
   detailAddress?: string;

@@ -35,7 +35,7 @@ public class Users {
     @Column(nullable = true)
     private String userName;
 
-    @Pattern(regexp = "^[가-힣a-zA-Z0-9]{3,12}+$", message = "닉네임은 3~12자여야 합니다.")
+    @Pattern(regexp = "^[가-힣a-zA-Z0-9]{3,12}$", message = "닉네임은 3~12자여야 합니다.")
     @Column(nullable = true, unique = true)
     private String nickName;
 
@@ -48,7 +48,7 @@ public class Users {
     private String phone;
 
     @Email(
-            regexp = "^[a-zA-Z0-9]+@[a-zA-Z0-9]+\\.[a-zA-Z]{2,}$",
+            regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
             message = "올바른 이메일 형식을 입력해주세요.")
     @Column(nullable = true, unique = true)
     private String email;
@@ -60,9 +60,15 @@ public class Users {
     @Column(name = "business_number", unique = true, nullable = true)
     private String businessNumber;
 
+    @Column(nullable = true)
+    private String provider; // google, kakao, naver, null(general)
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(nullable = true)
+    private LocalDateTime deletedAt; // Soft Delete
 
     @LastModifiedDate
     private LocalDateTime updatedAt;

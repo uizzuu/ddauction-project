@@ -1,6 +1,5 @@
 package com.my.backend.service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Random;
@@ -55,6 +54,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return sb.toString();
     }
 
+    @SuppressWarnings("null")
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) {
 
@@ -68,26 +68,40 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         String email = userInfo.getEmail();
         String baseNickName = userInfo.getName() != null ? userInfo.getName() : "OAuthUser";
         String password = UUID.randomUUID().toString(); // 임의 비밀번호
-        String phone = "010" + (int)(Math.random() * 1_0000_0000);
+        String phone = null; // 소셜 로그인은 전화번호 없음 (사용자가 추후 입력)
         LocalDateTime now = LocalDateTime.now();
 
         // ✅ 랜덤 및 패턴 맞춘 닉네임
         String nickName = generateValidNickName(baseNickName);
         String userName = nickName; // username에도 동일 적용
 
-        Users user = userRepository.findByEmail(email)
-                .orElseGet(() -> userRepository.save(Users.builder()
-                        .email(email)
-                        .password(password)
-                        .nickName(nickName)
-                        .userName(userName)
-                        .phone(phone)
-                        .birthday(LocalDate.of(1900, 1, 1)) // DB Not Null 제약 대응
-                        .role(Role.USER)
-                        .createdAt(now)
-                        .updatedAt(now)
-                        .build()
-                ));
+        Users user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            user = userRepository.save(Users.builder()
+                    .email(email)
+                    .password(password)
+                    .nickName(nickName)
+                    .userName(userName)
+                    .phone(phone)
+                    .birthday(null) // 초기값 null
+                    .role(Role.USER)
+                    .createdAt(now)
+                    .updatedAt(now)
+                    .provider(registrationId) // 소셜 제공자 저장
+                    .build());
+        } else {
+            // 탈퇴한 회원 체크
+            if (user.getDeletedAt() != null) {
+                throw new RuntimeException("탈퇴한 회원입니다.");
+            }
+
+            // 기존 유저 로그인 시 provider 정보 업데이트 (없을 경우)
+            if (user.getProvider() == null || !user.getProvider().equals(registrationId)) {
+                user.setProvider(registrationId);
+                userRepository.save(user);
+            }
+        }
 
 
 

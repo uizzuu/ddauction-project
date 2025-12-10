@@ -36,6 +36,7 @@ public class UsersDto {
     private String address;
     private String zipCode;
     private String detailAddress;
+    private String provider;
     @Builder.Default
     private List<ImageDto> images = new ArrayList<>();
 
@@ -62,6 +63,7 @@ public class UsersDto {
                 .phoneVerificationId(user.getPhoneVerification() != null ? user.getPhoneVerification().getPhoneVerificationId() : null)
                 .birthday(user.getBirthday())
                 .businessNumber(user.getBusinessNumber())
+                .provider(user.getProvider())
                 .build();
     }
 
@@ -82,6 +84,7 @@ public class UsersDto {
                 .phoneVerification(phoneVerification)
                 .birthday(this.birthday)
                 .businessNumber(this.businessNumber)
+                .provider(this.provider)
                 .build();
     }
 }
