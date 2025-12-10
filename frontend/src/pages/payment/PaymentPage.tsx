@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import CheckboxStyle from "../../components/ui/CheckboxStyle";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchProductById, getWinningInfo, preparePayment, completePayment, fetchUserAddress, fetchMe, updateUserAddress } from "../../common/api";
-
+import { getCartItems, removeFromCart } from "../../common/util";
+import type { CartItem } from "../../common/types";
 
 // PortOne Global Type
 declare global {
@@ -26,12 +27,21 @@ interface PaymentInfo {
   shippingFee: number;
 }
 
+interface CartPaymentInfo {
+  items: CartItem[];
+  totalPrice: number;
+  totalShipping: number;
+}
+
 export default function PaymentPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const productId = Number(searchParams.get("productId"));
+  const productId = searchParams.get("productId");
+  const cartMode = searchParams.get("cart") === "true";
+  const selectedItemIds = searchParams.get("items")?.split(",").map(Number) || [];
 
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
+  const [cartPaymentInfo, setCartPaymentInfo] = useState<CartPaymentInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -39,84 +49,120 @@ export default function PaymentPage() {
   const [address, setAddress] = useState("");
   const [postcode, setPostcode] = useState("");
   const [phone, setPhone] = useState("");
-  const [name, setName] = useState(""); // Buyer Name
+  const [name, setName] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("card");
+  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
+  const [saveForNextTime, setSaveForNextTime] = useState(false);
 
   useEffect(() => {
-    if (!productId || isNaN(productId)) {
+    if (cartMode) {
+      initCartPayment();
+    } else if (productId) {
+      initSinglePayment(Number(productId));
+    } else {
       alert("잘못된 접근입니다.");
       navigate("/");
-      return;
     }
+  }, [cartMode, productId, navigate]);
 
-    const initPage = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          alert("로그인이 필요합니다.");
-          navigate("/login");
-          return;
-        }
-
-        // 1. Fetch Product Type first
-        const product = await fetchProductById(productId);
-
-        if (product.productType === 'USED') {
-          alert("중고 거래 상품은 1:1 채팅을 통해 거래해주세요.");
-          navigate(`/products/${productId}`);
-          return;
-        }
-
-        // if (product.productType === 'STORE') {
-        //   // Store Product: Direct Purchase
-        //   setPaymentInfo({
-        //     productTitle: product.title,
-        //     productImage: (product.images && product.images.length > 0) ? product.images[0].imagePath : null,
-        //     sellerName: product.sellerNickName || "판매자",
-        //     price: Number(product.startingPrice), // Store uses startingPrice as fixed price
-        //     shippingFee: 0 // Free shipping for now based on previous UI
-        //   });
-        // } 
-
-        if (product.productType === 'STORE') {
-          const originalPrice = Number(product.originalPrice || 0);
-          const discountRate = Number(product.discountRate || 0);
-          const salePrice = Math.round(originalPrice * (100 - discountRate) / 100);
-          const shippingFee = product.deliveryIncluded ? 0 : Number(product.deliveryPrice || 0);
-
-          setPaymentInfo({
-            productTitle: product.title,
-            productImage: (product.images && product.images.length > 0) ? product.images[0].imagePath : null,
-            sellerName: product.sellerNickName || "판매자",
-            price: salePrice,
-            shippingFee: shippingFee
-          });
-        } else if (product.productType === 'AUCTION') {
-          // Auction Product: Check Winning Info
-          try {
-            const winData = await getWinningInfo(productId);
-            setPaymentInfo({
-              productTitle: winData.productTitle,
-              productImage: winData.productImage,
-              sellerName: winData.sellerName,
-              price: winData.bidPrice,
-              shippingFee: 0
-            });
-          } catch (e) {
-            setErrorMsg("낙찰 정보를 찾을 수 없습니다. (낙찰자가 아니거나 종료되지 않음)");
-          }
-        }
-
-      } catch (err) {
-        console.error(err);
-        setErrorMsg("상품 정보를 불러오는 중 오류가 발생했습니다.");
-      } finally {
-        setLoading(false);
+  const initSinglePayment = async (id: number) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        navigate("/login");
+        return;
       }
-    };
 
-    initPage();
-  }, [productId, navigate]);
+      const product = await fetchProductById(id);
+
+      if (product.productType === 'USED') {
+        alert("중고 거래 상품은 1:1 채팅을 통해 거래해주세요.");
+        navigate(`/products/${id}`);
+        return;
+      }
+
+      if (product.productType === 'STORE') {
+        const originalPrice = Number(product.originalPrice || 0);
+        const discountRate = Number(product.discountRate || 0);
+        const salePrice = Math.round(originalPrice * (100 - discountRate) / 100);
+        const shippingFee = product.deliveryIncluded ? 0 : Number(product.deliveryPrice || 0);
+
+        setPaymentInfo({
+          productTitle: product.title,
+          productImage: (product.images && product.images.length > 0) ? product.images[0].imagePath : null,
+          sellerName: product.sellerNickName || "판매자",
+          price: salePrice,
+          shippingFee: shippingFee
+        });
+      } else if (product.productType === 'AUCTION') {
+        try {
+          const winData = await getWinningInfo(id);
+          setPaymentInfo({
+            productTitle: winData.productTitle,
+            productImage: winData.productImage,
+            sellerName: winData.sellerName,
+            price: winData.bidPrice,
+            shippingFee: 0
+          });
+        } catch (e) {
+          setErrorMsg("낙찰 정보를 찾을 수 없습니다. (낙찰자가 아니거나 종료되지 않음)");
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("상품 정보를 불러오는 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const initCartPayment = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        navigate("/login");
+        return;
+      }
+
+      const allCartItems = getCartItems();
+      const selectedItems = allCartItems.filter(item =>
+        selectedItemIds.includes(item.productId)
+      );
+
+      if (selectedItems.length === 0) {
+        alert("선택된 상품이 없습니다.");
+        navigate("/cart");
+        return;
+      }
+
+      const hasUsedProduct = selectedItems.some(item => item.productType === 'USED');
+      if (hasUsedProduct) {
+        alert("중고 거래 상품은 결제할 수 없습니다.");
+        navigate("/cart");
+        return;
+      }
+
+      const totalPrice = selectedItems.reduce((sum, item) =>
+        sum + (item.startingPrice || 0) * item.quantity, 0
+      );
+      const totalShipping = selectedItems.reduce((sum, item) =>
+        sum + item.shipping, 0
+      );
+
+      setCartPaymentInfo({
+        items: selectedItems,
+        totalPrice,
+        totalShipping
+      });
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("장바구니 정보를 불러오는 중 오류가 발생했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load PortOne SDK
   useEffect(() => {
@@ -126,35 +172,6 @@ export default function PaymentPage() {
     document.body.appendChild(script);
     return () => { document.body.removeChild(script); };
   }, []);
-
-  // const handleLoadAddress = async () => {
-  //   try {
-  //     const token = localStorage.getItem("token");
-  //     if (!token) {
-  //       alert("로그인이 필요합니다.");
-  //       return;
-  //     }
-
-  //     const userId = JSON.parse(localStorage.getItem("loginUser") || "{}").userId;
-  //     if (!userId) {
-  //       alert("사용자 정보를 찾을 수 없습니다.");
-  //       return;
-  //     }
-
-  //     const userData = await fetchUserAddress(userId);
-  //     setName(userData.userName);
-  //     setPhone(userData.phone);
-  //     setAddress(userData.address + (userData.detailAddress ? " " + userData.detailAddress : ""));
-  //     setPostcode(userData.zipCode);
-
-  //   } catch (error) {
-  //     console.error(error);
-  //     alert("사용자 정보를 불러오는데 실패했습니다.");
-  //   }
-  // };
-
-  const [isLoadingAddress, setIsLoadingAddress] = useState(false);
-  const [saveForNextTime, setSaveForNextTime] = useState(false);
 
   const handleLoadAddress = async () => {
     try {
@@ -178,7 +195,7 @@ export default function PaymentPage() {
 
       console.log("📡 API 호출 시작:", userId);
       const userData = await fetchUserAddress(userId);
-      console.log(" 받아온 userData:", userData);
+      console.log("✅ 받아온 userData:", userData);
 
       setName(userData.userName || "");
       setPhone(userData.phone || "");
@@ -202,7 +219,6 @@ export default function PaymentPage() {
     }
   };
 
-  // ✅ 주소 정보 저장 함수 추가
   const handleSaveAddress = async () => {
     if (!saveForNextTime) return;
 
@@ -215,7 +231,6 @@ export default function PaymentPage() {
 
       if (!userId) return;
 
-      // 주소를 기본 주소와 상세 주소로 분리
       const addressParts = address.split(" ");
       const detailAddress = addressParts.length > 3 ? addressParts.slice(3).join(" ") : "";
       const baseAddress = addressParts.slice(0, 3).join(" ");
@@ -233,9 +248,6 @@ export default function PaymentPage() {
   };
 
   const handlePayment = async () => {
-    if (!paymentInfo) return;
-
-    // Basic Validation
     if (!address.trim() || !phone.trim() || !name.trim()) {
       alert("배송지 정보와 구매자 정보를 모두 입력해주세요.");
       return;
@@ -244,8 +256,15 @@ export default function PaymentPage() {
     await handleSaveAddress();
 
     try {
-      // 1. Prepare
-      const prepareData = await preparePayment(productId);
+      if (cartMode && cartPaymentInfo) {
+        handleCartPayment();
+        return;
+      }
+
+      if (!paymentInfo || !productId) return;
+
+      const singleFinalAmount = paymentInfo.price + paymentInfo.shippingFee;
+      const prepareData = await preparePayment(Number(productId));
 
       if (!window.IMP) {
         alert("결제 모듈 로딩 중입니다.");
@@ -255,11 +274,11 @@ export default function PaymentPage() {
       window.IMP.init(prepareData.impCode);
 
       const payParams = {
-        pg: "html5_inicis", // or kcp, toss, etc
-        pay_method: paymentMethod, // card, trans, vbank
+        pg: "html5_inicis",
+        pay_method: paymentMethod,
         merchant_uid: prepareData.merchantUid,
         name: prepareData.name,
-        amount: prepareData.amount, // Server-side calculated amount
+        amount: singleFinalAmount,
         buyer_email: prepareData.buyerEmail,
         buyer_name: name,
         buyer_tel: phone,
@@ -272,7 +291,7 @@ export default function PaymentPage() {
           try {
             await completePayment({
               imp_uid: response.imp_uid,
-              productId: productId,
+              productId: Number(productId),
               merchant_uid: response.merchant_uid!,
             });
             alert("결제가 완료되었습니다!");
@@ -291,9 +310,77 @@ export default function PaymentPage() {
     }
   };
 
+  const handleCartPayment = async () => {
+    if (!cartPaymentInfo) return;
+
+    try {
+      const firstProductId = cartPaymentInfo.items[0].productId;
+      const totalAmount = cartPaymentInfo.totalPrice + cartPaymentInfo.totalShipping;
+
+      const prepareData = await preparePayment(firstProductId);
+
+      if (!window.IMP) {
+        alert("결제 모듈 로딩 중입니다.");
+        return;
+      }
+
+      window.IMP.init(prepareData.impCode);
+
+      const payParams = {
+        pg: "html5_inicis",
+        pay_method: paymentMethod,
+        merchant_uid: `CART_${Date.now()}`,
+        name: `${cartPaymentInfo.items[0].title} 외 ${cartPaymentInfo.items.length - 1}건`,
+        amount: totalAmount,
+        buyer_email: prepareData.buyerEmail,
+        buyer_name: name,
+        buyer_tel: phone,
+        buyer_addr: address,
+        buyer_postcode: postcode,
+      };
+
+      window.IMP.request_pay(payParams, async (response) => {
+        if (response.success && response.imp_uid) {
+          try {
+            const paymentPromises = cartPaymentInfo.items.map(item =>
+              completePayment({
+                imp_uid: response.imp_uid!,
+                productId: item.productId,
+                merchant_uid: response.merchant_uid!,
+              })
+            );
+
+            await Promise.all(paymentPromises);
+
+            alert(`${cartPaymentInfo.items.length}건의 결제가 완료되었습니다!`);
+
+            cartPaymentInfo.items.forEach(item => {
+              removeFromCart(item.productId);
+            });
+
+            navigate("/mypage");
+          } catch (e) {
+            console.error("결제 검증 실패:", e);
+            alert("결제 검증 실패: " + (e instanceof Error ? e.message : "알 수 없는 오류"));
+          }
+        } else {
+          alert("결제 실패: " + (response.error_msg || "취소됨"));
+        }
+      });
+
+    } catch (err) {
+      console.error(err);
+      alert("결제 준비 중 오류가 발생했습니다.");
+    }
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center">불러오는 중...</div>;
   if (errorMsg) return <div className="min-h-screen flex items-center justify-center text-red-500 font-bold">{errorMsg}</div>;
-  if (!paymentInfo) return null;
+  if (!paymentInfo && !cartPaymentInfo) return null;
+
+  const finalAmount = cartMode && cartPaymentInfo
+    ? cartPaymentInfo.totalPrice + cartPaymentInfo.totalShipping
+    : (paymentInfo ? paymentInfo.price + paymentInfo.shippingFee : 0);
 
   return (
     <div className="bg-gray-50 min-h-screen py-10">
@@ -308,22 +395,52 @@ export default function PaymentPage() {
             {/* Product Info Card */}
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                주문 상품 <span className="text-gray-400 text-sm font-normal">1건</span>
+                주문 상품 
+                <span className="text-gray-400 text-sm font-normal">
+                  {cartMode && cartPaymentInfo ? `${cartPaymentInfo.items.length}건` : "1건"}
+                </span>
               </h2>
-              <div className="flex gap-4 items-start">
-                <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
-                  {paymentInfo.productImage ? (
-                    <img src={paymentInfo.productImage} alt="Product" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No Image</div>
-                  )}
+
+              {cartMode && cartPaymentInfo ? (
+                <div className="space-y-4">
+                  {cartPaymentInfo.items.map((item) => (
+                    <div key={item.productId} className="flex gap-4 items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0">
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                        {item.images && item.images.length > 0 ? (
+                          <img src={item.images[0].imagePath} alt={item.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No Image</div>
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-sm text-gray-500 mb-1">{item.sellerNickName}</div>
+                        <div className="font-medium text-gray-900 mb-1 line-clamp-2">{item.title}</div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-500">수량: {item.quantity}개</span>
+                          <span className="font-bold text-gray-900">{((item.startingPrice || 0) * item.quantity).toLocaleString()}원</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex-1">
-                  <div className="text-sm text-gray-500 mb-1">{paymentInfo.sellerName}</div>
-                  <div className="text-lg font-medium text-gray-900 mb-2 truncate">{paymentInfo.productTitle}</div>
-                  <div className="font-bold text-gray-900">{paymentInfo.price.toLocaleString()}원</div>
-                </div>
-              </div>
+              ) : (
+                paymentInfo && (
+                  <div className="flex gap-4 items-start">
+                    <div className="w-24 h-24 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                      {paymentInfo.productImage ? (
+                        <img src={paymentInfo.productImage} alt="Product" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">No Image</div>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-sm text-gray-500 mb-1">{paymentInfo.sellerName}</div>
+                      <div className="text-lg font-medium text-gray-900 mb-2 truncate">{paymentInfo.productTitle}</div>
+                      <div className="font-bold text-gray-900">{paymentInfo.price.toLocaleString()}원</div>
+                    </div>
+                  </div>
+                )
+              )}
             </div>
 
             {/* Shipping Info Card */}
@@ -339,12 +456,6 @@ export default function PaymentPage() {
                       placeholder="이름"
                       className="flex-1 border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
                     />
-                    {/* <button
-                      onClick={handleLoadAddress}
-                      className="px-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 whitespace-nowrap"
-                    >
-                      내 정보 불러오기
-                    </button> */}
                     <button
                       onClick={handleLoadAddress}
                       disabled={isLoadingAddress}
@@ -406,9 +517,9 @@ export default function PaymentPage() {
                   <label
                     key={method.id}
                     className={`
-                                        cursor-pointer border rounded-xl p-4 flex items-center justify-center gap-2 font-medium transition-all
-                                        ${paymentMethod === method.id ? 'border-orange-500 bg-orange-50 text-orange-600 ring-1 ring-orange-500' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600'}
-                                    `}
+                      cursor-pointer border rounded-xl p-4 flex items-center justify-center gap-2 font-medium transition-all
+                      ${paymentMethod === method.id ? 'border-orange-500 bg-orange-50 text-orange-600 ring-1 ring-orange-500' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600'}
+                    `}
                   >
                     <input
                       type="radio"
@@ -435,17 +546,29 @@ export default function PaymentPage() {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-gray-600">
                     <span>주문금액</span>
-                    <span>{paymentInfo.price.toLocaleString()}원</span>
+                    <span>
+                      {cartMode && cartPaymentInfo
+                        ? cartPaymentInfo.totalPrice.toLocaleString()
+                        : (paymentInfo?.price.toLocaleString() || "0")
+                      }원
+                    </span>
                   </div>
                   <div className="flex justify-between text-gray-600">
                     <span>배송비</span>
-                    <span>{paymentInfo.shippingFee === 0 ? "무료" : `${paymentInfo.shippingFee.toLocaleString()}원`}</span>
+                    <span>
+                      {(() => {
+                        const shipping = cartMode && cartPaymentInfo
+                          ? cartPaymentInfo.totalShipping
+                          : (paymentInfo?.shippingFee || 0);
+                        return shipping === 0 ? "무료" : `${shipping.toLocaleString()}원`;
+                      })()}
+                    </span>
                   </div>
                   <div className="h-px bg-gray-100 my-4" />
                   <div className="flex justify-between items-center">
                     <span className="font-bold text-gray-900">최종 결제 금액</span>
                     <span className="text-2xl font-bold text-orange-600">
-                      {(paymentInfo.price + paymentInfo.shippingFee).toLocaleString()}
+                      {finalAmount.toLocaleString()}
                       <span className="text-base text-gray-600 font-normal ml-1">원</span>
                     </span>
                   </div>
