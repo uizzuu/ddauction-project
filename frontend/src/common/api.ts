@@ -2145,6 +2145,64 @@ export async function fetchRanking(category?: string): Promise<TYPE.Product[]> {
   return text ? JSON.parse(text) : [];
 }
 
+// ===================== 상품 조회수 제어 =====================
+
+// 조회수 증가 여부를 판단하는 함수
+function shouldIncrementView(productId: number): boolean {
+  const STORAGE_KEY = `product_view_${productId}`;
+  const ONE_HOUR = 60 * 60 * 1000; // 1시간 (밀리초)
+
+  try {
+    const lastViewedStr = localStorage.getItem(STORAGE_KEY);
+    
+    if (!lastViewedStr) {
+      // 처음 보는 경우
+      localStorage.setItem(STORAGE_KEY, Date.now().toString());
+      return true;
+    }
+
+    const lastViewed = parseInt(lastViewedStr, 10);
+    const now = Date.now();
+
+    if (now - lastViewed >= ONE_HOUR) {
+      // 1시간이 지난 경우
+      localStorage.setItem(STORAGE_KEY, now.toString());
+      return true;
+    }
+
+    // 1시간이 안 지난 경우
+    return false;
+  } catch (error) {
+    console.warn("localStorage 접근 실패:", error);
+    return true; // 기본적으로 조회수 증가
+  }
+}
+
+// 🔥 상품 상세 조회 (조회수 제어 포함)
+export async function fetchProductDetail(productId: number): Promise<TYPE.Product> {
+  const token = localStorage.getItem("token");
+  
+  // 🔥 비로그인 유저만 프론트에서 1시간 체크
+  // 로그인 유저는 백엔드에서 자동으로 체크함
+  let incrementView = true;
+  
+  if (!token) {
+    // 비로그인 상태: localStorage로 1시간 체크
+    incrementView = shouldIncrementView(productId);
+  }
+  // 로그인 상태: incrementView는 항상 true (백엔드가 알아서 처리)
+
+  const url = `${API_BASE_URL}${SPRING_API}/products/${productId}?incrementView=${incrementView}`;
+
+  const response = await fetch(url, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+
+  if (!response.ok) throw new Error("상품 조회 실패");
+  return response.json();
+}
+
+
 // 프로필 이미지 업로드
 export const uploadProfileImage = async (userId: number, file: File): Promise<string> => {
   const token = localStorage.getItem("token");

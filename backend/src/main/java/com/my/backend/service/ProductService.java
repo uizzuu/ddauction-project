@@ -220,7 +220,6 @@ public class ProductService {
                 minStartPrice, maxStartPrice
         );
 
-        // Sort by createdAt desc by default for non-paged search, similar to existing logic
         return productRepository.findAll(spec, Sort.by(Sort.Direction.DESC, "createdAt"))
                 .stream()
                 .map(this::convertToDto)
@@ -294,7 +293,7 @@ public class ProductService {
                 minStartPrice, maxStartPrice,
                 pageable
         );
-        
+
         updateBookmarkStatus(page.getContent(), userId);
         return page;
     }
@@ -306,6 +305,76 @@ public class ProductService {
         return products.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    // ========================================
+    // 🔥 조회수 증가 로직 포함한 상품 조회
+    // ========================================
+    @Transactional
+    public ProductDto getProduct(Long productId, Long userId) {
+        Product product = findProductOrThrow(productId);
+
+        // 🔥 로그인한 유저만 1시간 제한 로직 적용
+        if (userId != null) {
+            Users user = findUserOrThrow(userId);
+
+            ProductViewLog viewLog = productViewLogRepository.findByUserAndProduct(user, product)
+                    .orElse(null);
+
+            if (viewLog == null) {
+                // 처음 보는 경우
+                productRepository.incrementViewCount(productId);
+                productViewLogRepository.save(ProductViewLog.builder()
+                        .user(user)
+                        .product(product)
+                        .viewedAt(LocalDateTime.now())
+                        .build());
+            } else {
+                // 1시간이 지났는지 체크
+                LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
+                if (viewLog.getViewedAt().isBefore(oneHourAgo)) {
+                    productRepository.incrementViewCount(productId);
+                    viewLog.setViewedAt(LocalDateTime.now());
+                }
+            }
+        } else {
+            // 🔥 비로그인 유저는 무조건 조회수 증가 (프론트에서 제어)
+            productRepository.incrementViewCount(productId);
+        }
+
+        // 🔥 증가 후 다시 조회 (Dirty Checking 반영)
+        em.flush();
+        em.clear();
+        product = findProductOrThrow(productId);
+
+        return convertToDto(product);
+    }
+
+    // ========================================
+    // 🔥 조회수 증가 없이 상품만 조회 (새로 추가)
+    // ========================================
+    public ProductDto getProductWithoutIncrement(Long productId) {
+        Product product = findProductOrThrow(productId);
+        return convertToDto(product);
+    }
+
+    // 랭킹 조회
+    public List<ProductDto> getRank(String category) {
+        Pageable limit = PageRequest.of(0, 100);
+        List<Product> products;
+
+        if (category == null) {
+            products = productRepository.findTopByViewCount(limit);
+        } else {
+            products = productRepository.findTopByCategoryAndViewCount(
+                    ProductCategoryType.valueOf(category.toUpperCase()),
+                    limit
+            );
+        }
+
+        return products.stream()
+                .map(this::convertToDto)
+                .toList();
     }
 
     // ========================================
@@ -360,88 +429,4 @@ public class ProductService {
         product.setBid(bid);
         product.setPayment(payment);
     }
-//    @Transactional
-//    public ProductDto getProduct(Long productId) {
-//
-//        // 🔥 동시성 안전하게 증가
-//        productRepository.incrementViewCount(productId);
-//
-//        // 증가시킨 뒤 엔티티 다시 조회
-//        Product product = findProductOrThrow(productId);
-//        return convertToDto(product);
-//    }
-    //랭킹
-    public List<ProductDto> getRank(String category) {
-
-        Pageable limit = PageRequest.of(0, 100);
-
-        List<Product> products;
-
-        if (category == null) {
-            products = productRepository.findTopByViewCount(limit);
-        } else {
-            products = productRepository.findTopByCategoryAndViewCount(
-                    ProductCategoryType.valueOf(category.toUpperCase()),
-                    limit
-            );
-        }
-
-        return products.stream()
-                .map(this::convertToDto)
-                .toList();
-    }
-    /**
-     * 상품 상세 조회 (조회수 로직 포함)
-     * @param productId 상품 ID
-     * @param userId 조회하는 유저 ID (비로그인일 경우 null 허용)
-     */
-    @Transactional
-    public ProductDto getProduct(Long productId, Long userId) {
-        Product product = findProductOrThrow(productId);
-
-        // 유저가 로그인한 상태라면 '1시간 1회' 제한 로직 적용
-        if (userId != null) {
-            Users user = findUserOrThrow(userId);
-
-            // 1. 해당 유저가 이 상품을 본 기록이 있는지 확인
-            ProductViewLog viewLog = productViewLogRepository.findByUserAndProduct(user, product)
-                    .orElse(null);
-
-            if (viewLog == null) {
-                // 2-1. 기록이 없으면 -> 처음 본 것임
-                // 조회수 증가
-                productRepository.incrementViewCount(productId);
-
-                // 기록 생성
-                productViewLogRepository.save(ProductViewLog.builder()
-                        .user(user)
-                        .product(product)
-                        .viewedAt(LocalDateTime.now())
-                        .build());
-            } else {
-                // 2-2. 기록이 있으면 -> 시간 차이 계산
-                LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
-
-                // 마지막으로 본 시간이 1시간 전보다 이전이면 (즉, 1시간이 지났으면)
-                if (viewLog.getViewedAt().isBefore(oneHourAgo)) {
-                    // 조회수 증가
-                    productRepository.incrementViewCount(productId);
-
-                    // 본 시간 업데이트 (Dirty Checking으로 자동 update 쿼리 나감)
-                    viewLog.setViewedAt(LocalDateTime.now());
-                }
-                // 1시간이 안 지났으면 조회수 증가 안 함
-            }
-        } else {
-            // 비로그인 유저의 경우 처리 (선택 사항)
-            // 1. 그냥 무조건 증가시킨다 OR
-            // 2. 쿠키를 사용해서 제한한다.
-            // 여기서는 일단 무조건 증가로 둡니다.
-            productRepository.incrementViewCount(productId);
-        }
-
-        return convertToDto(product);
-    }
-
-
 }

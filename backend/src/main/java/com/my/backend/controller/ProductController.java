@@ -58,13 +58,15 @@ public class ProductController {
     @GetMapping("/{id}")
     public ResponseEntity<ProductDto> getProduct(
             @PathVariable Long id,
-            @AuthenticationPrincipal CustomUserDetails userDetails // 👈 추가
+            @RequestParam(required = false, defaultValue = "true") Boolean incrementView,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        // 비로그인 상태면 userId는 null
         Long userId = (userDetails != null) ? userDetails.getUser().getUserId() : null;
 
-        // Service에 userId도 같이 전달 (1시간 제한 로직 활성화)
-        ProductDto product = productService.getProduct(id, userId);
+        // 🔥 incrementView가 false면 조회수 증가 안함
+        ProductDto product = incrementView
+                ? productService.getProduct(id, userId)
+                : productService.getProductWithoutIncrement(id);
 
         return ResponseEntity.ok(product);
     }
