@@ -332,50 +332,54 @@ public class ProductService {
     // ==========================================================
     // 1. 조회수 증가 로직이 포함된 메서드 (컨트롤러에서 incrementView=true 일 때 호출)
     // ==========================================================
-    @Transactional // 트랜잭션 필수!
+    @Transactional
     public ProductDto getProduct(Long productId, Long userId) {
-        // 1. 상품 조회 (영속성 컨텍스트에 로딩됨)
+        // 1️⃣ 상품 조회 (영속 상태)
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));
 
-        // 2. 로그인 유저 처리 (DB 로그 확인 후 증가 결정)
+        LocalDateTime now = LocalDateTime.now();
+
         if (userId != null) {
+            // 2️⃣ 로그인 유저
             Users user = userRepository.findById(userId)
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자 없음"));
 
-            LocalDateTime now = LocalDateTime.now();
-
-            // 기존 기록 찾기
+            // 기존 조회 로그 확인
             ProductViewLog viewLog = productViewLogRepository.findByUserAndProduct(user, product)
                     .orElse(null);
 
             if (viewLog == null) {
-                // [A] 처음 조회 -> 조회수 증가 + 로그 생성
-                product.setViewCount(product.getViewCount() + 1); // 🔥 Setter로 값 변경 (Dirty Checking)
+                // 🔹 처음 조회
+                product.setViewCount(product.getViewCount() + 1);
 
-                productViewLogRepository.save(ProductViewLog.builder()
+                // 새 로그 생성, em.persist로 flush 타이밍 제어
+                ProductViewLog newLog = ProductViewLog.builder()
                         .user(user)
                         .product(product)
                         .viewedAt(now)
-                        .build());
-            } else {
-                // [B] 이전에 조회함 -> 1시간 지났는지 체크
-                if (viewLog.getViewedAt().isBefore(now.minusHours(1))) {
-                    product.setViewCount(product.getViewCount() + 1); // 🔥 증가
-                    viewLog.setViewedAt(now); // 🔥 시간 업데이트 (자동 저장됨)
-                }
-                // 1시간 안 지났으면 조회수 증가 안 함! (컨트롤러가 true라고 했어도 여기서 막음)
+                        .build();
+                em.persist(newLog);
+                // 강제로 flush하면 dirty checking과 충돌 방지
+                em.flush();
+
+            } else if (viewLog.getViewedAt().isBefore(now.minusHours(1))) {
+                // 🔹 1시간 지난 경우만 증가
+                product.setViewCount(product.getViewCount() + 1);
+                viewLog.setViewedAt(now);
+                em.flush(); // 변경 반영
             }
-        }
-        // 3. 비로그인(Guest) 처리 (무조건 증가)
-        else {
-            // 컨트롤러가 이 메서드를 호출했다는 건, 프론트에서 localStorage 체크 후 "올려줘"라고 한 것임.
-            product.setViewCount(product.getViewCount() + 1); // 🔥 Setter로 값 변경
+            // 1시간 안 지난 경우 아무것도 하지 않음
+        } else {
+            // 3️⃣ 비로그인 (Guest) - 무조건 증가
+            product.setViewCount(product.getViewCount() + 1);
+            em.flush();
         }
 
-        // 트랜잭션이 끝날 때 변경된 product(조회수)와 viewLog가 DB에 자동 반영됩니다.
+        // 트랜잭션 종료 시 product + viewLog 모두 반영
         return convertToDto(product);
     }
+
 
     // ==========================================================
     // 2. 조회수 증가 없이 단순 조회 (컨트롤러에서 incrementView=false 일 때 호출)

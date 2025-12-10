@@ -15,6 +15,7 @@ public class ProductViewLog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "product_view_log_id")
     private Long productViewLogId;
 
     @ManyToOne(fetch = FetchType.LAZY)
