@@ -1,7 +1,10 @@
 package com.my.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.my.backend.entity.Notification;
 import com.my.backend.entity.Users;
 import com.my.backend.enums.NotificationStatus;
@@ -21,12 +24,16 @@ public class NotificationDto {
     private NotificationStatus notificationStatus; // ✅ 필수 필드
     private String content;
     private Boolean isRead;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime createdAt;
 
     // ✅ WebSocket 전송용 JSON 변환
     public String toJson() {
         try {
-            return new ObjectMapper().writeValueAsString(this);
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.registerModule(new JavaTimeModule());  // ✅ 추가
+            mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);  // ✅ 추가
+            return mapper.writeValueAsString(this);
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             return "{}";

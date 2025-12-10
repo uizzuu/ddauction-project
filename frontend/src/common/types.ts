@@ -1,5 +1,5 @@
 import { ROLE, PAYMENT_STATUS, PRODUCT_STATUS, CHAT_TYPE, IMAGE_TYPE, ARTICLE_TYPES } from './enums';
-import type { ProductType, ProductCategoryType, DeliveryType, ArticleType as ArticleTypeAlias } from './enums';
+import type { ProductType, ProductCategoryType, DeliveryType, ArticleType as ArticleTypeAlias, NotificationStatus } from './enums';
 
 export type { ProductType, ProductCategoryType, DeliveryType };
 export type ArticleType = ArticleTypeAlias;
@@ -414,3 +414,13 @@ export interface BusinessVerifyProps {
   onVerified: () => void;
   onCancel?: () => void; // <- 여기 추가
 }
+
+//알림 타입
+export type Notification = {
+  notificationId: number;
+  userId?: number;
+  notificationStatus?: NotificationStatus;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+};

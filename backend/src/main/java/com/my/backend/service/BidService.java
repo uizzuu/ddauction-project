@@ -35,6 +35,7 @@ public class BidService {
     private final BidRepository bidRepository;
     private final AuctionWebSocketHandler webSocketHandler;
     private final ImageRepository imageRepository;
+    private final NotificationService notificationService;
 
     private static final long MIN_BID_INCREMENT = 1000;
 
@@ -117,6 +118,27 @@ public class BidService {
                     bidRepository.save(prev);
                 }
             });
+            // ✅ 알림 추가 - 판매자에게 알림
+            notificationService.sendNewBidToSeller(
+                    product.getSeller().getUserId(),
+                    product.getTitle(),
+                    bidPrice
+            );
+
+            // ✅ 알림 추가 - 다른 입찰자들에게 알림
+            List<Bid> allBids = bidRepository.findByProduct(product);
+            for (Bid b : allBids) {
+                // 현재 입찰자 제외, 판매자 제외
+                if (!b.getUser().getUserId().equals(userId)
+                        && !b.getUser().getUserId().equals(product.getSeller().getUserId())) {
+                    notificationService.sendNewBidToOtherBidder(
+                            b.getUser().getUserId(),
+                            product.getTitle(),
+                            bidPrice
+                    );
+                }
+            }
+
 
             webSocketHandler.broadcastBidList(product.getProductId(), bid);
 

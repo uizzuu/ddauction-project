@@ -1,7 +1,7 @@
 import type * as TYPE from "./types";
 import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
-import type { ArticleType } from './types';
+import type { ArticleType,Notification } from './types';
 
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
@@ -2408,4 +2408,33 @@ export const getProfileImage = async (userId: number): Promise<string | null> =>
 
   const data = await response.json();
   return data.imageUrl || data.profileImage || null;
+};
+
+//알림 조회
+export const getNotifications = async (userId: number): Promise<Notification[]> => {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/notifications/${userId}`, {
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("알림 조회 실패");
+  }
+
+  return response.json();
+};
+
+// 알림 읽음 처리
+export const markNotificationAsRead = async (notificationId: number): Promise<void> => {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/notifications/${notificationId}/read`, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error("읽음 처리 실패");
+  }
 };

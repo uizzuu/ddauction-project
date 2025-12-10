@@ -63,8 +63,11 @@ public class AuctionSchedulerService {
                 log.info("[Auction] 경매 종료(낙찰): productId={}, winnerId={}, finalPrice={}",
                         productId, highest.getUser().getUserId(), highest.getBidPrice());
 
-                // 알림
-                notificationService.sendBidWinNotification(highest.getUser(), p.getTitle());
+                // ✅ userId만 넘김
+                notificationService.sendBidWinNotification(
+                        highest.getUser().getUserId(),
+                        p.getTitle()
+                );
 
             } else {
                 // 유찰 처리
@@ -75,7 +78,11 @@ public class AuctionSchedulerService {
 
                 List<Bid> allBids = bidRepository.findByProduct(p);
                 for (Bid bid : allBids) {
-                    notificationService.sendAuctionEndNotification(bid.getUser(), p.getTitle());
+                    // ✅ userId만 넘김
+                    notificationService.sendAuctionEndNotification(
+                            bid.getUser().getUserId(),
+                            p.getTitle()
+                    );
                 }
             }
 
@@ -89,14 +96,22 @@ public class AuctionSchedulerService {
         Bid savedBid = bidRepository.saveAndFlush(bid);
         Product product = savedBid.getProduct();
 
-        // 판매자 알림
-        notificationService.sendNewBidToSeller(product.getSeller(), product.getTitle(), savedBid.getBidPrice());
+        // ✅ 판매자 알림 - userId만 넘김
+        notificationService.sendNewBidToSeller(
+                product.getSeller().getUserId(),
+                product.getTitle(),
+                savedBid.getBidPrice()
+        );
 
-        // 다른 입찰자 알림
+        // ✅ 다른 입찰자 알림 - userId만 넘김
         List<Bid> otherBidders = bidRepository.findByProduct(product);
         for (Bid b : otherBidders) {
             if (!b.getUser().getUserId().equals(savedBid.getUser().getUserId())) {
-                notificationService.sendNewBidToOtherBidder(b.getUser(), product.getTitle(), savedBid.getBidPrice());
+                notificationService.sendNewBidToOtherBidder(
+                        b.getUser().getUserId(),
+                        product.getTitle(),
+                        savedBid.getBidPrice()
+                );
             }
         }
     }

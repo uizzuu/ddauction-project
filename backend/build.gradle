@@ -85,6 +85,8 @@ dependencies {
 
     // sms 전송용
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    //알림 시간용
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 }
 
 tasks.named('test') {
