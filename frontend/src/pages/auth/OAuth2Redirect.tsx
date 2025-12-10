@@ -16,7 +16,7 @@ export default function OAuth2Redirect({ setUser }: Props) {
         // URL에서 token 파라미터 추출
         const params = new URLSearchParams(window.location.search);
         const token = params.get("token");
-        
+
         console.log("✅ URL 확인: ", window.location.href);
 
         if (!token) {

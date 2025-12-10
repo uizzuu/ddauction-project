@@ -42,6 +42,7 @@ import ArticleDetail from "../pages/article/ArticleDetail";
 import PaymentPage from "../pages/payment/PaymentPage";
 import FindEmail from "../pages/auth/FindEmail";
 import FindPassword from "../pages/auth/FindPassword";
+import TermsAgreement from "../pages/auth/TermsAgreement";
 import UserChat from "../components/chat/UserChat";
 import PublicChat from "../components/chat/PublicChat";
 import FloatingWidgets from "../components/ui/FloatingWidgets";
@@ -107,5 +108,6 @@ export {
   WishlistPage,
   RankPage,
   UserProfilePage,
-  ReviewWritePage
+  ReviewWritePage,
+  TermsAgreement
 };

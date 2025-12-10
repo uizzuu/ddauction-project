@@ -1,4 +1,4 @@
-export const ROLE = ["ADMIN", "USER", "BANNED"] as const;
+export const ROLE = ["ADMIN", "USER", "BANNED", "SELLER"] as const;
 export type Role = (typeof ROLE)[number];
 
 export const PRODUCT_STATUS = ["ACTIVE", "CLOSED", "SOLD"] as const;

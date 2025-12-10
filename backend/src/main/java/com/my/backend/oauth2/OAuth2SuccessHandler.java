@@ -50,10 +50,17 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             System.out.println("✅ OAuth2 사용자 정보: email=" + email + ", roleEnum=" + roleEnum);
             // JWT 생성
             String jwtToken = jwtUtil.createJwt(userId, email, roleEnum, nickName, 24 * 60 * 60 * 1000L);
-            System.out.println("✅ JWT 토큰 생성 완료");
+            System.out.println("✅ JWT 토큰 생성 완료: " + jwtToken); // 토큰 로그 출력
+
+            // URL 인코딩 (안전하게 전달하기 위함)
+            String encodedToken = java.net.URLEncoder.encode(jwtToken, java.nio.charset.StandardCharsets.UTF_8);
+
             // React 앱 URL로 리다이렉트 + 토큰 전달
-            String redirectUrl = frontendUrl + "/oauth2/redirect?token=" + jwtToken;
+            String redirectUrl = frontendUrl + "/oauth2/redirect?token=" + encodedToken;
+            
             System.out.println("🔄 리다이렉트 URL: " + redirectUrl);
+            
+            response.setContentType("text/html;charset=UTF-8"); // 컨텐츠 타입 명시
             response.sendRedirect(redirectUrl);
             System.out.println("✅ 리다이렉트 완료");
 

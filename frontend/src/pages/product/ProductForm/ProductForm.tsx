@@ -30,6 +30,8 @@ export default function ProductRegister({ user }: Props) {
         auctionEndDate,
         minDateTime,
         maxDateTime,
+        isAgreed,
+        setIsAgreed,
     } = useProductForm(user);
 
     // Tag Logic
@@ -94,7 +96,13 @@ export default function ProductRegister({ user }: Props) {
                             판매 방식 <span className="text-red-500">*</span>
                         </label>
                         <div className="flex p-1 bg-gray-100 rounded-xl">
-                            {PRODUCT_TYPE_KEYS.map((type) => (
+                            {PRODUCT_TYPE_KEYS.filter(type => {
+                                if (type === "STORE") {
+                                    // 스토어는 사업자만 가능
+                                    return user?.role === "SELLER" || !!user?.businessNumber;
+                                }
+                                return true;
+                            }).map((type) => (
                                 <button
                                     key={type}
                                     type="button"
@@ -486,6 +494,47 @@ export default function ProductRegister({ user }: Props) {
                     </div>
 
 
+
+                    {/* Agreement Checkbox */}
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        {/* 정산 예상 금액 표시 */}
+                        <div className="flex justify-end mt-2 text-sm text-gray-500">
+                            {form.startingPrice && !isNaN(Number(form.startingPrice)) ? (
+                                <span className="font-medium text-[#c0392b]">
+                                    정산 예상 금액: {(Number(form.startingPrice) * 0.9).toLocaleString()}원 (수수료 5% 제외)
+                                </span>
+                            ) : null}
+                        </div>
+
+                        {/* 상품 등록 규정 (스크롤 박스) */}
+                        <div className="border border-gray-300 rounded-md p-3 h-32 overflow-y-auto mb-3 bg-gray-50 text-xs text-gray-500 leading-relaxed scrollbar-hide">
+                            <strong className="block mb-1 text-gray-700">상품 등록 규정</strong>
+                            1. 판매자는 실제 보유한 상품만을 등록해야 하며, 허위 매물 등록 시 제재를 받을 수 있습니다.<br />
+                            2. 위조품(짝퉁), 장물, 불법복제품 등 법령에 위반되거나 타인의 권리를 침해하는 물품은 등록할 수 없습니다.<br />
+                            3. 상품의 상태, 하자 등 상세 정보를 정확하게 기재해야 합니다. 정보 부족으로 인한 분쟁 책임은 판매자에게 있습니다.<br />
+                            4. 직거래 시 안전한 장소에서 거래하시기 바라며, 택배 거래 시 운송장 번호를 반드시 입력해야 합니다.<br />
+                            5. 경매 상품의 경우 낙찰 후 정당한 사유 없이 판매를 거부할 경우 페널티가 부여될 수 있습니다.<br />
+                            6. 서비스 수수료는 낙찰가/판매가의 5%이며, 정산 시 차감된 금액이 입금됩니다.<br />
+                            7. 기타 자세한 사항은 고객센터 도움말을 참고해 주세요.
+                        </div>
+
+                        <div className="flex items-center">
+                            <input
+                                id="agreement"
+                                type="checkbox"
+                                checked={isAgreed}
+                                onChange={(e) => setIsAgreed(e.target.checked)}
+                                className="h-4 w-4 text-black focus:ring-black border-gray-300 rounded cursor-pointer accent-black"
+                            />
+                            <label htmlFor="agreement" className="ml-2 block text-sm font-bold text-[#333] cursor-pointer select-none">
+                                상품 등록 규정에 동의합니다
+                            </label>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2 pl-7">
+                            가품, 도난 물품, 거래 금지 품목 등록 시 서비스 이용이 제한될 수 있으며,
+                            관련 법령에 따라 처벌받을 수 있습니다.
+                        </p>
+                    </div>
 
                     {/* Error Message */}
                     {error && (

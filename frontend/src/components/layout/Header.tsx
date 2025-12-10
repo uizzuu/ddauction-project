@@ -376,7 +376,7 @@ export default function Header({ user, setUser }: Props) {
                             <NavLink to="/login" className="hover:text-[#666] transition-colors">
                                 로그인
                             </NavLink>
-                            <NavLink to="/signup" className="hover:text-[#666] transition-colors">
+                            <NavLink to="/terms" className="hover:text-[#666] transition-colors">
                                 회원가입
                             </NavLink>
                             {/* <NavLink

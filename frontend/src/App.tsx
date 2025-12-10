@@ -31,7 +31,8 @@ import {
   WishlistPage,
   UserProfilePage,
   ReviewWritePage,
-  ImageSearchPage
+  ImageSearchPage,
+  TermsAgreement
 } from "./common/import";
 import type { User } from "./common/types";
 
@@ -59,7 +60,8 @@ const VALID_PATHS = [
   "/verify",
   "/cart",
   "/rank",
-  "/image-search"
+  "/image-search",
+  "/terms"
 ];
 
 // 동적 경로 패턴 (예: /products/123, /articles/456 등)
@@ -92,7 +94,7 @@ export default function App() {
   const location = useLocation();
   const [isInvalidPath, setIsInvalidPath] = useState(false);
 
-  const noHeaderPaths = ["/login", "/signup", "/find-email", "/find-password"];
+  const noHeaderPaths = ["/login", "/signup", "/find-email", "/find-password", "/terms"];
   const showHeader = !noHeaderPaths.includes(location.pathname);
 
   // 경로 유효성 확인
@@ -155,6 +157,7 @@ export default function App() {
           element={<OAuth2Redirect setUser={setUser} />}
         />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/terms" element={<TermsAgreement />} />
         <Route path="/auction" element={<ProductList />} />
         <Route path="/register" element={<ProductRegister user={user} />} />
         <Route

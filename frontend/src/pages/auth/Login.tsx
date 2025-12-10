@@ -216,7 +216,7 @@ export default function Login({ setUser }: Props) {
           <span className="w-[1px] h-3 bg-gray-300"></span>
           <span className="cursor-pointer hover:text-gray-600" onClick={() => navigate("/find-password")}>비밀번호 찾기</span>
           <span className="w-[1px] h-3 bg-gray-300"></span>
-          <span className="cursor-pointer hover:text-gray-600" onClick={() => navigate("/signup")}>회원가입</span>
+          <span className="cursor-pointer hover:text-gray-600" onClick={() => navigate("/terms")}>회원가입</span>
         </div>
 
         {/* Social Login */}

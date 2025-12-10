@@ -36,6 +36,7 @@ export default function useProductForm(user: User | null) {
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
     const [uploading, setUploading] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
+    const [isAgreed, setIsAgreed] = useState(false);
 
     useEffect(() => {
         const now = new Date();
@@ -126,6 +127,14 @@ export default function useProductForm(user: User | null) {
         if (isDirectTransaction && !form.address) {
             return "직거래를 선택하셨으므로 거래 희망 장소를 입력해주세요";
         }
+        if (isDirectTransaction && !form.address) {
+            return "직거래를 선택하셨으므로 거래 희망 장소를 입력해주세요";
+        }
+
+        if (!isAgreed) {
+            return "상품 등록 규정에 동의해주세요";
+        }
+
         return "";
     };
 
@@ -135,6 +144,17 @@ export default function useProductForm(user: User | null) {
             setError(validationError);
             return;
         }
+
+        // Confirmation Summary
+        const summary = [
+            `[상품 등록 확인]`,
+            `제목: ${form.title}`,
+            `가격: ${Number(form.startingPrice).toLocaleString()}원`,
+            `판매 방식: ${form.productType === 'AUCTION' ? '경매' : form.productType === 'STORE' ? '스토어' : '중고거래'}`,
+            `\n위 내용으로 상품을 등록하시겠습니까?`
+        ].join("\n");
+
+        if (!window.confirm(summary)) return;
 
         if (!user) {
             alert("로그인이 필요합니다");
@@ -235,6 +255,8 @@ export default function useProductForm(user: User | null) {
 
         // Setters if needed directly (though updateForm usually suffices)
         setForm,
-        setError
+        setError,
+        isAgreed,
+        setIsAgreed
     };
 }

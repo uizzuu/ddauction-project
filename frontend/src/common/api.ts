@@ -59,7 +59,8 @@ async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
     const text = await res.text();
     try {
       const data = JSON.parse(text);
-      throw new Error(data.error || text);
+      // error 필드나 message 필드가 있으면 그것을 사용, 없으면 전체 텍스트(JSON) 반환
+      throw new Error(data.error || data.message || text);
     } catch {
       throw new Error(text);
     }

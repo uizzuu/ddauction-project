@@ -11,15 +11,14 @@ type Props = {
 export default function StoreSection({ price, onChangePrice, uploading, form, updateForm }: Props) {
 
     // 1. Forward Calc: Original + Discount -> Sale
+    // 1. Forward Calc: Original + Discount -> Sale
     const calculateSalePrice = (originalStr: string, discountStr: string) => {
         const original = Number(originalStr.replace(/[^0-9]/g, ''));
         const discount = Number(discountStr.replace(/[^0-9]/g, ''));
 
         if (original > 0 && discount >= 0 && discount <= 100) {
-            const sale = Math.floor(original * (1 - discount / 100));
-            // Only update if sale price is effectively different to avoid loops if needed, 
-            // but here we are driven by user input on Original/Discount.
-            // We update the parent's startingPrice.
+            // 반올림하여 1원 단위 정밀도 향상
+            const sale = Math.round(original * (1 - discount / 100));
             updateForm("startingPrice", sale.toString());
         }
     };
@@ -31,7 +30,8 @@ export default function StoreSection({ price, onChangePrice, uploading, form, up
 
         if (original > 0 && sale >= 0 && sale <= original) {
             // Formula: Discount = (1 - Sale/Original) * 100
-            const discount = Math.floor((1 - sale / original) * 100);
+            // 소수점 첫째자리까지는 고려할 수도 있지만, 보통 정수 %를 사용하므로 Math.round
+            const discount = Math.round((1 - sale / original) * 100);
             updateForm("discountRate", discount.toString());
         }
     };
