@@ -74,6 +74,7 @@ public class Product {
 
     private String deliveryAvailable;
 
+    @Builder.Default
     @jakarta.persistence.ElementCollection
     @jakarta.persistence.CollectionTable(name = "product_banners", joinColumns = @JoinColumn(name = "product_id"))
     @jakarta.persistence.Column(name = "banner_url")

@@ -178,7 +178,7 @@ public class ProductController {
 
     @GetMapping("/top-bookmarked")
     public ResponseEntity<List<ProductDto>> getTopBookmarkedProducts() {
-        List<ProductDto> topProducts = bookMarkService.getTopBookmarkedProducts(1); // 1개만 가져오기
+        List<ProductDto> topProducts = bookMarkService.getTopBookmarkedProducts(10); // 1개 -> 10개로 늘려서 이미지 있는것 필터링 가능하게 변경
         return ResponseEntity.ok(topProducts);
     }
 
