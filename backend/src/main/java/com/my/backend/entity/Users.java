@@ -32,30 +32,25 @@ public class Users {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @NotBlank
-    @Pattern(regexp = "^[가-힣a-zA-Z0-9]+$")
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String userName;
 
-    @NotBlank
     @Pattern(regexp = "^[가-힣a-zA-Z0-9]{3,12}+$", message = "닉네임은 3~12자여야 합니다.")
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String nickName;
 
     @NotBlank
     @Column(nullable = false)
     private String password;
 
-    @NotBlank
     @Pattern(regexp = "^\\d{10,11}$", message = "전화번호는 숫자만 10~11자리여야 합니다.")
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String phone;
 
-    @NotBlank
     @Email(
             regexp = "^[a-zA-Z0-9]+@[a-zA-Z0-9]+\\.[a-zA-Z]{2,}$",
-            message = "올바른 이메일 형식이 아닙니다.")
-    @Column(nullable = false, unique = true)
+            message = "올바른 이메일 형식을 입력해주세요.")
+    @Column(nullable = true, unique = true)
     private String email;
 
     @Column(nullable = true)

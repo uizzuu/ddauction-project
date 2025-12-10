@@ -1,13 +1,8 @@
 import { useState, useEffect } from "react";
 import { Camera, Trash2 } from "lucide-react";
-
-type User = {
-  userId: number;
-  nickName?: string;
-  profileImage?: string;
-  userName?: string;
-  email?: string;
-};
+import Avatar from "../ui/Avatar";
+import type { User } from "../../common/types";
+import { API_BASE_URL } from "../../common/api";
 
 type Props = {
   user: User;
@@ -20,6 +15,12 @@ export default function ProfileImageUploader({ user, isEditing, onUpload, onDele
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
+  // Helper for image URL
+  const getImageUrl = (path: string | null) => {
+    if (!path) return null;
+    return path.startsWith("http") ? path : `${API_BASE_URL}/${path}`;
+  };
+
   // 디버깅용 로그
   useEffect(() => {
     console.log("User prop:", user);
@@ -30,19 +31,7 @@ export default function ProfileImageUploader({ user, isEditing, onUpload, onDele
     const file = e.target.files?.[0];
     if (!file) return;
 
-    console.log("Selected file:", file);
-
-    // 파일 크기 체크 (5MB 제한)
-    if (file.size > 5 * 1024 * 1024) {
-      alert("파일 크기는 5MB 이하여야 합니다.");
-      return;
-    }
-
-    // 파일 타입 체크
-    if (!file.type.startsWith("image/")) {
-      alert("이미지 파일만 업로드 가능합니다.");
-      return;
-    }
+    // ... (checks)
 
     setUploading(true);
 
@@ -51,17 +40,24 @@ export default function ProfileImageUploader({ user, isEditing, onUpload, onDele
       formData.append("file", file);
 
       const token = localStorage.getItem("token");
-      const response = await fetch(`/api/users/${user.userId}/profile-image`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/${user.userId}/profile-image`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${(token || "").trim()}`,
         },
         body: formData,
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "이미지 업로드에 실패했습니다.");
+        let errorMessage = "이미지 업로드에 실패했습니다.";
+        try {
+          const error = await response.json();
+          errorMessage = error.message || errorMessage;
+        } catch (e) {
+          if (response.status === 401) errorMessage = "로그인이 만료되었습니다. 다시 로그인해주세요.";
+          else if (response.status === 403) errorMessage = "권한이 없습니다.";
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -91,7 +87,7 @@ export default function ProfileImageUploader({ user, isEditing, onUpload, onDele
 
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(`/api/users/${user.userId}/profile-image`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/${user.userId}/profile-image`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -120,7 +116,7 @@ export default function ProfileImageUploader({ user, isEditing, onUpload, onDele
     return <div className="text-gray-500">사용자 정보를 불러오는 중...</div>;
   }
 
-  const displayImage = previewUrl || user.profileImage || null;
+  const displayImage = previewUrl || (user.images && user.images.length > 0 ? getImageUrl(user.images[0].imagePath) : null);
   console.log("Display image URL:", displayImage);
 
   return (
@@ -130,21 +126,12 @@ export default function ProfileImageUploader({ user, isEditing, onUpload, onDele
       <div className="flex items-center gap-4">
         <div className="relative">
           <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-            {displayImage ? (
-              <img
-                src={displayImage}
-                alt="Profile"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  console.error("이미지 로딩 실패:", displayImage);
-                  (e.target as HTMLImageElement).src = ""; // 실패 시 기본 처리
-                }}
-              />
-            ) : (
-              <div className="text-3xl font-bold text-gray-400">
-                {user.nickName?.charAt(0).toUpperCase() || user.userName?.charAt(0).toUpperCase() || "U"}
-              </div>
-            )}
+            <Avatar
+              src={previewUrl || (user.images && user.images.length > 0 ? user.images[0].imagePath : null)}
+              alt="Profile"
+              className="w-full h-full"
+              fallbackText={user.nickName}
+            />
           </div>
 
           {isEditing && (

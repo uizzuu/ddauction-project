@@ -549,9 +549,9 @@ export default function Header({ user, setUser }: Props) {
                                             )}
                                         </div>
 
-                                        {/* 인기 검색어 */}
+                                        {/* 실시간 검색어 */}
                                         <div>
-                                            <h3 className="text-sm font-bold text-[#333] mb-3">인기 검색어</h3>
+                                            <h3 className="text-sm font-bold text-[#333] mb-3">실시간 검색어</h3>
                                             <div className="grid grid-cols-2 gap-x-4 gap-y-3">
                                                 {popularKeywords.map((keyword, index) => (
                                                     <div

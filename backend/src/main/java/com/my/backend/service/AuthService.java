@@ -3,7 +3,6 @@ package com.my.backend.service;
 import java.time.LocalDateTime;
 import java.util.Map;
 
-import com.my.backend.dto.auth.PhoneLoginRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,6 +10,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.my.backend.dto.auth.LoginRequest;
+import com.my.backend.dto.auth.PhoneLoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.dto.auth.TokenResponse;
 import com.my.backend.entity.Address;
@@ -19,9 +19,9 @@ import com.my.backend.entity.PhoneVerification;
 import com.my.backend.entity.Users;
 import com.my.backend.enums.Role;
 import com.my.backend.myjwt.JWTUtil;
+import com.my.backend.phoneVerification.PhoneVerificationRepository;
 import com.my.backend.repository.AddressRepository;
 import com.my.backend.repository.EmailVerificationRepository;
-import com.my.backend.phoneVerification.PhoneVerificationRepository;
 import com.my.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -40,25 +40,29 @@ public class AuthService {
     private final PhoneVerificationRepository phoneVerificationRepository; // 추가
     private final EmailService emailService;
 
-    // 검증 메서드
+    // 검증 메서드 Check (Optional fields return true if null/empty)
     private boolean isValidName(String name) {
-        return name != null && name.matches("^[가-힣a-zA-Z]+$");
+        if (name == null || name.trim().isEmpty()) return true;
+        return name.matches("^[가-힣a-zA-Z]+$");
     }
 
     private boolean isValidNickName(String nickName) {
-        return nickName != null && nickName.matches("^[가-힣a-zA-Z0-9]{3,12}$");
+        if (nickName == null || nickName.trim().isEmpty()) return true;
+        return nickName.matches("^[가-힣a-zA-Z0-9]{3,12}$");
     }
 
     private boolean isValidEmail(String email) {
-        return email != null && email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+        if (email == null || email.trim().isEmpty()) return true;
+        return email.matches("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
     }
 
     private boolean isValidPhone(String phone) {
-        return phone != null && phone.matches("^\\d{10,11}$");
+        if (phone == null || phone.trim().isEmpty()) return true;
+        return phone.matches("^\\d{10,11}$");
     }
 
     private boolean isValidPassword(String password) {
-        if (password == null) return false;
+        if (password == null) return false; // Password is required
         return password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!*@#]).{8,}$");
     }
 
@@ -86,6 +90,8 @@ public class AuthService {
         String trimmedEmail = email.trim().toLowerCase();
         if (!isValidEmail(trimmedEmail))
             return ResponseEntity.badRequest().body("올바른 이메일 형식이 아닙니다.");
+        
+        // 이메일이 입력된 경우 중복 체크
         if (userRepository.existsByEmail(trimmedEmail))
             return ResponseEntity.badRequest().body("이미 사용 중인 이메일입니다.");
 
@@ -108,16 +114,27 @@ public class AuthService {
     // ========== 회원가입 (이메일 OR 핸드폰 인증 확인) ==========
     @Transactional
     public ResponseEntity<?> register(RegisterRequest request) {
-        log.info("회원가입 시작 - email: {}, phone: {}", request.getEmail(), request.getPhone());
+        String email = request.getEmail() != null && !request.getEmail().trim().isEmpty() ? request.getEmail() : null;
+        String phone = request.getPhone() != null && !request.getPhone().trim().isEmpty() ? request.getPhone() : null;
+        String nickName = request.getNickName() != null && !request.getNickName().trim().isEmpty() ? request.getNickName() : null;
+        String userName = request.getUserName() != null && !request.getUserName().trim().isEmpty() ? request.getUserName() : null;
+
+        log.info("회원가입 시작 - email: {}, phone: {}", email, phone);
 
         // 🔥 이메일 또는 핸드폰 인증 중 하나라도 완료되어야 함
-        EmailVerification emailVerification = emailVerificationRepository
-                .findByUserEmailAndVerifiedTrue(request.getEmail())
-                .orElse(null);
+        EmailVerification emailVerification = null;
+        if (email != null) {
+            emailVerification = emailVerificationRepository
+                    .findByUserEmailAndVerifiedTrue(email)
+                    .orElse(null);
+        }
 
-        PhoneVerification phoneVerification = phoneVerificationRepository
-                .findByUserPhoneAndVerifiedTrue(request.getPhone())
-                .orElse(null);
+        PhoneVerification phoneVerification = null;
+        if (phone != null) {
+            phoneVerification = phoneVerificationRepository
+                    .findByUserPhoneAndVerifiedTrue(phone)
+                    .orElse(null);
+        }
 
         // 둘 다 인증 안됨
         if (emailVerification == null && phoneVerification == null) {
@@ -128,21 +145,21 @@ public class AuthService {
                 emailVerification != null, phoneVerification != null);
 
         // 중복 체크
-        if (userRepository.existsByEmail(request.getEmail()))
+        if (email != null && userRepository.existsByEmail(email))
             return ResponseEntity.badRequest().body("이미 가입된 이메일입니다.");
-        if (userRepository.existsByNickName(request.getNickName()))
+        if (nickName != null && userRepository.existsByNickName(nickName))
             return ResponseEntity.badRequest().body("이미 사용중인 닉네임입니다.");
-        if (userRepository.existsByPhone(request.getPhone()))
+        if (phone != null && userRepository.existsByPhone(phone))
             return ResponseEntity.badRequest().body("이미 가입된 전화번호입니다.");
 
-        // 유효성 검사
-        if (!isValidName(request.getUserName()))
+        // 유효성 검사 (Optional fields are validated inside isValid* only if present)
+        if (!isValidName(userName))
             throw new IllegalArgumentException("이름 형식이 올바르지 않습니다.");
-        if (!isValidNickName(request.getNickName()))
+        if (!isValidNickName(nickName))
             throw new IllegalArgumentException("닉네임 형식이 올바르지 않습니다.");
         if (!isValidPassword(request.getPassword()))
             throw new IllegalArgumentException("비밀번호 형식이 올바르지 않습니다.");
-        if (!isValidPhone(request.getPhone()))
+        if (!isValidPhone(phone))
             throw new IllegalArgumentException("전화번호 형식이 올바르지 않습니다.");
 
         // 주소 저장

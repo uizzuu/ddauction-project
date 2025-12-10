@@ -1,15 +1,10 @@
 package com.my.backend.controller;
 
 import com.my.backend.dto.UsersDto;
-import com.my.backend.dto.auth.LoginRequest;
-import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.entity.Users;
-import com.my.backend.enums.Role;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.repository.UserRepository;
-import com.my.backend.service.AuthService;
 import com.my.backend.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,7 +25,6 @@ public class UserController {
     private final UserRepository userRepository;
     private final JWTUtil jwtUtil;
 
-    private final Long JWT_EXPIRATION_MS = 1000L * 60 * 60 * 24;
 
     // 모든 유저 조회 (관리자용)
     @GetMapping
@@ -46,15 +40,17 @@ public class UserController {
         return userService.getUser(id);
     }
 
+    // 공개 유저 프로필 조회
+    @GetMapping("/{id}/public")
+    public ResponseEntity<UsersDto> getPublicUserProfile(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.getPublicUser(id));
+    }
+
     //  현재 로그인한 사용자 정보 조회
     @GetMapping("/me")
     public ResponseEntity<UsersDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         Users user = getUserFromToken(authHeader);
-
-        // 프로필 이미지 URL 가져오기
-        String profileImageUrl = userService.getProfileImageUrl(user.getUserId());
-
-        return ResponseEntity.ok(UsersDto.fromEntity(user, profileImageUrl));
+        return ResponseEntity.ok(userService.getUser(user.getUserId()));
     }
 
     // 마이페이지 조회 (JWT 기반)

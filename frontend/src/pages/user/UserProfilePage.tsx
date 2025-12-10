@@ -4,6 +4,7 @@ import {
     fetchUserProfile,
     fetchUserSellingProducts,
     fetchUserReviews,
+    API_BASE_URL,
 } from "../../common/api";
 import type * as TYPE from "../../common/types";
 import ProductCard from "../../components/ui/ProductCard";
@@ -77,16 +78,25 @@ export default function UserProfilePage() {
     return (
         <div className="min-h-screen bg-gray-50 pb-20">
             {/* Profile Header */}
-            <div className="bg-white border-b sticky top-0 z-10">
-                <div className="max-w-4xl mx-auto px-6 py-8">
-                    <div className="flex flex-col md:flex-row items-center gap-6 md:gap-8">
+            <div className="bg-white border-b">
+                <div className="max-w-4xl mx-auto px-6 pb-6 relative mt-8">
+                    <div className="flex flex-col md:flex-row items-end md:items-center gap-6">
                         {/* Avatar */}
-                        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 border border-gray-200">
-                            <User size={40} className="text-gray-400" />
+                        <div className="w-24 h-24 rounded-2xl bg-white p-1 shadow-lg flex-shrink-0 relative z-10">
+                            <div className="w-full h-full rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-100">
+                                {user.images && user.images.length > 0 ? (
+                                    <img
+                                        src={user.images[0].imagePath.startsWith("http") ? user.images[0].imagePath : `${API_BASE_URL}/${user.images[0].imagePath}`}
+                                        alt={user.nickName}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <User size={32} className="text-gray-400" />
+                                )}
+                            </div>
                         </div>
-
                         {/* User Info */}
-                        <div className="flex-1 text-center md:text-left">
+                        <div className="flex-1 text-left">
                             <h1 className="text-2xl font-bold text-gray-900 mb-2">{user.nickName}</h1>
                             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-gray-600">
                                 <div className="flex items-center gap-1">
@@ -116,8 +126,8 @@ export default function UserProfilePage() {
                         <button
                             onClick={() => setActiveTab("products")}
                             className={`flex-1 py-4 text-sm font-medium transition-colors relative ${activeTab === "products"
-                                    ? "text-black font-semibold"
-                                    : "text-gray-500 hover:text-gray-700"
+                                ? "text-black font-semibold"
+                                : "text-gray-500 hover:text-gray-700"
                                 }`}
                         >
                             판매 물품
@@ -128,8 +138,8 @@ export default function UserProfilePage() {
                         <button
                             onClick={() => setActiveTab("reviews")}
                             className={`flex-1 py-4 text-sm font-medium transition-colors relative ${activeTab === "reviews"
-                                    ? "text-black font-semibold"
-                                    : "text-gray-500 hover:text-gray-700"
+                                ? "text-black font-semibold"
+                                : "text-gray-500 hover:text-gray-700"
                                 }`}
                         >
                             받은 리뷰

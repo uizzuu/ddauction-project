@@ -1,7 +1,7 @@
 package com.my.backend.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
+
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,22 @@ public class S3Uploader {
     private String bucket;
 
     public String upload(MultipartFile file, String dirName) throws IOException {
-        String fileName = dirName + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
+        return upload(file, dirName, null);
+    }
+
+    public String upload(MultipartFile file, String dirName, String customFileName) throws IOException {
+        String fileName;
+        if (customFileName != null && !customFileName.isBlank()) {
+            // 확장자 추출
+            String originalName = file.getOriginalFilename();
+            String extension = "";
+            if (originalName != null && originalName.contains(".")) {
+                extension = originalName.substring(originalName.lastIndexOf("."));
+            }
+            fileName = dirName + "/" + customFileName + extension;
+        } else {
+            fileName = dirName + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
+        }
 
         // ObjectMetadata 설정 (스트림 버퍼 문제 해결)
         ObjectMetadata metadata = new ObjectMetadata();

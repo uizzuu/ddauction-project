@@ -70,18 +70,30 @@ export default function Signup() {
       detailAddress: "",
     };
 
-    if (!form.userName) newErrors.userName = "이름을 입력해주세요";
-    if (!form.nickName) newErrors.nickName = "닉네임을 입력해주세요";
-    else if (form.nickName.length < 3 || form.nickName.length > 12)
+    // userName, nickName are optional now
+    if (form.nickName && (form.nickName.length < 3 || form.nickName.length > 12)) {
       newErrors.nickName = "닉네임은 3~12자여야 합니다";
+    }
 
-    if (!form.email) newErrors.email = "이메일을 입력해주세요";
-    else if (!isEmailValid(form.email))
-      newErrors.email = "올바른 이메일 형식이 아닙니다";
+    // Email validation
+    if (verificationType === "email") {
+      if (!form.email) newErrors.email = "이메일을 입력해주세요";
+      else if (!isEmailValid(form.email)) newErrors.email = "올바른 이메일 형식이 아닙니다";
+    } else {
+      // If not verifying email, it is optional. check format only if provided
+      if (form.email && !isEmailValid(form.email)) newErrors.email = "올바른 이메일 형식이 아닙니다";
+    }
 
-    if (!form.phone) newErrors.phone = "전화번호를 입력해주세요";
-    else if (form.phone.length < 10 || form.phone.length > 11)
-      newErrors.phone = "전화번호는 10~11자리 숫자여야 합니다";
+    // Phone validation
+    if (verificationType === "phone") {
+      if (!form.phone) newErrors.phone = "전화번호를 입력해주세요";
+      else if (form.phone.length < 10 || form.phone.length > 11)
+        newErrors.phone = "전화번호는 10~11자리 숫자여야 합니다";
+    } else {
+      // Optional if not verifying phone
+      if (form.phone && (form.phone.length < 10 || form.phone.length > 11))
+        newErrors.phone = "전화번호는 10~11자리 숫자여야 합니다";
+    }
 
     if (!form.password) newErrors.password = "비밀번호를 입력해주세요";
     else if (form.password.length < 8)
@@ -213,7 +225,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-[#f5f6f7] flex flex-col justify-center items-center py-10 px-4">
       {/* Logo Area */}
-      <a  
+      <a
         href="/"
         className="relative block w-32 h-8 flex flex-shrink-0 mb-6"
         aria-label="DDANG 홈으로 이동"
@@ -242,7 +254,7 @@ export default function Signup() {
                   let val = e.target.value;
                   if (!isComposing.userName) val = val.replace(/[^가-힣a-zA-Z]/g, "");
                   setForm((prev) => ({ ...prev, userName: val }));
-                  setErrors((prev) => ({ ...prev, userName: val ? "" : "이름을 입력해주세요" }));
+                  setErrors((prev) => ({ ...prev, userName: "" }));
                 }}
                 className={`w-full px-4 py-3 border ${errors.userName ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
               />
@@ -261,8 +273,7 @@ export default function Signup() {
                   if (!isComposing.nickName) val = val.replace(/[^가-힣a-zA-Z0-9]/g, "");
                   setForm((prev) => ({ ...prev, nickName: val }));
                   let msg = "";
-                  if (!val) msg = "닉네임을 입력해주세요";
-                  else if (val.length < 3 || val.length > 12) msg = "닉네임은 3~12자여야 합니다";
+                  if (val && (val.length < 3 || val.length > 12)) msg = "닉네임은 3~12자여야 합니다";
                   setErrors((prev) => ({ ...prev, nickName: msg }));
                 }}
                 className={`w-full px-4 py-3 border ${errors.nickName ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
@@ -279,11 +290,10 @@ export default function Signup() {
                 setIsPhoneVerified(false);
                 setPhoneMessage("");
               }}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                verificationType === "email"
-                  ? "border-b-2 border-[#333] text-[#333]"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${verificationType === "email"
+                ? "border-b-2 border-[#333] text-[#333]"
+                : "text-gray-400 hover:text-gray-600"
+                }`}
             >
               이메일 인증
             </button>
@@ -293,11 +303,10 @@ export default function Signup() {
                 setIsEmailVerified(false);
                 setEmailMessage("");
               }}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                verificationType === "phone"
-                  ? "border-b-2 border-[#333] text-[#333]"
-                  : "text-gray-400 hover:text-gray-600"
-              }`}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${verificationType === "phone"
+                ? "border-b-2 border-[#333] text-[#333]"
+                : "text-gray-400 hover:text-gray-600"
+                }`}
             >
               핸드폰 인증
             </button>
@@ -366,8 +375,7 @@ export default function Signup() {
                     setForm((prev) => ({ ...prev, phone: filtered }));
                     setIsPhoneVerified(false);
                     let msg = "";
-                    if (!filtered) msg = "전화번호를 입력해주세요";
-                    else if (filtered.length < 10) msg = "전화번호는 10~11자리 숫자여야 합니다";
+                    if (filtered && filtered.length < 10) msg = "전화번호는 10~11자리 숫자여야 합니다";
                     setErrors((prev) => ({ ...prev, phone: msg }));
                   }}
                   className={`flex-1 min-w-0 px-4 py-3 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
@@ -406,6 +414,47 @@ export default function Signup() {
             </div>
           )}
 
+          {/* --- 비밀번호 --- */}
+          <div className="flex flex-col gap-2">
+            <input
+              type="password"
+              placeholder="비밀번호 (8자리, 대소문자/숫자/특수문자)"
+              value={form.password}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\s+/g, "");
+                setForm((prev) => ({ ...prev, password: val }));
+                const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!*@#]).{8,}$/;
+                let msg = "";
+                if (!val) msg = "비밀번호를 입력해주세요";
+                else if (!pattern.test(val)) msg = "비밀번호는 8자리 이상, 대소문자+숫자+특수문자 !*@# 1개 이상 포함";
+                setErrors((prev) => ({
+                  ...prev,
+                  password: msg,
+                  passwordConfirm: passwordConfirm && passwordConfirm !== val ? "비밀번호가 일치하지 않습니다" : "",
+                }));
+              }}
+              className={`w-full px-4 py-3 border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
+            />
+            {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
+
+            <input
+              type="password"
+              placeholder="비밀번호 확인"
+              value={passwordConfirm}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\s+/g, "");
+                setPasswordConfirm(val);
+                setErrors((prev) => ({
+                  ...prev,
+                  passwordConfirm: val && val !== form.password ? "비밀번호가 일치하지 않습니다" : "",
+                }));
+              }}
+              onPaste={(e) => e.preventDefault()}
+              className={`w-full px-4 py-3 border ${errors.passwordConfirm ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
+            />
+            {errors.passwordConfirm && <p className="text-xs text-red-500">{errors.passwordConfirm}</p>}
+          </div>
+
           {/* --- 이메일 & 전화번호 (인증 안한 쪽도 입력 필요) --- */}
           {verificationType === "phone" && (
             <div className="flex flex-col">
@@ -434,8 +483,7 @@ export default function Signup() {
                   const filtered = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
                   setForm((prev) => ({ ...prev, phone: filtered }));
                   let msg = "";
-                  if (!filtered) msg = "전화번호를 입력해주세요";
-                  else if (filtered.length < 10) msg = "전화번호는 10~11자리 숫자여야 합니다";
+                  if (filtered && filtered.length < 10) msg = "전화번호는 10~11자리 숫자여야 합니다";
                   setErrors((prev) => ({ ...prev, phone: msg }));
                 }}
                 className={`w-full px-4 py-3 border ${errors.phone ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
@@ -489,57 +537,15 @@ export default function Signup() {
             {errors.address && <p className="text-xs text-red-500">{errors.address}</p>}
           </div>
 
-          {/* --- 비밀번호 --- */}
-          <div className="flex flex-col gap-2">
-            <input
-              type="password"
-              placeholder="비밀번호 (8자리, 대소문자/숫자/특수문자)"
-              value={form.password}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\s+/g, "");
-                setForm((prev) => ({ ...prev, password: val }));
-                const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!*@#]).{8,}$/;
-                let msg = "";
-                if (!val) msg = "비밀번호를 입력해주세요";
-                else if (!pattern.test(val)) msg = "비밀번호는 8자리 이상, 대소문자+숫자+특수문자 !*@# 1개 이상 포함";
-                setErrors((prev) => ({
-                  ...prev,
-                  password: msg,
-                  passwordConfirm: passwordConfirm && passwordConfirm !== val ? "비밀번호가 일치하지 않습니다" : "",
-                }));
-              }}
-              className={`w-full px-4 py-3 border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
-            />
-            {errors.password && <p className="text-xs text-red-500">{errors.password}</p>}
-
-            <input
-              type="password"
-              placeholder="비밀번호 확인"
-              value={passwordConfirm}
-              onChange={(e) => {
-                const val = e.target.value.replace(/\s+/g, "");
-                setPasswordConfirm(val);
-                setErrors((prev) => ({
-                  ...prev,
-                  passwordConfirm: val && val !== form.password ? "비밀번호가 일치하지 않습니다" : "",
-                }));
-              }}
-              onPaste={(e) => e.preventDefault()}
-              className={`w-full px-4 py-3 border ${errors.passwordConfirm ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors rounded-[4px]`}
-            />
-            {errors.passwordConfirm && <p className="text-xs text-red-500">{errors.passwordConfirm}</p>}
-          </div>
-
           {errors.submit && <p className="text-xs text-red-500 text-center">{errors.submit}</p>}
 
           <button
             onClick={handleSubmit}
             disabled={!isEmailVerified && !isPhoneVerified}
-            className={`w-full py-4 mt-4 font-bold text-white transition-colors ${
-              !isEmailVerified && !isPhoneVerified
-                ? 'bg-gray-300 cursor-not-allowed'
-                : 'bg-[#888] hover:bg-[#333]'
-            } rounded-[4px]`}
+            className={`w-full py-4 mt-4 font-bold text-white transition-colors ${!isEmailVerified && !isPhoneVerified
+              ? 'bg-gray-300 cursor-not-allowed'
+              : 'bg-[#888] hover:bg-[#333]'
+              } rounded-[4px]`}
           >
             가입하기
           </button>

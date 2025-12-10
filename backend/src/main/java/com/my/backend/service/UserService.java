@@ -1,6 +1,7 @@
 package com.my.backend.service;
 
 import com.my.backend.dto.UsersDto;
+import com.my.backend.dto.ImageDto;
 import com.my.backend.entity.Address;
 import com.my.backend.entity.Image;
 import com.my.backend.entity.Users;
@@ -18,7 +19,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -37,36 +38,41 @@ public class UserService {
     public List<UsersDto> getAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(user -> UsersDto.fromEntity(user, getProfileImageUrl(user.getUserId())))
+                .map(user -> {
+                    UsersDto dto = UsersDto.fromEntity(user);
+                    dto.setImages(getUserImages(user.getUserId()));
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
     // 단일 유저 조회
-    public UsersDto getUser(Long id) {
+    public UsersDto getUser(@org.springframework.lang.NonNull Long id) {
         Users user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
-        String profileImageUrl = getProfileImageUrl(id); // 프로필 이미지 URL 가져오기
-        return UsersDto.fromEntity(user, profileImageUrl);
+        UsersDto dto = UsersDto.fromEntity(user);
+        dto.setImages(getUserImages(id));
+        return dto;
     }
 
-
-    // 로그인
-    public UsersDto login(String email, String password) {
-        Optional<Users> userOpt = userRepository.findByEmail(email);
-        if (userOpt.isEmpty()) {
-            throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
-        }
-
-        Users user = userOpt.get();
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("이메일 또는 비밀번호가 잘못되었습니다.");
-        }
-
-        // 프로필 이미지 URL 가져오기
-        String profileImageUrl = getProfileImageUrl(user.getUserId());
-
-        // DTO 변환
-        return UsersDto.fromEntity(user, profileImageUrl);
+    // 공개 유저 프로필 조회
+    public UsersDto getPublicUser(@org.springframework.lang.NonNull Long id) {
+        Users user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
+        UsersDto dto = UsersDto.fromEntity(user);
+        dto.setImages(getUserImages(id));
+        
+        // 민감 정보 삭제
+        dto.setPassword(null);
+        dto.setPhone(null);
+        dto.setEmail(null); 
+        dto.setAddress(null);
+        dto.setDetailAddress(null);
+        dto.setZipCode(null);
+        dto.setBusinessNumber(null);
+        dto.setRole(null); 
+        
+        return dto;
     }
 
     // 유저 정보 수정
@@ -101,21 +107,22 @@ public class UserService {
         }
         if (dto.getAddressId() != null) {
             Address address = findAddressOrNull(dto.getAddressId());
-            user.setAddress(address);
+            if (address != null) {
+                user.setAddress(address);
+            }
         }
 
 
         Users savedUser = userRepository.save(user);
 
-        // 프로필 이미지 URL 가져오기
-        String profileImageUrl = getProfileImageUrl(savedUser.getUserId());
-
-        return UsersDto.fromEntity(savedUser, profileImageUrl);
+        UsersDto savedDto = UsersDto.fromEntity(savedUser);
+        savedDto.setImages(getUserImages(savedUser.getUserId()));
+        return savedDto;
     }
 
 
     // 주소 정보 업데이트 (결제 페이지용)
-    public void updateUserAddress(Long userId, String address, String detailAddress, String zipCode, String phone) {
+    public void updateUserAddress(@org.springframework.lang.NonNull Long userId, String address, String detailAddress, String zipCode, String phone) {
         Users user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("사용자가 존재하지 않습니다."));
         Address addressEntity = user.getAddress();
@@ -146,9 +153,10 @@ public class UserService {
     }
 
     // 유저 삭제
-    public void deleteUser(Long id) {
+    public void deleteUser(@org.springframework.lang.NonNull Long id) {
         userRepository.deleteById(id);
     }
+
 
     // 비밀번호 유효성 검사
     private void validatePassword(String password) {
@@ -177,8 +185,9 @@ public class UserService {
     // 프로필 이미지 등록/수정
     @Transactional
     public String updateProfileImage(Long userId, MultipartFile file) throws IOException {
-        Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("사용자를 찾을 수 없습니다.");
+        }
 
         // 기존 프로필 이미지 삭제
         List<Image> existingImages = imageRepository.findByRefIdAndImageType(userId, ImageType.USER);
@@ -195,7 +204,8 @@ public class UserService {
         }
 
         // S3 업로드
-        String imageUrl = s3Uploader.upload(file, "profile");
+        String customFileName = "user_" + userId + "_" + System.currentTimeMillis();
+        String imageUrl = s3Uploader.upload(file, "uploads/profile", customFileName);
 
         // 새 이미지 저장
         Image newImage = Image.builder()
@@ -209,11 +219,20 @@ public class UserService {
         return imageUrl;
     }
 
+    // 프로필 이미지 목록 조회 (List<ImageDto>)
+    private List<ImageDto> getUserImages(Long userId) {
+        return imageRepository.findByRefIdAndImageType(userId, ImageType.USER)
+                .stream()
+                .map(ImageDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
     // 프로필 이미지 삭제
     @Transactional
     public void deleteProfileImage(Long userId) {
-        Users user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+        if (!userRepository.existsById(userId)) {
+            throw new RuntimeException("사용자를 찾을 수 없습니다.");
+        }
 
         List<Image> existingImages = imageRepository.findByRefIdAndImageType(userId, ImageType.USER);
         if (!existingImages.isEmpty()) {

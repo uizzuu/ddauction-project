@@ -78,7 +78,7 @@ async function authFetch(url: string, options: RequestInit = {}) {
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(token ? { Authorization: `Bearer ${token.trim()}` } : {}),
   };
 
   const finalOptions = {
@@ -510,7 +510,7 @@ export async function createProduct(
     method: "POST",
     headers: {
       // ⭐ 토큰과 JSON 타입을 명시적으로 추가
-      "Authorization": `Bearer ${token}`,
+      "Authorization": `Bearer ${token.trim()}`,
       "Content-Type": "application/json", // JSON 데이터임을 명시
     },
     body: JSON.stringify(productData),
@@ -943,12 +943,17 @@ export async function generateAiDescription(
 }
 
 // S3 이미지 업로드
-export async function uploadImageToS3(file: File): Promise<string> {
+export async function uploadImageToS3(file: File, dir?: string, customName?: string): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
 
+  let url = `${API_BASE_URL}${SPRING_API}/files/s3-upload?dir=${dir || ""}`;
+  if (customName) {
+    url += `&fileName=${encodeURIComponent(customName)}`;
+  }
+
   const token = localStorage.getItem("token");
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/files/s3-upload`, {
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
@@ -1048,9 +1053,10 @@ export async function registerProductWithImages(
     deliveryPrice?: number;
     deliveryAddPrice?: number;
     deliveryIncluded?: boolean;
-    productBanner?: string; // If we decided to pass it here (Wait, StoreSection banner logic might differ)
+    // productBanner?: string; // Removed pre-upload logic
   },
-  images: File[]
+  images: File[],
+  bannerImages: File[] = [] // ✅ New argument for detail images
 ): Promise<TYPE.Product> {
   // 1. 상품 등록
   const data: any = {
@@ -1063,26 +1069,89 @@ export async function registerProductWithImages(
     throw new Error("서버에서 productId를 받지 못했습니다.");
   }
 
-  // 2. 이미지 업로드 및 DB 등록
-  for (let i = 0; i < images.length; i++) {  // ✅ 순차 처리로 변경 (디버깅 쉽게)
+
+
+  // 2. 메인 이미지 업로드 및 DB 등록 (product 폴더)
+  for (let i = 0; i < images.length; i++) {
     const file = images[i];
-    console.log(`이미지 ${i + 1}/${images.length} 처리 중:`, file.name);
+    console.log(`메인 이미지 ${i + 1}/${images.length} 처리 중:`, file.name);
 
     try {
-      const s3Url = await uploadImageToS3(file);
+      // 파일명: product_{id}_{index}
+      const customName = `product_${product.productId}_${i}`;
+      const s3Url = await uploadImageToS3(file, "product", customName);
       console.log(`S3 업로드 성공:`, s3Url);
 
       await registerProductImage(product.productId, s3Url, productData.productType);
       console.log(`DB 저장 완료`);
     } catch (err) {
-      console.error(`이미지 ${i + 1} 처리 실패:`, err);
-      throw err;  // 하나라도 실패하면 전체 실패
+      console.error(`메인 이미지 ${i + 1} 처리 실패:`, err);
+      // 하나라도 실패하면 전체 실패로 간주할지, 계속 진행할지 결정해야 함. 일단 throw.
+      throw err;
+    }
+  }
+
+  // 3. 상세(배너) 이미지 업로드 및 URL 수집
+  const bannerUrls: string[] = [];
+  for (let i = 0; i < bannerImages.length; i++) {
+    const file = bannerImages[i];
+    console.log(`상세 이미지 ${i + 1}/${bannerImages.length} 처리 중:`, file.name);
+
+    try {
+      // 파일명: product_{id}_detail_{index}
+      const customName = `product_${product.productId}_detail_${i}`;
+      const s3Url = await uploadImageToS3(file, "product_detail", customName);
+      console.log(`S3 상세 이미지 업로드 성공:`, s3Url);
+
+      bannerUrls.push(s3Url);
+
+      // (선택) ImageRepository에도 저장 (기존 로직 유지)
+      await registerProductImage(product.productId, s3Url, productData.productType);
+    } catch (err) {
+      console.error(`상세 이미지 ${i + 1} 처리 실패:`, err);
+      throw err;
+    }
+  }
+
+  // 4. 상품 정보 업데이트 (productBanners 저장)
+  if (bannerUrls.length > 0) {
+    try {
+      console.log("상세 이미지 URL 상품 정보에 업데이트 중...", bannerUrls);
+      await updateProduct(product.productId, {
+        ...product, // 기존 상품 정보 (ID 등 포함)
+        ...productData, // 입력된 상품 데이터
+        productBanners: bannerUrls
+      } as any);
+      console.log("상세 이미지 업데이트 완료");
+    } catch (err) {
+      console.error("상세 이미지 URL 업데이트 실패:", err);
+      // 이미지는 올라갔으나 연결이 안 된 상태. 치명적이지 않을 수 있으나 사용자에게 알림 필요?
+      // 여기서는 일단 로그만 찍고 진행
     }
   }
 
   console.log("=== 모든 이미지 등록 완료 ===");
 
   return product;
+}
+
+// 상품 정보 수정 (JSON)
+export async function updateProduct(productId: number, productData: Partial<TYPE.Product>): Promise<TYPE.Product> {
+  const token = localStorage.getItem("token");
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify(productData),
+  });
+
+  if (!response.ok) {
+    throw new Error("상품 수정 실패");
+  }
+
+  return response.json();
 }
 
 // admin 관련 API (api.ts에 추가하지 않고 AdminPage에서만 사용)
@@ -1844,7 +1913,7 @@ export async function fetchUserInquiries(token: string): Promise<any[]> {
 export async function fetchUserProfile(userId: number): Promise<TYPE.User | null> {
   // Use public endpoint if available, otherwise fallback to known pattern
   // Assuming /users/{userId} exposes public info
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}`, {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/public`, {
     method: "GET",
     headers: { "Content-Type": "application/json" }
   });

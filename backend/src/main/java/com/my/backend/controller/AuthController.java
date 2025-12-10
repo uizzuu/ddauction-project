@@ -93,12 +93,7 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<UsersDto> getCurrentUser(@RequestHeader("Authorization") String authHeader) {
         Users user = getUserFromToken(authHeader);
-
-        // 프로필 이미지 URL 가져오기
-        String profileImageUrl = userService.getProfileImageUrl(user.getUserId());
-
-        // DTO 생성 시 profileImageUrl 전달
-        return ResponseEntity.ok(UsersDto.fromEntity(user, profileImageUrl));
+        return ResponseEntity.ok(userService.getUser(user.getUserId()));
     }
 
     // 이메일 찾기

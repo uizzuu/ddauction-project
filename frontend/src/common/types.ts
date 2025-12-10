@@ -31,7 +31,10 @@ export interface User {
   token?: string;
   isWinner?: boolean;
   businessNumber?: string;
-  profileImage?: string; // 이 줄 추가
+  images?: Image[];
+  address?: string;
+  detailAddress?: string;
+  zipCode?: string;
 }
 
 export interface Bid {
@@ -55,6 +58,7 @@ export interface Product {
   productId: number;
   sellerId: number;
   sellerNickName: string;
+  sellerProfileImage?: string;
   title: string;
   content?: string;
   startingPrice?: number;

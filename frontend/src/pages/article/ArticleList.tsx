@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { getArticles } from "../../common/api";
 import type { ArticleDto, User } from "../../common/types";
@@ -10,11 +10,36 @@ interface Props {
 }
 
 export default function ArticleList({ user }: Props) {
-  const [activeTab, setActiveTab] = useState<ArticleType | "ALL">("ALL");
+  const [activeTab, setActiveTab] = useState<ArticleType | "ALL">(ArticleType.COMMUNITY);
 
   const [articles, setArticles] = useState<ArticleDto[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // 슬라이딩 언더바 관련 state & ref
+  const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  // activeTab 변경 시 언더바 위치 조정
+  useEffect(() => {
+    // 탭 순서(인덱스) 찾기
+    const tabs = [
+      // { key: "ALL" },
+      { key: ArticleType.COMMUNITY },
+      { key: ArticleType.NOTICE },
+      { key: ArticleType.FAQ },
+    ];
+    const index = tabs.findIndex((t) => t.key === activeTab);
+
+    // 해당 인덱스의 버튼 엘리먼트 가져오기
+    const el = tabRefs.current[index];
+    if (el) {
+      setUnderlineStyle({
+        left: el.offsetLeft,
+        width: el.offsetWidth,
+      });
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     // 탭 변경 시 API 호출 (필터링)
@@ -66,26 +91,33 @@ export default function ArticleList({ user }: Props) {
       </div>
 
       {/* 탭 네비게이션 */}
-      <div className="flex gap-2 mb-6 border-b border-gray-200 pb-1 overflow-x-auto">
+      <div className="relative flex gap-2 mb-6 border-b border-gray-200">
         {[
           // { key: "ALL", label: "전체" },
           { key: ArticleType.COMMUNITY, label: "자유게시판" },
           { key: ArticleType.NOTICE, label: "공지사항" },
           { key: ArticleType.FAQ, label: "FAQ" },
-        ].map((tab) => (
+        ].map((tab, index) => (
           <button
             key={tab.key}
-            onClick={() => setActiveTab(tab.key as ArticleType | "COMMUNITY")}
+            ref={(el) => { tabRefs.current[index] = el; }}
+            onClick={() => setActiveTab(tab.key as ArticleType | "ALL")}
             className={`
-              px-4 py-2 text-sm font-bold border-b-2 transition-colors whitespace-nowrap
-              ${activeTab === tab.key
-                ? "border-[#111] text-[#111]"
-                : "border-transparent text-gray-500 hover:text-[#333]"}
+              relative z-10 px-4 py-2 text-sm font-bold transition-colors whitespace-nowrap
+              ${activeTab === tab.key ? "text-[#111]" : "text-gray-500 hover:text-[#333]"}
             `}
           >
             {tab.label}
           </button>
         ))}
+        {/* Sliding Underline */}
+        <div
+          className="absolute bottom-0 h-0.5 bg-[#111] transition-all duration-300 ease-in-out"
+          style={{
+            left: `${underlineStyle.left}px`,
+            width: `${underlineStyle.width}px`,
+          }}
+        />
       </div>
 
       {articles.length === 0 ? (

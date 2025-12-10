@@ -31,6 +31,7 @@ public class ProductDto {
     private Long productId;
     private Long sellerId;
     private String sellerNickName;
+    private String sellerProfileImage;
     private String title;
     private String content;
     private Long startingPrice;
