@@ -1,11 +1,13 @@
 package com.my.backend.service;
 
+import com.my.backend.dto.NotificationMessage;
 import com.my.backend.entity.Bid;
 import com.my.backend.entity.Product;
 import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductStatus;
 import com.my.backend.repository.BidRepository;
 import com.my.backend.repository.ProductRepository;
+import com.my.backend.websocket.NotificationWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -22,6 +25,8 @@ public class AuctionSchedulerService {
 
     private final ProductRepository productRepository;
     private final BidRepository bidRepository;
+    private final NotificationWebSocketHandler notificationWebSocketHandler; // 추가
+
 
     // 경매 한 건에 대한 종료 처리 (멱등)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -67,12 +72,32 @@ public class AuctionSchedulerService {
                         productId,
                         highest.getUser().getUserId(),
                         highest.getBidPrice());
+                // ✅ 낙찰자에게 알림
+                NotificationMessage noti = new NotificationMessage(
+                        productId,
+                        "입찰 성공",
+                        String.format("참여하신 '%s' 경매가 낙찰되었습니다! 결제를 진행해주세요.", p.getTitle()),
+                        "방금 전",
+                        false
+                );
+                notificationWebSocketHandler.sendNotification(noti);
             } else {
                 // // 유찰 처리
                 p.setProductStatus(ProductStatus.CLOSED);
                 productRepository.saveAndFlush(p);
 
                 log.info("[Auction] 경매 종료(유찰): productId={}", productId);
+                List<Bid> allBids = bidRepository.findByProduct(p);
+                for (Bid bid : allBids) {
+                    NotificationMessage noti = new NotificationMessage(
+                            productId,
+                            "경매 종료",
+                            String.format("참여하신 '%s' 경매가 유찰되었습니다.", p.getTitle()),
+                            "방금 전",
+                            false
+                    );
+                    notificationWebSocketHandler.sendNotificationToUser(bid.getUser().getUserId(), noti);
+                }
             }
 
         } catch (Exception e) {

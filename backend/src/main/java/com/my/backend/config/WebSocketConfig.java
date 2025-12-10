@@ -3,6 +3,7 @@ package com.my.backend.config;
 import com.my.backend.websocket.AuctionWebSocketHandler;
 // import com.my.backend.config.WebSocketHandler; // 개인채팅용
 import com.my.backend.config.PublicChatWebSocketHandler;
+import com.my.backend.websocket.NotificationWebSocketHandler;
 import com.my.backend.websocket.RealTimeSearchWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +27,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final WebSocketHandler chatWebSocketHandler; // 개인채팅용
     private final PublicChatWebSocketHandler publicChatWebSocketHandler; // 공개채팅용
     private final RealTimeSearchWebSocketHandler realTimeSearchWebSocketHandler;
+    private final NotificationWebSocketHandler notificationWebSocketHandler;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
@@ -73,6 +75,10 @@ public class WebSocketConfig implements WebSocketConfigurer {
         // 실시간 검색어용 WebSocket
         registry.addHandler(realTimeSearchWebSocketHandler, "/ws/realtime-search")
                 .setAllowedOrigins("*");
+
+        registry.addHandler(notificationWebSocketHandler, "/ws/notifications")
+                .setAllowedOrigins("*");
+
 
         // 개인채팅용 WebSocket (현재는 테스트용으로 주석)
 
