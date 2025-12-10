@@ -618,8 +618,13 @@ export default function Header({ user, setUser }: Props) {
                                     style={{ filter: "invert(20%)" }}
                                 />
                             </button>
-                            <NotificationModal isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
-                        </div>
+                            {user && (
+            <NotificationModal 
+                isOpen={showNotifications} 
+                onClose={() => setShowNotifications(false)} 
+                userId={user.userId}
+            />
+        )}</div>
 
                         <NavLink
                             to="/wishlist"

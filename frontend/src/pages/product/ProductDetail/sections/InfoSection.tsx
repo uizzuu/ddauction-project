@@ -79,9 +79,11 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
                                     </svg>
                                 </button>
-                                <div className="absolute right-0 mt-1 w-28 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50 overflow-hidden">
+                                <div className="absolute right-1 w-28 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50 overflow-hidden">
                                     <button onClick={handleEditProduct} className="block w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 border-b border-gray-50">수정하기</button>
-                                    <button onClick={handleDeleteProduct} className="block w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50">삭제하기</button>
+                                    {!(product.productType === 'AUCTION' && mergedBids.length > 0) && (
+                                        <button onClick={handleDeleteProduct} className="block w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50">삭제하기</button>
+                                    )}
                                 </div>
                             </div>
                         )}

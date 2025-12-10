@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import CheckboxStyle from "../../components/ui/CheckboxStyle";
 import { useNavigate, useParams } from "react-router-dom";
 import { createArticle, getArticleById, updateArticle } from "../../common/api";
 import type { ArticleForm as ArticleFormType, User } from "../../common/types";
@@ -170,15 +171,13 @@ export default function ArticleForm({ user }: Props) {
         {/* 비밀글 설정 (FAQ일 때만 표시) */}
         {form.articleType === ArticleType.FAQ && (
           <div className="mb-6">
-            <label className="flex items-center gap-2 cursor-pointer w-fit">
-              <input
-                type="checkbox"
+            <div className="mb-6">
+              <CheckboxStyle
                 checked={form.isSecret}
-                onChange={(e) => setForm(prev => ({ ...prev, isSecret: e.target.checked }))}
-                className="w-4 h-4 accent-[#111]"
+                onChange={(checked) => setForm(prev => ({ ...prev, isSecret: checked }))}
+                label="비밀글 설정 (작성자와 관리자만 볼 수 있습니다)"
               />
-              <span className="text-sm text-[#333]">비밀글 설정 (작성자와 관리자만 볼 수 있습니다)</span>
-            </label>
+            </div>
           </div>
         )}
 

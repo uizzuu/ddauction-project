@@ -92,7 +92,7 @@ export default function MySellingProducts({
                           const parent = e.currentTarget.parentElement;
                           if (parent) {
                             parent.innerHTML =
-                              '<div class="no-image-txt">이미지 없음</div>';
+                              '<></>';
                           }
                         }}
                       />
@@ -108,9 +108,7 @@ export default function MySellingProducts({
                           backgroundColor: "#eee",
                           color: "#999",
                         }}
-                      >
-                        이미지 없음
-                      </div>
+                      ></div>
                     )}
                   </div>
 

@@ -6,7 +6,4 @@
 /* 기본 설정 (리셋, 변수) */
 @import "./css/reset.css";
 @import "./css/base.css";
-
-/* @apply를 사용하는 커스텀 모듈 */
-@import "./css/layout.css";
 @import "./css/modules.css";

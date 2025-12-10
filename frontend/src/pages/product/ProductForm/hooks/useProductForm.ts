@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { User, ProductForm } from "../../../../common/types";
-import * as TYPE from "../../../../common/types";
+import type { User, ProductForm, PaymentStatus } from "../../../../common/types";
+import type { ProductCategoryType } from "../../../../common/enums";
 import { formatDateTime } from "../../../../common/util";
-import { generateAiDescription, registerProductWithImages } from "../../../../common/api";
+import { generateAiDescription, registerProductWithImages, fetchProductById, updateProduct } from "../../../../common/api";
 
-export default function useProductForm(user: User | null) {
+export default function useProductForm(user: User | null, productId?: number) {
     const navigate = useNavigate();
+    const isEditMode = !!productId;
+
     const [form, setForm] = useState<ProductForm>({
         title: "",
         content: "",
@@ -15,11 +17,10 @@ export default function useProductForm(user: User | null) {
         productType: "AUCTION",
         auctionEndTime: "",
         productCategoryType: null,
-        // New State
         tag: "",
         address: "",
-        deliveryAvailable: [], // Array of keys
-        productBanners: [], // Array of Files
+        deliveryAvailable: [],
+        productBanners: [],
         originalPrice: "",
         discountRate: "",
         deliveryPrice: "",
@@ -37,32 +38,76 @@ export default function useProductForm(user: User | null) {
     const [uploading, setUploading] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
     const [isAgreed, setIsAgreed] = useState(false);
+    const [hasBids, setHasBids] = useState(false);
 
     useEffect(() => {
         const now = new Date();
-        // Default min time is slightly buffered or just 'now'
-        // Setting clean minutes/seconds
         now.setSeconds(0);
         now.setMilliseconds(0);
-
         setMinDateTime(now);
 
         const maxDate = new Date(now);
         maxDate.setMonth(now.getMonth() + 3);
         setMaxDateTime(maxDate);
-    }, []);
+
+        if (isEditMode && productId) {
+            loadProductData(productId);
+        }
+    }, [productId]);
+
+    const loadProductData = async (id: number) => {
+        try {
+            const product = await fetchProductById(id);
+            setForm({
+                title: product.title,
+                content: product.content || "",
+                startingPrice: String(product.startingPrice),
+                // Cast existing images to any [] to bypass File[] check temporarily or usage needs update
+                images: (product.images || []) as any[],
+                productType: product.productType as "AUCTION" | "USED" | "STORE",
+                auctionEndTime: product.auctionEndTime ? product.auctionEndTime.replace("T", " ") : "",
+                productCategoryType: product.productCategoryType as ProductCategoryType | null,
+                tag: product.tag || "",
+                address: product.address || "",
+                deliveryAvailable: product.deliveryAvailable ? product.deliveryAvailable.split(",") : [],
+                productBanners: (product.productBanners || []) as any[],
+                originalPrice: String(product.originalPrice || ""),
+                discountRate: String(product.discountRate || ""),
+                deliveryPrice: String(product.deliveryPrice || ""),
+                deliveryAddPrice: String(product.deliveryAddPrice || ""),
+                deliveryIncluded: !!product.deliveryIncluded,
+                latitude: (product as any).latitude,
+                longitude: (product as any).longitude,
+            });
+
+            if (product.auctionEndTime) {
+                setAuctionEndDate(new Date(product.auctionEndTime));
+            }
+
+            if (product.productType === "AUCTION" && product.bids && product.bids.length > 0) {
+                setHasBids(true);
+            }
+            setIsAgreed(true);
+
+        } catch (err) {
+            console.error("Failed to load product", err);
+            setError("상품 정보를 불러오는데 실패했습니다.");
+        }
+    };
 
     const handleDateChange = (date: Date | null) => {
         setAuctionEndDate(date);
         if (date) {
             const now = new Date();
-            if (date < now) {
+            // In Edit Mode, if the auction hasn't started or we are extending time, it is fine.
+            // But strict check "date < now" might block fixing old products. 
+            // We'll relax it slightly for edit mode or keep it strict if auction status matters.
+            if (date < now && !isEditMode) {
                 setError("경매 종료 시간은 현재 시간 이후로만 선택 가능합니다.");
                 return;
             }
 
             const formatted = formatDateTime(date.toISOString()).replace(" ", "T");
-
             setForm((prev) => ({
                 ...prev,
                 auctionEndTime: formatted,
@@ -76,10 +121,8 @@ export default function useProductForm(user: User | null) {
             alert("상품명을 2글자 이상 입력해주세요!");
             return;
         }
-
         setAiGenerating(true);
         setError("");
-
         try {
             const description = await generateAiDescription(form.title);
             setForm({ ...form, content: description });
@@ -94,8 +137,6 @@ export default function useProductForm(user: User | null) {
 
     const validateForm = () => {
         if (!form.title) return "제목은 필수 입력 항목입니다";
-
-        // Content Validation: Optional for STORE if banners exist
         if (form.productType === "STORE") {
             if (!form.content && (!form.productBanners || form.productBanners.length === 0)) {
                 return "스토어 상품은 상세 설명 또는 상세 이미지를 입력해야 합니다";
@@ -103,17 +144,11 @@ export default function useProductForm(user: User | null) {
         } else {
             if (!form.content) return "상세 설명은 필수 입력 항목입니다";
         }
-
-        // Check price based on type? Or always checking startingPrice?
-        // Original code checks startingPrice for all types (as Used/Store also use it field-wise)
         if (!form.startingPrice || Number(form.startingPrice) <= 0)
             return "가격은 1원 이상이어야 합니다";
-
-        // Auction specific validation
         if (form.productType === "AUCTION" && !form.auctionEndTime) {
             return "경매 종료 시간을 입력해주세요";
         }
-
         if (!form.productCategoryType) return "카테고리를 선택해주세요";
         if (!form.images || form.images.length === 0)
             return "최소 1개 이상의 이미지를 선택해주세요";
@@ -121,20 +156,11 @@ export default function useProductForm(user: User | null) {
         if (form.productType !== "STORE" && (!form.deliveryAvailable || form.deliveryAvailable.length === 0)) {
             return "거래 가능 방식을 최소 1개 이상 선택해주세요";
         }
-
-        // Address Validation: Required ONLY if "직거래" is selected
         const isDirectTransaction = form.deliveryAvailable?.some(method => method.includes("직거래"));
         if (isDirectTransaction && !form.address) {
             return "직거래를 선택하셨으므로 거래 희망 장소를 입력해주세요";
         }
-        if (isDirectTransaction && !form.address) {
-            return "직거래를 선택하셨으므로 거래 희망 장소를 입력해주세요";
-        }
-
-        if (!isAgreed) {
-            return "상품 등록 규정에 동의해주세요";
-        }
-
+        if (!isAgreed) return "상품 등록 규정에 동의해주세요";
         return "";
     };
 
@@ -145,66 +171,58 @@ export default function useProductForm(user: User | null) {
             return;
         }
 
-        // Confirmation Summary
-        const summary = [
-            `[상품 등록 확인]`,
-            `제목: ${form.title}`,
-            `가격: ${Number(form.startingPrice).toLocaleString()}원`,
-            `판매 방식: ${form.productType === 'AUCTION' ? '경매' : form.productType === 'STORE' ? '스토어' : '중고거래'}`,
-            `\n위 내용으로 상품을 등록하시겠습니까?`
-        ].join("\n");
-
-        if (!window.confirm(summary)) return;
-
         if (!user) {
             alert("로그인이 필요합니다");
             navigate("/login");
             return;
         }
 
-        const priceNumber = Math.max(
-            Number(form.startingPrice.replace(/[^0-9]/g, "")),
-            1
-        );
+        const summary = isEditMode
+            ? "상품 정보를 수정하시겠습니까?"
+            : `[상품 등록 확인]\n제목: ${form.title} \n가격: ${Number(form.startingPrice).toLocaleString()} 원\n위 내용으로 상품을 등록하시겠습니까 ? `;
+
+        if (!window.confirm(summary)) return;
+
+        const priceNumber = Math.max(Number(form.startingPrice.replace(/[^0-9]/g, "")), 1);
 
         try {
             setUploading(true);
 
+            // API 호출
             const productData = {
                 title: form.title,
                 content: form.content,
                 startingPrice: priceNumber,
-                auctionEndTime: form.auctionEndTime ? form.auctionEndTime.replace(" ", "T") : undefined,
+                auctionEndTime: form.productType === "AUCTION" ? (form.auctionEndTime ? form.auctionEndTime.replace(" ", "T") : undefined) : undefined,
                 sellerId: user.userId,
-                productCategoryType: form.productCategoryType,
-                productStatus: "ACTIVE" as TYPE.ProductStatus,
-                paymentStatus: "PENDING" as TYPE.PaymentStatus,
+                productCategoryType: form.productCategoryType as ProductCategoryType,
                 productType: form.productType,
-                // New Fields
+                productStatus: (form as any).productStatus || "ACTIVE", // Cast for partial interface mismatch if any
                 tag: form.tag,
                 address: form.address,
-                deliveryAvailable: form.deliveryAvailable?.join(","), // Convert array to comma-string
+                deliveryAvailable: Array.isArray(form.deliveryAvailable) ? form.deliveryAvailable.join(",") : form.deliveryAvailable,
                 originalPrice: Number(form.originalPrice) || undefined,
                 discountRate: Number(form.discountRate) || undefined,
                 deliveryPrice: Number(form.deliveryPrice) || undefined,
                 deliveryAddPrice: Number(form.deliveryAddPrice) || undefined,
-
                 deliveryIncluded: form.deliveryIncluded,
                 latitude: form.latitude,
                 longitude: form.longitude,
+                paymentStatus: "PENDING" as PaymentStatus // Initial status matching enum
             };
 
-            // Handle Product Banners (Detail Images)
-            // 상세 이미지는 registerProductWithImages 내부에서 상품 생성 후 업로드됨 (파일명에 productId 포함 위해)
+            if (isEditMode && productId) {
+                await updateProduct(productId, productData);
+                alert("상품 정보가 수정되었습니다.");
+                navigate(`/ products / ${productId} `);
+            } else {
+                const files = (form.images || []).filter((img): img is File => img instanceof File);
+                const banners = (form.productBanners || []).filter((img): img is File => img instanceof File);
 
-            await registerProductWithImages(
-                productData,
-                Array.from(form.images || []),
-                form.productBanners || [] // Pass banner files directly
-            );
-
-            alert("물품 등록 성공!");
-            navigate("/search");
+                await registerProductWithImages(productData, files, banners);
+                alert("물품 등록 성공!");
+                navigate("/search");
+            }
         } catch (err) {
             setError(err instanceof Error ? err.message : "서버 연결 실패");
         } finally {
@@ -214,10 +232,7 @@ export default function useProductForm(user: User | null) {
 
     const updateForm = (key: keyof ProductForm, value: any) => {
         setForm((prev) => ({ ...prev, [key]: value }));
-        // Clear error for that field if exists (simplified logic)
-        if (errors[key]) {
-            setErrors((prev) => ({ ...prev, [key]: "" }));
-        }
+        if (errors[key]) setErrors((prev) => ({ ...prev, [key]: "" }));
     };
 
     const handleImageChange = (files: FileList | null) => {
@@ -243,8 +258,6 @@ export default function useProductForm(user: User | null) {
         removeImage,
         handleSubmit,
         generateAiDescriptionAuto,
-
-        // States
         error,
         errors,
         uploading,
@@ -252,11 +265,11 @@ export default function useProductForm(user: User | null) {
         auctionEndDate,
         minDateTime,
         maxDateTime,
-
-        // Setters if needed directly (though updateForm usually suffices)
         setForm,
         setError,
         isAgreed,
-        setIsAgreed
+        setIsAgreed,
+        isEditMode,
+        hasBids
     };
 }

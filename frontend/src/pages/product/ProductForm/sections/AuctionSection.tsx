@@ -1,5 +1,5 @@
-import ReactDatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import CheckboxStyle from "../../../../components/ui/CheckboxStyle";
+import DatePickerStyle from "../../../../components/ui/DatePickerStyle";
 
 type Props = {
     startingPrice: string;
@@ -10,7 +10,8 @@ type Props = {
     onDateChange: (date: Date | null) => void;
     uploading: boolean;
     form: any;
-    updateForm: (key: any, value: any) => void;
+    updateForm: any;
+    hasBids?: boolean;
 };
 
 
@@ -24,7 +25,8 @@ export default function AuctionSection({
     onDateChange,
     uploading,
     form,
-    updateForm
+    updateForm,
+    hasBids = false
 }: Props) {
     const handleDeliveryChange = (method: string) => {
         const current = form.deliveryAvailable || [];
@@ -44,19 +46,22 @@ export default function AuctionSection({
                     <input
                         type="text"
                         placeholder="0"
-                        value={startingPrice ? Number(startingPrice).toLocaleString() : ""}
-                        onChange={(e) => onChangePrice(e.target.value.replace(/[^0-9]/g, ''))}
-                        className="w-full pl-4 pr-8 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-white text-sm placeholder:text-gray-400"
-                        disabled={uploading}
+                        value={startingPrice}
+                        onChange={(e) => {
+                            const val = e.target.value.replace(/[^0-9]/g, "");
+                            onChangePrice?.(Number(val).toLocaleString());
+                        }}
+                        className="w-full pl-4 pr-8 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-white text-right font-medium disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                        disabled={uploading || hasBids}
                     />
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">원</span>
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-sm">원</span>
                 </div>
                 <div className="flex gap-2 mt-2">
                     <button
                         type="button"
                         onClick={() => {
                             const current = startingPrice ? parseInt(startingPrice, 10) : 0;
-                            onChangePrice((current + 1000).toString());
+                            onChangePrice?.((current + 1000).toString());
                         }}
                         className="px-3 py-1 text-xs border border-gray-200 rounded-full hover:bg-gray-50 text-gray-600 transition-colors"
                     >
@@ -66,13 +71,18 @@ export default function AuctionSection({
                         type="button"
                         onClick={() => {
                             const current = startingPrice ? parseInt(startingPrice, 10) : 0;
-                            onChangePrice((current + 10000).toString());
+                            onChangePrice?.((current + 10000).toString());
                         }}
                         className="px-3 py-1 text-xs border border-gray-200 rounded-full hover:bg-gray-50 text-gray-600 transition-colors"
                     >
                         + 10,000원
                     </button>
                 </div>
+                {hasBids && (
+                    <p className="text-xs text-red-500 mt-1">
+                        * 입찰이 시작된 경매는 시작 가격을 수정할 수 없습니다.
+                    </p>
+                )}
             </div>
 
             <div>
@@ -80,19 +90,15 @@ export default function AuctionSection({
                     경매 종료 시간 <span className="text-red-500">*</span>
                     <span className="text-xs font-normal text-gray-400 ml-2">최소 24시간 이후</span>
                 </label>
-                <ReactDatePicker
+                <DatePickerStyle
                     selected={auctionEndDate}
                     onChange={onDateChange}
                     showTimeSelect
-                    timeFormat="HH:mm"
-                    timeIntervals={5}
                     dateFormat="yyyy-MM-dd HH:mm"
                     minDate={minDateTime}
                     maxDate={maxDateTime}
-                    placeholderText="날짜와 시간을 선택하세요"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-white text-sm placeholder:text-gray-400 font-sans"
-                    disabled={uploading}
-                    popperClassName="z-[500]"
+                    placeholder="날짜와 시간을 선택하세요"
+                    className="w-full"
                 />
             </div>
             <p className="col-span-1 md:col-span-2 text-xs text-gray-500 mt-1">
@@ -108,16 +114,11 @@ export default function AuctionSection({
 
                 {/* Simple inline checkboxes */}
                 <div className="flex flex-wrap gap-4 mb-3">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={(form.deliveryAvailable || []).includes("직거래")}
-                            onChange={() => handleDeliveryChange("직거래")}
-                            disabled={uploading}
-                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
-                        />
-                        <span className="text-sm text-gray-700">직거래</span>
-                    </label>
+                    <CheckboxStyle
+                        checked={(form.deliveryAvailable || []).includes("직거래")}
+                        onChange={() => handleDeliveryChange("직거래")}
+                        label="직거래"
+                    />
 
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input
@@ -136,39 +137,39 @@ export default function AuctionSection({
                         />
                         <span className="text-sm text-gray-700">편의점택배</span>
                     </label>
+                    <CheckboxStyle
+                        checked={(form.deliveryAvailable || []).includes("준등기")}
+                        onChange={() => handleDeliveryChange("준등기")}
+                        label="준등기"
+                    />
+                    <CheckboxStyle
+                        checked={(form.deliveryAvailable || []).includes("등기")}
+                        onChange={() => handleDeliveryChange("등기")}
+                        label="등기"
+                    />
 
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={(form.deliveryAvailable || []).includes("준등기")}
-                            onChange={() => handleDeliveryChange("준등기")}
-                            disabled={uploading}
-                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
-                        />
-                        <span className="text-sm text-gray-700">준등기</span>
-                    </label>
+                    <CheckboxStyle
+                        checked={(form.deliveryAvailable || []).includes("택배")}
+                        onChange={() => handleDeliveryChange("택배")}
+                        label="택배"
+                    />
+                    {/* <CheckboxStyle
+                            checked={form.deliveryIncluded}
+                            onChange={(checked) => updateForm("deliveryIncluded", checked)}
+                            label="만원 이상 무료배송"
+                        /> */}
+                </div>
 
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={(form.deliveryAvailable || []).includes("등기")}
-                            onChange={() => handleDeliveryChange("등기")}
-                            disabled={uploading}
-                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
+                <div className="flex flex-wrap gap-4 mb-3">
+                    <div className="bg-white p-4 rounded-lg border border-gray-200">
+                        <CheckboxStyle
+                            checked={true}
+                            disabled={true}
+                            onChange={() => { }}
+                            label="안전결제 (필수)"
                         />
-                        <span className="text-sm text-gray-700">등기</span>
-                    </label>
-
-                    <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={(form.deliveryAvailable || []).includes("택배")}
-                            onChange={() => handleDeliveryChange("택배")}
-                            disabled={uploading}
-                            className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
-                        />
-                        <span className="text-sm text-gray-700">택배</span>
-                    </label>
+                        <p className="text-xs text-gray-500 mt-1 ml-7">구매자가 물품 수령 후 구매확정을 해야 정산됩니다.</p>
+                    </div>
                 </div>
 
                 {/* Compact detail inputs - grid layout */}
@@ -313,7 +314,6 @@ export default function AuctionSection({
                         </div>
                     )}
             </div>
-
         </div>
     );
 }

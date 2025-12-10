@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
-import { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
+import CheckboxStyle from "../ui/CheckboxStyle";
 import { PRODUCT_CATEGORIES, type ProductCategoryType, DELIVERY_TYPES, type DeliveryType } from "../../common/enums";
 
 const BENEFITS = [
@@ -286,17 +287,18 @@ export default function SideFilterModal({
                         <h3 className="font-bold mb-3 text-[15px]">혜택/할인</h3>
                         <div className="flex flex-col gap-2.5">
                             {BENEFITS.map((b) => (
-                                <label key={b.id} className="flex items-center gap-2 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        className="accent-black w-5 h-5"
+                                <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded" key={b.id}>
+                                    <CheckboxStyle
                                         checked={selectedBenefits.includes(b.id)}
-                                        onChange={(e) => {
-                                            if (e.target.checked) onBenefitChange([...selectedBenefits, b.id]);
-                                            else onBenefitChange(selectedBenefits.filter(id => id !== b.id));
+                                        onChange={(checked) => {
+                                            if (checked) {
+                                                onBenefitChange([...selectedBenefits, b.id]);
+                                            } else {
+                                                onBenefitChange(selectedBenefits.filter((id) => id !== b.id));
+                                            }
                                         }}
                                     />
-                                    <span className="text-sm text-[#333]">{b.label}</span>
+                                    <span className="text-sm font-medium text-gray-700">{b.label}</span>
                                 </label>
                             ))}
                         </div>

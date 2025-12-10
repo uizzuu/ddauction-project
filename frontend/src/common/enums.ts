@@ -91,3 +91,13 @@ export const COURIER_OPTIONS = [
 ] as const;
 
 export type CourierType = (typeof COURIER_OPTIONS)[number]["value"];
+export const NOTIFICATION_STATUS = [
+  "NEW_COMMENT",
+  "BID_WIN",
+  "BID_LOSE",
+  "MESSAGE",
+  "FOLLOW",
+  "SYSTEM",
+] as const;
+
+export type NotificationStatus = (typeof NOTIFICATION_STATUS)[number];

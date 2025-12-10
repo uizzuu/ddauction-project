@@ -106,7 +106,7 @@ export default function RankPage() {
     }, [showInfoModal]);
 
     return (
-        <div className="container">
+        <div className="containerr">
             <div className="mb-8 flex justify-between items-end">
                 <div className="text-left">
                     <h1 className="text-3xl font-bold mb-2">Hot Items</h1>
