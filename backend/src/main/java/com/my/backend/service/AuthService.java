@@ -111,6 +111,31 @@ public class AuthService {
         return ResponseEntity.ok("인증 이메일이 발송되었습니다.");
     }
 
+    // 비밀번호 재설정용 인증 이메일 발송 (가입된 사용자 확인)
+    public ResponseEntity<?> sendPasswordResetCode(String email) {
+        String trimmedEmail = email.trim().toLowerCase();
+        if (!isValidEmail(trimmedEmail))
+            return ResponseEntity.badRequest().body("올바른 이메일 형식이 아닙니다.");
+
+        // 가입된 사용자인지 확인 (없으면 에러)
+        if (!userRepository.existsByEmail(trimmedEmail))
+            return ResponseEntity.badRequest().body("가입되지 않은 이메일입니다.");
+
+        String code = generateRandomCode();
+
+        EmailVerification verification = emailVerificationRepository
+                .findByUserEmail(trimmedEmail)
+                .orElse(EmailVerification.builder().userEmail(trimmedEmail).build());
+        verification.setEmailVerificationToken(code);
+        verification.setExpiredAt(LocalDateTime.now().plusMinutes(10));
+        verification.setVerified(false);
+        emailVerificationRepository.save(verification);
+
+        emailService.sendVerificationEmail(trimmedEmail, code);
+
+        return ResponseEntity.ok("인증 이메일이 발송되었습니다.");
+    }
+
     // ========== 회원가입 (이메일 OR 핸드폰 인증 확인) ==========
     @Transactional
     public ResponseEntity<?> register(RegisterRequest request) {
@@ -314,21 +339,77 @@ public class AuthService {
     }
 
     // ========== 비밀번호 재설정 ==========
+    // 비밀번호 재설정용 SMS 발송
+    public ResponseEntity<?> sendPasswordResetSms(String phone) {
+        String trimmedPhone = phone.trim();
+        if (!isValidPhone(trimmedPhone))
+            return ResponseEntity.badRequest().body("올바른 전화번호 형식이 아닙니다.");
+
+        // 가입된 사용자인지 확인
+        if (!userRepository.existsByPhone(trimmedPhone))
+            return ResponseEntity.badRequest().body("가입되지 않은 전화번호입니다.");
+
+        // SMS 발송 로직 (SmsService 가정 - 없으면 유사 로직 구현)
+        // 여기서는 PhoneVerification 엔티티만 생성하고 메시지 리턴 (실제 SMS는 SmsService에서)
+        // 하지만 SmsService 호출이 필요함. 기존 로직 참고.
+        // 현재 AuthService에는 SmsService 의존성이 안보임.
+        // 그러나 User Signup 로직에 phone 인증이 있음.
+        // 아, Signup.tsx는 /api/sms/send를 호출하고, 그건 AuthController -> SmsService?
+        // SmsService가 없다면? AuthController를 봐야함.
+
+        // 일단 AuthService에는 SMS 발송 로직이 없으므로, Verification 엔티티만 처리하는 메서드 추가 불가능?
+        // 사용자가 /api/sms/send 호출 시 AuthService를 안거치고 SmsService를 거칠 수도.
+        // 확인 필요.
+        return ResponseEntity.status(501).body("Not implemented yet");
+    }
+
+    // ========== 비밀번호 재설정 ==========
     public ResponseEntity<?> resetPassword(String email, String phone, String userName, String newPassword) {
         try {
-            if (!isValidEmail(email)) throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
-            if (!isValidPhone(phone)) throw new IllegalArgumentException("전화번호는 10~11자리 숫자여야 합니다.");
             if (!isValidName(userName)) throw new IllegalArgumentException("이름은 한글 또는 영문만 입력 가능합니다.");
             if (!isValidPassword(newPassword))
                 throw new IllegalArgumentException("비밀번호는 8자리 이상, 대소문자+숫자+특수문자 !*@# 1개 이상 포함해야 합니다.");
 
-            Users user = userRepository.findByEmailAndPhoneAndUserName(email, phone, userName)
-                    .orElseThrow(() -> new IllegalArgumentException("입력 정보와 일치하는 사용자가 없습니다."));
+            Users user = null;
+
+            // 1. 이메일 + 이름으로 찾기
+            if (email != null && !email.isBlank()) {
+                if (!isValidEmail(email)) throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+                
+                // 🔥 이메일 인증 여부 확인 (보안 강화)
+                EmailVerification ev = emailVerificationRepository.findByUserEmailAndVerifiedTrue(email)
+                        .orElseThrow(() -> new IllegalArgumentException("이메일 인증이 완료되지 않았습니다."));
+                
+                user = userRepository.findByEmailAndUserName(email, userName)
+                        .orElse(null);
+                        
+                // 사용 후 인증 정보 삭제 (재사용 방지)
+                emailVerificationRepository.delete(ev);
+            }
+
+            // 2. 전화번호 + 이름으로 찾기 (이메일로 못 찾은 경우)
+            if (user == null && phone != null && !phone.isBlank()) {
+                if (!isValidPhone(phone)) throw new IllegalArgumentException("전화번호는 10~11자리 숫자여야 합니다.");
+                
+                // 🔥 전화번호 인증 여부 확인
+                PhoneVerification pv = phoneVerificationRepository.findByUserPhoneAndVerifiedTrue(phone)
+                        .orElseThrow(() -> new IllegalArgumentException("전화번호 인증이 완료되지 않았습니다."));
+
+                user = userRepository.findByPhoneAndUserName(phone, userName)
+                        .orElse(null);
+
+                // 사용 후 인증 정보 삭제
+                phoneVerificationRepository.delete(pv);
+            }
+
+            if (user == null) {
+                throw new IllegalArgumentException("입력 정보와 일치하는 사용자가 없습니다.");
+            }
 
             user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
 
-            log.info("비밀번호 재설정 성공: {}", email);
+            log.info("비밀번호 재설정 성공: {}", user.getEmail());
             return ResponseEntity.ok("비밀번호가 성공적으로 변경되었습니다.");
         } catch (IllegalArgumentException e) {
             log.warn("비밀번호 재설정 실패: {}", e.getMessage());

@@ -96,6 +96,30 @@ public class SmsAuthService {
             throw new IllegalStateException("이미 인증된 전화번호입니다.");
         }
 
+        return sendSmsInternal(phone);
+    }
+    
+    /**
+     * 비밀번호 재설정용 SMS 인증번호 발송
+     */
+    public SmsVerificationResponse sendPasswordResetCode(String phone) {
+        // 1. 가입된 사용자인지 확인
+        if (!usersRepository.existsByPhone(phone)) {
+            throw new IllegalStateException("가입되지 않은 전화번호입니다.");
+        }
+        
+        // 기존 인증 정보가 있다면 만료 처리 (새로 발송하기 위함)
+        phoneVerificationRepository.findByUserPhoneAndVerifiedTrue(phone)
+            .ifPresent(v -> {
+                v.setExpiredAt(LocalDateTime.now());
+                v.setVerified(false); 
+                phoneVerificationRepository.save(v);
+            });
+
+        return sendSmsInternal(phone);
+    }
+    
+    private SmsVerificationResponse sendSmsInternal(String phone) {
         // 2. 발송 제한 확인 (1시간에 5회)
         checkSendLimit(phone);
 

@@ -111,8 +111,14 @@ public class AuthController {
         String newPassword = body.get("newPassword");
 
         // 서비스 호출
-        authService.resetPassword(email, phone, userName, newPassword);
-        return ResponseEntity.ok(Map.of("message", "비밀번호가 변경되었습니다."));
+        return authService.resetPassword(email, phone, userName, newPassword);
+    }
+
+    // 비밀번호 재설정용 이메일 인증 코드 발송
+    @PostMapping("/password-reset/send-code")
+    public ResponseEntity<?> sendPasswordResetCode(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        return authService.sendPasswordResetCode(email);
     }
 
     // 공통 메서드

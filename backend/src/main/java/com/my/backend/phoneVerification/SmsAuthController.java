@@ -39,6 +39,25 @@ public class SmsAuthController {
     }
 
     /**
+     * 비밀번호 재설정 인증번호 발송 API
+     * POST /api/sms/reset/send
+     */
+    @PostMapping("/reset/send")
+    public ResponseEntity<SmsVerificationResponse> sendPasswordResetCode(
+            @Valid @RequestBody SmsVerificationRequest.Send request) {
+        try {
+            SmsVerificationResponse response = smsAuthService.sendPasswordResetCode(request.getPhone());
+            return ResponseEntity.ok(response);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(SmsVerificationResponse.failure(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(SmsVerificationResponse.failure("서버 오류가 발생했습니다."));
+        }
+    }
+
+    /**
      * 인증번호 검증 API
      * POST /api/sms/verify
      */
