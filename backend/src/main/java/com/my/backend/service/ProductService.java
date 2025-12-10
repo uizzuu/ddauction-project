@@ -329,54 +329,65 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-    // ========================================
-    // 🔥 조회수 증가 로직 포함한 상품 조회
-    // ========================================
+    // ==========================================================
+    // 1. 조회수 증가 로직이 포함된 메서드 (컨트롤러에서 incrementView=true 일 때 호출)
+    // ==========================================================
     @Transactional
     public ProductDto getProduct(Long productId, Long userId) {
-        Product product = findProductOrThrow(productId);
+        // 1️⃣ 상품 조회 (영속 상태)
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));
 
-        // 🔥 로그인한 유저만 1시간 제한 로직 적용
+        LocalDateTime now = LocalDateTime.now();
+
         if (userId != null) {
-            Users user = findUserOrThrow(userId);
+            // 2️⃣ 로그인 유저
+            Users user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "사용자 없음"));
 
+            // 기존 조회 로그 확인
             ProductViewLog viewLog = productViewLogRepository.findByUserAndProduct(user, product)
                     .orElse(null);
 
             if (viewLog == null) {
-                // 처음 보는 경우
-                productRepository.incrementViewCount(productId);
-                productViewLogRepository.save(ProductViewLog.builder()
+                // 🔹 처음 조회
+                product.setViewCount(product.getViewCount() + 1);
+
+                // 새 로그 생성, em.persist로 flush 타이밍 제어
+                ProductViewLog newLog = ProductViewLog.builder()
                         .user(user)
                         .product(product)
-                        .viewedAt(LocalDateTime.now())
-                        .build());
-            } else {
-                // 1시간이 지났는지 체크
-                LocalDateTime oneHourAgo = LocalDateTime.now().minusHours(1);
-                if (viewLog.getViewedAt().isBefore(oneHourAgo)) {
-                    productRepository.incrementViewCount(productId);
-                    viewLog.setViewedAt(LocalDateTime.now());
-                }
+                        .viewedAt(now)
+                        .build();
+                em.persist(newLog);
+                // 강제로 flush하면 dirty checking과 충돌 방지
+                em.flush();
+
+            } else if (viewLog.getViewedAt().isBefore(now.minusHours(1))) {
+                // 🔹 1시간 지난 경우만 증가
+                product.setViewCount(product.getViewCount() + 1);
+                viewLog.setViewedAt(now);
+                em.flush(); // 변경 반영
             }
+            // 1시간 안 지난 경우 아무것도 하지 않음
         } else {
-            // 🔥 비로그인 유저는 무조건 조회수 증가 (프론트에서 제어)
-            productRepository.incrementViewCount(productId);
+            // 3️⃣ 비로그인 (Guest) - 무조건 증가
+            product.setViewCount(product.getViewCount() + 1);
+            em.flush();
         }
 
-        // 🔥 증가 후 다시 조회 (Dirty Checking 반영)
-        em.flush();
-        em.clear();
-        product = findProductOrThrow(productId);
-
+        // 트랜잭션 종료 시 product + viewLog 모두 반영
         return convertToDto(product);
     }
 
-    // ========================================
-    // 🔥 조회수 증가 없이 상품만 조회 (새로 추가)
-    // ========================================
+
+    // ==========================================================
+    // 2. 조회수 증가 없이 단순 조회 (컨트롤러에서 incrementView=false 일 때 호출)
+    // ==========================================================
+    @Transactional // 읽기 전용으로 성능 최적화
     public ProductDto getProductWithoutIncrement(Long productId) {
-        Product product = findProductOrThrow(productId);
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품이 존재하지 않습니다."));
         return convertToDto(product);
     }
 
