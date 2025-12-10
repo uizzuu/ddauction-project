@@ -6,8 +6,6 @@ import { NotificationModal } from "../../common/import";
 import { RealTimeSearch } from "../../common/websocket";
 import { getCartItems } from "../../common/util";
 
-import "../../css/modules.css";
-
 type Props = {
     user: User | null;
     setUser: (user: User | null) => void;
@@ -180,7 +178,6 @@ export default function Header({ user, setUser }: Props) {
         try {
             const keywords = await fetchPopularKeywords(10);
             setPopularKeywords(keywords);
-            console.log("✅ 인기 검색어 로드:", keywords);
         } catch (error) {
             console.error("❌ 인기 검색어 조회 오류:", error);
             setPopularKeywords([]);
@@ -619,12 +616,12 @@ export default function Header({ user, setUser }: Props) {
                                 />
                             </button>
                             {user && (
-            <NotificationModal 
-                isOpen={showNotifications} 
-                onClose={() => setShowNotifications(false)} 
-                userId={user.userId}
-            />
-        )}</div>
+                                <NotificationModal
+                                    isOpen={showNotifications}
+                                    onClose={() => setShowNotifications(false)}
+                                    userId={user.userId}
+                                />
+                            )}</div>
 
                         <NavLink
                             to="/wishlist"

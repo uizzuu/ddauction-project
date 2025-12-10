@@ -118,10 +118,15 @@ export const fetchBookmarkCheck = (productId: number, token?: string) =>
 // 찜 토글
 export const toggleBookmark = async (productId: number, token?: string) => {
   const t = ensureToken(token);
-  return fetchJson<string>(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${productId}`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${productId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
   });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "찜하기 실패");
+  }
+  return res.text();
 };
 
 // 찜 목록 다중 삭제
@@ -1208,20 +1213,82 @@ export async function registerProductWithImages(
   return product;
 }
 
+// 상품 정보 수정 (이미지 포함)
+export async function updateProductWithImages(
+  productId: number,
+  productData: Partial<TYPE.Product>,
+  images: (File | TYPE.Image)[],
+  bannerImages: (File | string)[]
+): Promise<TYPE.Product> {
+
+  // 1. 메인 이미지 처리
+  const finalImages: Partial<TYPE.Image>[] = [];
+
+  for (let i = 0; i < images.length; i++) {
+    const item = images[i];
+    if (item instanceof File) {
+      console.log(`[Update] 새 메인 이미지 업로드 중 (${i + 1}/${images.length})`);
+      const customName = `product_${productId}_${Date.now()}_${i}`;
+      const s3Url = await uploadImageToS3(item, "product", customName);
+      // 새 이미지는 ID 없음 -> DB에서 Insert 됨
+      finalImages.push({
+        refId: productId,
+        imagePath: s3Url,
+        imageType: "PRODUCT",
+        productType: productData.productType, // Ensure productType is passed if needed
+      });
+    } else {
+      // 기존 이미지 유지
+      finalImages.push(item);
+    }
+  }
+
+  // 2. 배너(상세) 이미지 처리
+  const finalBanners: string[] = [];
+
+  for (let i = 0; i < bannerImages.length; i++) {
+    const item = bannerImages[i];
+    if (item instanceof File) {
+      console.log(`[Update] 새 배너 이미지 업로드 중 (${i + 1}/${bannerImages.length})`);
+      const customName = `product_${productId}_detail_${Date.now()}_${i}`;
+      const s3Url = await uploadImageToS3(item, "product_detail", customName);
+      finalBanners.push(s3Url);
+    } else {
+      // 기존 URL 유지
+      // item이 객체일 수도 있고 문자열일 수도 있음 (useProductForm 구현에 따라 다름)
+      if (typeof item === 'string') {
+        finalBanners.push(item);
+      } else {
+        // 혹시 객체로 들어왔다면 imagePath 추출
+        finalBanners.push((item as any).imagePath || (item as any).toString());
+      }
+    }
+  }
+
+  // 3. 최종 업데이트 호출
+  // images와 productBanners를 포함하여 업데이트 요청
+  const payload = {
+    ...productData,
+    images: finalImages,
+    productBanners: finalBanners
+  } as any;
+
+  console.log("[Update] 최종 업데이트 요청 payload:", payload);
+
+  return updateProduct(productId, payload);
+}
+
+// 상품 정보 수정 (JSON)
 // 상품 정보 수정 (JSON)
 export async function updateProduct(productId: number, productData: Partial<TYPE.Product>): Promise<TYPE.Product> {
-  const token = localStorage.getItem("token");
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
     body: JSON.stringify(productData),
   });
 
   if (!response.ok) {
-    throw new Error("상품 수정 실패");
+    const text = await response.text();
+    throw new Error(text || "상품 수정 실패");
   }
 
   return response.json();
@@ -1811,24 +1878,7 @@ export async function withdrawUser(userId: number, token: string): Promise<void>
   }
 }
 
-// 상품 수정 (FormData 버전)
-export async function updateProductWithImages(
-  productId: number,
-  formData: FormData
-): Promise<TYPE.Product> {
-  const res = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
-    method: "PUT",
-    body: formData,
-  });
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(errorText || "상품 수정 실패");
-  }
-
-  const text = await res.text();
-  return normalizeProduct(text ? JSON.parse(text) : {});
-}
 
 // 신고 내역 조회 (이미 fetchReports가 있지만 명확성을 위해 이름 변경)
 export async function fetchMyReports(token: string): Promise<TYPE.Report[]> {

@@ -1,33 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Slider from "react-slick";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Product } from "../../../../common/types";
 import { API_BASE_URL } from "../../../../common/api";
+import { FastAverageColor } from "fast-average-color";
 
-function ImageNextArrow(props: any) {
-    const { onClick, visible } = props;
+function ImageNextArrow({ onClick, visible, isDark }: { onClick?: () => void; visible: boolean; isDark: boolean }) {
     return (
         <div
             onClick={onClick}
             className={`absolute top-0 bottom-0 right-0 w-[50%] z-10 flex items-center justify-end pr-4 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"
                 }`}
         >
-            <ChevronRight size={32} className="text-white mix-blend-difference" />
+            <ChevronRight size={32} color={isDark ? "white" : "#111"} />
         </div>
     );
 }
 
-function ImagePrevArrow(props: any) {
-    const { onClick, visible } = props;
+function ImagePrevArrow({ onClick, visible, isDark }: { onClick?: () => void; visible: boolean; isDark: boolean }) {
     return (
         <div
             onClick={onClick}
             className={`absolute top-0 bottom-0 left-0 w-[50%] z-10 flex items-center justify-start pl-4 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"
                 }`}
         >
-            <ChevronLeft size={32} className="text-white mix-blend-difference" />
+            <ChevronLeft size={32} color={isDark ? "white" : "#111"} />
         </div>
     );
 }
@@ -39,6 +38,44 @@ interface ImageSectionProps {
 
 export const ImageSection: React.FC<ImageSectionProps> = ({ product, setShowARModal }) => {
     const [hoverSide, setHoverSide] = useState<"left" | "right" | null>(null);
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [brightnessMap, setBrightnessMap] = useState<Record<number, "dark" | "light">>({});
+
+    useEffect(() => {
+        if (product.images?.length) {
+            analyzeImages(product.images);
+        }
+    }, [product.images]);
+
+    const analyzeImages = async (images: any[]) => {
+        const fac = new FastAverageColor();
+        const map: Record<number, "dark" | "light"> = {};
+
+        for (let i = 0; i < images.length; i++) {
+            try {
+                const rawPath = images[i].imagePath.startsWith('http')
+                    ? images[i].imagePath
+                    : `${API_BASE_URL}${images[i].imagePath}`;
+
+                // 캐시 버스팅 추가
+                const imgPath = `${rawPath}?v=${new Date().getTime()}`;
+
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                img.src = imgPath;
+                await new Promise((resolve, reject) => {
+                    img.onload = resolve;
+                    img.onerror = reject;
+                });
+                const color = await fac.getColorAsync(img);
+                map[i] = color.isDark ? "dark" : "light";
+            } catch (e) {
+                // Fallback to light (dark text) if analysis fails
+                map[i] = "light";
+            }
+        }
+        setBrightnessMap(map);
+    };
 
     const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
         const { left, width } = e.currentTarget.getBoundingClientRect();
@@ -54,6 +91,8 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ product, setShowARMo
         setHoverSide(null);
     };
 
+    const isCurrentDark = brightnessMap[currentSlide] === "dark";
+
     const settings = {
         dots: true,
         infinite: true,
@@ -61,9 +100,10 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ product, setShowARMo
         slidesToShow: 1,
         slidesToScroll: 1,
         arrows: true,
-        nextArrow: <ImageNextArrow visible={hoverSide === "right"} />,
-        prevArrow: <ImagePrevArrow visible={hoverSide === "left"} />,
+        nextArrow: <ImageNextArrow visible={hoverSide === "right"} isDark={isCurrentDark} />,
+        prevArrow: <ImagePrevArrow visible={hoverSide === "left"} isDark={isCurrentDark} />,
         adaptiveHeight: false,
+        beforeChange: (_: number, next: number) => setCurrentSlide(next),
     };
 
     return (
@@ -85,18 +125,14 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ product, setShowARMo
                                         alt={`${product.title} - ${idx + 1}`}
                                         className="w-full h-full object-contain"
                                         onError={(e) => {
-                                            const parent = e.currentTarget.parentElement;
-                                            if (parent) {
-                                                parent.innerHTML =
-                                                    '<div class="flex items-center justify-center h-full text-gray-400 text-sm"></div>';
-                                            }
+                                            e.currentTarget.style.display = 'none';
                                         }}
                                     />
                                 </div>
                             ))}
                         </Slider>
                     ) : (
-                        <div className="flex items-center justify-center h-full text-gray-400 bg-gray-100">
+                        <div className="flex items-center justify-center h-full text-gray-400 bg-gray-200">
                         </div>
                     )}
 

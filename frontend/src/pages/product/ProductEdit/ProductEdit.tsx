@@ -1,11 +1,11 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
-import useProductForm from "./hooks/useProductForm";
-import AuctionSection from "./sections/AuctionSection";
-import UsedSection from "./sections/UsedSection";
-import StoreSection from "./sections/StoreSection";
+import useProductForm from "../ProductForm/hooks/useProductForm";
+import AuctionSection from "../ProductForm/sections/AuctionSection";
+import UsedSection from "../ProductForm/sections/UsedSection";
+import StoreSection from "../ProductForm/sections/StoreSection";
 import type { User } from "../../../common/types";
-import { CATEGORY_OPTIONS, PRODUCT_TYPES, PRODUCT_TYPE_KEYS } from "../../../common/enums";
+import { CATEGORY_OPTIONS } from "../../../common/enums";
 import type { ProductCategoryType } from "../../../common/enums";
 import SelectStyle from "../../../components/ui/SelectStyle";
 import CheckboxStyle from "../../../components/ui/CheckboxStyle";
@@ -14,8 +14,10 @@ type Props = {
     user: User | null;
 };
 
-export default function ProductRegister({ user }: Props) {
+export default function ProductEdit({ user }: Props) {
     const navigate = useNavigate();
+    const { productId } = useParams<{ productId: string }>();
+    const parsedProductId = productId ? Number(productId) : undefined;
 
     const {
         form,
@@ -34,12 +36,11 @@ export default function ProductRegister({ user }: Props) {
         maxDateTime,
         isAgreed,
         setIsAgreed,
-    } = useProductForm(user);
+        hasBids
+    } = useProductForm(user, parsedProductId);
 
     // Tag Logic
     const [currentTag, setCurrentTag] = useState("");
-
-    // Parse tags from form.tag string
     const tags = form.tag ? form.tag.split(",").filter(Boolean) : [];
 
     const handleTagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -59,7 +60,6 @@ export default function ProductRegister({ user }: Props) {
         updateForm("tag", newTags.join(","));
     };
 
-    // Thumbnail Logic (Move to index 0)
     const setThumbnail = (index: number) => {
         if (!form.images) return;
         const newImages = [...form.images];
@@ -84,45 +84,16 @@ export default function ProductRegister({ user }: Props) {
     }
 
     return (
-        <div className="max-w-[800px] mx-auto py-10 px-5">
-            <div className="mb-8 text-center">
-                <h2 className="text-3xl font-bold text-[#111] mb-2">물품 등록</h2>
+        <div className="containerr mx-auto">
+            <div className="mb-8 text-left">
+                <h2 className="text-3xl font-bold text-[#111] mb-2">물품 수정</h2>
                 <p className="text-gray-500">
-                    새로운 물품을 등록하여 판매를 시작해보세요
+                    등록된 상품 정보를 수정합니다.
                 </p>
             </div>
 
-            <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+            <div className="bg-white">
                 <div className="space-y-8">
-                    {/* 1. Product Type Selection (Segmented Control) */}
-                    <div>
-                        <label className="block text-sm font-bold text-[#333] mb-3">
-                            판매 방식 <span className="text-red-500">*</span>
-                        </label>
-                        <div className="flex p-1 bg-gray-100 rounded-xl">
-                            {PRODUCT_TYPE_KEYS.filter(type => {
-                                if (type === "STORE") {
-                                    // 스토어는 사업자만 가능
-                                    return user?.role === "SELLER" || !!user?.businessNumber;
-                                }
-                                return true;
-                            }).map((type) => (
-                                <button
-                                    key={type}
-                                    type="button"
-                                    className={`flex-1 py-3 text-sm font-bold rounded-lg transition-all duration-200 ${form.productType === type
-                                        ? "bg-white text-black shadow-sm ring-1 ring-black/5"
-                                        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50/50"
-                                        }`}
-                                    onClick={() => updateForm("productType", type)}
-                                    disabled={uploading}
-                                >
-                                    {PRODUCT_TYPES[type]}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* 이미지 등록 */}
                     <div>
                         <label className="block text-sm font-bold text-[#333] mb-3">
@@ -130,7 +101,7 @@ export default function ProductRegister({ user }: Props) {
                             <span className="text-xs font-normal text-gray-400 ml-2">첫 번째 이미지가 썸네일로 지정됩니다.</span>
                         </label>
 
-                        <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                        <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
                             <label className={`
                                 aspect-square flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-300 cursor-pointer hover:border-black hover:bg-gray-50 transition-all
                                 ${uploading ? "opacity-50 cursor-not-allowed" : ""}
@@ -148,12 +119,10 @@ export default function ProductRegister({ user }: Props) {
                             </label>
 
                             {(form.images || []).map((fileOrObj, idx) => {
-                                // Safely determine source
                                 let src = "";
                                 if (fileOrObj instanceof File) {
                                     src = URL.createObjectURL(fileOrObj);
                                 } else {
-                                    // Assuming it's the object { imagePath: ... }
                                     const path = (fileOrObj as any).imagePath || "";
                                     src = path.startsWith("http") ? path : `http://localhost:8080${path}`;
                                 }
@@ -210,7 +179,7 @@ export default function ProductRegister({ user }: Props) {
                                         <button
                                             type="button"
                                             onClick={(e) => {
-                                                e.stopPropagation(); // Prevent drag start if clicking remove
+                                                e.stopPropagation();
                                                 removeImage(idx);
                                             }}
                                             className="absolute top-1 right-1 w-5 h-5 bg-black/50 hover:bg-black text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
@@ -335,7 +304,7 @@ export default function ProductRegister({ user }: Props) {
                                     <label className="block text-xs font-bold text-gray-500 mb-2">
                                         상세 이미지
                                     </label>
-                                    <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-3">
                                         <label className="aspect-[3/2] flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-all bg-white">
                                             <span className="text-gray-400 text-sm">+ 추가</span>
                                             <input
@@ -419,8 +388,11 @@ export default function ProductRegister({ user }: Props) {
                                 uploading={uploading}
                                 form={form}
                                 updateForm={updateForm}
-                                hasBids={false}
+                                hasBids={hasBids}
                             />
+                        )}
+                        {hasBids && form.productType === "AUCTION" && (
+                            <p className="text-xs text-red-500 text-center mt-2">입찰이 시작된 경매 상품은 가격을 수정할 수 없습니다.</p>
                         )}
                         {form.productType === "USED" && (
                             <UsedSection
@@ -453,7 +425,7 @@ export default function ProductRegister({ user }: Props) {
                             ) : null}
                         </div>
                         <div className="border border-gray-300 rounded-md p-3 h-32 overflow-y-auto mb-3 bg-gray-50 text-xs text-gray-500 leading-relaxed scrollbar-hide">
-                            <strong className="block mb-1 text-gray-700">상품 등록 규정</strong>
+                            <strong className="block mb-1 text-gray-700">상품 수정 및 등록 규정</strong>
                             1. 판매자는 실제 보유한 상품만을 등록해야 하며, 허위 매물 등록 시 제재를 받을 수 있습니다.<br />
                             2. 위조품(짝퉁), 장물, 불법복제품 등 법령에 위반되거나 타인의 권리를 침해하는 물품은 등록할 수 없습니다.<br />
                             3. 상품의 상태, 하자 등 상세 정보를 정확하게 기재해야 합니다. 정보 부족으로 인한 분쟁 책임은 판매자에게 있습니다.<br />
@@ -467,7 +439,7 @@ export default function ProductRegister({ user }: Props) {
                             id="agreement"
                             checked={isAgreed}
                             onChange={setIsAgreed}
-                            label="상품 등록 규정에 동의합니다"
+                            label="상품 수정 및 등록 규정에 동의합니다"
                         />
                         <p className="text-xs text-gray-500 mt-2 pl-7">
                             가품, 도난 물품, 거래 금지 품목 등록 시 서비스 이용이 제한될 수 있습니다.
@@ -495,7 +467,7 @@ export default function ProductRegister({ user }: Props) {
                             className="flex-[2] py-3.5 bg-[#111] text-white rounded-xl font-bold hover:bg-black shadow-lg shadow-black/20 transition-all disabled:bg-gray-300 disabled:shadow-none"
                             disabled={uploading}
                         >
-                            {uploading ? "처리 중..." : "물품 등록하기"}
+                            {uploading ? "처리 중..." : "수정 완료"}
                         </button>
                     </div>
                 </div>

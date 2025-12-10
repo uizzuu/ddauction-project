@@ -9,6 +9,7 @@ import {
   Signup,
   ProductList,
   ProductRegister,
+  ProductEdit,
   MyPage,
   ProductDetail,
   ArticleList,
@@ -67,6 +68,7 @@ const VALID_PATHS = [
 // 동적 경로 패턴 (예: /products/123, /articles/456 등)
 const DYNAMIC_PATH_PATTERNS = [
   /^\/products\/\d+$/,
+  /^\/products\/\d+\/edit$/,
   /^\/articles\/\d+$/,
   /^\/articles\/\d+\/edit$/,
   /^\/users\/\d+$/,
@@ -160,6 +162,7 @@ export default function App() {
         <Route path="/terms" element={<TermsAgreement />} />
         <Route path="/auction" element={<ProductList />} />
         <Route path="/register" element={<ProductRegister user={user} />} />
+        <Route path="/products/:productId/edit" element={<ProductEdit user={user} />} />
         <Route
           path="/mypage"
           element={<MyPage user={user} setUser={setUser} />}
