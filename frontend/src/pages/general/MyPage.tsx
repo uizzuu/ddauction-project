@@ -227,9 +227,9 @@ export default function MyPage({ user, setUser }: Props) {
       });
       if (user.address) {
         setAddressForm({
-          address: user.address.address,
-          detailAddress: user.address.detailAddress,
-          zipCode: user.address.zipCode,
+          address: user.address,
+          detailAddress: user.detailAddress || "",
+          zipCode: user.zipCode || "",
         });
       }
       setInitialData({
@@ -247,8 +247,6 @@ export default function MyPage({ user, setUser }: Props) {
   // Watch for changes to require verification
   useEffect(() => {
     if (user) {
-      // If social provider exists, validation logic is handled differently (fields might be read-only or disconnect required)
-      // But if user edits them (after disconnect?), apply standard rules.
 
       if (profileForm.email !== initialData.email) {
         setVerification(prev => ({ ...prev, isEmailVerified: false }));
@@ -454,7 +452,7 @@ export default function MyPage({ user, setUser }: Props) {
       setShippingModalOpen(false); setSelectedPaymentId(null); loadTabContent("selling");
     } catch (err: any) { alert(err.message || "배송 정보 등록 실패"); }
   };
-  const openShippingModal = (id: number, courier = "CJ", tracking = "") => { /* ... */ setSelectedPaymentId(id); setModalDefaults({ courier, tracking }); setShippingModalOpen(true); };
+  const openShippingModal = (id: number, courier = "CJ", trackingNumber = "") => { /* ... */ setSelectedPaymentId(id); setModalDefaults({ courier, trackingNumber }); setShippingModalOpen(true); };
   const handleConfirmPurchase = (id: number) => { /* ... */ setConfirmTargetId(id); setConfirmModalOpen(true); };
   const executeConfirmPurchase = async () => { /* ... */
     if (!confirmTargetId) return;
@@ -685,7 +683,7 @@ export default function MyPage({ user, setUser }: Props) {
               {activeTab === "buying" && (
                 <div className="space-y-8 px-1">
                   <div><h3 className="text-lg font-bold text-[#111] mb-4 flex items-center gap-2"><Heart size={20} className="text-[#666]" /> 찜한 상품</h3>{myLikes.length === 0 ? <div className="text-center py-16 bg-[#f9f9f9] rounded-lg border border-[#eee]"><Heart size={48} className="mx-auto text-[#ddd] mb-3" /><p className="text-[#666] mb-4">찜한 상품이 없습니다.</p><button onClick={() => navigate("/products")} className="px-6 py-2.5 bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors font-medium">상품 둘러보기</button></div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">{myLikes.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}</div>
-                  <div><h3 className="text-lg font-bold text-[#111] mb-4 flex items-center gap-2"><Gavel size={20} className="text-[#666]" /> 입찰 내역</h3>{myBids.length === 0 ? <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]"><Gavel size={40} className="mx-auto text-[#ddd] mb-2" /><p className="text-[#666]">입찰 내역이 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{myBids.map(bid => <div key={bid.bidId} className="p-4 border-b"><div className="font-bold">{bid.productName}</div><div>{bid.bidAmount.toLocaleString()}원</div><div className="text-xs text-gray-500">{new Date(bid.bidTime).toLocaleString()}</div></div>)}</div>}</div>
+                  <div><h3 className="text-lg font-bold text-[#111] mb-4 flex items-center gap-2"><Gavel size={20} className="text-[#666]" /> 입찰 내역</h3>{myBids.length === 0 ? <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]"><Gavel size={40} className="mx-auto text-[#ddd] mb-2" /><p className="text-[#666]">입찰 내역이 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{myBids.map(bid => <div key={bid.bidId} className="p-4 border-b"><div className="font-bold">{bid.productName || "상품명 없음"}</div><div>{(bid.bidAmount || bid.bidPrice).toLocaleString()}원</div><div className="text-xs text-gray-500">{new Date(bid.bidTime || bid.createdAt).toLocaleString()}</div></div>)}</div>}</div>
                   <div><h3 className="text-lg font-bold text-[#111] mb-4 flex items-center gap-2"><ShoppingBag size={20} className="text-[#666]" /> 구매 내역</h3>{buyingHistory.length === 0 ? <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]"><ShoppingBag size={40} className="mx-auto text-[#ddd] mb-2" /><p className="text-[#666]">구매 내역이 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{buyingHistory.map((item) => <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                     <div className="flex gap-4"><div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">{item.productImage && <img src={item.productImage} alt="product" className="w-full h-full object-cover" />}</div><div><div className="font-medium text-gray-900">{item.productTitle}</div><div className="text-sm text-gray-500">판매자: {item.sellerNickName}</div><div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div><div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div></div></div>
                     <div className="flex flex-col items-end gap-2 text-right"><div className="text-sm font-bold text-blue-600">{item.status}</div>{item.status === "PAID" && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleConfirmPurchase(item.paymentId); }} className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 font-medium">구매 확정</button>}{item.status === "CONFIRMED" && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); openReviewModal(item.sellerId, item.productId, item.productType); }} className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 font-medium">리뷰 작성</button>}{item.courier && item.trackingNumber && <div className="text-sm text-gray-600"><div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div><div className="text-xs">{item.trackingNumber}</div></div>}</div>

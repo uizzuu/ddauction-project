@@ -1930,7 +1930,7 @@ export async function fetchCurrentUser(token: string): Promise<TYPE.User> {
   return JSON.parse(text);
 }
 
-export async function updateUserProfile(userId: number, data: { nickName: string; password: string; phone: string }): Promise<TYPE.User> {
+export async function updateUserProfile(userId: number, data: any): Promise<TYPE.User> {
   const res = await authFetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -2321,15 +2321,15 @@ export async function fetchProductDetail(productId: number): Promise<TYPE.Produc
   // 로그인 상태: incrementView는 항상 true (백엔드가 알아서 처리)
 
   const url = `${API_BASE_URL}${SPRING_API}/products/${productId}?incrementView=${incrementView}`;
-   console.log("📌 요청 URL:", url);
+  console.log("📌 요청 URL:", url);
   console.log("📌 incrementView:", incrementView);
   console.log("📌 token:", token);
 
   const headers: Record<string, string> = {
-  "Content-Type": "application/json",
-};
+    "Content-Type": "application/json",
+  };
 
-const response = await fetch(url, { headers });
+  const response = await fetch(url, { headers });
 
 
   if (!response.ok) throw new Error("상품 조회 실패");

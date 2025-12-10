@@ -44,6 +44,11 @@ export interface Bid {
   bidPrice: number;
   isWinning: boolean;
   createdAt: string;
+  // New Fields for MyPage
+  productName?: string;
+  bidTime?: string;     // Alias for createdAt or specific bid timestamp
+  bidAmount?: number;   // Alias for bidPrice
+  userNickName?: string; // Sometimes needed for list display
 }
 
 export interface Image {
