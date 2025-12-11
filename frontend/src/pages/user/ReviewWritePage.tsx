@@ -58,11 +58,11 @@ export default function ReviewWritePage() {
     };
 
     if (loading) {
-        return <div className="w-[1280px] mx-auto min-h-screen flex items-center justify-center">Loading...</div>;
+        return <div className="w-full max-w-[1280px] px-4 mx-auto min-h-screen flex items-center justify-center">Loading...</div>;
     }
 
     if (!product) {
-        return <div className="w-[1280px] mx-auto min-h-screen flex items-center justify-center">상품을 찾을 수 없습니다.</div>;
+        return <div className="w-full max-w-[1280px] px-4 mx-auto min-h-screen flex items-center justify-center">상품을 찾을 수 없습니다.</div>;
     }
 
     return (
