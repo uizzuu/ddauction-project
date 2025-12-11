@@ -351,8 +351,8 @@ export default function Header({ user, setUser }: Props) {
     return (
         <div className={`sticky top-0 z-50 bg-white transition-shadow duration-300 ${isSticky ? "shadow-sm" : ""}`}>
             {/* 상단 네비 */}
-            <div className={`w-full max-w-[1280px] mx-auto flex justify-end overflow-hidden transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0" : "max-h-[40px] opacity-100 pt-2"}`}>
-                <nav className="flex gap-4 text-sm text-[#aaa]">
+            <div className={`w-full max-w-[1280px] mx-auto flex justify-end overflow-x-auto scrollbar-hide whitespace-nowrap px-4 xl:px-0 transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0" : "max-h-[40px] opacity-100 pt-2"}`}>
+                <nav className="flex gap-3 md:gap-4 text-xs md:text-sm text-[#aaa] items-center min-w-max">
                     {user ? (
                         <>
                             <span>{user.nickName} 님</span>
@@ -485,7 +485,7 @@ export default function Header({ user, setUser }: Props) {
 
                         {/* Dropdown */}
                         {showSuggestions && (
-                            <div className="autocomplete-dropdown w-full">
+                            <div className="autocomplete-dropdown">
                                 {searchKeyword ? (
                                     /* 1. 자동완성 목록 (검색어 있을 때) */
                                     suggestions.length > 0 && suggestions.map((item, index) => (

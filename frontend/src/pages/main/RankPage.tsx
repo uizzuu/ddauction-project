@@ -11,7 +11,7 @@ function CategoryNextArrow({ onClick, visible }: { onClick: () => void; visible:
     return (
         <button
             onClick={onClick}
-            className="absolute top-1/2 -translate-y-1/2 -right-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all"
+            className="absolute top-1/2 -translate-y-1/2 right-0 md:-right-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all bg-white/80 md:bg-transparent rounded-full shadow-sm md:shadow-none"
         >
             <ChevronRight size={28} />
         </button>
@@ -23,7 +23,7 @@ function CategoryPrevArrow({ onClick, visible }: { onClick: () => void; visible:
     return (
         <button
             onClick={onClick}
-            className="absolute top-1/2 -translate-y-1/2 -left-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all"
+            className="absolute top-1/2 -translate-y-1/2 left-0 md:-left-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all bg-white/80 md:bg-transparent rounded-full shadow-sm md:shadow-none"
         >
             <ChevronLeft size={28} />
         </button>
@@ -106,7 +106,7 @@ export default function RankPage() {
     }, [showInfoModal]);
 
     return (
-        <div className="containerr">
+        <div className="container mx-auto px-4 py-8 min-h-screen">
             <div className="mb-8 flex justify-between items-end">
                 <div className="text-left">
                     <h1 className="text-3xl font-bold mb-2">Hot Items</h1>
@@ -145,11 +145,10 @@ export default function RankPage() {
                 >
                     <button
                         onClick={() => setSelectedCategory("")}
-                        className={`flex items-center justify-center px-4 py-2 rounded-[18px] text-[14px] font-medium whitespace-nowrap border transition-all flex-shrink-0 ${
-                            !selectedCategory
-                                ? "bg-[#333] text-white border-[#333]"
-                                : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"
-                        }`}
+                        className={`flex items-center justify-center px-4 py-2 rounded-[18px] text-[14px] font-medium whitespace-nowrap border transition-all flex-shrink-0 ${!selectedCategory
+                            ? "bg-[#333] text-white border-[#333]"
+                            : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"
+                            }`}
                     >
                         전체
                     </button>
@@ -158,11 +157,10 @@ export default function RankPage() {
                         <button
                             key={code}
                             onClick={() => setSelectedCategory(code)}
-                            className={`flex items-center justify-center px-4 py-2 rounded-[18px] text-[14px] font-medium whitespace-nowrap border transition-all flex-shrink-0 ${
-                                selectedCategory === code
-                                    ? "bg-[#333] text-white border-[#333]"
-                                    : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"
-                            }`}
+                            className={`flex items-center justify-center px-4 py-2 rounded-[18px] text-[14px] font-medium whitespace-nowrap border transition-all flex-shrink-0 ${selectedCategory === code
+                                ? "bg-[#333] text-white border-[#333]"
+                                : "bg-gray-100 text-[#666] border-transparent hover:bg-gray-200"
+                                }`}
                         >
                             {label}
                         </button>
