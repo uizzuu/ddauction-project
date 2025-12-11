@@ -48,11 +48,11 @@ export default function CartPage() {
     const totalPrice = totalProductPrice + totalShipping;
 
     if (loading) {
-        return <div className="conatainer px-4 py-8 flex justify-center">로딩 중...</div>;
+        return <div className="container mx-auto px-4 py-8 flex justify-center">로딩 중...</div>;
     }
 
     return (
-        <div className="containerr">
+        <div className="container mx-auto px-4 py-8 min-h-screen">
             <h2 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-2">
                 <ShoppingBag className="text-[#111]" />
                 장바구니

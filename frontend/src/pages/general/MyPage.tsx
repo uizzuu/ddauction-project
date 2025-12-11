@@ -9,7 +9,6 @@ import type { PaymentHistoryResponse } from "../../common/api";
 import ProductCard from "../../components/ui/ProductCard";
 import BusinessVerify from "../../components/mypage/BusinessVerify";
 import ShippingModal from "../../components/ui/ShippingModal";
-import ReviewModal from "../../components/ui/ReviewModal";
 import { ConfirmModal } from "../../components/ui/ConfirmModal";
 import ProfileImageUploader from "../../components/mypage/ProfileImageUploader";
 import Avatar from "../../components/ui/Avatar";
@@ -67,8 +66,7 @@ export default function MyPage({ user, setUser }: Props) {
   const [shippingModalOpen, setShippingModalOpen] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
   const [modalDefaults, setModalDefaults] = useState({ courier: "CJ", trackingNumber: "" });
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [reviewTarget, setReviewTarget] = useState<{ sellerId: number; refId: number; productType?: string } | null>(null);
+
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [myBids, setMyBids] = useState<Bid[]>([]);
   const [confirmTargetId, setConfirmTargetId] = useState<number | null>(null);
@@ -462,14 +460,6 @@ export default function MyPage({ user, setUser }: Props) {
     await new Promise(r => setTimeout(r, 500));
     await loadTabContent("buying");
   };
-  const openReviewModal = (sid: number, rid: number, pt?: string) => { /* ... */ setReviewTarget({ sellerId: sid, refId: rid, productType: pt }); setReviewModalOpen(true); };
-  const handleReviewSubmit = async (rating: number, comments: string) => { /* ... */
-    if (!reviewTarget) return;
-    try {
-      await API.submitReview(reviewTarget.sellerId, { rating, comments, refId: reviewTarget.refId, productType: reviewTarget.productType ?? "AUCTION" }, localStorage.getItem("token") || "");
-      alert("리뷰가 등록되었습니다."); setReviewModalOpen(false); setReviewTarget(null);
-    } catch (err: any) { alert(err.message || "리뷰 등록 실패"); }
-  };
 
 
   if (!user) return <div className="text-center py-20 text-gray-500">로딩 중...</div>;
@@ -484,37 +474,37 @@ export default function MyPage({ user, setUser }: Props) {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-[1280px] mx-auto">
+      <div className="w-full max-w-[1280px] mx-auto px-4 xl:px-0">
         {/* Profile Summary Card */}
         <div className="py-8 mb-8 border-b border-[#eee]">
           <div className="flex items-center gap-6">
-            <div className="w-24 h-24 rounded-lg bg-[#333] flex items-center justify-center overflow-hidden">
+            <div className="w-24 h-24 rounded-lg bg-[#333] flex items-center justify-center overflow-hidden flex-shrink-0">
               <Avatar src={user.images?.[0]?.imagePath} alt="Profile" className="w-full h-full text-3xl" fallbackText={user.nickName} />
             </div>
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-2xl font-bold text-[#111]">{user.nickName || user.userName}</h2>
+                <h2 className="text-2xl font-bold text-[#111] truncate">{user.nickName || user.userName}</h2>
                 {user.provider && <ProviderBadge provider={user.provider} />}
               </div>
-              <p className="text-sm text-[#666]">{user.email}</p>
-              <div className="flex gap-8 mt-6 pt-6 border-t border-[#eee]">
-                {/* Stats items... same as before */}
-                <div className="flex items-center gap-2"><Package size={18} className="text-[#666]" /><span className="text-sm text-[#666]">판매중 <span className="font-bold text-[#111]">{stats.sellingCount}</span></span></div>
-                <div className="flex items-center gap-2"><Heart size={18} className="text-[#666]" /><span className="text-sm text-[#666]">찜 <span className="font-bold text-[#111]">{stats.likesCount}</span></span></div>
-                <div className="flex items-center gap-2"><Gavel size={18} className="text-[#666]" /><span className="text-sm text-[#666]">입찰 <span className="font-bold text-[#111]">{stats.bidsCount}</span></span></div>
-                <div className="flex items-center gap-2"><Star size={18} className="text-[#666]" /><span className="text-sm text-[#666]">평점 <span className="font-bold text-[#111]">{stats.rating.toFixed(1)}</span></span></div>
+              <p className="text-sm text-[#666] truncate">{user.email}</p>
+              <div className="flex flex-wrap gap-4 sm:gap-6 md:gap-8 mt-6 pt-6 border-t border-[#eee]">
+                {/* Stats items... added whitespace-nowrap */}
+                <div className="flex items-center gap-2 whitespace-nowrap"><Package size={18} className="text-[#666]" /><span className="text-sm text-[#666]">판매중 <span className="font-bold text-[#111]">{stats.sellingCount}</span></span></div>
+                <div className="flex items-center gap-2 whitespace-nowrap"><Heart size={18} className="text-[#666]" /><span className="text-sm text-[#666]">찜 <span className="font-bold text-[#111]">{stats.likesCount}</span></span></div>
+                <div className="flex items-center gap-2 whitespace-nowrap"><Gavel size={18} className="text-[#666]" /><span className="text-sm text-[#666]">입찰 <span className="font-bold text-[#111]">{stats.bidsCount}</span></span></div>
+                <div className="flex items-center gap-2 whitespace-nowrap"><Star size={18} className="text-[#666]" /><span className="text-sm text-[#666]">평점 <span className="font-bold text-[#111]">{stats.rating.toFixed(1)}</span></span></div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-t-xl border-b border-gray-200 sticky top-14 z-10 shadow-sm">
-          <div className="flex relative">
+        <div className="bg-white rounded-t-xl border-b border-gray-200 sticky top-14 z-900 shadow-sm">
+          <div className="flex relative overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
-                <button key={tab.id} ref={(el) => { if (el) tabRefs.current[tab.id] = el; }} onClick={() => setActiveTab(tab.id)} className={`flex-1 px-6 py-4 text-sm font-medium transition-colors relative flex items-center justify-center gap-2 ${activeTab === tab.id ? "text-[#333]" : "text-gray-600 hover:text-gray-900"}`}>
+                <button key={tab.id} ref={(el) => { if (el) tabRefs.current[tab.id] = el; }} onClick={() => setActiveTab(tab.id)} className={`flex-1 px-4 md:px-6 py-4 text-sm font-medium transition-colors relative flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === tab.id ? "text-[#333]" : "text-gray-600 hover:text-gray-900"}`}>
                   <Icon size={18} /> {tab.label}
                 </button>
               );
@@ -716,7 +706,7 @@ export default function MyPage({ user, setUser }: Props) {
         </div>
       </div>
       <ShippingModal isOpen={shippingModalOpen} onClose={() => setShippingModalOpen(false)} onSubmit={handleShippingSubmit} defaultCourier={modalDefaults.courier} defaultTrackingNumber={modalDefaults.trackingNumber} />
-      <ReviewModal isOpen={reviewModalOpen} onClose={() => setReviewModalOpen(false)} onSubmit={handleReviewSubmit} />
+
       <ConfirmModal isOpen={confirmModalOpen} onClose={() => setConfirmModalOpen(false)} onConfirm={executeConfirmPurchase} title="구매 확정" message="구매를 확정하시겠습니까?" confirmText="확인" cancelText="취소" />
 
       {/* Disconnect Social Modal */}

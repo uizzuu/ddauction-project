@@ -90,7 +90,7 @@ export default function ArticleList({ user }: Props) {
 
   return (
     <div className="max-w-[1280px] mx-auto py-8 px-5">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <div className="flex md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-[#111]">커뮤니티</h1>
         {user && (
           <button

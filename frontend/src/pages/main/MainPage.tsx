@@ -41,7 +41,7 @@ function CategoryNextArrow({ onClick, visible }: { onClick?: () => void; visible
   return (
     <button
       onClick={onClick}
-      className="absolute top-1/2 -translate-y-1/2 -right-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all"
+      className="absolute top-1/2 -translate-y-1/2 right-0 md:-right-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all bg-white/80 md:bg-transparent rounded-full shadow-sm md:shadow-none"
     >
       <ChevronRight size={28} />
     </button>
@@ -53,7 +53,7 @@ function CategoryPrevArrow({ onClick, visible }: { onClick?: () => void; visible
   return (
     <button
       onClick={onClick}
-      className="absolute top-1/2 -translate-y-1/2 -left-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all"
+      className="absolute top-1/2 -translate-y-1/2 left-0 md:-left-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all bg-white/80 md:bg-transparent rounded-full shadow-sm md:shadow-none"
     >
       <ChevronLeft size={28} />
     </button>
@@ -208,11 +208,11 @@ export default function Main() {
   };
 
   return (
-    <div className="w-full bg-white pb-20">
+    <div className="w-full bg-white pb-20 containerr">
       {/* 1. Banner Section (Fixed Size, Rounded) */}
-      <div className="w-full mb-10 mt-10">
+      <div className="w-full mb-6 mt-6 md:mb-10 md:mt-0 px-4 md:px-0">
         <div
-          className="w-full max-w-[1280px] mx-auto h-[400px] relative group rounded-[12px] overflow-hidden bg-[#f4f4f4]"
+          className="w-full max-w-[1280px] mx-auto h-[250px] md:h-[400px] relative group rounded-[12px] overflow-hidden bg-[#f4f4f4] md:px-4 xl:px-0"
           onMouseMove={handleBannerMouseMove}
           onMouseLeave={handleBannerMouseLeave}
         >
@@ -220,9 +220,9 @@ export default function Main() {
             <>
               <Slider {...bannerSettings} className="h-full">
                 {banners.map((b, i) => (
-                  <div key={i} className="h-[400px] outline-none">
+                  <div key={i} className="h-[250px] md:h-[400px] outline-none">
                     <div
-                      className="w-full h-full cursor-pointer relative bg-[#333]"
+                      className="w-full h-full cursor-pointer relative bg-[#333] rounded-[12px] overflow-hidden"
                       onClick={() => {
                         if (b.product) {
                           navigate(`/products/${b.product.productId}`);
@@ -266,7 +266,7 @@ export default function Main() {
       </div>
 
       {/* Main Content */}
-      <div className="containerr mx-auto md:px-0 mt-0">
+      <div className="w-full max-w-[1280px] mx-auto px-4 xl:px-0 mt-0">
 
         {/* 2. Category Shortcuts (Slider) */}
         <section className="mb-20 relative w-fit mx-auto max-w-full">
@@ -275,18 +275,18 @@ export default function Main() {
           <div
             ref={scrollRef}
             onScroll={checkScroll}
-            className="flex gap-4 overflow-x-auto scroll-smooth category-scroll-container"
+            className="flex gap-4 overflow-x-auto scroll-smooth category-scroll-container scrollbar-hide py-2"
           >
             {(Object.keys(PRODUCT_CATEGORIES) as ProductCategoryType[]).map((cat) => (
               <div
                 key={cat}
-                className="category flex flex-col items-center gap-2 cursor-pointer w-[80px] flex-shrink-0 group/cat"
+                className="category flex flex-col items-center gap-2 cursor-pointer w-[60px] md:w-[80px] flex-shrink-0 group/cat"
                 onClick={() => navigate(`/search?category=${cat}`)}
               >
-                <div className="w-[80px] h-[80px] rounded-[12px] bg-[#f8f9fa] flex items-center justify-center text-[#333] transition-all duration-300 ease-out group-hover/cat:bg-white group-hover/cat:shadow-[0_8px_20px_rgba(0,0,0,0.08)] group-hover/cat:-translate-y-[2px] group-hover/cat:text-black border border-transparent group-hover/cat:border-[#eee]">
+                <div className="w-[60px] h-[60px] md:w-[80px] md:h-[80px] rounded-[12px] bg-[#f8f9fa] flex items-center justify-center text-[#333] transition-all duration-300 ease-out group-hover/cat:bg-white group-hover/cat:shadow-[0_8px_20px_rgba(0,0,0,0.08)] group-hover/cat:-translate-y-[2px] group-hover/cat:text-black border border-transparent group-hover/cat:border-[#eee]">
                   {CATEGORY_ICONS[cat]}
                 </div>
-                <span className="text-[14px] text-[#333] font-medium text-center whitespace-nowrap group-hover/cat:font-semibold">
+                <span className="text-[12px] md:text-[14px] text-[#333] font-medium text-center whitespace-nowrap group-hover/cat:font-semibold">
                   {PRODUCT_CATEGORIES[cat]}
                 </span>
               </div>

@@ -115,7 +115,7 @@ export default function AIChatBot({ isOpen, onClose }: Props) {
   return (
     <>
       <div
-        className="fixed bottom-6 right-6 z-[1000] w-[400px] h-[650px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden origin-bottom-right"
+        className="fixed bottom-6 right-4 left-4 sm:left-auto sm:bottom-8 sm:right-8 z-[1000] w-auto sm:w-[400px] h-[80vh] sm:h-[650px] bg-white rounded-2xl shadow-2xl flex flex-col overflow-hidden origin-bottom-right"
         style={{
           animation: isClosing
             ? 'collapseChatPanel 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'

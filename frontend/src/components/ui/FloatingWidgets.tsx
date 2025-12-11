@@ -29,7 +29,7 @@ export default function FloatingWidgets() {
     return (
         <>
             {/* Floating Buttons Container */}
-            <div className="fixed bottom-6 right-6 flex flex-col gap-3 z-50 items-end">
+            <div className="fixed bottom-6 right-4 sm:bottom-8 sm:right-8 flex flex-col gap-3 z-50 items-end">
 
                 {/* Scroll To Top Button */}
                 <button
