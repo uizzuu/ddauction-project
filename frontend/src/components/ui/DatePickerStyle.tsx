@@ -3,6 +3,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../../css/datepicker.css";
 import { Calendar as CalendarIcon } from "lucide-react";
+import { ko } from "date-fns/locale";
 
 interface DatePickerProps {
     selected: Date | null;
@@ -68,9 +69,10 @@ export default function DatePickerStyle({
                 dateFormat={showTimeSelect ? "yyyy.MM.dd HH:mm" : dateFormat}
                 placeholderText={placeholder}
                 disabled={disabled}
+                locale={ko}
                 customInput={<CustomInput />}
                 // Styling Poppers
-                calendarClassName="!font-sans !border-0 !shadow-xl !rounded-2xl !p-3 !bg-white overflow-hidden"
+                calendarClassName="!font-sans !border-0 !shadow-xl !rounded-2 !bg-white overflow-hidden"
                 dayClassName={() =>
                     "hover:bg-orange-100 rounded-full"
                 }

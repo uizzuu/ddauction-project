@@ -4,20 +4,70 @@
 @tailwind utilities;
 
 @layer components {
+  .react-datepicker {
+    @apply w-fit !important;
+    width: fit-content !important; /* Force override inline styles */
+  }
+
+  .custom-datepicker-container {
+    @apply w-fit flex;
+  }
+
+  /* 1. Navigation Arrows Alignment */
+  .custom-datepicker-container .react-datepicker__navigation {
+    @apply top-[10px] !important; /* Adjusted for centered alignment */
+  }
+
+  .custom-datepicker-container
+    .react-datepicker__navigation--next--with-time:not(
+      .react-datepicker__navigation--next--with-today-button
+    ) {
+    right: 75px !important;
+  }
+
   .custom-datepicker-container .react-datepicker__header {
-    @apply bg-white border-b border-gray-100 pb-3 !important;
+    @apply bg-white border-b border-gray-100 pb-2 pt-3 px-3 w-full !important;
   }
 
   .custom-datepicker-container .react-datepicker__current-month {
     @apply text-base font-bold text-[#111] mb-2 !important;
   }
 
+  .custom-datepicker-container .react-datepicker__header--time {
+    @apply px-3 pt-4 pr-5 pb-[18px] !important;
+  }
+
+  .custom-datepicker-container
+    .react-datepicker-popper
+    .react-datepicker__triangle {
+    stroke: none !important;
+    fill: white !important;
+  }
+
+  .custom-datepicker-container
+    .react-datepicker-popper
+    .react-datepicker__triangle::before,
+  .custom-datepicker-container
+    .react-datepicker-popper
+    .react-datepicker__triangle::after {
+    border-bottom-color: white !important;
+    border-top-color: white !important;
+  }
+
+  /* 2. Day Names Centering */
   .custom-datepicker-container .react-datepicker__day-name {
-    @apply text-gray-400 font-semibold w-10 !important;
+    @apply text-gray-400 font-semibold w-8 h-8 leading-8 inline-block m-0 !important;
+    text-align: center;
+    overflow: visible;
+    white-space: nowrap;
+  }
+
+  .custom-datepicker-container .react-datepicker__month {
+    @apply px-2 m-0 !important;
   }
 
   .custom-datepicker-container .react-datepicker__day {
-    @apply w-10 h-10 leading-10 m-0 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition-colors !important;
+    @apply w-8 h-8 leading-8 m-0 rounded-lg text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center float-left !important;
   }
 
   .custom-datepicker-container .react-datepicker__day--selected {
@@ -28,8 +78,13 @@
     @apply bg-gray-100 text-black !important;
   }
 
+  .custom-datepicker-container .react-datepicker__day--outside-month {
+    visibility: hidden !important;
+  }
+
+  /* 3. Time Section Width & Scroll Fix */
   .custom-datepicker-container .react-datepicker__time-container {
-    @apply border-l border-gray-100 !important;
+    @apply w-fit border-l border-gray-100 shrink-0 !important;
   }
 
   .custom-datepicker-container .react-datepicker__time-list-item--selected {
@@ -40,8 +95,43 @@
     @apply z-[60] !important;
   }
 
-  /* Flex Layout for Calendar + Time */
+  .custom-datepicker-container .react-datepicker__day-names {
+    @apply w-full !important;
+  }
+
   .custom-datepicker-container .react-datepicker {
-    @apply flex border border-gray-100 rounded-xl overflow-hidden shadow-lg !important;
+    @apply flex border border-gray-100 rounded-xl overflow-hidden shadow-lg max-h-[240px] !important;
+    font-family: inherit;
+  }
+
+  .custom-datepicker-container .react-datepicker__month-container {
+    @apply float-left bg-white shrink-0 !important;
+  }
+
+  .custom-datepicker-container
+    .react-datepicker__time-container
+    .react-datepicker__time,
+  .custom-datepicker-container .react-datepicker__time-list {
+    @apply w-full h-full overflow-y-auto overflow-x-hidden !important;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-gutter: auto; /* Don't reserve space for scrollbar */
+  }
+
+  .custom-datepicker-container .react-datepicker__time-list-item {
+    @apply w-full text-[12px] pr-5 !important;
+    box-sizing: border-box;
+  }
+
+  .custom-datepicker-container
+    .react-datepicker__time-container
+    .react-datepicker__time::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  /* 애니메이션/트랜지션 제거 */
+  .custom-datepicker-container .react-datepicker,
+  .custom-datepicker-container .react-datepicker-popper {
+    @apply transition-none animate-none !important;
   }
 }

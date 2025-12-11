@@ -425,7 +425,7 @@ export default function Header({ user, setUser }: Props) {
                                 onKeyDown={handleKeyDown}
                                 onFocus={handleInputFocus}
                                 autoComplete="off"
-                                className="w-full border-none outline-none bg-transparent h-full ring-0 text-[15px] text-[#333] placeholder-[#aaa]"
+                                className="w-full border-none outline-none bg-transparent h-full ring-0 text-base md:text-[15px] text-[#333] placeholder-[#aaa]"
                                 aria-label="검색어 입력"
                                 ref={inputRef}
                             />
