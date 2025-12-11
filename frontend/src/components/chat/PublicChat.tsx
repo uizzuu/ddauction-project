@@ -45,7 +45,7 @@ export default function PublicChat({ user }: Props) {
         },
         body: JSON.stringify({
           userId: targetUser.userId,
-          reason: "테스트 경고",
+          reason: "※경고 24시간동안 공개채팅이 제한되었습니다.",
           banHours: 24,
         }),
       });

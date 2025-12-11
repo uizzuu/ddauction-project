@@ -60,6 +60,14 @@ public class PublicChatWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        // 유저 정지 체크 추가
+        boolean isBanned = chatService.isUserBanned(userId); // DB에서 active=1인 정지 있는지 조회
+        if (isBanned) {
+            // 클라이언트에 알림 보내고 메시지 무시
+            sendMessageToUser(userId, "채팅 정지 상태라 메시지를 보낼 수 없습니다.");
+            return;
+        }
+
         // 공개채팅 저장
         PublicChatDto saved = chatService.savePublicChat(userId, PublicChatDto.builder()
                 .content(content)

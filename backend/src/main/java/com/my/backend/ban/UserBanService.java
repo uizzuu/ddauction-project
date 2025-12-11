@@ -2,7 +2,10 @@ package com.my.backend.ban;
 
 
 import com.my.backend.dto.NotificationDto;
+import com.my.backend.entity.Notification;
 import com.my.backend.entity.Users;
+import com.my.backend.enums.NotificationStatus;
+import com.my.backend.repository.NotificationRepository;
 import com.my.backend.repository.UserRepository;
 import com.my.backend.websocket.NotificationWebSocketHandler;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +26,7 @@ public class UserBanService {
     private final UserBanRepository userBanRepository;
     private final UserRepository usersRepository;
     private final NotificationWebSocketHandler notificationWebSocketHandler;
+    private final NotificationRepository notificationRepository;
 
     private static final int DEFAULT_BAN_HOURS = 24; // 기본 24시간 제재
 
@@ -164,12 +168,25 @@ public class UserBanService {
 
     // 경고 등록 시
     private void sendBanNotification(Long userId, LocalDateTime banUntil, String reason) {
-        NotificationDto noti = NotificationDto.builder()
+        // 1️⃣ Notification DTO 생성 (WebSocket용)
+        NotificationDto notiDto = NotificationDto.builder()
                 .userId(userId)
-                .content("경고가 등록되었습니다: " + reason)
+                .content(reason)
                 .build();
 
-        notificationWebSocketHandler.sendNotificationToUser(userId, noti);
+        // 2️⃣ WebSocket으로 실시간 전송
+        notificationWebSocketHandler.sendNotificationToUser(userId, notiDto);
+
+        // 3️⃣ DB 저장용 Notification 엔티티 생성
+        Notification notification = Notification.builder()
+                .user(usersRepository.findById(userId).orElseThrow())
+                .content(reason)
+                .isRead(false)
+                .notificationStatus(NotificationStatus.NOTICE) // enum 맞게 설정
+                .build();
+
+        // 4️⃣ DB 저장
+        notificationRepository.save(notification);
     }
 
     // 경고 해제 시

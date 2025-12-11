@@ -6,5 +6,6 @@ public enum NotificationStatus {
     SYSTEM,   // 시스템 알림
     NOTICE,   // 공지사항
     MESSAGE,
-    FOLLOW
+    FOLLOW,
+    WARN
 }

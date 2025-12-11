@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.my.backend.ban.UserBanRepository;
 import org.springframework.stereotype.Service;
 
 import com.my.backend.dto.ChatRoomDto;
@@ -35,6 +36,11 @@ public class ChattingService {
     private final UserRepository usersRepository;
     private final ChatRoomRepository chatRoomRepository;
     private final ProductRepository productRepository;
+    private final UserBanRepository userBanRepository;
+    public boolean isUserBanned(Long userId) {
+        return userBanRepository.existsByUser_UserIdAndActiveTrue(userId); // 여기 이름 꼭 똑같이
+    }
+
 
     // ===================== 개인 채팅 저장 =====================
     public PrivateChatDto savePrivateChat(Long userId, Long targetUserId, Long productId, PrivateChatDto dto) {

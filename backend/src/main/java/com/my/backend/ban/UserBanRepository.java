@@ -12,6 +12,8 @@ import java.util.Optional;
 @Repository
 public interface UserBanRepository extends JpaRepository<UserBan, Long> {
 
+    boolean existsByUser_UserIdAndActiveTrue(Long userId);
+
     /**
      * 특정 유저의 활성화된 제재 조회
      */
