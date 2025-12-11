@@ -36,3 +36,9 @@ python-multipart>=0.0.6
 
 # Transformers (CLIP)
 transformers>=4.40.0
+
+# 추가 패키지
+mysql-connector-python
+boto3
+requests
+Pillow
