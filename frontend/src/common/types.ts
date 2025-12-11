@@ -67,7 +67,7 @@ export interface Product {
   sellerProfileImage?: string;
   title: string;
   content?: string;
-  startingPrice?: number;
+  startingPrice?: number;  // ✅ AUCTION: 시작 입찰가
   images?: Image[];
   auctionEndTime?: string; // Optional for non-auction items
   productStatus: ProductStatus;
@@ -88,8 +88,9 @@ export interface Product {
   address?: string;
   deliveryAvailable?: string; // Comma separated
   productBanners?: string[]; // List of URLs
-  originalPrice?: number;
-  discountRate?: number;
+  originalPrice?: number;    // ✅ USED: 판매가
+  salePrice?: number;        // ✅ STORE: 판매가
+  discountRate?: number;     // ✅ STORE: 할인율
   deliveryPrice?: number;
   deliveryAddPrice?: number;
   deliveryIncluded?: boolean;
@@ -120,7 +121,9 @@ export interface SignupForm {
 export interface ProductForm {
   title: string;
   content: string;
-  startingPrice: string; // 숫자 입력 후 문자열로 변환하여 저장
+  startingPrice: string;   // ✅ AUCTION: 시작 입찰가
+  salePrice?: string;      // ✅ STORE: 판매가 (NEW)
+  originalPrice?: string;  // ✅ USED: 판매가
   auctionEndTime: string;
   productCategoryType: ProductCategoryType | null;
   productType: ProductType; // 상품 타입 필드 추가
@@ -133,8 +136,7 @@ export interface ProductForm {
   longitude?: number;
   deliveryAvailable?: string[]; // Frontend uses array, convert to string for backend
   productBanners?: File[]; // Store only (Multi-upload)
-  originalPrice?: string;
-  discountRate?: string;
+  discountRate?: string;   // ✅ STORE: 할인율
   deliveryPrice?: string;
   deliveryAddPrice?: string;
   deliveryIncluded?: boolean;
@@ -176,6 +178,7 @@ export interface CreateProductRequest {
   deliveryAvailable?: string; // "GS,CU"
   productBanners?: string[]; // URLs after upload 
   originalPrice?: number;
+  salePrice?: number;        // ✅ STORE: 최종 판매가 (NEW)
   discountRate?: number;
   deliveryPrice?: number;
   deliveryAddPrice?: number;
@@ -412,7 +415,7 @@ export interface AiDescriptionResponse {
 export interface BusinessVerifyProps {
   userId: number;
   onVerified: () => void;
-  onCancel?: () => void; // <- 여기 추가
+  onCancel?: () => void;
 }
 
 //알림 타입

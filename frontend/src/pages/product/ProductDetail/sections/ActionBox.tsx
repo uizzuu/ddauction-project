@@ -3,6 +3,8 @@ import { AuctionBidding } from "../../../../components/product/AuctionBidding";
 import type { Product, Bid } from "../../../../common/types";
 import * as API from "../../../../common/api";
 import { addToCart } from "../../../../common/util";
+import { DELIVERY_TYPES } from "../../../../common/enums";
+import type { DeliveryType } from "../../../../common/enums";
 
 interface ActionBoxProps {
     product: Product;
@@ -33,7 +35,30 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
 
     if (editingProductId) return null;
 
-
+    // ✅ 배송 방법 텍스트 계산 (enum 사용)
+    const getDeliveryText = () => {
+        // 무료배송이면 무료배송 표시
+        if (product.deliveryIncluded === true) {
+            return "무료배송";
+        }
+        
+        // deliveryAvailable에서 배송 방법들 가져와서 한글로 변환
+        if (product.deliveryAvailable) {
+            const methods = product.deliveryAvailable.split(",").map(m => {
+                const key = m.trim() as DeliveryType;
+                return DELIVERY_TYPES[key] || m.trim();
+            });
+            return methods.join(", ");
+        }
+        
+        // 배송비만 있는 경우
+        const deliveryPrice = Number(product.deliveryPrice) || 0;
+        if (deliveryPrice > 0) {
+            return `${DELIVERY_TYPES.PARCEL} ${deliveryPrice.toLocaleString()}원`;
+        }
+        
+        return DELIVERY_TYPES.PARCEL; // 기본값: "택배"
+    };
 
     return (
         <div className="rounded-xl border border-gray-200 shadow-sm p-5 sticky top-24 h-[400px] box-border flex flex-col bg-white">
@@ -83,11 +108,11 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
                 ) : (
                     <div className="flex flex-col">
                         <div className="space-y-3">
-                            {/* Delivery Info */}
+                            {/* ✅ Delivery Info - 수정됨 */}
                             <div className="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg">
                                 <span className="text-gray-500 font-medium">배송 방법</span>
-                                <span className="font-bold text-gray-800">
-                                    {product.deliveryIncluded ? "무료배송" : "택배배송"}
+                                <span className={`font-bold ${product.deliveryIncluded === true ? 'text-green-600' : 'text-gray-800'}`}>
+                                    {getDeliveryText()}
                                 </span>
                             </div>
 

@@ -117,37 +117,57 @@ export const useProductDetail = (user: User | null) => {
         );
     }, [allBids, liveBids]);
 
+    // ✅ 남은 시간 계산 - 초 단위 포함
     const calculateRemainingTime = (endTime: string) => {
         const now = new Date();
         const end = new Date(endTime);
         const diffMs = end.getTime() - now.getTime();
+        
         if (diffMs <= 0) return "경매 종료";
+        
         const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
         const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
-        // 초 제외 요건 반영
-        return `${days}일 ${hours}시간 ${minutes}분`;
+        const seconds = Math.floor((diffMs / 1000) % 60);
+        
+        // ✅ 초 단위 추가하여 실시간 업데이트 체감 향상
+        if (days > 0) {
+            return `${days}일 ${hours}시간 ${minutes}분`;
+        } else if (hours > 0) {
+            return `${hours}시간 ${minutes}분 ${seconds}초`;
+        } else if (minutes > 0) {
+            return `${minutes}분 ${seconds}초`;
+        } else {
+            return `${seconds}초`;
+        }
     };
 
     useEffect(() => {
         if (!product) return;
+        
+        // ✅ 즉시 한 번 실행
+        const remaining = calculateRemainingTime(product.auctionEndTime || "");
+        setRemainingTime(remaining);
+        
+        if (remaining === "경매 종료") return;
+        
         const interval = setInterval(() => {
             const remaining = calculateRemainingTime(product.auctionEndTime || "");
             setRemainingTime(remaining);
             if (remaining === "경매 종료") clearInterval(interval);
         }, 1000);
+        
         return () => clearInterval(interval);
     }, [product]);
+    
     const viewedRef = useRef(false);
+    
     useEffect(() => {
         // 조회수 증가 한 번만 체크
-        if (viewedRef.current) return; //
+        if (viewedRef.current) return;
 
         const fetchProduct = async () => {
             try {
-                // const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
-                // if (!res.ok) throw new Error("상품 정보를 가져올 수 없습니다.");
-                // const data: Product = await res.json();
                 const data = await fetchProductDetail(Number(id));
                 setProduct(data);
                 setSellerNickName(data.sellerNickName ?? "알 수 없음");

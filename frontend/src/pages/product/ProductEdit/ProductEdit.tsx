@@ -68,6 +68,23 @@ export default function ProductEdit({ user }: Props) {
         updateForm("images", newImages);
     };
 
+    // ✅ 타입별 가격 가져오기
+    // AUCTION: startingPrice (시작 입찰가)
+    // STORE: salePrice (판매가)
+    // USED: originalPrice (판매가)
+    const getPriceForSettlement = (): number => {
+        if (form.productType === "AUCTION") {
+            return Number(form.startingPrice) || 0;
+        } else if (form.productType === "STORE") {
+            return Number(form.salePrice) || 0;
+        } else {
+            // USED
+            return Number(form.originalPrice) || 0;
+        }
+    };
+
+    const settlementPrice = getPriceForSettlement();
+
     if (!user) {
         return (
             <div className="min-h-[calc(100vh-120px)] flex justify-center items-center py-10 px-5 bg-white">
@@ -396,8 +413,8 @@ export default function ProductEdit({ user }: Props) {
                         )}
                         {form.productType === "USED" && (
                             <UsedSection
-                                price={form.startingPrice}
-                                onChangePrice={(val) => updateForm("startingPrice", val)}
+                                price={form.originalPrice || ""}
+                                onChangePrice={(val) => updateForm("originalPrice", val)}
                                 uploading={uploading}
                                 form={form}
                                 updateForm={updateForm}
@@ -405,8 +422,8 @@ export default function ProductEdit({ user }: Props) {
                         )}
                         {form.productType === "STORE" && (
                             <StoreSection
-                                price={form.startingPrice}
-                                onChangePrice={(val) => updateForm("startingPrice", val)}
+                                price={form.salePrice || ""}
+                                onChangePrice={(val) => updateForm("salePrice", val)}
                                 uploading={uploading}
                                 form={form}
                                 updateForm={updateForm}
@@ -417,10 +434,11 @@ export default function ProductEdit({ user }: Props) {
 
                     {/* Agreement (New Checkbox Style) */}
                     <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        {/* ✅ 타입별 가격으로 정산 예상 금액 계산 */}
                         <div className="flex justify-end mt-2 text-sm text-gray-500">
-                            {form.startingPrice && !isNaN(Number(form.startingPrice)) ? (
+                            {settlementPrice > 0 ? (
                                 <span className="font-medium text-[#c0392b]">
-                                    정산 예상 금액: {(Number(form.startingPrice) * 0.9).toLocaleString()}원 (수수료 5% 제외)
+                                    정산 예상 금액: {Math.round(settlementPrice * 0.95).toLocaleString()}원 (수수료 5% 제외)
                                 </span>
                             ) : null}
                         </div>

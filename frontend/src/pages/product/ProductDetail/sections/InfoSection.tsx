@@ -37,12 +37,56 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
     handleCancelProductEdit,
     handleChangeProductForm,
 }) => {
-
-
     // 날짜 포맷 (초 제외)
     const formatDateTimeNoSec = (dateStr: string) => {
         return formatDateTime(dateStr).slice(0, 16);
     };
+
+    // ✅ 가격 계산 함수 (타입별 분기)
+    // AUCTION: startingPrice (시작 입찰가)
+    // STORE: salePrice (판매가), discountRate (할인율)
+    // USED: originalPrice (판매가)
+    const getPriceInfo = () => {
+        const productType = product.productType;
+        const extProduct = product as any; // salePrice 접근용
+
+        if (productType === 'STORE') {
+            const salePrice = Number(extProduct.salePrice) || 0;
+            const discountRate = Number(product.discountRate) || 0;
+
+            // ✅ 할인율이 있으면 원가 역산: 원가 = 판매가 / (1 - 할인율/100)
+            let originalPrice = 0;
+            if (discountRate > 0 && salePrice > 0) {
+                originalPrice = Math.round(salePrice / (1 - discountRate / 100));
+            }
+
+            return {
+                originalPrice,
+                finalPrice: salePrice,
+                discountRate,
+                hasDiscount: discountRate > 0
+            };
+        } else if (productType === 'USED') {
+            // USED: originalPrice가 판매가
+            const price = Number(product.originalPrice) || 0;
+            return {
+                originalPrice: 0,
+                finalPrice: price,
+                discountRate: 0,
+                hasDiscount: false
+            };
+        } else {
+            // AUCTION: startingPrice가 시작가
+            return {
+                originalPrice: 0,
+                finalPrice: Number(product.startingPrice) || 0,
+                discountRate: 0,
+                hasDiscount: false
+            };
+        }
+    };
+
+    const priceInfo = getPriceInfo();
 
     return (
         <div className="w-full md:w-full flex flex-col h-full justify-between">
@@ -148,11 +192,20 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                 ) : (
                     <div>
                         {product.productType === 'AUCTION' ? (
+                            /* ✅ AUCTION 가격 표시 - 입찰 건수 추가 */
                             <div className="space-y-2 mb-3">
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-500">시작 입찰가</span>
                                     <span className="font-bold text-gray-700">{Number(product.startingPrice).toLocaleString()}원</span>
                                 </div>
+                                
+                                {/* ✅ 입찰 건수 표시 */}
+                                <div className="flex justify-between items-center text-sm">
+                                    <span className="text-gray-500">입찰 건수</span>
+                                    <span className="font-bold text-indigo-600">{mergedBids.length}건</span>
+                                </div>
+
+                                {/* ✅ 현재 최고가 (입찰이 있을 때만) */}
                                 {mergedBids.length > 0 && (
                                     <div className="flex justify-between items-baseline pt-2 border-t border-gray-100">
                                         <span className="text-red-500 font-bold text-sm">현재 최고가</span>
@@ -164,24 +217,24 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                                 )}
                             </div>
                         ) : product.productType === 'STORE' ? (
-                            // STORE Pricing
+                            /* ✅ STORE 가격 표시 - salePrice 사용 */
                             <div>
                                 <div className="flex justify-between items-end mb-1">
                                     <span className="text-gray-500 text-sm">판매가</span>
                                     <div className="text-right">
-                                        {product.discountRate && Number(product.discountRate) > 0 && (
-                                            <div className="flex items-center justify-end gap-1 mb-0.5">
+                                        {priceInfo.hasDiscount && (
+                                            <div className="flex items-center justify-end gap-2 mb-0.5">
                                                 <span className="text-gray-400 text-xs line-through">
-                                                    {Number(product.originalPrice).toLocaleString()}원
+                                                    {priceInfo.originalPrice.toLocaleString()}원
                                                 </span>
                                                 <span className="text-red-500 text-base font-bold">
-                                                    {product.discountRate}%
+                                                    {priceInfo.discountRate}%
                                                 </span>
                                             </div>
                                         )}
                                         <div className="flex items-baseline justify-end gap-1">
                                             <span className="text-3xl font-extrabold text-gray-900">
-                                                {Number(product.startingPrice).toLocaleString()}
+                                                {priceInfo.finalPrice.toLocaleString()}
                                             </span>
                                             <span className="text-lg text-gray-600 font-bold">원</span>
                                         </div>
@@ -189,24 +242,24 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                                 </div>
                             </div>
                         ) : (
-                            // USED / General Pricing
+                            /* ✅ USED 가격 표시 - originalPrice 사용 */
                             <div className="flex justify-between items-baseline mb-2">
                                 <span className="text-gray-500 text-sm">판매가</span>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-3xl font-extrabold text-gray-900">{Number(product.startingPrice).toLocaleString()}</span>
+                                    <span className="text-3xl font-extrabold text-gray-900">{priceInfo.finalPrice.toLocaleString()}</span>
                                     <span className="text-lg text-gray-600 font-bold">원</span>
                                 </div>
                             </div>
                         )}
 
-                        {/* Shipping Info */}
+                        {/* ✅ Shipping Info - deliveryIncluded 체크 수정 */}
                         <div className="flex justify-end items-center gap-2 mt-1">
-                            {product.deliveryIncluded ? (
-                                <span className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">배송비 무료</span>
+                            {product.deliveryIncluded === true ? (
+                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">무료배송</span>
                             ) : (
                                 <span className="text-xs text-gray-500">
                                     배송비 {Number(product.deliveryPrice || 0).toLocaleString()}원
-                                    {Number(product.deliveryAddPrice) > 0 && ` (+${Number(product.deliveryAddPrice).toLocaleString()}원)`}
+                                    {Number(product.deliveryAddPrice) > 0 && ` (도서산간 +${Number(product.deliveryAddPrice).toLocaleString()}원)`}
                                 </span>
                             )}
                         </div>

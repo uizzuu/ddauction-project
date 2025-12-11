@@ -12,7 +12,9 @@ export default function useProductForm(user: User | null, productId?: number) {
     const [form, setForm] = useState<ProductForm>({
         title: "",
         content: "",
-        startingPrice: "",
+        startingPrice: "",      // ✅ AUCTION: 시작 입찰가
+        salePrice: "",          // ✅ STORE: 판매가 (NEW)
+        originalPrice: "",      // ✅ USED: 판매가
         images: [],
         productType: "AUCTION",
         auctionEndTime: "",
@@ -21,8 +23,7 @@ export default function useProductForm(user: User | null, productId?: number) {
         address: "",
         deliveryAvailable: [],
         productBanners: [],
-        originalPrice: "",
-        discountRate: "",
+        discountRate: "",       // ✅ STORE: 할인율
         deliveryPrice: "",
         deliveryAddPrice: "",
         deliveryIncluded: false,
@@ -58,11 +59,14 @@ export default function useProductForm(user: User | null, productId?: number) {
     const loadProductData = async (id: number) => {
         try {
             const product = await fetchProductById(id);
+            const extProduct = product as any; // salePrice 접근용
+
             setForm({
                 title: product.title,
                 content: product.content || "",
-                startingPrice: String(product.startingPrice),
-                // Cast existing images to any [] to bypass File[] check temporarily or usage needs update
+                startingPrice: String(product.startingPrice || ""),      // ✅ AUCTION
+                salePrice: String(extProduct.salePrice || ""),           // ✅ STORE
+                originalPrice: String(product.originalPrice || ""),      // ✅ USED
                 images: (product.images || []) as any[],
                 productType: product.productType as "AUCTION" | "USED" | "STORE",
                 auctionEndTime: product.auctionEndTime ? product.auctionEndTime.replace("T", " ") : "",
@@ -71,7 +75,6 @@ export default function useProductForm(user: User | null, productId?: number) {
                 address: product.address || "",
                 deliveryAvailable: product.deliveryAvailable ? product.deliveryAvailable.split(",") : [],
                 productBanners: (product.productBanners || []) as any[],
-                originalPrice: String(product.originalPrice || ""),
                 discountRate: String(product.discountRate || ""),
                 deliveryPrice: String(product.deliveryPrice || ""),
                 deliveryAddPrice: String(product.deliveryAddPrice || ""),
@@ -99,9 +102,6 @@ export default function useProductForm(user: User | null, productId?: number) {
         setAuctionEndDate(date);
         if (date) {
             const now = new Date();
-            // In Edit Mode, if the auction hasn't started or we are extending time, it is fine.
-            // But strict check "date < now" might block fixing old products. 
-            // We'll relax it slightly for edit mode or keep it strict if auction status matters.
             if (date < now && !isEditMode) {
                 setError("경매 종료 시간은 현재 시간 이후로만 선택 가능합니다.");
                 return;
@@ -135,8 +135,21 @@ export default function useProductForm(user: User | null, productId?: number) {
         }
     };
 
+    // ✅ 타입별 가격 가져오기
+    const getPriceByType = (): number => {
+        if (form.productType === "AUCTION") {
+            return Number(form.startingPrice) || 0;
+        } else if (form.productType === "STORE") {
+            return Number(form.salePrice) || 0;
+        } else {
+            // USED
+            return Number(form.originalPrice) || 0;
+        }
+    };
+
     const validateForm = () => {
         if (!form.title) return "제목은 필수 입력 항목입니다";
+        
         if (form.productType === "STORE") {
             if (!form.content && (!form.productBanners || form.productBanners.length === 0)) {
                 return "스토어 상품은 상세 설명 또는 상세 이미지를 입력해야 합니다";
@@ -144,8 +157,19 @@ export default function useProductForm(user: User | null, productId?: number) {
         } else {
             if (!form.content) return "상세 설명은 필수 입력 항목입니다";
         }
-        if (!form.startingPrice || Number(form.startingPrice) <= 0)
-            return "가격은 1원 이상이어야 합니다";
+
+        // ✅ 타입별 가격 검증
+        const price = getPriceByType();
+        if (price <= 0) {
+            if (form.productType === "AUCTION") {
+                return "시작 입찰가는 1원 이상이어야 합니다";
+            } else if (form.productType === "STORE") {
+                return "판매가는 1원 이상이어야 합니다";
+            } else {
+                return "가격은 1원 이상이어야 합니다";
+            }
+        }
+
         if (form.productType === "AUCTION" && !form.auctionEndTime) {
             return "경매 종료 시간을 입력해주세요";
         }
@@ -156,7 +180,7 @@ export default function useProductForm(user: User | null, productId?: number) {
         if (form.productType !== "STORE" && (!form.deliveryAvailable || form.deliveryAvailable.length === 0)) {
             return "거래 가능 방식을 최소 1개 이상 선택해주세요";
         }
-        const isDirectTransaction = form.deliveryAvailable?.some(method => method.includes("직거래"));
+        const isDirectTransaction = form.deliveryAvailable?.some(method => method.includes("직거래") || method === "MEETUP");
         if (isDirectTransaction && !form.address) {
             return "직거래를 선택하셨으므로 거래 희망 장소를 입력해주세요";
         }
@@ -177,42 +201,51 @@ export default function useProductForm(user: User | null, productId?: number) {
             return;
         }
 
+        // ✅ 타입별 가격으로 확인 메시지 표시
+        const price = getPriceByType();
+        const priceLabel = form.productType === "AUCTION" ? "시작가" : "판매가";
+
         const summary = isEditMode
             ? "상품 정보를 수정하시겠습니까?"
-            : `[상품 등록 확인]\n제목: ${form.title} \n가격: ${Number(form.startingPrice).toLocaleString()} 원\n위 내용으로 상품을 등록하시겠습니까 ? `;
+            : `[상품 등록 확인]\n제목: ${form.title}\n${priceLabel}: ${price.toLocaleString()}원\n위 내용으로 상품을 등록하시겠습니까?`;
 
         if (!window.confirm(summary)) return;
-
-        const priceNumber = Math.max(Number(form.startingPrice.replace(/[^0-9]/g, "")), 1);
 
         try {
             setUploading(true);
 
-            // API 호출
-            const productData = {
+            // ✅ 타입별 가격 필드 설정
+            const productData: any = {
                 title: form.title,
                 content: form.content,
-                startingPrice: priceNumber,
                 auctionEndTime: form.productType === "AUCTION" ? (form.auctionEndTime ? form.auctionEndTime.replace(" ", "T") : undefined) : undefined,
                 sellerId: user.userId,
                 productCategoryType: form.productCategoryType as ProductCategoryType,
                 productType: form.productType,
-                productStatus: (form as any).productStatus || "ACTIVE", // Cast for partial interface mismatch if any
+                productStatus: (form as any).productStatus || "ACTIVE",
                 tag: form.tag,
                 address: form.address,
                 deliveryAvailable: Array.isArray(form.deliveryAvailable) ? form.deliveryAvailable.join(",") : form.deliveryAvailable,
-                originalPrice: Number(form.originalPrice) || undefined,
                 discountRate: Number(form.discountRate) || undefined,
                 deliveryPrice: Number(form.deliveryPrice) || undefined,
                 deliveryAddPrice: Number(form.deliveryAddPrice) || undefined,
                 deliveryIncluded: form.deliveryIncluded,
                 latitude: form.latitude,
                 longitude: form.longitude,
-                paymentStatus: "PENDING" as PaymentStatus // Initial status matching enum
+                paymentStatus: "PENDING" as PaymentStatus
             };
 
+            // ✅ 타입별 가격 필드 매핑
+            if (form.productType === "AUCTION") {
+                productData.startingPrice = Math.max(Number(form.startingPrice.replace(/[^0-9]/g, "")), 1);
+            } else if (form.productType === "STORE") {
+                productData.salePrice = Math.max(Number(String(form.salePrice).replace(/[^0-9]/g, "")), 1);
+            } else {
+                // USED
+                productData.originalPrice = Math.max(Number(String(form.originalPrice).replace(/[^0-9]/g, "")), 1);
+            }
+
             if (isEditMode && productId) {
-                // Pass full image lists (mixed Files and Strings/Objects)
                 const images = form.images || [];
                 const banners = form.productBanners || [];
 

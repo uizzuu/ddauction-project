@@ -1,7 +1,7 @@
 import CheckboxStyle from "../../../../components/ui/CheckboxStyle";
 
 type Props = {
-    price: string; // This is 'startingPrice' (Sale Price)
+    price: string; // ✅ salePrice (판매가)
     onChangePrice: (val: string) => void;
     uploading: boolean;
     form: any;
@@ -10,26 +10,23 @@ type Props = {
 
 export default function StoreSection({ price, onChangePrice, uploading, form, updateForm }: Props) {
 
-    // 1. Forward Calc: Original + Discount -> Sale
-    const calculateSalePrice = (originalStr: string, discountStr: string) => {
+    // ✅ 정가 입력 시 -> 할인율 기반으로 판매가 자동 계산
+    const calculateSalePriceFromOriginal = (originalStr: string, discountStr: string) => {
         const original = Number(originalStr.replace(/[^0-9]/g, ''));
         const discount = Number(discountStr.replace(/[^0-9]/g, ''));
 
         if (original > 0 && discount >= 0 && discount <= 100) {
-            // 반올림하여 1원 단위 정밀도 향상
             const sale = Math.round(original * (1 - discount / 100));
-            updateForm("startingPrice", sale.toString());
+            onChangePrice(sale.toString()); // ✅ salePrice 업데이트
         }
     };
 
-    // 2. Reverse Calc: Original + Sale -> Discount
-    const calculateDiscountRate = (originalStr: string, saleStr: string) => {
+    // ✅ 판매가 입력 시 -> 정가 기반으로 할인율 자동 계산
+    const calculateDiscountFromSalePrice = (originalStr: string, saleStr: string) => {
         const original = Number(originalStr.replace(/[^0-9]/g, ''));
         const sale = Number(saleStr.replace(/[^0-9]/g, ''));
 
         if (original > 0 && sale >= 0 && sale <= original) {
-            // Formula: Discount = (1 - Sale/Original) * 100
-            // 소수점 첫째자리까지는 고려할 수도 있지만, 보통 정수 %를 사용하므로 Math.round
             const discount = Math.round((1 - sale / original) * 100);
             updateForm("discountRate", discount.toString());
         }
@@ -41,7 +38,7 @@ export default function StoreSection({ price, onChangePrice, uploading, form, up
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-bold text-[#333] mb-2">
-                        정가 (원가) <span className="text-red-500">*</span>
+                        정가 (원가)
                     </label>
                     <input
                         type="text"
@@ -50,15 +47,13 @@ export default function StoreSection({ price, onChangePrice, uploading, form, up
                         onChange={(e) => {
                             const val = e.target.value.replace(/[^0-9]/g, '');
                             updateForm("originalPrice", val);
-                            // If user changes Original, we re-calc Sale Price based on existing Discount?
-                            // Or re-calc Discount based on existing Sale?
-                            // User request: "Original + Discount -> Sale".
-                            // So if Original changes, we use existing Discount to update Sale.
-                            calculateSalePrice(val, form.discountRate || "0");
+                            // 정가 변경 시 할인율 기반으로 판매가 재계산
+                            calculateSalePriceFromOriginal(val, form.discountRate || "0");
                         }}
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-white text-sm"
                         disabled={uploading}
                     />
+                    <p className="text-xs text-gray-400 mt-1">할인 표시용 (선택)</p>
                 </div>
                 <div>
                     <label className="block text-sm font-bold text-[#333] mb-2">
@@ -72,8 +67,8 @@ export default function StoreSection({ price, onChangePrice, uploading, form, up
                             const val = e.target.value.replace(/[^0-9]/g, '');
                             if (Number(val) > 100) return;
                             updateForm("discountRate", val);
-                            // Forward Calc
-                            calculateSalePrice(form.originalPrice || "0", val);
+                            // 할인율 변경 시 정가 기반으로 판매가 재계산
+                            calculateSalePriceFromOriginal(form.originalPrice || "0", val);
                         }}
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-white text-sm"
                         disabled={uploading}
@@ -81,10 +76,10 @@ export default function StoreSection({ price, onChangePrice, uploading, form, up
                 </div>
             </div>
 
-            {/* Final Sale Price (startingPrice) */}
+            {/* ✅ Final Sale Price (salePrice) */}
             <div>
                 <label className="block text-sm font-bold text-[#333] mb-2">
-                    판매 가격 (최종 할인가) <span className="text-red-500">*</span>
+                    판매 가격 <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                     <input
@@ -93,11 +88,11 @@ export default function StoreSection({ price, onChangePrice, uploading, form, up
                         value={price ? Number(price).toLocaleString() : ""}
                         onChange={(e) => {
                             const val = e.target.value.replace(/[^0-9]/g, '');
-                            onChangePrice(val); // this updates 'startingPrice' in form via parent
+                            onChangePrice(val); // ✅ salePrice 업데이트
 
-                            // Reverse Calc: If Original exists, calc Discount
+                            // 정가가 있으면 할인율 역산
                             if (form.originalPrice) {
-                                calculateDiscountRate(form.originalPrice, val);
+                                calculateDiscountFromSalePrice(form.originalPrice, val);
                             }
                         }}
                         className="w-full pl-4 pr-8 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 focus:border-black transition-all bg-white text-sm font-bold text-black"
@@ -144,7 +139,7 @@ export default function StoreSection({ price, onChangePrice, uploading, form, up
                 <CheckboxStyle
                     checked={form.deliveryIncluded || false}
                     onChange={(checked) => updateForm("deliveryIncluded", checked)}
-                    label="배송비 포함"
+                    label="무료배송"
                 />
             </div>
         </div>

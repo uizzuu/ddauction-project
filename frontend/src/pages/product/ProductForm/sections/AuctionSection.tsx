@@ -1,5 +1,6 @@
 import CheckboxStyle from "../../../../components/ui/CheckboxStyle";
 import DatePickerStyle from "../../../../components/ui/DatePickerStyle";
+import { DELIVERY_TYPES } from "../../../../common/enums";
 
 type Props = {
     startingPrice: string;
@@ -14,8 +15,6 @@ type Props = {
     hasBids?: boolean;
 };
 
-
-
 export default function AuctionSection({
     startingPrice,
     auctionEndDate,
@@ -28,14 +27,28 @@ export default function AuctionSection({
     updateForm,
     hasBids = false
 }: Props) {
+    const deliveryAvailable: string[] = form.deliveryAvailable || [];
+
     const handleDeliveryChange = (method: string) => {
-        const current = form.deliveryAvailable || [];
-        if (current.includes(method)) {
-            updateForm("deliveryAvailable", current.filter((m: string) => m !== method));
+        if (deliveryAvailable.includes(method)) {
+            updateForm("deliveryAvailable", deliveryAvailable.filter((m: string) => m !== method));
         } else {
-            updateForm("deliveryAvailable", [...current, method]);
+            updateForm("deliveryAvailable", [...deliveryAvailable, method]);
         }
     };
+
+    // 편의점 택배 체크 여부 (GS 또는 CU 포함)
+    const hasConvenience = deliveryAvailable.some(m => m === "GS" || m === "CU");
+
+    // 편의점 택배 토글
+    const handleConvenienceToggle = () => {
+        if (hasConvenience) {
+            updateForm("deliveryAvailable", deliveryAvailable.filter(m => m !== "GS" && m !== "CU"));
+        } else {
+            updateForm("deliveryAvailable", [...deliveryAvailable, "GS"]);
+        }
+    };
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -60,8 +73,8 @@ export default function AuctionSection({
                     <button
                         type="button"
                         onClick={() => {
-                            const current = startingPrice ? parseInt(startingPrice, 10) : 0;
-                            onChangePrice?.((current + 1000).toString());
+                            const current = startingPrice ? parseInt(startingPrice.replace(/,/g, ''), 10) : 0;
+                            onChangePrice?.((current + 1000).toLocaleString());
                         }}
                         className="px-3 py-1 text-xs border border-gray-200 rounded-full hover:bg-gray-50 text-gray-600 transition-colors"
                     >
@@ -70,8 +83,8 @@ export default function AuctionSection({
                     <button
                         type="button"
                         onClick={() => {
-                            const current = startingPrice ? parseInt(startingPrice, 10) : 0;
-                            onChangePrice?.((current + 10000).toString());
+                            const current = startingPrice ? parseInt(startingPrice.replace(/,/g, ''), 10) : 0;
+                            onChangePrice?.((current + 10000).toLocaleString());
                         }}
                         className="px-3 py-1 text-xs border border-gray-200 rounded-full hover:bg-gray-50 text-gray-600 transition-colors"
                     >
@@ -105,59 +118,52 @@ export default function AuctionSection({
                 * 경매 종료 시 가장 높은 가격을 제시한 입찰자에게 낙찰됩니다.
             </p>
 
-
-            {/* Delivery Methods & Logic */}
+            {/* ✅ Delivery Methods - enum 키 사용 */}
             <div className="col-span-1 md:col-span-2 mt-6">
                 <label className="block text-sm font-bold text-[#333] mb-2">
                     희망 배송 방법 <span className="text-red-500">*</span> <span className="text-[14px] text-[#ccc]">(중복선택 가능)</span>
                 </label>
 
-                {/* Simple inline checkboxes */}
                 <div className="flex flex-wrap gap-4 mb-3">
+                    {/* 직거래 (MEETUP) */}
                     <CheckboxStyle
-                        checked={(form.deliveryAvailable || []).includes("직거래")}
-                        onChange={() => handleDeliveryChange("직거래")}
-                        label="직거래"
+                        checked={deliveryAvailable.includes("MEETUP")}
+                        onChange={() => handleDeliveryChange("MEETUP")}
+                        label={DELIVERY_TYPES.MEETUP}
                     />
 
+                    {/* 편의점택배 (GS, CU 그룹) */}
                     <label className="flex items-center gap-2 cursor-pointer">
                         <input
                             type="checkbox"
-                            checked={(form.deliveryAvailable || []).some((m: string) => m.includes("반택"))}
-                            onChange={() => {
-                                const hasHalf = (form.deliveryAvailable || []).some((m: string) => m.includes("반택"));
-                                if (hasHalf) {
-                                    updateForm("deliveryAvailable", (form.deliveryAvailable || []).filter((m: string) => !m.includes("반택")));
-                                } else {
-                                    updateForm("deliveryAvailable", [...(form.deliveryAvailable || []), "반택(GS)"]);
-                                }
-                            }}
+                            checked={hasConvenience}
+                            onChange={handleConvenienceToggle}
                             disabled={uploading}
                             className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
                         />
                         <span className="text-sm text-gray-700">편의점택배</span>
                     </label>
+
+                    {/* 준등기 (SEMIREGISTERED) */}
                     <CheckboxStyle
-                        checked={(form.deliveryAvailable || []).includes("준등기")}
-                        onChange={() => handleDeliveryChange("준등기")}
-                        label="준등기"
-                    />
-                    <CheckboxStyle
-                        checked={(form.deliveryAvailable || []).includes("등기")}
-                        onChange={() => handleDeliveryChange("등기")}
-                        label="등기"
+                        checked={deliveryAvailable.includes("SEMIREGISTERED")}
+                        onChange={() => handleDeliveryChange("SEMIREGISTERED")}
+                        label={DELIVERY_TYPES.SEMIREGISTERED}
                     />
 
+                    {/* 등기 (REGISTERED) */}
                     <CheckboxStyle
-                        checked={(form.deliveryAvailable || []).includes("택배")}
-                        onChange={() => handleDeliveryChange("택배")}
-                        label="택배"
+                        checked={deliveryAvailable.includes("REGISTERED")}
+                        onChange={() => handleDeliveryChange("REGISTERED")}
+                        label={DELIVERY_TYPES.REGISTERED}
                     />
-                    {/* <CheckboxStyle
-                            checked={form.deliveryIncluded}
-                            onChange={(checked) => updateForm("deliveryIncluded", checked)}
-                            label="만원 이상 무료배송"
-                        /> */}
+
+                    {/* 택배 (PARCEL) */}
+                    <CheckboxStyle
+                        checked={deliveryAvailable.includes("PARCEL")}
+                        onChange={() => handleDeliveryChange("PARCEL")}
+                        label={DELIVERY_TYPES.PARCEL}
+                    />
                 </div>
 
                 <div className="flex flex-wrap gap-4 mb-3">
@@ -172,15 +178,15 @@ export default function AuctionSection({
                     </div>
                 </div>
 
-                {/* Compact detail inputs - grid layout */}
-                {((form.deliveryAvailable || []).includes("직거래") ||
-                    (form.deliveryAvailable || []).some((m: string) => m.includes("반택")) ||
-                    (form.deliveryAvailable || []).includes("준등기") ||
-                    (form.deliveryAvailable || []).includes("등기") ||
-                    (form.deliveryAvailable || []).includes("택배")) && (
+                {/* 배송 상세 입력 */}
+                {(deliveryAvailable.includes("MEETUP") ||
+                    hasConvenience ||
+                    deliveryAvailable.includes("SEMIREGISTERED") ||
+                    deliveryAvailable.includes("REGISTERED") ||
+                    deliveryAvailable.includes("PARCEL")) && (
                         <div className="bg-gray-50/50 rounded-lg p-4 border border-gray-200 space-y-3">
-                            {/* 직거래 */}
-                            {(form.deliveryAvailable || []).includes("직거래") && (
+                            {/* 직거래 장소 */}
+                            {deliveryAvailable.includes("MEETUP") && (
                                 <div className="grid grid-cols-[100px_1fr] gap-3 items-start">
                                     <label className="text-sm font-medium text-gray-600 pt-2">📍 직거래 장소</label>
                                     <div className="flex gap-2">
@@ -225,33 +231,26 @@ export default function AuctionSection({
                                 </div>
                             )}
 
-                            {/* 반택 */}
-                            {(form.deliveryAvailable || []).some((m: string) => m.includes("반택")) && (
+                            {/* 편의점 택배 (GS, CU) */}
+                            {hasConvenience && (
                                 <div className="grid grid-cols-[100px_1fr] gap-3 items-start">
                                     <label className="text-sm font-medium text-gray-600 pt-2">편의점택배</label>
                                     <div className="space-y-2">
                                         {[
-                                            { label: "GS25 반값택배", value: "반택(GS)", priceKey: "반택(GS)_price", defaultPrice: "1900" },
-                                            { label: "CU 알뜰택배", value: "반택(CU)", priceKey: "반택(CU)_price", defaultPrice: "1900" }
+                                            { label: DELIVERY_TYPES.GS, value: "GS", priceKey: "gsPrice", defaultPrice: "1900" },
+                                            { label: DELIVERY_TYPES.CU, value: "CU", priceKey: "cuPrice", defaultPrice: "1900" }
                                         ].map((option) => (
                                             <div key={option.value} className="flex items-center gap-3">
-                                                <label className="flex items-center gap-2 cursor-pointer min-w-[80px]">
+                                                <label className="flex items-center gap-2 cursor-pointer min-w-[120px]">
                                                     <input
                                                         type="checkbox"
-                                                        checked={(form.deliveryAvailable || []).includes(option.value)}
-                                                        onChange={() => {
-                                                            const current = form.deliveryAvailable || [];
-                                                            if (current.includes(option.value)) {
-                                                                updateForm("deliveryAvailable", current.filter((m: string) => m !== option.value));
-                                                            } else {
-                                                                updateForm("deliveryAvailable", [...current, option.value]);
-                                                            }
-                                                        }}
+                                                        checked={deliveryAvailable.includes(option.value)}
+                                                        onChange={() => handleDeliveryChange(option.value)}
                                                         className="w-4 h-4 rounded border-gray-300 text-black focus:ring-black"
                                                     />
                                                     <span className="text-sm text-gray-700">{option.label}</span>
                                                 </label>
-                                                {(form.deliveryAvailable || []).includes(option.value) && (
+                                                {deliveryAvailable.includes(option.value) && (
                                                     <input
                                                         type="text"
                                                         placeholder={option.defaultPrice}
@@ -267,23 +266,23 @@ export default function AuctionSection({
                                 </div>
                             )}
 
-                            {/* 준등기 */}
-                            {(form.deliveryAvailable || []).includes("준등기") && (
+                            {/* 준등기 비용 */}
+                            {deliveryAvailable.includes("SEMIREGISTERED") && (
                                 <div className="grid grid-cols-[100px_1fr] gap-3 items-center">
                                     <label className="text-sm font-medium text-gray-600">💰 준등기 비용</label>
                                     <input
                                         type="text"
                                         placeholder="2000"
-                                        value={form.deliveryPrice || ""}
-                                        onChange={(e) => updateForm("deliveryPrice", e.target.value.replace(/[^0-9]/g, ''))}
+                                        value={form.semiRegisteredPrice || ""}
+                                        onChange={(e) => updateForm("semiRegisteredPrice", e.target.value.replace(/[^0-9]/g, ''))}
                                         className="w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
                                         disabled={uploading}
                                     />
                                 </div>
                             )}
 
-                            {/* 등기 */}
-                            {(form.deliveryAvailable || []).includes("등기") && (
+                            {/* 등기 비용 */}
+                            {deliveryAvailable.includes("REGISTERED") && (
                                 <div className="grid grid-cols-[100px_1fr] gap-3 items-center">
                                     <label className="text-sm font-medium text-gray-600">💰 등기 비용</label>
                                     <input
@@ -297,15 +296,15 @@ export default function AuctionSection({
                                 </div>
                             )}
 
-                            {/* 택배 */}
-                            {(form.deliveryAvailable || []).includes("택배") && (
+                            {/* 택배 비용 */}
+                            {deliveryAvailable.includes("PARCEL") && (
                                 <div className="grid grid-cols-[100px_1fr] gap-3 items-center">
                                     <label className="text-sm font-medium text-gray-600">💰 택배 비용</label>
                                     <input
                                         type="text"
                                         placeholder="3500"
-                                        value={form.deliveryPrice || ""}
-                                        onChange={(e) => updateForm("deliveryPrice", e.target.value.replace(/[^0-9]/g, ''))}
+                                        value={form.parcelPrice || form.deliveryPrice || ""}
+                                        onChange={(e) => updateForm("parcelPrice", e.target.value.replace(/[^0-9]/g, ''))}
                                         className="w-32 px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white"
                                         disabled={uploading}
                                     />

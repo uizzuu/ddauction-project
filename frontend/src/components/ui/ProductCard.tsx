@@ -65,8 +65,49 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
         }
     }, [product.images]);
 
-    // 임시 할인율 (Store) - 실제 데이터 없으면 0
-    const discountRate = 20;
+    // ✅ 가격 정보 계산 (타입별 분기)
+    // AUCTION: startingPrice (시작 입찰가)
+    // STORE: salePrice (판매가), discountRate (할인율)
+    // USED: originalPrice (판매가)
+    const getPriceInfo = () => {
+        const extProduct = product as any; // salePrice 접근용
+
+        if (product.productType === 'STORE') {
+            const salePrice = Number(extProduct.salePrice) || 0;
+            const discountRate = Number(product.discountRate) || 0;
+
+            // 할인율이 있으면 원가 역산
+            let originalPrice = 0;
+            if (discountRate > 0 && salePrice > 0) {
+                originalPrice = Math.round(salePrice / (1 - discountRate / 100));
+            }
+
+            return {
+                originalPrice,
+                finalPrice: salePrice,
+                discountRate,
+                hasDiscount: discountRate > 0
+            };
+        } else if (product.productType === 'USED') {
+            const price = Number(product.originalPrice) || 0;
+            return {
+                originalPrice: 0,
+                finalPrice: price,
+                discountRate: 0,
+                hasDiscount: false
+            };
+        } else {
+            // AUCTION
+            return {
+                originalPrice: 0,
+                finalPrice: Number(product.startingPrice) || 0,
+                discountRate: 0,
+                hasDiscount: false
+            };
+        }
+    };
+
+    const priceInfo = getPriceInfo();
 
     const handleCardClick = () => {
         navigate(`/products/${product.productId}`);
@@ -204,12 +245,10 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                 <div className="mb-1 min-h-[16px]">
                     {product.productType === "AUCTION" && product.auctionEndTime && (
                         <span className="text-[0.8rem] text-[#888]">
-                            {/* 보여줄 데이터 포맷 고민: 남은 시간 상세 or 간단히 */}
                             {calculateRemainingTime(product.auctionEndTime)}
                         </span>
                     )}
                     {product.productType === "USED" && (
-                        /* 중고는 상단에 특별한 정보가 없으면 공백 혹은 카테고리 등 표시 */
                         <span className="text-[0.8rem] text-[#888]">
                             {/* 카테고리나 브랜드 명 */}
                         </span>
@@ -227,7 +266,7 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                     {product.title}
                 </h3>
 
-                {/* Price Area */}
+                {/* Price Area - ✅ 수정됨 */}
                 <div className="mt-auto">
                     {product.productType === "AUCTION" ? (
                         <div className="flex flex-col">
@@ -242,40 +281,46 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                             </div>
                         </div>
                     ) : product.productType === "STORE" ? (
+                        /* ✅ STORE: salePrice 사용, discountRate 실제 값 사용 */
                         <div className="flex flex-col">
-                            <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
-                                {formatPrice(Math.round((product.startingPrice || 0) * 1.2))} {/* 임시 원가 */}
-                            </div>
+                            {priceInfo.hasDiscount && (
+                                <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
+                                    {formatPrice(priceInfo.originalPrice)}
+                                </div>
+                            )}
                             <div className="flex items-center gap-1.5">
-                                <span className="text-[0.85rem] font-bold text-[#111]">{discountRate}%</span>
+                                {priceInfo.hasDiscount && (
+                                    <span className="text-[0.85rem] font-bold text-[#111]">{priceInfo.discountRate}%</span>
+                                )}
                                 <span className="text-[0.95rem] font-bold text-[#333]">
-                                    {formatPrice(product.startingPrice)}
+                                    {formatPrice(priceInfo.finalPrice)}
                                 </span>
                             </div>
                         </div>
                     ) : (
-                        // USED
+                        /* ✅ USED: originalPrice 사용 */
                         <div className="flex flex-col">
                             <span className="text-[0.95rem] font-bold text-[#333]">
-                                {formatPrice(product.startingPrice)}
+                                {formatPrice(priceInfo.finalPrice)}
                             </span>
                         </div>
                     )}
                 </div>
 
-                {/* Footer Info Area */}
+                {/* Footer Info Area - ✅ 수정됨 */}
                 <div className="mt-2 text-[0.85rem] text-[#999] font-medium flex items-center gap-1">
                     {product.productType === "AUCTION" ? (
                         <span className="text-[#aaa]">입찰 {product.bids?.length || 0}건</span>
                     ) : product.productType === "STORE" ? (
+                        /* ✅ STORE: deliveryIncluded 체크 */
                         <div className="flex items-center gap-1">
                             <Truck size={10} />
-                            <span>무료배송</span>
+                            <span>{product.deliveryIncluded === true ? "무료배송" : "유료배송"}</span>
                         </div>
                     ) : (
-                        // USED - Location | Time ago
+                        /* ✅ USED: 실제 주소 사용 */
                         <div className="flex items-center gap-1">
-                            <span>서울 강남구</span> {/* 임시 지역 */}
+                            <span>{product.address || "지역 미설정"}</span>
                             <span className="w-[1px] h-[8px] bg-[#ddd] inline-block mx-0.5"></span>
                             <span>{formatTimeAgo(product.createdAt)}</span>
                         </div>
