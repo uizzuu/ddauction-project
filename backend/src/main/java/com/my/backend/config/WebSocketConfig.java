@@ -2,7 +2,7 @@ package com.my.backend.config;
 
 import com.my.backend.websocket.AuctionWebSocketHandler;
 // import com.my.backend.config.WebSocketHandler; // 개인채팅용
-import com.my.backend.config.PublicChatWebSocketHandler;
+import com.my.backend.websocket.PublicChatWebSocketHandler;
 import com.my.backend.websocket.NotificationWebSocketHandler;
 import com.my.backend.websocket.RealTimeSearchWebSocketHandler;
 import lombok.RequiredArgsConstructor;

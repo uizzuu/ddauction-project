@@ -5,7 +5,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Product, Bid } from "../../common/types";
-import { fetchLatestProducts, fetchBannerProducts } from "../../common/api";
+import { fetchLatestProducts } from "../../common/api";
 import ProductCard from "../../components/ui/ProductCard";
 import {
   Monitor, Refrigerator, Armchair, Utensils, Sandwich, Baby, Book, Pencil,
@@ -14,6 +14,10 @@ import {
 import { PRODUCT_CATEGORIES, type ProductCategoryType } from "../../common/enums";
 import "../../css/modules.css";
 import { FastAverageColor } from "fast-average-color";
+import banner1 from "../../assets/banners/banner1.png";
+import banner2 from "../../assets/banners/banner2.png";
+import banner3 from "../../assets/banners/banner3.png";
+import banner4 from "../../assets/banners/banner4.png";
 
 const CATEGORY_ICONS: Record<ProductCategoryType, React.ReactNode> = {
   ELECTRONICS: <Monitor size={24} />,
@@ -65,7 +69,7 @@ function BannerNextArrow({ onClick, visible, isDark }: { onClick?: () => void; v
   return (
     <div
       onClick={onClick}
-      className={`absolute top-0 bottom-0 right-0 w-[50%] z-10 flex items-center justify-end pr-4 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"}`}
+      className={`absolute top-1/2 -translate-y-1/2 right-4 z-10 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"} pointer-events-auto`}
     >
       <ChevronRight size={48} color={isDark ? "white" : "#111"} />
     </div>
@@ -76,7 +80,7 @@ function BannerPrevArrow({ onClick, visible, isDark }: { onClick?: () => void; v
   return (
     <div
       onClick={onClick}
-      className={`absolute top-0 bottom-0 left-0 w-[50%] z-10 flex items-center justify-start pl-4 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"}`}
+      className={`absolute top-1/2 -translate-y-1/2 left-4 z-10 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"} pointer-events-auto`}
     >
       <ChevronLeft size={48} color={isDark ? "white" : "#111"} />
     </div>
@@ -93,6 +97,7 @@ export default function Main() {
   >([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [bannerBrightness, setBannerBrightness] = useState<Record<number, "dark" | "light">>({});
+  const [isBannerHovered, setIsBannerHovered] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -126,9 +131,17 @@ export default function Main() {
       try {
         const latestProducts = await fetchLatestProducts();
         setProducts(latestProducts.slice(0, 6));
-        const bannerData = await fetchBannerProducts();
-        setBanners(bannerData);
-        analyzeBannerColors(bannerData);
+
+        // 정적 배너 설정
+        const staticBanners = [
+          { id: 1, image: banner1, text: "AI 챗봇으로 간편하게 문의", link: "/chat" },
+          { id: 2, image: banner2, text: "경매 입찰내역을 실시간 그래프로!", link: "/products?type=AUCTION" },
+          { id: 3, image: banner3, text: "쾌적한 쇼핑을 위한 리뷰 서비스 제공", link: "/products?type=STORE" },
+          { id: 4, image: banner4, text: "땅땅옥션 12월 이벤트 - 100% 당첨 매일 랜덤 포인트", link: "/event" }
+        ];
+
+        setBanners(staticBanners);
+        analyzeBannerColors(staticBanners);
       } catch (err) {
         console.error(err);
         setProducts([]);
@@ -166,15 +179,8 @@ export default function Main() {
       }
     }
     setBannerBrightness(brightnessMap);
+    fac.destroy();
   };
-
-  const [hoverSide, setHoverSide] = useState<"left" | "right" | null>(null);
-  const handleBannerMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const { left, width } = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - left;
-    setHoverSide(x < width / 2 ? "left" : "right");
-  };
-  const handleBannerMouseLeave = () => setHoverSide(null);
 
   const isCurrentDark = bannerBrightness[currentSlide] === "dark";
 
@@ -186,8 +192,8 @@ export default function Main() {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 5000,
-    nextArrow: <BannerNextArrow visible={hoverSide === "right"} isDark={isCurrentDark} />,
-    prevArrow: <BannerPrevArrow visible={hoverSide === "left"} isDark={isCurrentDark} />,
+    nextArrow: <BannerNextArrow visible={isBannerHovered} isDark={isCurrentDark} />,
+    prevArrow: <BannerPrevArrow visible={isBannerHovered} isDark={isCurrentDark} />,
     beforeChange: (_: number, next: number) => setCurrentSlide(next),
   };
 
@@ -197,8 +203,8 @@ export default function Main() {
       <div className="w-full mb-6 mt-6 md:mb-10 md:mt-0 px-4 md:px-0">
         <div
           className="w-full max-w-[1280px] mx-auto h-[250px] md:h-[400px] relative group rounded-[12px] overflow-hidden bg-[#f4f4f4] md:px-4 xl:px-0"
-          onMouseMove={handleBannerMouseMove}
-          onMouseLeave={handleBannerMouseLeave}
+          onMouseEnter={() => setIsBannerHovered(true)}
+          onMouseLeave={() => setIsBannerHovered(false)}
         >
           {banners.length > 0 ? (
             <>
@@ -207,22 +213,15 @@ export default function Main() {
                   <div key={i} className="h-[250px] md:h-[400px] outline-none">
                     <div
                       className="w-full h-full cursor-pointer relative bg-[#333] rounded-[12px] overflow-hidden"
-                      onClick={() => {
-                        if (b.product) {
-                          navigate(`/products/${b.product.productId}`);
-                        } else if (b.link) {
-                          navigate(b.link);
-                        }
-                      }}
+                      // onClick={() => {
+                      //   if (b.product) {
+                      //     navigate(`/products/${b.product.productId}`);
+                      //   } else if (b.link) {
+                      //     navigate(b.link);
+                      //   }
+                      // }}
                     >
-                      {b.image && <img src={b.image} alt={b.text} className="w-full h-full object-cover" />}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-                      <div className="absolute bottom-12 left-10 text-white z-10 text-left">
-                        <h3 className="text-3xl font-bold drop-shadow-md mb-2">{b.text}</h3>
-                        <p className="text-sm font-light opacity-90 tracking-wider">
-                          {b.product ? "지금 바로 구경하기 →" : "자세히 보기 →"}
-                        </p>
-                      </div>
+                      {b.image && <img src={b.image} alt={`Banner ${b.id}`} className="w-full h-full object-cover" />}
                     </div>
                   </div>
                 ))}

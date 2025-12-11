@@ -1,4 +1,4 @@
-package com.my.backend.config;
+package com.my.backend.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -12,7 +12,6 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 @RequiredArgsConstructor
@@ -58,6 +57,14 @@ public class PublicChatWebSocketHandler extends TextWebSocketHandler {
 
         if (userId == null || content == null || content.trim().isEmpty()) {
             System.err.println("[공개채팅] userId 또는 내용 누락, 메시지 무시, 세션ID=" + session.getId());
+            return;
+        }
+
+        // 유저 정지 체크 추가
+        boolean isBanned = chatService.isUserBanned(userId); // DB에서 active=1인 정지 있는지 조회
+        if (isBanned) {
+            // 클라이언트에 알림 보내고 메시지 무시
+            sendMessageToUser(userId, "채팅 정지 상태라 메시지를 보낼 수 없습니다.");
             return;
         }
 

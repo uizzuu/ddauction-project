@@ -266,8 +266,7 @@ class S3Uploader:
                 self.bucket,
                 s3_key,
                 ExtraArgs={
-                    'ContentType': 'image/jpeg',
-                    'ACL': 'public-read'  # 또는 bucket policy로 관리
+                    'ContentType': 'image/jpeg'
                 }
             )
 
@@ -377,7 +376,7 @@ def create_products_with_s3(cursor, user_ids: List[int], s3_uploader: S3Uploader
                 starting_price, original_price, sale_price, discount_rate,
                 auction_end,
                 random.randint(10, 500),
-                f"{product_type.lower()},{category.lower()}",
+                f"{product_type.lower()},{category.lower()},{uuid.uuid4().hex[:6]}",
                 random.choice(ADDRESSES) if product_type != 'STORE' else None,
                 ','.join(random.sample(DELIVERY_TYPES, random.randint(2, 4))),
                 product_type, 'ACTIVE', category,

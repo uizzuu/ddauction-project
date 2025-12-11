@@ -1,17 +1,19 @@
 package com.my.backend.service;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.my.backend.dto.CommentDto;
 import com.my.backend.entity.Article;
 import com.my.backend.entity.Comment;
 import com.my.backend.entity.Users;
-import com.my.backend.repository.CommentRepository;
 import com.my.backend.repository.ArticleRepository;
+import com.my.backend.repository.CommentRepository;
 import com.my.backend.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final ArticleRepository articleRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     // 댓글 단건 조회
     public CommentDto findComment(Long commentId) {
@@ -49,6 +52,14 @@ public class CommentService {
 
         Comment comment = dto.toEntity(article, user);
         commentRepository.save(comment);
+
+        // ✅ 댓글 작성 시 게시글 작성자에게 알림 전송 (본인 댓글 제외)
+        if (!article.getUser().getUserId().equals(user.getUserId())) {
+            notificationService.sendCommentReplyNotification(
+                    article.getUser().getUserId(),
+                    article.getTitle()
+            );
+        }
     }
 
     // 댓글 수정
