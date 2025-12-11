@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.my.backend.config.PublicChatWebSocketHandler;
+import com.my.backend.websocket.PublicChatWebSocketHandler;
 import com.my.backend.entity.Report;
 import com.my.backend.enums.ReportType;
 import com.my.backend.enums.Role;

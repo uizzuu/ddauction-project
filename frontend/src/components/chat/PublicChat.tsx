@@ -33,6 +33,32 @@ export default function PublicChat({ user }: Props) {
   const handleWarn = (user: User) => {
     alert(`${user.nickName}님에게 경고를 보냅니다.`);
     setActiveMenuMessageId(null);
+  const handleWarn = async (targetUser: User) => {
+    if (!window.confirm(`${targetUser.nickName}님에게 경고를 보내시겠습니까?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("로그인 토큰이 없습니다.");
+
+      await fetch("/api/warn", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: targetUser.userId,
+          reason: "테스트 경고", // 필요하면 입력받도록 변경 가능
+          banHours: 24,
+        }),
+      });
+
+      alert(`${targetUser.nickName}님에게 경고가 전달되었습니다.`);
+      setActiveMenuUser(null);
+    } catch (err) {
+      console.error(err);
+      alert("경고 전송 중 오류가 발생했습니다.");
+    }
   };
 
   const handleBan = async (targetUser: User) => {
