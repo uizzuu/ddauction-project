@@ -5,7 +5,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Product, Bid } from "../../common/types";
-import { fetchLatestProducts, fetchBannerProducts } from "../../common/api";
+import { fetchLatestProducts } from "../../common/api";
 import ProductCard from "../../components/ui/ProductCard";
 import {
   Monitor, Refrigerator, Armchair, Utensils, Sandwich, Baby, Book, Pencil,
