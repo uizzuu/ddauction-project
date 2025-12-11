@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchRecentPublicChats, deletePublicChat } from "../../common/api";
+import { fetchRecentPublicChats, deletePublicChat, banUser } from "../../common/api";
 import type { PublicChat, User, ChatMessagePayload } from "../../common/types";
-import { banUser } from "../../common/api";
+import { UserProfileModal } from "../../components/modal/UserProfileModal";
 
 // -----------------------------
 // PublicChat 컴포넌트
@@ -16,6 +16,8 @@ export default function PublicChat({ user }: Props) {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const ws = useRef<WebSocket | null>(null);
 
+  const [profileModalUser, setProfileModalUser] = useState<User | null>(null); // 프로필 모달 상태
+
   const isLocal = window.location.hostname === "localhost";
 
   // 관리자 메뉴 상태
@@ -25,14 +27,13 @@ export default function PublicChat({ user }: Props) {
   const toggleUserMenu = (user: User, e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
-    const menuWidth = 128; // 메뉴 폭
+    const menuWidth = 128;
     const menuHeight = 110;
     let left = rect.left + window.scrollX;
     let top = rect.top + window.scrollY - menuHeight;
 
-    // 화면 오른쪽 끝에서 잘리는 경우 left 조정
     if (left + menuWidth > window.scrollX + window.innerWidth) {
-      left = window.scrollX + window.innerWidth - menuWidth - 8; // 8px 여유
+      left = window.scrollX + window.innerWidth - menuWidth - 8;
     }
 
     setMenuPosition({ top, left });
@@ -41,49 +42,62 @@ export default function PublicChat({ user }: Props) {
 
   const handleWarn = (user: User) => {
     alert(`${user.nickName}님에게 경고를 보냅니다.`);
-    // TODO: 백엔드 API 호출로 공개채팅 일시제한
     setActiveMenuUser(null);
   };
 
- const handleBan = async (targetUser: User) => {
-  if (!window.confirm(`${targetUser.nickName}님을 밴 처리하시겠습니까?`)) return;
+  const handleBan = async (targetUser: User) => {
+    if (!window.confirm(`${targetUser.nickName}님을 밴 처리하시겠습니까?`)) return;
 
-  try {
-    const token = localStorage.getItem("token");
-    
-    if (!token) throw new Error("로그인 토큰이 없습니다.");
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("로그인 토큰이 없습니다.");
+      const adminId = user.userId;
 
-    const adminId = user.userId;
+      await banUser(targetUser.userId, token, adminId);
 
-    await banUser(targetUser.userId, token, adminId);
+      alert(`${targetUser.nickName}님이 밴 처리되었습니다.`);
+      setActiveMenuUser(null);
 
-    alert(`${targetUser.nickName}님이 밴 처리되었습니다.`);
-    setActiveMenuUser(null);
-
-    setMessages(prev =>
-      prev.map(m => (m.user?.userId === targetUser.userId ? { ...m, content: "밴 처리된 사용자" } : m))
-    );
-  } catch (err) {
-    console.error(err);
-    alert("밴 처리 중 오류가 발생했습니다.");
-  }
-};
-
-
-  const viewProfile = (user: User) => {
-    alert(`${user.nickName} 프로필 확인`);
-    // TODO: 프로필 모달/페이지 연결
-    setActiveMenuUser(null);
+      setMessages(prev =>
+        prev.map(m => (m.user?.userId === targetUser.userId ? { ...m, content: "밴 처리된 사용자" } : m))
+      );
+    } catch (err) {
+      console.error(err);
+      alert("밴 처리 중 오류가 발생했습니다.");
+    }
   };
 
-  // 1. 초기 메시지 불러오기
+  // 프로필 모달 열기
+  const viewProfile = async (clickedUser: User) => {
+    try {
+      const token = localStorage.getItem("token"); // 관리자 토큰
+      if (!token) throw new Error("관리자 토큰이 없습니다.");
+
+      const res = await fetch(`/api/users/${clickedUser.userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // 토큰 반드시 넣어야 서버에서 전체 정보 줌
+        },
+      });
+
+      if (!res.ok) throw new Error("유저 정보를 불러오지 못했습니다.");
+
+      const fullUser: User = await res.json();
+      setProfileModalUser(fullUser); // 모달에 전체 정보 세팅
+      setActiveMenuUser(null);
+    } catch (err) {
+      console.error(err);
+      alert("유저 정보를 불러오는 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 초기 메시지 불러오기
   useEffect(() => {
     fetchRecentPublicChats()
       .then(data => setMessages(data))
       .catch(err => console.error("공개 채팅 불러오기 실패", err));
   }, []);
 
-  // 2. WebSocket 연결
+  // WebSocket 연결
   useEffect(() => {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const host = isLocal ? "localhost:8080" : window.location.host;
@@ -114,12 +128,12 @@ export default function PublicChat({ user }: Props) {
     return () => ws.current?.close();
   }, [user.userId, isLocal]);
 
-  // 3. 자동 스크롤
+  // 자동 스크롤
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 4. 메시지 전송
+  // 메시지 전송
   const sendMessage = () => {
     if (!input.trim() || !ws.current) return;
     if (ws.current.readyState !== WebSocket.OPEN) return;
@@ -261,6 +275,15 @@ export default function PublicChat({ user }: Props) {
           <div className="p-3 bg-gray-100 text-center text-gray-500 text-sm rounded-lg border border-gray-200">
             🔒 관리자 모드: 메시지를 클릭하여 삭제하거나, 유저 이름 옆 ⋮ 버튼으로 제재 메뉴 사용
           </div>
+        )}
+
+        {/* 프로필 모달 */}
+        {profileModalUser && (
+          <UserProfileModal
+            user={profileModalUser}
+            isOpen={!!profileModalUser}
+            onClose={() => setProfileModalUser(null)}
+          />
         )}
       </div>
     </div>

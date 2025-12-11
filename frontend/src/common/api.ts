@@ -4,6 +4,7 @@ import type { SortOption } from "./util";
 import type { ArticleType, Notification } from './types';
 
 
+
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
 export const API_BASE_URL =
@@ -2587,3 +2588,4 @@ export async function banUser(userId: number, adminToken: string, adminId: numbe
     return res.text(); // 텍스트로 반환
   }
 }
+
