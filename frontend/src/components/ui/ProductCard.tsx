@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { Product } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
 import { Heart, Truck, ChevronRight, Minus } from "lucide-react";
-import { toggleBookmark, fetchBookmarkCheck } from "../../common/api";
+import { toggleBookmark, fetchBookmarkCheck, API_BASE_URL } from "../../common/api";
 
 type Props = {
     product: Product;
@@ -33,6 +33,37 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                 });
         }
     }, [product.productId, product.isBookmarked]);
+
+    // Image Brightness Analysis
+    const [isDarkImage, setIsDarkImage] = useState(false); // Default to Black icon (Safe for light backgrounds)
+
+    useEffect(() => {
+        if (product.images && product.images.length > 0) {
+            const baseUrl = product.images[0].imagePath.startsWith('http')
+                ? product.images[0].imagePath
+                : `${API_BASE_URL}${product.images[0].imagePath}`;
+
+            // 캐시 버스팅: 브라우저가 캐시된(CORS 헤더 없는) 응답을 재사용하지 않도록 강제
+            const imgSrc = `${baseUrl}?v=${Date.now()}`;
+
+            const img = new Image();
+            img.crossOrigin = "Anonymous";
+            img.src = imgSrc;
+
+            // Allow FastAverageColor to work
+            import("fast-average-color").then(module => {
+                const fac = new module.FastAverageColor();
+                fac.getColorAsync(img)
+                    .then(color => {
+                        // isDark: true if bg is dark -> text white
+                        setIsDarkImage(color.isDark);
+                    })
+                    .catch(() => {
+                        // Ignore error, keep default
+                    });
+            });
+        }
+    }, [product.images]);
 
     // 임시 할인율 (Store) - 실제 데이터 없으면 0
     const discountRate = 20;
@@ -79,12 +110,11 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                     <img
                         src={product.images[0].imagePath.startsWith('http')
                             ? product.images[0].imagePath
-                            : `http://localhost:8080${product.images[0].imagePath}`}
+                            : `${API_BASE_URL}${product.images[0].imagePath}`}
                         alt={product.title}
                         className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         onError={(e) => {
-                            const parent = e.currentTarget.parentElement;
-                            if (parent) parent.innerHTML = '<div class="flex justify-center items-center w-full h-full text-[#aaa] text-xs"></div>';
+                            e.currentTarget.style.display = 'none';
                         }}
                     />
                 ) : (
@@ -116,7 +146,8 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                         size={20}
                         className={isLiked
                             ? "fill-red-500 text-red-500 drop-shadow-sm"
-                            : "text-white mix-blend-difference hover:opacity-80"}
+                            : ""}
+                        color={isLiked ? undefined : (isDarkImage ? "white" : "#111")}
                     />
                 </button>
             </div>
