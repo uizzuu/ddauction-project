@@ -99,6 +99,9 @@ export interface Product {
   bookmarkCount?: number;
   isBookmarked?: boolean;
   viewCount?: number;
+  
+  bidCount?: number;
+  highestBidPrice?: number;
 }
 
 

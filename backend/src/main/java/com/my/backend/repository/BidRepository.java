@@ -22,6 +22,8 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
 
     Optional<Bid> findTopByProductOrderByBidPriceDesc(Product product);
 
+    // ✅ 추가: 특정 상품의 모든 입찰 (입찰가 내림차순)
+    List<Bid> findByProductOrderByBidPriceDesc(Product product);
     // 특정 상품의 모든 낙찰자 조회
     List<Bid> findByProductAndIsWinning(Product product, boolean isWinning);
 

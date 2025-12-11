@@ -1,9 +1,11 @@
 package com.my.backend.service;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.my.backend.enums.*;
 import com.my.backend.repository.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -23,10 +25,6 @@ import com.my.backend.entity.Payment;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.ProductViewLog;
 import com.my.backend.entity.Users;
-import com.my.backend.enums.ImageType;
-import com.my.backend.enums.PaymentStatus;
-import com.my.backend.enums.ProductCategoryType;
-import com.my.backend.enums.ProductStatus;
 
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -71,8 +69,29 @@ public class ProductService {
             }
         }
 
+        if (product.getProductType() == ProductType.AUCTION) {
+            List<Bid> bids = bidRepository.findByProductOrderByBidPriceDesc(product);
+
+            // BidDto 리스트로 변환
+            List<BidDto> bidDtos = bids.stream()
+                    .map(BidDto::fromEntity)
+                    .collect(Collectors.toList());
+            dto.setBids(bidDtos);
+
+            // 입찰 건수
+            dto.setBidCount(bids.size());
+
+            // 최고 입찰가 (입찰이 없으면 시작가)
+            Long highestBid = bids.stream()
+                    .map(Bid::getBidPrice)
+                    .max(Comparator.naturalOrder())
+                    .orElse(product.getStartingPrice() != null ? product.getStartingPrice() : 0L);
+            dto.setHighestBidPrice(highestBid);
+        }
+
         return dto;
     }
+
 
     // 북마크 여부 업데이트 헬퍼
     private void updateBookmarkStatus(List<ProductDto> products, Long userId) {
