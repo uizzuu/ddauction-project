@@ -270,7 +270,7 @@ STORE_TITLES = [
     "[스토어] 섬유유연제 무향 2L",
     "[스토어] 세탁세제 드럼용 3L",
     "[스토어] 욕실매트 규조토 라지",
-    "[스토어] 샤워커튼 방수 180x200",
+    "[스토어] 초기화 테스트 확인용",
 ]
 
 # ============================================
@@ -625,6 +625,20 @@ def main():
         except Exception as e:
             print(f"⚠️ S3 연결 실패, Unsplash URL 사용: {e}")
             s3_uploader = None
+
+        # 0. 기존 데이터 초기화 (선택)
+        print("\n🧹 Step 0: 기존 데이터 초기화")
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 0")
+        tables = ['review', 'bookmark', 'bid', 'image', 'product', 'users', 'chat_room', 'private_chat', 'public_chat', 'notification', 'point', 'payment', 'product_qna', 'qna_review', 'report', 'user_ban', 'product_view_log', 'product_banners', 'comment', 'article', 'phone_verification', 'email_verification', 'address']
+        for table in tables:
+            try:
+                cursor.execute(f"DELETE FROM {table}")
+                print(f"   - {table} 테이블 비움")
+            except mysql.connector.Error as err:
+                # 테이블이 없을 수도 있으므로 무시
+                pass
+        cursor.execute("SET FOREIGN_KEY_CHECKS = 1")
+        conn.commit()
 
         # 1. 유저
         print("\n📌 Step 1: 유저 생성")
