@@ -36,3 +36,7 @@ python-multipart>=0.0.6
 
 # Transformers (CLIP)
 transformers>=4.40.0
+
+# Database / AWS
+mysql-connector-python>=8.0.0
+boto3>=1.28.0
