@@ -195,14 +195,21 @@ export const useProductDetail = (user: User | null) => {
         const token = localStorage.getItem("token");
         if (!token) return alert("로그인 후 찜 해주세요.");
 
-        try {
-            const resultMsg = await toggleBookmark(product.productId, token);
-            setIsBookMarked(resultMsg === "찜 완료");
+        const prev = isBookMarked;
+        setIsBookMarked(!prev); // Optimistic Update
 
+        try {
+            await toggleBookmark(product.productId, token);
+            // Sync with other components
+            window.dispatchEvent(new Event("wishlist-updated"));
+
+            // Optionally update count from server
             const count = await fetchBookmarkCount(product.productId);
             setBookmarkCount(count);
         } catch (err) {
             console.error(err);
+            setIsBookMarked(prev); // Revert on error
+            alert("찜하기 처리에 실패했습니다.");
         }
     };
 

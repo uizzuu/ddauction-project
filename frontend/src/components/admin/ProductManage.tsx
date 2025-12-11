@@ -1,7 +1,7 @@
 import type { Product, EditProductForm } from "../../common/types";
 import { PRODUCT_STATUS, CATEGORY_OPTIONS, PRODUCT_CATEGORIES, type ProductCategoryType } from "../../common/enums";
 import { Search } from "lucide-react";
-import CustomSelect from "../common/CustomSelect";
+import CustomSelect from "../ui/CustomSelect";
 
 type Props = {
   products: Product[];

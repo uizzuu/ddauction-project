@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { PRODUCT_CATEGORIES, type ProductCategoryType } from "../../common/enums";
 import "../../css/modules.css";
+import { FastAverageColor } from "fast-average-color";
 
 const CATEGORY_ICONS: Record<ProductCategoryType, React.ReactNode> = {
   ELECTRONICS: <Monitor size={24} />,
@@ -35,7 +36,7 @@ const CATEGORY_ICONS: Record<ProductCategoryType, React.ReactNode> = {
 };
 
 // 카테고리용 깔끔한 화살표 (배너 스타일과 유사한 심플함, 하지만 배경에 맞게 컬러 조정)
-function CategoryNextArrow({ onClick, visible }: { onClick: () => void; visible: boolean }) {
+function CategoryNextArrow({ onClick, visible }: { onClick?: () => void; visible: boolean }) {
   if (!visible) return null;
   return (
     <button
@@ -47,7 +48,7 @@ function CategoryNextArrow({ onClick, visible }: { onClick: () => void; visible:
   );
 }
 
-function CategoryPrevArrow({ onClick, visible }: { onClick: () => void; visible: boolean }) {
+function CategoryPrevArrow({ onClick, visible }: { onClick?: () => void; visible: boolean }) {
   if (!visible) return null;
   return (
     <button
@@ -60,28 +61,26 @@ function CategoryPrevArrow({ onClick, visible }: { onClick: () => void; visible:
 }
 
 // 배너용 화살표 (Hover Zone 방식 - 독립적인 hover - 50% Split)
-function BannerNextArrow(props: any) {
-  const { onClick, visible } = props;
+function BannerNextArrow({ onClick, visible, isDark }: { onClick?: () => void; visible: boolean; isDark: boolean }) {
   return (
     <div
       onClick={onClick}
       className={`absolute top-0 bottom-0 right-0 w-[50%] z-10 flex items-center justify-end pr-4 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"
         }`}
     >
-      <ChevronRight size={48} className="text-white mix-blend-difference" />
+      <ChevronRight size={48} color={isDark ? "white" : "#111"} />
     </div>
   );
 }
 
-function BannerPrevArrow(props: any) {
-  const { onClick, visible } = props;
+function BannerPrevArrow({ onClick, visible, isDark }: { onClick?: () => void; visible: boolean; isDark: boolean }) {
   return (
     <div
       onClick={onClick}
       className={`absolute top-0 bottom-0 left-0 w-[50%] z-10 flex items-center justify-start pl-4 transition-opacity duration-300 cursor-pointer ${visible ? "opacity-100" : "opacity-0"
         }`}
     >
-      <ChevronLeft size={48} className="text-white mix-blend-difference" />
+      <ChevronLeft size={48} color={isDark ? "white" : "#111"} />
     </div>
   );
 }
@@ -95,6 +94,7 @@ export default function Main() {
     { id: number; image?: string; text: string; product?: Product; link?: string }[]
   >([]);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [bannerBrightness, setBannerBrightness] = useState<Record<number, "dark" | "light">>({});
 
   // Native Scroll Refs & State
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -132,6 +132,7 @@ export default function Main() {
         setProducts(latestProducts.slice(0, 6));
         const bannerData = await fetchBannerProducts();
         setBanners(bannerData);
+        analyzeBannerColors(bannerData);
       } catch (err) {
         console.error(err);
         setProducts([]);
@@ -142,6 +143,37 @@ export default function Main() {
     };
     loadData();
   }, []);
+
+  const analyzeBannerColors = async (items: typeof banners) => {
+    const fac = new FastAverageColor();
+    const brightnessMap: Record<number, "dark" | "light"> = {};
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (!item.image) {
+        brightnessMap[i] = "light"; // Default
+        continue;
+      }
+      try {
+        // 이미지 로드 후 분석
+        const img = new Image();
+        img.crossOrigin = "Anonymous";
+        img.src = item.image;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+        const color = await fac.getColorAsync(img);
+        // isDark: true if background is dark -> text should be white
+        // isLight: true if background is light -> text should be black
+        brightnessMap[i] = color.isDark ? "dark" : "light";
+      } catch (e) {
+        console.warn("Failed to analyze banner color", e);
+        brightnessMap[i] = "dark"; // Fallback to white text
+      }
+    }
+    setBannerBrightness(brightnessMap);
+  };
 
   // Mouse Move Handler for Split Hover
   const [hoverSide, setHoverSide] = useState<"left" | "right" | null>(null);
@@ -160,6 +192,8 @@ export default function Main() {
     setHoverSide(null);
   };
 
+  const isCurrentDark = bannerBrightness[currentSlide] === "dark";
+
   const bannerSettings = {
     dots: false,
     infinite: true,
@@ -168,8 +202,8 @@ export default function Main() {
     slidesToScroll: 1,
     autoplay: true,
     autoplaySpeed: 5000,
-    nextArrow: <BannerNextArrow visible={hoverSide === "right"} />,
-    prevArrow: <BannerPrevArrow visible={hoverSide === "left"} />,
+    nextArrow: <BannerNextArrow visible={hoverSide === "right"} isDark={isCurrentDark} />,
+    prevArrow: <BannerPrevArrow visible={hoverSide === "left"} isDark={isCurrentDark} />,
     beforeChange: (_: number, next: number) => setCurrentSlide(next),
   };
 
@@ -241,7 +275,7 @@ export default function Main() {
           <div
             ref={scrollRef}
             onScroll={checkScroll}
-            className="flex gap-4 overflow-x-auto no-scrollbar scroll-smooth"
+            className="flex gap-4 overflow-x-auto scroll-smooth category-scroll-container"
           >
             {(Object.keys(PRODUCT_CATEGORIES) as ProductCategoryType[]).map((cat) => (
               <div

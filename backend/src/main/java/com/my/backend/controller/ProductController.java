@@ -2,6 +2,7 @@ package com.my.backend.controller;
 
 import java.util.List;
 
+import com.my.backend.entity.Product;
 import com.my.backend.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -178,7 +179,7 @@ public class ProductController {
 
     @GetMapping("/top-bookmarked")
     public ResponseEntity<List<ProductDto>> getTopBookmarkedProducts() {
-        List<ProductDto> topProducts = bookMarkService.getTopBookmarkedProducts(1); // 1개만 가져오기
+        List<ProductDto> topProducts = bookMarkService.getTopBookmarkedProducts(10); // 1개 -> 10개로 늘려서 이미지 있는것 필터링 가능하게 변경
         return ResponseEntity.ok(topProducts);
     }
 
@@ -259,5 +260,11 @@ public class ProductController {
         return ResponseEntity.ok(list);
     }
 
-
+    // ★ 리뷰 평점 4.5 이상 인기 상품 조회
+    @GetMapping("/top-rated")
+    public ResponseEntity<List<Product>> getTopRatedProducts() {
+        // 수정포인트: 서비스 호출
+        List<Product> products = productService.getTopRatedProducts();
+        return ResponseEntity.ok(products);
+    }
 }

@@ -1,9 +1,9 @@
+/* 기본 설정 (리셋, 변수) */
+@import "../css/reset.css";
+@import "../css/base.css";
+@import "../css/modules.css";
+
 /* Tailwind CSS v3 Directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* 기본 설정 (리셋, 변수) */
-@import "./css/reset.css";
-@import "./css/base.css";
-@import "./css/modules.css";

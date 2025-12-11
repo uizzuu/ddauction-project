@@ -1,7 +1,7 @@
 import type * as TYPE from "./types";
 import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
-import type { ArticleType,Notification } from './types';
+import type { ArticleType, Notification } from './types';
 
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
@@ -118,10 +118,15 @@ export const fetchBookmarkCheck = (productId: number, token?: string) =>
 // 찜 토글
 export const toggleBookmark = async (productId: number, token?: string) => {
   const t = ensureToken(token);
-  return fetchJson<string>(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${productId}`, {
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/bookmarks/toggle?productId=${productId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
   });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "찜하기 실패");
+  }
+  return res.text();
 };
 
 // 찜 목록 다중 삭제
@@ -1208,20 +1213,82 @@ export async function registerProductWithImages(
   return product;
 }
 
+// 상품 정보 수정 (이미지 포함)
+export async function updateProductWithImages(
+  productId: number,
+  productData: Partial<TYPE.Product>,
+  images: (File | TYPE.Image)[],
+  bannerImages: (File | string)[]
+): Promise<TYPE.Product> {
+
+  // 1. 메인 이미지 처리
+  const finalImages: Partial<TYPE.Image>[] = [];
+
+  for (let i = 0; i < images.length; i++) {
+    const item = images[i];
+    if (item instanceof File) {
+      console.log(`[Update] 새 메인 이미지 업로드 중 (${i + 1}/${images.length})`);
+      const customName = `product_${productId}_${Date.now()}_${i}`;
+      const s3Url = await uploadImageToS3(item, "product", customName);
+      // 새 이미지는 ID 없음 -> DB에서 Insert 됨
+      finalImages.push({
+        refId: productId,
+        imagePath: s3Url,
+        imageType: "PRODUCT",
+        productType: productData.productType, // Ensure productType is passed if needed
+      });
+    } else {
+      // 기존 이미지 유지
+      finalImages.push(item);
+    }
+  }
+
+  // 2. 배너(상세) 이미지 처리
+  const finalBanners: string[] = [];
+
+  for (let i = 0; i < bannerImages.length; i++) {
+    const item = bannerImages[i];
+    if (item instanceof File) {
+      console.log(`[Update] 새 배너 이미지 업로드 중 (${i + 1}/${bannerImages.length})`);
+      const customName = `product_${productId}_detail_${Date.now()}_${i}`;
+      const s3Url = await uploadImageToS3(item, "product_detail", customName);
+      finalBanners.push(s3Url);
+    } else {
+      // 기존 URL 유지
+      // item이 객체일 수도 있고 문자열일 수도 있음 (useProductForm 구현에 따라 다름)
+      if (typeof item === 'string') {
+        finalBanners.push(item);
+      } else {
+        // 혹시 객체로 들어왔다면 imagePath 추출
+        finalBanners.push((item as any).imagePath || (item as any).toString());
+      }
+    }
+  }
+
+  // 3. 최종 업데이트 호출
+  // images와 productBanners를 포함하여 업데이트 요청
+  const payload = {
+    ...productData,
+    images: finalImages,
+    productBanners: finalBanners
+  } as any;
+
+  console.log("[Update] 최종 업데이트 요청 payload:", payload);
+
+  return updateProduct(productId, payload);
+}
+
+// 상품 정보 수정 (JSON)
 // 상품 정보 수정 (JSON)
 export async function updateProduct(productId: number, productData: Partial<TYPE.Product>): Promise<TYPE.Product> {
-  const token = localStorage.getItem("token");
-  const response = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`
-    },
     body: JSON.stringify(productData),
   });
 
   if (!response.ok) {
-    throw new Error("상품 수정 실패");
+    const text = await response.text();
+    throw new Error(text || "상품 수정 실패");
   }
 
   return response.json();
@@ -1473,118 +1540,99 @@ export async function fetchLatestProducts(): Promise<TYPE.Product[]> {
 }
 
 // 배너 상품 가져오기
-// 배너 상품 가져오기
 export async function fetchBannerProducts(): Promise<
   { id: number; image?: string; text: string; product?: TYPE.Product; link?: string }[]
 > {
   try {
-    const [topRes, latestRes, endingRes] = await Promise.all([
+    // 1. Fetch Data concurrently
+    // - Rank: Based on View Count (replacing "Hot Auction")
+    // - Latest: New items (Fallback pool)
+    // - Bookmarked: Based on User Likes (replacing "Ending Soon")
+    const [rankRes, latestRes, bookmarkRes] = await Promise.all([
+      fetch(`${API_BASE_URL}${SPRING_API}/products/rank`),
+      fetch(`${API_BASE_URL}${SPRING_API}/products/search-paged?size=20&sort=createdAt,desc`),
       fetch(`${API_BASE_URL}${SPRING_API}/products/top-bookmarked`),
-      fetch(`${API_BASE_URL}${SPRING_API}/products/latest`),
-      fetch(`${API_BASE_URL}${SPRING_API}/products/ending-soon`),
     ]);
 
-    // Helper to safely extract array
+    // Helper to extract array from various response shapes (List, Page, Single Object)
     const extractArray = async (res: Response): Promise<TYPE.Product[]> => {
       if (!res.ok) return [];
       try {
         const data = await res.json();
-        if (Array.isArray(data)) return data;
-        if (data && Array.isArray(data.content)) return data.content; // Page wrapper
+        if (Array.isArray(data)) return data; // List
+        if (data && Array.isArray(data.content)) return data.content; // Page
         if (data && Array.isArray(data.data)) return data.data; // Wrapper
+        if (data && typeof data === 'object' && data.productId) return [data]; // Single Object
         return [];
       } catch {
         return [];
       }
     };
 
-    const topData = await extractArray(topRes);
+    const rankData = await extractArray(rankRes);
     const latestData = await extractArray(latestRes);
-    const endingData = await extractArray(endingRes);
+    const bookmarkData = await extractArray(bookmarkRes);
+
+    // Normalize Image URLs Helper
+    const getSafeImage = (p: TYPE.Product): string | undefined => {
+      if (!p.images || p.images.length === 0) return undefined;
+      const path = p.images[0].imagePath;
+      if (!path) return undefined;
+      return path.startsWith('http') ? path : `${API_BASE_URL}${path}`;
+    };
+
+    // Filter only products with images
+    const validRank = rankData.filter(p => p.images && p.images.length > 0);
+    const validLatest = latestData.filter(p => p.images && p.images.length > 0);
+    const validBookmarked = bookmarkData.filter(p => p.images && p.images.length > 0);
 
     const banners: { id: number; image?: string; text: string; product?: TYPE.Product; link?: string }[] = [];
+    const usedProductIds = new Set<number>();
 
-    // 1. Top Banner
-    let topProduct = topData[0] || latestData[0];
-    if (topProduct) {
+    // 1. Highest View Count (Rank) - "실시간 조회수 제일 높은 물건"
+    let rankProduct = validRank[0];
+    if (!rankProduct && validLatest.length > 0) {
+      rankProduct = validLatest[0]; // Fallback to latest
+    }
+
+    if (rankProduct) {
       banners.push({
         id: 1,
-        image: topProduct.images?.[0]?.imagePath,
-        text: "실시간 인기 급상승 경매 🔥",
-        product: topProduct,
+        image: getSafeImage(rankProduct),
+        text: "지금 사람들이 가장 많이 본 상품",
+        product: rankProduct,
       });
+      usedProductIds.add(rankProduct.productId);
     }
 
-    // 2. Latest Banner (Unique)
-    let latestProduct = latestData[0];
-    if (latestProduct && latestProduct.productId === topProduct?.productId && latestData.length > 1) {
-      latestProduct = latestData[1];
-    }
-    // If different from top, add
-    if (latestProduct && latestProduct.productId !== topProduct?.productId) {
+    // 2. Latest Banner - "새로 등록된 핫한 아이템"
+    let latestProduct = validLatest.find(p => !usedProductIds.has(p.productId));
+
+    if (latestProduct) {
       banners.push({
         id: 2,
-        image: latestProduct.images?.[0]?.imagePath,
-        text: "새로 등록된 핫한 아이템 ✨",
+        image: getSafeImage(latestProduct),
+        text: "따끈따끈! 새로 들어온 신상",
         product: latestProduct,
       });
+      usedProductIds.add(latestProduct.productId);
     }
 
-    // 3. Ending Banner (Unique)
-    let endingProduct = endingData[0];
-    // Avoid duplicates
-    if (!endingProduct || endingProduct.productId === topProduct?.productId || endingProduct.productId === latestProduct?.productId) {
-      const potential = latestData.find(p => p.productId !== topProduct?.productId && p.productId !== latestProduct?.productId);
-      if (potential) endingProduct = potential;
+    // 3. Most Popular (Top Bookmarked) - "지금 가장 인기있는" (Replacing Ending Soon)
+    let popProduct = validBookmarked.find(p => !usedProductIds.has(p.productId));
+    // If no distinct popular product, try another from latest fallback pool
+    if (!popProduct) {
+      popProduct = validLatest.find(p => !usedProductIds.has(p.productId));
     }
 
-    if (endingProduct && endingProduct.productId !== topProduct?.productId && endingProduct.productId !== latestProduct?.productId) {
+    if (popProduct) {
       banners.push({
         id: 3,
-        image: endingProduct.images?.[0]?.imagePath,
-        text: "마감 임박! 마지막 기회를 잡으세요 ⚡",
-        product: endingProduct,
+        image: getSafeImage(popProduct),
+        text: "모두가 주목하는 인기 아이템",
+        product: popProduct,
       });
-    }
-
-    // Fallback Logic
-    if (banners.length < 3) {
-      const staticBanners = [
-        {
-          id: 101,
-          text: "나만의 보물찾기, 땅땅옥션 💎",
-          image: topProduct?.images?.[0]?.imagePath || "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=1280&q=80",
-          link: "/search"
-        },
-        {
-          id: 102,
-          text: "더 많은 경매 보러가기 🚀",
-          image: latestProduct?.images?.[0]?.imagePath || "https://images.unsplash.com/photo-1531297461136-82lwDe8c2e0b?auto=format&fit=crop&w=1280&q=80",
-          link: "/search?sort=latest"
-        },
-        {
-          id: 103,
-          text: "지금 가장 핫한 상품을 만나보세요 🔥",
-          image: endingProduct?.images?.[0]?.imagePath || "https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=1280&q=80",
-          link: "/search?sort=popular"
-        }
-      ];
-
-      let staticIndex = 0;
-      while (banners.length < 3 && staticIndex < staticBanners.length) {
-        const sb = staticBanners[staticIndex];
-        // Ensure ID uniqueness roughly
-        if (!banners.find(b => b.id === sb.id)) {
-          banners.push({
-            id: sb.id,
-            image: sb.image,
-            text: sb.text,
-            link: sb.link,
-            product: undefined
-          });
-        }
-        staticIndex++;
-      }
+      usedProductIds.add(popProduct.productId);
     }
 
     return banners;
@@ -1811,24 +1859,7 @@ export async function withdrawUser(userId: number, token: string): Promise<void>
   }
 }
 
-// 상품 수정 (FormData 버전)
-export async function updateProductWithImages(
-  productId: number,
-  formData: FormData
-): Promise<TYPE.Product> {
-  const res = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
-    method: "PUT",
-    body: formData,
-  });
 
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(errorText || "상품 수정 실패");
-  }
-
-  const text = await res.text();
-  return normalizeProduct(text ? JSON.parse(text) : {});
-}
 
 // 신고 내역 조회 (이미 fetchReports가 있지만 명확성을 위해 이름 변경)
 export async function fetchMyReports(token: string): Promise<TYPE.Report[]> {

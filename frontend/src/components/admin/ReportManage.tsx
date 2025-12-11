@@ -1,5 +1,5 @@
 import type { Report } from "../../common/types";
-import CustomSelect from "../common/CustomSelect";
+import CustomSelect from "../ui/CustomSelect";
 
 type Props = {
   reports: Report[];

@@ -51,17 +51,7 @@ export default function ProductDetail({ user }: Props) {
 
     // Edit Handlers Wrapper
     const handleEditProduct = () => {
-        setEditingProductId(product.productId);
-        setProductForm({
-            title: product.title,
-            content: product.content || "",
-            productCategoryType: product.productCategoryType || null,
-            startingPrice: String(product.startingPrice || 0),
-            productStatus: product.productStatus,
-            auctionEndTime: product.auctionEndTime || "",
-            productType: product.productType || "AUCTION",
-            images: [],
-        });
+        navigate(`/products/${product.productId}/edit`);
     };
     const handleCancelProductEdit = () => setEditingProductId(null);
     const handleSaveProduct = () => {

@@ -190,4 +190,6 @@ ORDER BY p.viewCount DESC
             return predicate;
         };
     }
+    // ★ 상품 ID 리스트로 product 조회
+    List<Product> findByProductIdIn(List<Long> productIds);
 }

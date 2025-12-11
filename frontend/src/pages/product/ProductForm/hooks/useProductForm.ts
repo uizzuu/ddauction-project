@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import type { User, ProductForm, PaymentStatus } from "../../../../common/types";
 import type { ProductCategoryType } from "../../../../common/enums";
 import { formatDateTime } from "../../../../common/util";
-import { generateAiDescription, registerProductWithImages, fetchProductById, updateProduct } from "../../../../common/api";
+import { generateAiDescription, registerProductWithImages, fetchProductById, updateProductWithImages } from "../../../../common/api";
 
 export default function useProductForm(user: User | null, productId?: number) {
     const navigate = useNavigate();
@@ -212,9 +212,13 @@ export default function useProductForm(user: User | null, productId?: number) {
             };
 
             if (isEditMode && productId) {
-                await updateProduct(productId, productData);
+                // Pass full image lists (mixed Files and Strings/Objects)
+                const images = form.images || [];
+                const banners = form.productBanners || [];
+
+                await updateProductWithImages(productId, productData, images, banners);
                 alert("상품 정보가 수정되었습니다.");
-                navigate(`/ products / ${productId} `);
+                navigate(`/products/${productId}`);
             } else {
                 const files = (form.images || []).filter((img): img is File => img instanceof File);
                 const banners = (form.productBanners || []).filter((img): img is File => img instanceof File);

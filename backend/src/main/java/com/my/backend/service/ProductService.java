@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.my.backend.repository.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,13 +27,6 @@ import com.my.backend.enums.ImageType;
 import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductCategoryType;
 import com.my.backend.enums.ProductStatus;
-import com.my.backend.repository.BidRepository;
-import com.my.backend.repository.BookMarkRepository;
-import com.my.backend.repository.ImageRepository;
-import com.my.backend.repository.PaymentRepository;
-import com.my.backend.repository.ProductRepository;
-import com.my.backend.repository.ProductViewLogRepository;
-import com.my.backend.repository.UserRepository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -50,6 +44,7 @@ public class ProductService {
     private final ImageRepository imageRepository;
     private final EntityManager em;
     private final ProductViewLogRepository productViewLogRepository;
+    private final ReviewRepository reviewRepository;
 
     // ========================================
     // 🔹 헬퍼 메서드: Product → ProductDto 변환 + 이미지 추가
@@ -462,5 +457,18 @@ public class ProductService {
         product.setSeller(seller);
         product.setBid(bid);
         product.setPayment(payment);
+    }
+
+    // ★ 평균 평점 4.5 이상 상품 가져오기
+    public List<Product> getTopRatedProducts() {
+        // 수정포인트: 평균 4.5 이상인 상품 ID 조회
+        List<Long> productIds = reviewRepository.findProductIdsByAverageRating(4.5);
+
+        if (productIds.isEmpty()) {
+            return List.of();   // 수정포인트: 빈 리스트 반환
+        }
+
+        // 수정포인트: 상품 리스트 조회
+        return productRepository.findByProductIdIn(productIds);
     }
 }

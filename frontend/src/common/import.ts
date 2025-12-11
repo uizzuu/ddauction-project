@@ -28,6 +28,7 @@ import Login from "../pages/auth/Login";
 import Signup from "../pages/auth/Signup";
 import ProductList from "../pages/product/ProductList";
 import ProductRegister from "../pages/product/ProductForm/ProductForm";
+import ProductEdit from "../pages/product/ProductEdit/ProductEdit";
 import MyPage from "../pages/general/MyPage";
 import ProductDetail from "../pages/product/ProductDetail";
 import ArticleList from "../pages/article/ArticleList";
@@ -82,6 +83,7 @@ export {
   Signup,
   ProductList,
   ProductRegister,
+  ProductEdit,
   MyPage,
   ProductDetail,
   ArticleList,
