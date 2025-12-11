@@ -669,37 +669,37 @@ export default function ArticleDetail({ user }: Props) {
           )}
 
           {/* 댓글 작성: Notice는 아예 숨김, FAQ는 관리자만, Community는 누구나 */}
-          (article.articleType !== ArticleType.FAQ || user?.role === 'ADMIN') ? (
-          user ? (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <label className="block text-sm font-bold text-[#333] mb-2">
-              댓글 작성
-            </label>
-            <textarea
-              id="comment-textarea"
-              value={commentContent}
-              onChange={(e) => setCommentContent(e.target.value)}
-              rows={4}
-              placeholder="댓글을 입력하세요 (예: @닉네임 으로 멘션 가능)"
-              className="w-full px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm resize-none mb-3"
-            />
-            <div className="flex justify-end">
-              <button
-                onClick={handleCommentSubmit}
-                className="px-6 py-2.5 bg-[#111] text-white rounded-lg font-bold text-sm hover:bg-[#333] transition-colors shadow-sm"
-              >
-                댓글 등록
-              </button>
-            </div>
-          </div>
-          ) : (
-          <div className="mt-6 pt-6 border-t border-gray-200 text-center">
-            <p className="text-gray-500 text-sm">
-              댓글을 작성하려면 <NavLink to="/login" className="text-[#333] hover:underline font-medium">로그인</NavLink>하세요.
-            </p>
-          </div>
-          )
-          ) : null
+          {(article.articleType !== ArticleType.FAQ || user?.role === 'ADMIN') ? (
+            user ? (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <label className="block text-sm font-bold text-[#333] mb-2">
+                  댓글 작성
+                </label>
+                <textarea
+                  id="comment-textarea"
+                  value={commentContent}
+                  onChange={(e) => setCommentContent(e.target.value)}
+                  rows={4}
+                  placeholder="댓글을 입력하세요 (예: @닉네임 으로 멘션 가능)"
+                  className="w-full px-4 py-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#111] text-sm resize-none mb-3"
+                />
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleCommentSubmit}
+                    className="px-6 py-2.5 bg-[#111] text-white rounded-lg font-bold text-sm hover:bg-[#333] transition-colors shadow-sm"
+                  >
+                    댓글 등록
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 pt-6 border-t border-gray-200 text-center">
+                <p className="text-gray-500 text-sm">
+                  댓글을 작성하려면 <NavLink to="/login" className="text-[#333] hover:underline font-medium">로그인</NavLink>하세요.
+                </p>
+              </div>
+            )
+          ) : null}
         </div>
       )}
 
