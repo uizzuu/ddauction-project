@@ -175,7 +175,7 @@ export default function NotificationModal({ isOpen, onClose, userId: propsUserId
     <div
       ref={modalRef}
       onClick={(e) => e.stopPropagation()}
-      className="absolute top-8 right-0 w-[300px] sm:w-80 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-xl border border-gray-100 z-50 overflow-hidden animate-fadeIn"
+      className="fixed top-16 left-4 right-4 w-auto sm:absolute sm:top-8 sm:right-0 sm:left-auto sm:w-80 bg-white rounded-lg shadow-xl border border-gray-100 z-50 overflow-hidden animate-fadeIn"
     >
       {/* 헤더 */}
       <div className="flex items-center justify-between p-4 border-b bg-gray-50">
