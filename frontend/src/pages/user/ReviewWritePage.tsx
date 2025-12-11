@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { fetchProductById, createProductReview } from "../../common/api";
+import { fetchProductById, createProductReview, API_BASE_URL } from "../../common/api";
 import type * as TYPE from "../../common/types";
 import { Star, ChevronLeft, Image as ImageIcon } from "lucide-react";
 
@@ -82,11 +82,18 @@ export default function ReviewWritePage() {
                 <div className="flex gap-5 mb-10 bg-white p-5 rounded-2xl border border-gray-100 shadow-sm items-center">
                     <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-100">
                         {product.images && product.images.length > 0 ? (
-                            <img src={product.images[0].imagePath} alt={product.title} className="w-full h-full object-cover" />
+                            <img
+                                src={product.images[0].imagePath.startsWith('http')
+                                    ? product.images[0].imagePath
+                                    : `${API_BASE_URL}${product.images[0].imagePath}`}
+                                alt={product.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                                <ImageIcon size={24} />
-                            </div>
+                            <div className="flex justify-center items-center w-full h-full text-[#aaa] text-xs"></div>
                         )}
                     </div>
                     <div>
