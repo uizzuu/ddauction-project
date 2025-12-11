@@ -389,11 +389,11 @@ export default function Header({ user, setUser }: Props) {
             </div>
             {/* 메인헤더 */}
             <div className="w-full bg-white py-2">
-                <div className="w-full max-w-[1280px] mx-auto flex gap-4 items-center">
+                <div className="w-full max-w-[1280px] mx-auto flex flex-wrap md:flex-nowrap gap-y-3 md:gap-4 items-center px-4 xl:px-0">
                     {/* 로고 */}
                     <a
                         href="/"
-                        className="relative block w-32 h-8 flex flex-shrink-0"
+                        className="relative block w-24 h-6 md:w-32 md:h-8 flex flex-shrink-0 order-1"
                         aria-label="DDANG 홈으로 이동"
                     >
                         <img
@@ -405,12 +405,12 @@ export default function Header({ user, setUser }: Props) {
 
                     {/* 검색바 */}
                     <div
-                        className={`search-container ${showSuggestions ? "active" : ""}`}
+                        className={`search-container w-full md:w-auto md:flex-1 order-3 md:order-2 ${showSuggestions ? "active" : ""}`}
                         ref={searchRef}
                         onClick={() => inputRef.current?.focus()}
                     >
                         <form
-                            className={`search-bar ${showSuggestions ? "active" : ""}`}
+                            className={`search-bar w-full ${showSuggestions ? "active" : ""}`}
                             role="search"
                             onSubmit={handleSearch}
                         >
@@ -475,7 +475,7 @@ export default function Header({ user, setUser }: Props) {
                             />
                             <button type="submit" aria-label="검색" className="ml-1">
                                 <img
-                                    className="relative flex-[0_0_auto] w-[22px] h-[22px]"
+                                    className="relative flex-[0_0_auto] w-5 h-5 md:w-[22px] md:h-[22px]"
                                     alt=""
                                     src="https://c.animaapp.com/vpqlbV8X/img/search.svg"
                                     style={{ filter: "invert(20%)" }}
@@ -485,7 +485,7 @@ export default function Header({ user, setUser }: Props) {
 
                         {/* Dropdown */}
                         {showSuggestions && (
-                            <div className="autocomplete-dropdown">
+                            <div className="autocomplete-dropdown w-full">
                                 {searchKeyword ? (
                                     /* 1. 자동완성 목록 (검색어 있을 때) */
                                     suggestions.length > 0 && suggestions.map((item, index) => (
@@ -599,7 +599,7 @@ export default function Header({ user, setUser }: Props) {
                     {/* 아이콘 */}
 
                     <nav
-                        className="flex items-center gap-3 relative flex-shrink-0 ml-auto"
+                        className="flex items-center gap-2 md:gap-3 relative flex-shrink-0 ml-auto order-2 md:order-3"
                         aria-label="주요 메뉴"
                     >
                         <div className="relative">
@@ -609,7 +609,7 @@ export default function Header({ user, setUser }: Props) {
                                 onClick={() => setShowNotifications(!showNotifications)}
                             >
                                 <img
-                                    className="w-[21px] h-[23px]"
+                                    className="w-5 h-5 md:w-[21px] md:h-[23px]"
                                     alt=""
                                     src="https://c.animaapp.com/vpqlbV8X/img/group@2x.png"
                                     style={{ filter: "invert(20%)" }}
@@ -630,7 +630,7 @@ export default function Header({ user, setUser }: Props) {
                             aria-label="찜하기"
                         >
                             <img
-                                className="w-[23px] h-[23px]"
+                                className="w-5 h-5 md:w-[23px] md:h-[23px]"
                                 alt=""
                                 src="https://c.animaapp.com/vpqlbV8X/img/vector-1.svg"
                                 style={{ filter: "invert(20%)" }}
@@ -644,7 +644,7 @@ export default function Header({ user, setUser }: Props) {
                             className="p-1 hover:opacity-70 transition-opacity"
                         >
                             <img
-                                className="w-[23px] h-[23px]"
+                                className="w-5 h-5 md:w-[23px] md:h-[23px]"
                                 alt=""
                                 src="https://c.animaapp.com/vpqlbV8X/img/mypage.svg"
                                 style={{ filter: "invert(20%)" }}
@@ -658,7 +658,7 @@ export default function Header({ user, setUser }: Props) {
                             aria-label={`장바구니 ${cartItemCount}개 상품`}
                         >
                             <img
-                                className="w-[21px] h-[23px]"
+                                className="w-5 h-5 md:w-[21px] md:h-[23px]"
                                 alt=""
                                 src="https://c.animaapp.com/vpqlbV8X/img/group-1@2x.png"
                                 style={{ filter: "invert(20%)" }}
