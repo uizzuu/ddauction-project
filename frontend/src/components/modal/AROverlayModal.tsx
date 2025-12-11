@@ -136,23 +136,25 @@ const AROverlayModal: React.FC<TYPE.AROverlayProps> = ({ productId }) => {
           </div>
           <h2 className="text-2xl font-bold text-white">AR 가상 착해보기</h2>
           <p className="text-gray-400 text-center max-w-sm mb-4">
-            스마트폰으로 QR코드를 스캔하거나<br />웹캠을 사용하여 상품을 미리 체험해보세요.
+            <span>스마트폰으로 QR코드를 스캔하거나<br />웹캠을 사용하여 상품을 미리 체험해보세요.</span><br />
+            <span className="text-[13px] font-medium text-gray-400 text-center max-w-sm">* 사이트 내의 카메라 스캔 버튼으로만 QR코드 인식 가능</span>
           </p>
+
 
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <button
               onClick={() => setMode("showQR")}
               className="w-full py-4 bg-white/10 hover:bg-white/20 border border-white/10 backdrop-blur-sm rounded-xl text-white font-bold transition-all flex items-center justify-center gap-3 group"
             >
-              <span className="text-xl">📱</span>
-              <span className="group-hover:translate-x-1 transition-transform">모바일로 QR 스캔</span>
+              <span className="group-hover:translate-x-1 transition-transform">QR코드</span>
             </button>
             <button
               onClick={() => setMode("scanning")}
               className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold shadow-lg shadow-indigo-500/30 transition-all flex items-center justify-center gap-3 group"
             >
-              <span className="text-xl">📷</span>
-              <span className="group-hover:translate-x-1 transition-transform">웹캠으로 바로 실행</span>
+              <span className="group-hover:translate-x-1 transition-transform leading-tight">
+                카메라 스캔하기
+              </span>
             </button>
           </div>
         </div>

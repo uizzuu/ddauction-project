@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function ArticleList({ user }: Props) {
-  const [activeTab, setActiveTab] = useState<ArticleType | "ALL">(ArticleType.COMMUNITY);
+  const [activeTab, setActiveTab] = useState<ArticleType | "COMMUNITY">(ArticleType.COMMUNITY);
 
   const [articles, setArticles] = useState<ArticleDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,18 +20,14 @@ export default function ArticleList({ user }: Props) {
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // activeTab 변경 시 언더바 위치 조정
-  useEffect(() => {
-    // 탭 순서(인덱스) 찾기
+  // 언더바 위치 업데이트 함수
+  const updateUnderlinePosition = () => {
     const tabs = [
-      // { key: "ALL" },
       { key: ArticleType.COMMUNITY },
       { key: ArticleType.NOTICE },
       { key: ArticleType.FAQ },
     ];
     const index = tabs.findIndex((t) => t.key === activeTab);
-
-    // 해당 인덱스의 버튼 엘리먼트 가져오기
     const el = tabRefs.current[index];
     if (el) {
       setUnderlineStyle({
@@ -39,11 +35,27 @@ export default function ArticleList({ user }: Props) {
         width: el.offsetWidth,
       });
     }
+  };
+
+  // activeTab 변경 시 언더바 위치 조정
+  useEffect(() => {
+    updateUnderlinePosition();
   }, [activeTab]);
+
+  // 초기 렌더링 후 언더바 위치 설정 (마운트 시)
+  useEffect(() => {
+    // DOM이 완전히 렌더링되고 ref가 설정된 후 언더바 위치 계산
+    // requestAnimationFrame을 사용하여 브라우저가 DOM을 완전히 그린 후 실행
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        updateUnderlinePosition();
+      }, 50); // 50ms 후 실행하여 DOM 완전 렌더링 보장
+    });
+  }, []);
 
   useEffect(() => {
     // 탭 변경 시 API 호출 (필터링)
-    const params = activeTab === "ALL" ? {} : { articleType: activeTab };
+    const params = { articleType: activeTab };
 
     getArticles(params)
       .then(setArticles)
@@ -101,7 +113,7 @@ export default function ArticleList({ user }: Props) {
           <button
             key={tab.key}
             ref={(el) => { tabRefs.current[index] = el; }}
-            onClick={() => setActiveTab(tab.key as ArticleType | "ALL")}
+            onClick={() => setActiveTab(tab.key as ArticleType | "COMMUNITY")}
             className={`
               relative z-10 px-4 py-2 text-sm font-bold transition-colors whitespace-nowrap
               ${activeTab === tab.key ? "text-[#111]" : "text-gray-500 hover:text-[#333]"}

@@ -141,7 +141,7 @@ export default function RankPage() {
                 <div
                     ref={scrollRef}
                     onScroll={checkScroll}
-                    className="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth px-1"
+                    className="flex gap-2 overflow-x-auto category-scroll-container scroll-smooth"
                 >
                     <button
                         onClick={() => setSelectedCategory("")}
