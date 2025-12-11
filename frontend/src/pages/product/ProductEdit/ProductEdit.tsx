@@ -101,7 +101,7 @@ export default function ProductEdit({ user }: Props) {
     }
 
     return (
-        <div className="containerr mx-auto">
+        <div className="containerr mx-auto md:px-0 px-4">
             <div className="mb-8 text-left">
                 <h2 className="text-3xl font-bold text-[#111] mb-2">물품 수정</h2>
                 <p className="text-gray-500">
@@ -132,7 +132,7 @@ export default function ProductEdit({ user }: Props) {
                                     disabled={uploading}
                                 />
                                 <span className="text-2xl mb-1 text-gray-400">+</span>
-                                <span className="text-xs text-gray-500">이미지 추가</span>
+                                <span className="text-xs text-gray-500 text-nowrap">이미지 추가</span>
                             </label>
 
                             {(form.images || []).map((fileOrObj, idx) => {

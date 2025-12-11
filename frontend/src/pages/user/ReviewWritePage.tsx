@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { fetchProductById, createProductReview, API_BASE_URL } from "../../common/api";
 import type * as TYPE from "../../common/types";
-import { Star, ChevronLeft, Image as ImageIcon } from "lucide-react";
+import { Star, ChevronLeft } from "lucide-react";
 
 export default function ReviewWritePage() {
     const { productId } = useParams<{ productId: string }>();

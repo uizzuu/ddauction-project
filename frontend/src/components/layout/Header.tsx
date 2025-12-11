@@ -403,9 +403,8 @@ export default function Header({ user, setUser }: Props) {
                         />
                     </a>
 
-                    {/* 검색바 */}
                     <div
-                        className={`search-container w-full md:w-auto md:flex-1 order-3 md:order-2 ${showSuggestions ? "active" : ""}`}
+                        className={`search-container w-full md:w-[450px] order-3 md:order-2 ${showSuggestions ? "active" : ""}`}
                         ref={searchRef}
                         onClick={() => inputRef.current?.focus()}
                     >
@@ -678,7 +677,7 @@ export default function Header({ user, setUser }: Props) {
                 className={`w-full bg-white transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0 border-none" : "max-h-[60px] opacity-100 border-b"}`}
             >
                 <div className="w-full max-w-[1280px] mx-auto relative overflow-x-auto scrollbar-hide">
-                    <nav className="flex gap-4 md:gap-6 relative px-4 xl:px-0 whitespace-nowrap h-[60px] items-center" aria-label="카테고리" ref={navRef}>
+                    <nav className="flex gap-4 md:gap-6 relative px-4 xl:px-0 whitespace-nowrap h-fit items-center" aria-label="카테고리" ref={navRef}>
                         <NavLink
                             to="/"
                             className={({ isActive }) => `nav-tab ${isActive || location.pathname === '/' ? "active" : "inactive"}`}

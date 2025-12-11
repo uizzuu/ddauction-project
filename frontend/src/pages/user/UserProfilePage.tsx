@@ -80,7 +80,7 @@ export default function UserProfilePage() {
             {/* Profile Header */}
             <div className="bg-white border-b">
                 <div className="max-w-4xl mx-auto px-6 pb-6 relative mt-8">
-                    <div className="flex flex-col md:flex-row items-end md:items-center gap-6">
+                    <div className="flex md:flex-row items-end md:items-center gap-6">
                         {/* Avatar */}
                         <div className="w-24 h-24 rounded-2xl bg-white p-1 shadow-lg flex-shrink-0 relative z-10">
                             <div className="w-full h-full rounded-xl bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-100">
@@ -98,7 +98,7 @@ export default function UserProfilePage() {
                         {/* User Info */}
                         <div className="flex-1 text-left">
                             <h1 className="text-2xl font-bold text-gray-900 mb-2">{user.nickName}</h1>
-                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 text-sm text-gray-600">
+                            <div className="flex flex-wrap items-center justify-start gap-4 text-sm text-gray-600">
                                 <div className="flex items-center gap-1">
                                     <Star size={16} className="text-yellow-400 fill-yellow-400" />
                                     <span className="font-medium text-black">

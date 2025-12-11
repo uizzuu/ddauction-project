@@ -9,7 +9,6 @@ import type { PaymentHistoryResponse } from "../../common/api";
 import ProductCard from "../../components/ui/ProductCard";
 import BusinessVerify from "../../components/mypage/BusinessVerify";
 import ShippingModal from "../../components/ui/ShippingModal";
-import ReviewModal from "../../components/ui/ReviewModal";
 import { ConfirmModal } from "../../components/ui/ConfirmModal";
 import ProfileImageUploader from "../../components/mypage/ProfileImageUploader";
 import Avatar from "../../components/ui/Avatar";
@@ -67,8 +66,7 @@ export default function MyPage({ user, setUser }: Props) {
   const [shippingModalOpen, setShippingModalOpen] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
   const [modalDefaults, setModalDefaults] = useState({ courier: "CJ", trackingNumber: "" });
-  const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [reviewTarget, setReviewTarget] = useState<{ sellerId: number; refId: number; productType?: string } | null>(null);
+
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [myBids, setMyBids] = useState<Bid[]>([]);
   const [confirmTargetId, setConfirmTargetId] = useState<number | null>(null);
@@ -462,14 +460,6 @@ export default function MyPage({ user, setUser }: Props) {
     await new Promise(r => setTimeout(r, 500));
     await loadTabContent("buying");
   };
-  const openReviewModal = (sid: number, rid: number, pt?: string) => { /* ... */ setReviewTarget({ sellerId: sid, refId: rid, productType: pt }); setReviewModalOpen(true); };
-  const handleReviewSubmit = async (rating: number, comments: string) => { /* ... */
-    if (!reviewTarget) return;
-    try {
-      await API.submitReview(reviewTarget.sellerId, { rating, comments, refId: reviewTarget.refId, productType: reviewTarget.productType ?? "AUCTION" }, localStorage.getItem("token") || "");
-      alert("리뷰가 등록되었습니다."); setReviewModalOpen(false); setReviewTarget(null);
-    } catch (err: any) { alert(err.message || "리뷰 등록 실패"); }
-  };
 
 
   if (!user) return <div className="text-center py-20 text-gray-500">로딩 중...</div>;
@@ -716,7 +706,7 @@ export default function MyPage({ user, setUser }: Props) {
         </div>
       </div>
       <ShippingModal isOpen={shippingModalOpen} onClose={() => setShippingModalOpen(false)} onSubmit={handleShippingSubmit} defaultCourier={modalDefaults.courier} defaultTrackingNumber={modalDefaults.trackingNumber} />
-      <ReviewModal isOpen={reviewModalOpen} onClose={() => setReviewModalOpen(false)} onSubmit={handleReviewSubmit} />
+
       <ConfirmModal isOpen={confirmModalOpen} onClose={() => setConfirmModalOpen(false)} onConfirm={executeConfirmPurchase} title="구매 확정" message="구매를 확정하시겠습니까?" confirmText="확인" cancelText="취소" />
 
       {/* Disconnect Social Modal */}

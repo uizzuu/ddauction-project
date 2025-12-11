@@ -51,7 +51,7 @@ import NotificationModal from "../components/modal/NotificationModal";
 import CartPage from "../pages/general/CartPage";
 import WishlistPage from "../pages/general/WishlistPage";
 import RankPage from "../pages/main/RankPage";
-import SearchPage from "../pages/product/ProductList"; // Alias for readability
+import SearchPage from "../pages/product/ProductList";
 import UserProfilePage from "../pages/user/UserProfilePage";
 import ReviewWritePage from "../pages/user/ReviewWritePage";
 

@@ -18,11 +18,28 @@ export const RealTimeSearch = () => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const wsUrl =
-      API_BASE_URL.replace("http", "ws").replace("/api", "") +
-      "/ws/realtime-search";
-    const ws = new WebSocket(wsUrl);
-    wsRef.current = ws;
+    let wsUrl = "";
+    
+    // API_BASE_URL이 존재하면 변환, 없으면 현재 호스트 기준 (Production 등)
+    if (API_BASE_URL) {
+       // http -> ws, https -> wss
+       wsUrl = API_BASE_URL.replace(/^http/, "ws") + "/ws/realtime-search";
+    } else {
+       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+       const host = window.location.host;
+       wsUrl = `${protocol}//${host}/ws/realtime-search`;
+    }
+
+    let ws: WebSocket | null = null;
+    try {
+      ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
+    } catch (error) {
+      console.error("WebSocket create failed:", error);
+      return;
+    }
+
+    if (!ws) return;
 
     ws.onopen = () => {
       console.log("실시간 검색어 WebSocket 연결됨");

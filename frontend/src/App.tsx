@@ -219,7 +219,7 @@ export default function App() {
         <Route path="/find-password" element={<FindPassword />} />
         <Route path="/cart" element={user ? <CartPage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
         <Route path="/wishlist" element={user ? <WishlistPage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
-        <Route path="/wishlist" element={user ? <WishlistPage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
+
         <Route path="/reviews/write/:productId" element={user ? <ReviewWritePage /> : <div style={{ padding: "20px" }}>로그인이 필요합니다.</div>} />
         <Route path="/rank" element={<RankPage />} />
         <Route path="/users/:userId" element={<UserProfilePage />} />

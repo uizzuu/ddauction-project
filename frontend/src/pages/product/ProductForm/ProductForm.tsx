@@ -158,7 +158,7 @@ export default function ProductRegister({ user }: Props) {
                                     disabled={uploading}
                                 />
                                 <span className="text-2xl mb-1 text-gray-400">+</span>
-                                <span className="text-xs text-gray-500">이미지 추가</span>
+                                <span className="text-xs text-gray-500 text-nowrap">이미지 추가</span>
                             </label>
 
                             {(form.images || []).map((fileOrObj, idx) => {
