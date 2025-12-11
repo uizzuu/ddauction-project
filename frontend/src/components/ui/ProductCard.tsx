@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Product,Bid } from "../../common/types";
+import type { Product, Bid } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
 import { Heart, Truck, ChevronRight, Minus } from "lucide-react";
 import { toggleBookmark, fetchBookmarkCheck, API_BASE_URL } from "../../common/api";
@@ -9,21 +9,17 @@ type Props = {
     product: Product;
     rank?: number;
     rankChange?: "UP" | "DOWN" | "SAME";
-    mergedBids?: Bid[];       // 외부에서 계산된 모든 입찰
-    highestBid?: number;      // 최고 입찰가
+    mergedBids?: Bid[];       // 외부에서 계산된 모든 입찰 (선택적)
+    highestBid?: number;      // 최고 입찰가 (선택적)
 };
 
-export default function ProductCard({ product, rank, rankChange,mergedBids,highestBid }: Props) {
+export default function ProductCard({ product, rank, rankChange, mergedBids: externalBids, highestBid: externalHighestBid }: Props) {
     const navigate = useNavigate();
-    // 1. Initialize state from prop
     const [isLiked, setIsLiked] = useState(!!product.isBookmarked);
 
-    // 2. Sync state with prop updates AND server status
     useEffect(() => {
-        // 우선 prop으로 동기화
         setIsLiked(!!product.isBookmarked);
 
-        // 서버에서 최신 상태 확인 (로그인 시)
         const token = localStorage.getItem("token");
         if (token) {
             fetchBookmarkCheck(product.productId, token)
@@ -37,7 +33,7 @@ export default function ProductCard({ product, rank, rankChange,mergedBids,highe
     }, [product.productId, product.isBookmarked]);
 
     // Image Brightness Analysis
-    const [isDarkImage, setIsDarkImage] = useState(false); // Default to Black icon (Safe for light backgrounds)
+    const [isDarkImage, setIsDarkImage] = useState(false);
 
     useEffect(() => {
         if (product.images && product.images.length > 0) {
@@ -45,40 +41,55 @@ export default function ProductCard({ product, rank, rankChange,mergedBids,highe
                 ? product.images[0].imagePath
                 : `${API_BASE_URL}${product.images[0].imagePath}`;
 
-            // 캐시 버스팅: 브라우저가 캐시된(CORS 헤더 없는) 응답을 재사용하지 않도록 강제
             const imgSrc = `${baseUrl}?v=${Date.now()}`;
 
             const img = new Image();
             img.crossOrigin = "Anonymous";
             img.src = imgSrc;
 
-            // Allow FastAverageColor to work
             import("fast-average-color").then(module => {
                 const fac = new module.FastAverageColor();
                 fac.getColorAsync(img)
                     .then(color => {
-                        // isDark: true if bg is dark -> text white
                         setIsDarkImage(color.isDark);
                     })
-                    .catch(() => {
-                        // Ignore error, keep default
-                    });
+                    .catch(() => { });
             });
         }
     }, [product.images]);
 
-    // ✅ 가격 정보 계산 (타입별 분기)
-    // AUCTION: startingPrice (시작 입찰가)
-    // STORE: salePrice (판매가), discountRate (할인율)
-    // USED: originalPrice (판매가)
-    const getPriceInfo = () => {
-        const extProduct = product as any; // salePrice 접근용
+    // ✅ 입찰 정보 계산 (우선순위: props > 백엔드 집계 > product.bids 계산)
+    const getBidInfo = () => {
+        // 1. 외부에서 전달된 props가 있으면 사용
+        if (externalBids !== undefined && externalHighestBid !== undefined) {
+            return { bidCount: externalBids.length, highestBidPrice: externalHighestBid };
+        }
 
+        // 2. 백엔드에서 계산된 집계 데이터가 있으면 사용
+        if (product.bidCount !== undefined && product.highestBidPrice !== undefined) {
+            return { bidCount: product.bidCount, highestBidPrice: product.highestBidPrice };
+        }
+
+        // 3. product.bids에서 직접 계산
+        const bids = product.bids || [];
+        let maxBid = Number(product.startingPrice) || 0;
+        
+        if (bids.length > 0) {
+            const maxBidPrice = Math.max(...bids.map(bid => Number(bid.bidPrice) || 0));
+            maxBid = Math.max(maxBid, maxBidPrice);
+        }
+
+        return { bidCount: bids.length, highestBidPrice: maxBid };
+    };
+
+    const bidInfo = getBidInfo();
+
+    // ✅ 가격 정보 계산 (타입별 분기)
+    const getPriceInfo = () => {
         if (product.productType === 'STORE') {
-            const salePrice = Number(extProduct.salePrice) || 0;
+            const salePrice = Number(product.salePrice) || 0;
             const discountRate = Number(product.discountRate) || 0;
 
-            // 할인율이 있으면 원가 역산
             let originalPrice = 0;
             if (discountRate > 0 && salePrice > 0) {
                 originalPrice = Math.round(salePrice / (1 - discountRate / 100));
@@ -125,18 +136,15 @@ export default function ProductCard({ product, rank, rankChange,mergedBids,highe
         }
 
         const prev = isLiked;
-        setIsLiked(!prev); // Optimistic Update
+        setIsLiked(!prev);
 
         try {
             await toggleBookmark(product.productId, token);
-            // 헤더 카운트 즉시 업데이트
             window.dispatchEvent(new Event("cart-updated"));
-            // 찜 업데이트 이벤트 발생
             window.dispatchEvent(new Event("wishlist-updated"));
-            console.log("Like toggled, event dispatched");
         } catch (err) {
             console.error(err);
-            setIsLiked(prev); // Revert
+            setIsLiked(prev);
             const msg = err instanceof Error ? err.message : "알 수 없는 오류";
             alert(`찜하기 실패: ${msg}`);
         }
@@ -268,9 +276,10 @@ export default function ProductCard({ product, rank, rankChange,mergedBids,highe
                     {product.title}
                 </h3>
 
-                {/* Price Area - ✅ 수정됨 */}
+                {/* Price Area */}
                 <div className="mt-auto">
                     {product.productType === "AUCTION" ? (
+                        /* ✅ AUCTION: 시작가 + 현재가 표시 */
                         <div className="flex flex-col">
                             <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
                                 시작가 {formatPrice(product.startingPrice)}
@@ -278,12 +287,12 @@ export default function ProductCard({ product, rank, rankChange,mergedBids,highe
                             <div className="flex items-baseline gap-1 mt-0.5">
                                 <span className="text-[0.85rem] text-[#111] font-bold">현재가</span>
                                 <span className="text-[0.95rem] font-bold text-[#333]">
-                                    {formatPrice(highestBid ?? product.startingPrice)}
+                                    {formatPrice(bidInfo.highestBidPrice)}
                                 </span>
                             </div>
                         </div>
                     ) : product.productType === "STORE" ? (
-                        /* ✅ STORE: salePrice 사용, discountRate 실제 값 사용 */
+                        /* ✅ STORE: salePrice 사용 */
                         <div className="flex flex-col">
                             {priceInfo.hasDiscount && (
                                 <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
@@ -309,10 +318,11 @@ export default function ProductCard({ product, rank, rankChange,mergedBids,highe
                     )}
                 </div>
 
-                {/* Footer Info Area - ✅ 수정됨 */}
+                {/* Footer Info Area */}
                 <div className="mt-2 text-[0.85rem] text-[#999] font-medium flex items-center gap-1">
                     {product.productType === "AUCTION" ? (
-                        <span className="text-[#aaa]">입찰 {mergedBids?.length ?? product.bids?.length ?? 0}건</span>
+                        /* ✅ AUCTION: 입찰 건수 표시 */
+                        <span className="text-[#aaa]">입찰 {bidInfo.bidCount}건</span>
                     ) : product.productType === "STORE" ? (
                         /* ✅ STORE: deliveryIncluded 체크 */
                         <div className="flex items-center gap-1">
