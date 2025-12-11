@@ -1799,9 +1799,8 @@ export async function fetchFilteredProducts(params: {
   if (params.maxStartPrice !== undefined) query.append("maxStartPrice", params.maxStartPrice.toString());
 
   const response = await fetch(`${API_BASE_URL}${SPRING_API}/products/search?${query.toString()}`);
-  const json = await response.json();
-console.log("🔍 검색 API 응답:", json);
-return json;
+  if (!response.ok) throw new Error("상품 검색 실패");
+  return response.json();
 }
 
 export async function submitUserQna(title: string, content: string): Promise<void> {
