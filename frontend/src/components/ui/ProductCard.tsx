@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Product } from "../../common/types";
+import type { Product, Bid } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
 import { Heart, Truck, ChevronRight, Minus } from "lucide-react";
 import { toggleBookmark, fetchBookmarkCheck, API_BASE_URL } from "../../common/api";
@@ -9,9 +9,12 @@ type Props = {
     product: Product;
     rank?: number;
     rankChange?: "UP" | "DOWN" | "SAME";
+    highestBid: number; 
+    mergedBids: Bid[];
 };
 
-export default function ProductCard({ product, rank, rankChange }: Props) {
+export default function ProductCard({ product, rank, rankChange,highestBid, // ✅ Props로 받음
+    mergedBids }: Props) {
     const navigate = useNavigate();
     // 1. Initialize state from prop
     const [isLiked, setIsLiked] = useState(!!product.isBookmarked);
@@ -276,7 +279,7 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                             <div className="flex items-baseline gap-1 mt-0.5">
                                 <span className="text-[0.85rem] text-[#111] font-bold">현재가</span>
                                 <span className="text-[0.95rem] font-bold text-[#333]">
-                                    {formatPrice(product.bidPrice || product.startingPrice)}
+                                    {formatPrice(highestBid)}
                                 </span>
                             </div>
                         </div>
@@ -310,7 +313,7 @@ export default function ProductCard({ product, rank, rankChange }: Props) {
                 {/* Footer Info Area - ✅ 수정됨 */}
                 <div className="mt-2 text-[0.85rem] text-[#999] font-medium flex items-center gap-1">
                     {product.productType === "AUCTION" ? (
-                        <span className="text-[#aaa]">입찰 {product.bids?.length || 0}건</span>
+                        <span className="text-[#aaa]">입찰 {mergedBids?.length ?? 0}건</span>
                     ) : product.productType === "STORE" ? (
                         /* ✅ STORE: deliveryIncluded 체크 */
                         <div className="flex items-center gap-1">
