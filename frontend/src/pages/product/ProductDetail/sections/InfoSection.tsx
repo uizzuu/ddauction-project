@@ -89,9 +89,9 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
     const priceInfo = getPriceInfo();
 
     return (
-        <div className="w-full md:w-full flex flex-col h-full justify-between">
+        <div className="w-full md:w-full flex flex-col h-full justify-start gap-3">
             {/* Header: Title & Meta */}
-            <div className="border-b border-gray-100 pb-3 mb-3">
+            <div className="border-b border-gray-100 mb-3">
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <span className="inline-block px-3 py-[6px] bg-gray-100 text-gray-600 text-[11px] font-semibold rounded-full mb-1">
@@ -169,7 +169,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
             {product.tag && (
                 <div className="flex flex-wrap gap-1.5 mb-3">
                     {product.tag.split(",").map((tag, idx) => (
-                        <span key={idx} className="px-1.5 py-0.5 bg-gray-50 text-gray-500 text-[10px] rounded-full border border-gray-100">
+                        <span key={idx} className="px-1.5 py-0.5 bg-gray-50 text-gray-500 text-[13px] rounded-full border border-gray-100">
                             #{tag.trim()}
                         </span>
                     ))}
@@ -255,9 +255,9 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                         {/* ✅ Shipping Info - deliveryIncluded 체크 수정 */}
                         <div className="flex justify-end items-center gap-2 mt-1">
                             {product.deliveryIncluded === true ? (
-                                <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">무료배송</span>
+                                <span className="text-[14px] bg-green-100 text-green-700 px-2 py-0.5 rounded font-medium">무료배송</span>
                             ) : (
-                                <span className="text-xs text-gray-500">
+                                <span className="text-[14px] text-gray-500">
                                     배송비 {Number(product.deliveryPrice || 0).toLocaleString()}원
                                     {Number(product.deliveryAddPrice) > 0 && ` (도서산간 +${Number(product.deliveryAddPrice).toLocaleString()}원)`}
                                 </span>
@@ -285,7 +285,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                         <span className="w-16 text-gray-500 text-xs font-medium shrink-0">배송 방법</span>
                         <div className="text-xs text-gray-900 flex flex-wrap gap-1">
                             {product.deliveryAvailable.split(",").map((method, idx) => (
-                                <span key={idx} className="inline-block border border-gray-200 px-1.5 py-0.5 rounded text-[10px] text-gray-600 bg-white">
+                                <span key={idx} className="inline-block border border-gray-300 border-solid px-1.5 py-0.5 rounded text-[12px] text-gray-600 bg-white">
                                     {method.trim()}
                                 </span>
                             ))}
