@@ -3,6 +3,7 @@ import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
 import type { ArticleType, Notification } from './types';
 
+
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
 export const API_BASE_URL =
@@ -2559,3 +2560,30 @@ export const markNotificationAsRead = async (notificationId: number): Promise<vo
     throw new Error("읽음 처리 실패");
   }
 };
+
+// 공개채팅 유저 밴처리
+export async function banUser(userId: number, adminToken: string, adminId: number) {
+  const url = `${API_BASE_URL}${SPRING_API}/ban/${userId}?adminId=${adminId}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${adminToken}`
+    },
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error("밴 처리 실패:", text);
+    throw new Error("밴 처리 실패");
+  }
+
+  // ✅ 텍스트로 받기 (또는 JSON 여부 확인 후 처리)
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return res.json();
+  } else {
+    return res.text(); // 텍스트로 반환
+  }
+}
