@@ -673,12 +673,12 @@ export default function Header({ user, setUser }: Props) {
                     </nav>
                 </div>
             </div>
-            {/* PC 카테고리 탭 (Full Width Border) */}
+            {/* PC/Mobile 카테고리 탭 (Full Width Border) */}
             <div
-                className={`hidden md:block w-full bg-white overflow-hidden transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0 border-none" : "max-h-[60px] opacity-100 border-b"}`}
+                className={`w-full bg-white transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0 border-none" : "max-h-[60px] opacity-100 border-b"}`}
             >
-                <div className="w-full max-w-[1280px] mx-auto relative">
-                    <nav className="flex gap-6 relative" aria-label="카테고리" ref={navRef}>
+                <div className="w-full max-w-[1280px] mx-auto relative overflow-x-auto scrollbar-hide">
+                    <nav className="flex gap-4 md:gap-6 relative px-4 xl:px-0 whitespace-nowrap h-[60px] items-center" aria-label="카테고리" ref={navRef}>
                         <NavLink
                             to="/"
                             className={({ isActive }) => `nav-tab ${isActive || location.pathname === '/' ? "active" : "inactive"}`}
