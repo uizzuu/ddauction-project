@@ -19,6 +19,7 @@ public class PublicChatDto {
     private LocalDateTime createdAt;
     private String nickName;
     private SimpleUserDto user;
+    private Boolean isDeleted;
 
     // Entity → DTO
     public static PublicChatDto fromEntity(PublicChat publicChat) {
@@ -37,6 +38,7 @@ public class PublicChatDto {
                 .nickName(publicChat.getUser() != null ? publicChat.getUser().getNickName() : null)
                 .createdAt(publicChat.getCreatedAt())
                 .user(userDto) // 여기에 넣어줘야 프론트에서 msg.user.userId, msg.user.nickName 사용 가능
+                .isDeleted(publicChat.isDeleted())
                 .build();
     }
 

@@ -102,4 +102,22 @@ public class PublicChatWebSocketHandler extends TextWebSocketHandler {
         System.out.println("[공개채팅] 연결 종료, 세션ID=" + session.getId() + ", 상태: " + status);
         System.out.println("[공개채팅] 현재 접속 세션 수: " + sessions.size());
     }
+
+
+    public void sendMessageToUser(Long userId, String message) {
+        synchronized (sessions) {
+            for (WebSocketSession s : sessions) {
+                Object sessionUserId = s.getAttributes().get("userId");
+                if (sessionUserId != null && userId.equals(Long.valueOf(sessionUserId.toString())) && s.isOpen()) {
+                    try {
+                        s.sendMessage(new TextMessage(message));
+                        System.out.println("[공개채팅] 밴 알림 전송, userId=" + userId);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    break; // userId는 하나뿐이므로 전송 후 종료
+                }
+            }
+        }
+    }
 }

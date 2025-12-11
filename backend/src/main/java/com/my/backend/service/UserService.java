@@ -4,6 +4,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.my.backend.config.PublicChatWebSocketHandler;
+import com.my.backend.entity.Report;
+import com.my.backend.enums.ReportType;
+import com.my.backend.enums.Role;
+import com.my.backend.repository.ReportRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -32,6 +37,8 @@ public class UserService {
     private final AddressRepository addressRepository;
     private final ImageRepository imageRepository;
     private final S3Uploader s3Uploader;
+    private final ReportRepository reportRepository;
+    private final PublicChatWebSocketHandler publicChatWebSocketHandler;
 
 
 
@@ -296,5 +303,28 @@ public class UserService {
             }
             imageRepository.delete(existingImage);
         }
+    }
+
+    @Transactional
+    public void banUser(Long userId, Long adminId) {
+        Users target = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("해당 유저가 없습니다."));
+
+        if(target.getRole() == Role.BANNED) return;
+
+        target.setRole(Role.BANNED);
+        userRepository.save(target);
+
+        Report report = Report.builder()
+                .refId(userId)
+                .reason("관리자에 의해 밴 처리됨")
+                .status(true)
+                .reportType(ReportType.PUBLIC_CHAT)
+                .user(userRepository.findById(adminId).orElse(null))
+                .build();
+        reportRepository.save(report);
+
+        // 기존 WebSocketHandler 이용해서 메시지 보내기
+        publicChatWebSocketHandler.sendMessageToUser(userId, "관리자에 의해 밴 처리되었습니다."); // sendMessageToUser는 핸들러에 직접 만들어야 함
     }
 }
