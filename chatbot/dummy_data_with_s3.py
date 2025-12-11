@@ -462,6 +462,14 @@ def future_datetime(min_days: int = 1, max_days: int = 7) -> datetime:
 # ============================================
 # 🗃️ 데이터 생성 함수
 # ============================================
+def generate_random_email() -> str:
+    domains = ['gmail.com', 'naver.com', 'kakao.com', 'daum.net']
+    english_names = ['minjun', 'seoyeon', 'doyun', 'seoyun', 'yejun',
+                     'jiwoo', 'sua', 'seohyun', 'hajun', 'jimin',
+                     'soyul', 'jiho', 'yujin', 'dohyun', 'chaewon',
+                     'junhyuk', 'jiwon', 'subin', 'siwoo', 'dain']
+    return f"{random.choice(english_names)}{random.randint(1, 999)}@{random.choice(domains)}"
+
 def create_users(cursor) -> List[int]:
     user_ids = []
 
@@ -474,7 +482,7 @@ def create_users(cursor) -> List[int]:
             INSERT INTO users (user_name, nick_name, email, password, phone, birthday, role, verified, created_at, updated_at)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            name, nick, generate_random_email(name), hash_password("password123"),
+            name, nick, generate_random_email(), hash_password("Password123!"),
             generate_random_phone(),
             f"{random.randint(1985, 2000)}-{random.randint(1,12):02d}-{random.randint(1,28):02d}",
             random.choice(['USER', 'SELLER']), True, created, created
