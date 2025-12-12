@@ -470,29 +470,44 @@ def generate_random_email() -> str:
                      'junhyuk', 'jiwon', 'subin', 'siwoo', 'dain']
     return f"{random.choice(english_names)}{random.randint(1, 999)}@{random.choice(domains)}"
 
-def create_users(cursor) -> List[int]:
+def generate_random_business_number() -> str:
+    """랜덤 사업자 번호 생성 (10자리 숫자 문자열)"""
+    return "".join([str(random.randint(0, 9)) for _ in range(10)])
+
+def create_users(cursor) -> (List[int], List[int]):
     user_ids = []
+    business_user_ids = [] # 사업자 번호가 있는 유저 ID 리스트
 
     for i in range(NUM_USERS):
         name = USER_NAMES[i % len(USER_NAMES)]
         nick = f"{NICK_NAMES[i % len(NICK_NAMES)]}{i+1}"
         created = random_datetime(60, 30)
+        
+        # 50% 확률로 사업자 번호 부여
+        is_seller = random.choice([True, False])
+        business_number = generate_random_business_number() if is_seller else None
+        role = 'USER' # SELLER 제거, 무조건 USER
 
         cursor.execute("""
-            INSERT INTO users (user_name, nick_name, email, password, phone, birthday, role, verified, created_at, updated_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO users (user_name, nick_name, email, password, phone, birthday, role, business_number, verified, created_at, updated_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """, (
             name, nick, generate_random_email(), hash_password("Password123!"),
             generate_random_phone(),
             f"{random.randint(1985, 2000)}-{random.randint(1,12):02d}-{random.randint(1,28):02d}",
-            random.choice(['USER', 'SELLER']), True, created, created
+            role, business_number, True, created, created
         ))
-        user_ids.append(cursor.lastrowid)
-        print(f"✅ User {i+1}/{NUM_USERS}: {nick}")
+        user_id = cursor.lastrowid
+        user_ids.append(user_id)
+        if business_number:
+            business_user_ids.append(user_id)
+            
+        role_str = "USER(Biz)" if business_number else "USER"
+        print(f"✅ User {i+1}/{NUM_USERS}: {nick} [{role_str}]")
 
-    return user_ids
+    return user_ids, business_user_ids
 
-def create_products_with_s3(cursor, user_ids: List[int], s3_uploader: S3Uploader) -> Dict[str, List[int]]:
+def create_products_with_s3(cursor, user_ids: List[int], business_user_ids: List[int], s3_uploader: S3Uploader) -> Dict[str, List[int]]:
     """상품 + S3 이미지 생성"""
     product_ids = {'AUCTION': [], 'STORE': [], 'USED': []}
 
@@ -523,6 +538,15 @@ def create_products_with_s3(cursor, user_ids: List[int], s3_uploader: S3Uploader
                 original_price = random.randint(5, 200) * 1000
                 sale_price, discount_rate = None, None
                 auction_end = None
+            
+            # 판매자 선택 로직 변경
+            if product_type == 'STORE':
+                if not business_user_ids:
+                    print("⚠️ 사업자 유저가 없어서 STORE 상품 생성 불가")
+                    continue
+                seller_id = random.choice(business_user_ids) # 사업자 유저 중에서 선택
+            else:
+                seller_id = random.choice(user_ids) # 일반/중고는 아무나
 
             # 상품 삽입
             cursor.execute("""
@@ -534,7 +558,7 @@ def create_products_with_s3(cursor, user_ids: List[int], s3_uploader: S3Uploader
                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 titles[i % len(titles)],
-                random.choice(PRODUCT_CONTENTS),
+                random.choice(PRODUCT_CONTENTS),  
                 starting_price, original_price, sale_price, discount_rate,
                 auction_end,
                 random.randint(10, 500),
@@ -544,7 +568,7 @@ def create_products_with_s3(cursor, user_ids: List[int], s3_uploader: S3Uploader
                 product_type, 'ACTIVE', category,
                 product_type == 'STORE' and (discount_rate or 0) >= 20,
                 random.choice([0, 2500, 3000]) if product_type != 'STORE' or (discount_rate or 0) < 20 else 0,
-                random.choice(user_ids),
+                seller_id,
                 created, created
             ))
 
@@ -579,6 +603,7 @@ def create_bids(cursor, auction_ids: List[int], user_ids: List[int]):
             continue
 
         current_price = result[0]
+        # 입찰자는 전체 유저 중에서 선택
         bidders = random.sample(user_ids, min(NUM_BIDS_PER_AUCTION, len(user_ids)))
 
         for i, user_id in enumerate(bidders):
@@ -650,18 +675,19 @@ def main():
 
         # 1. 유저
         print("\n📌 Step 1: 유저 생성")
-        user_ids = create_users(cursor)
+        user_ids, business_user_ids = create_users(cursor)
         conn.commit()
 
         # 2. 상품 + 이미지
         print("\n📌 Step 2: 상품 + 이미지 생성")
-        product_ids = create_products_with_s3(cursor, user_ids, s3_uploader)
+        product_ids = create_products_with_s3(cursor, user_ids, business_user_ids, s3_uploader)
         conn.commit()
 
         # 3. 입찰
         print("\n📌 Step 3: 입찰 생성")
         create_bids(cursor, product_ids['AUCTION'], user_ids)
         conn.commit()
+
 
         # 4. 북마크
         print("\n📌 Step 4: 북마크 생성")
