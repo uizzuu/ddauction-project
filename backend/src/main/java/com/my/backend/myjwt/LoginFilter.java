@@ -111,6 +111,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
                 customUserDetails.getEmail(),
                 roleEnum,
                 customUserDetails.getNickName(),
+                customUserDetails.getUser().getBusinessNumber(),
                 expiredMs
         );
 

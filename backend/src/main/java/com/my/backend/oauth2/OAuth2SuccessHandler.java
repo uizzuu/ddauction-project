@@ -36,6 +36,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             Long userId = oauthUser.getUserId();
             String email = oauthUser.getEmail() != null ? oauthUser.getEmail() : "kakao@noemail.com";
             String nickName = oauthUser.getNickName() != null ? oauthUser.getNickName() : "KakaoUser";
+            String businessNumber = oauthUser.getBusinessNumber();
 
             // String role을 Role enum으로 변환
             String roleStr = oauthUser.getRole();
@@ -45,9 +46,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             } catch (IllegalArgumentException e) {
                 roleEnum = Role.USER; // 안전하게 기본값
             }
-            System.out.println("✅ OAuth2 사용자 정보: email=" + email + ", roleEnum=" + roleEnum);
+            System.out.println("✅ OAuth2 사용자 정보: email=" + email + ", roleEnum=" + roleEnum + ", businessNumber=" + businessNumber);
             // JWT 생성
-            String jwtToken = jwtUtil.createJwt(userId, email, roleEnum, nickName, 24 * 60 * 60 * 1000L);
+            String jwtToken = jwtUtil.createJwt(userId, email, roleEnum, nickName, businessNumber, 24 * 60 * 60 * 1000L);
             System.out.println("✅ JWT 토큰 생성 완료: " + jwtToken); // 토큰 로그 출력
 
             // URL 인코딩 (안전하게 전달하기 위함)
@@ -55,9 +56,9 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
             // React 앱 URL로 리다이렉트 + 토큰 전달
             String redirectUrl = frontendUrl + "/oauth2/redirect?token=" + encodedToken;
-            
+
             System.out.println("🔄 리다이렉트 URL: " + redirectUrl);
-            
+
             response.setContentType("text/html;charset=UTF-8"); // 컨텐츠 타입 명시
             response.sendRedirect(redirectUrl);
             System.out.println("✅ 리다이렉트 완료");
@@ -67,5 +68,5 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             throw new RuntimeException(e);
     }
 
-}
+    }
 }

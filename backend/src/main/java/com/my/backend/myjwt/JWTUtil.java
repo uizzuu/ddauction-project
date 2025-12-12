@@ -44,12 +44,13 @@ public class JWTUtil {
                 parseSignedClaims(token).getPayload().getExpiration().before(new Date());
     }
 
-    public String createJwt(Long userId, String email, Role role, String nickName, Long expiredMs) {
+    public String createJwt(Long userId, String email, Role role, String nickName, String businessNumber, Long expiredMs) {
         Map<String, Object> claims = Map.of(
                 "userId",userId,
                 "email", email,
                 "role", role,
-                "nickName", nickName
+                "nickName", nickName,
+                "businessNumber", businessNumber
         );
         return createJwt(claims, expiredMs); // 이미 Map 기반 메서드로 처리
     }

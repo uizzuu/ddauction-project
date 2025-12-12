@@ -116,7 +116,10 @@ export default function App() {
         userName: string;
         nickName: string;
         role?: "ADMIN" | "USER" | "BANNED";
+        businessNumber?: string;
       }>(token);
+      console.log("🔍 JWT decoded:", decoded); // ✅ 추가
+      console.log("🔍 businessNumber:", decoded.businessNumber); // ✅ 추가
 
       // 🔹 setUser에 nickName 포함
       setUser({
@@ -124,7 +127,9 @@ export default function App() {
         userName: decoded.userName,
         nickName: decoded.nickName,
         role: decoded.role,
+        businessNumber: decoded.businessNumber,
       });
+      console.log("🔍 setUser 완료"); // ✅ 추가
     } catch (e) {
       console.error("JWT decode 실패", e);
       localStorage.removeItem("token");

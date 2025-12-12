@@ -18,6 +18,7 @@ public class CustomOAuth2User implements OAuth2User {
     private final String email;
     private final String role;
     private final String nickName;
+    private final String businessNumber;
 
     private final Map<String, Object> attributes;
     private final Collection<? extends GrantedAuthority> authorities;
@@ -26,12 +27,14 @@ public class CustomOAuth2User implements OAuth2User {
                             String email,
                             String role,
                             String nickName,
+                            String businessNumber,
                             Map<String, Object> attributes,
                             Collection<? extends GrantedAuthority> authorities) {
         this.userId = userId;
         this.email = email;
         this.role = role;
         this.nickName = nickName;
+        this.businessNumber = businessNumber;
         this.attributes = attributes;
         this.authorities = authorities;
     }
@@ -47,6 +50,8 @@ public class CustomOAuth2User implements OAuth2User {
     }
 
     public String getNickName(){return nickName;}
+
+    public String getBusinessNumber() {return businessNumber;}
 
     @Override
     public Map<String, Object> getAttributes() {

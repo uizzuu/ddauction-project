@@ -117,7 +117,7 @@ export default function ProductRegister({ user }: Props) {
                             {PRODUCT_TYPE_KEYS.filter(type => {
                                 if (type === "STORE") {
                                     // 스토어는 사업자만 가능
-                                    return user?.role === "SELLER" || !!user?.businessNumber;
+                                   return !!user?.businessNumber;
                                 }
                                 return true;
                             }).map((type) => (

@@ -127,6 +127,13 @@ public class ProductService {
     // 상품 생성
     public ProductDto createProduct(ProductDto dto) {
         Users seller = findUserOrThrow(dto.getSellerId());
+
+        // ★ 사업자만 STORE 상품 등록 가능
+        if (dto.getProductType() == ProductType.STORE
+                && (seller.getBusinessNumber() == null || seller.getBusinessNumber().isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "사업자만 일반판매(STORE) 상품을 등록할 수 있습니다."); // ★추가
+        }
+
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
 
@@ -156,6 +163,12 @@ public class ProductService {
     public ProductDto updateProduct(Long id, ProductDto dto) {
         Product product = findProductOrThrow(id);
         Users seller = findUserOrThrow(dto.getSellerId());
+
+        // ★ 사업자만 STORE 상품 수정 가능
+        if (dto.getProductType() == ProductType.STORE
+                && (seller.getBusinessNumber() == null || seller.getBusinessNumber().isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "사업자만 일반판매(STORE) 상품을 수정할 수 있습니다."); // ★추가
+        }
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
 

@@ -3,6 +3,7 @@ package com.my.backend.controller;
 import java.util.List;
 
 import com.my.backend.entity.Product;
+import com.my.backend.enums.ProductType;
 import com.my.backend.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -99,18 +100,35 @@ public class ProductController {
     // 새 상품 생성 (로그인 체크 필요하면 session 확인 후 수정 가능)
     @PostMapping
     public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto dto) {
-        // JWT 인증 후 sellerId 자동 설정
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        if (!(principal instanceof com.my.backend.dto.auth.CustomUserDetails userDetails)) {
+        if (!(principal instanceof CustomUserDetails userDetails)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
 
-        if (userDetails.getUser().getRole() == Role.ADMIN) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        Users user = userDetails.getUser();
+        ProductType type = dto.getProductType();  // ★ enum 직접 사용
+
+        switch (type) {
+            case AUCTION:
+            case USED:
+                // 중고, 경매 → 누구나 가능
+                break;
+
+            case STORE:
+                // STORE 상품은 사업자만 가능
+                if (user.getBusinessNumber() == null || user.getBusinessNumber().isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null); // ★ 차단
+                }
+                break;
+
+            default:
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
 
-        dto.setSellerId(userDetails.getUser().getUserId());
+        // 판매자 ID 설정
+        dto.setSellerId(user.getUserId());
+
         ProductDto created = productService.createProduct(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }

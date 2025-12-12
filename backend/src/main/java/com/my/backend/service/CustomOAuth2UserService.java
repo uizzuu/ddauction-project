@@ -115,6 +115,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 user.getEmail(),
                 user.getRole().name(),
                 user.getNickName(),
+                user.getBusinessNumber(),
                 oAuth2User.getAttributes(),
                 Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
         );

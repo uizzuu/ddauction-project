@@ -256,6 +256,7 @@ public class AuthService {
                     user.getEmail(),
                     user.getRole(),
                     user.getNickName(),
+                    user.getBusinessNumber(),
                     24 * 60 * 60 * 1000L  // 24시간
             );
             TokenResponse tokenResponse = new TokenResponse(token, null);
@@ -292,6 +293,7 @@ public class AuthService {
                     user.getEmail() != null ? user.getEmail() : "",
                     user.getRole(),
                     user.getNickName(),
+                    user.getBusinessNumber(),
                     24 * 60 * 60 * 1000L
             );
 
@@ -322,6 +324,7 @@ public class AuthService {
                     user.getEmail(),
                     user.getRole(),
                     user.getNickName(),
+                    user.getBusinessNumber(),
                     24 * 60 * 60 * 1000L  // 24시간
             );
             String newRefreshToken = jwtUtil.createJwt(
@@ -329,6 +332,7 @@ public class AuthService {
                     user.getEmail(),
                     user.getRole(),
                     user.getNickName(),
+                    user.getBusinessNumber(),
                     604800000L
             );
 
