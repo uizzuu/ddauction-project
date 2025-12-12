@@ -395,7 +395,7 @@ export interface ChatMessagePayload {
 
 // UserChat 컴포넌트 props 타입
 export interface UserChatProps {
-  user: User | null;
+  user: User;
 }
 
 // AROverlayModal 컴포넌트 props 타입

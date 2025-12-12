@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+// 타입 임포트 (PrivateChat, User 등)
 import type { UserChatProps, PrivateChat, ChatMessagePayload, User, ChatListItem } from "../../common/types";
-import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages, API_BASE_URL, fetchMyChatRooms, fetchPrivateMessagesByRoomId, fetchAdminAllChatRooms } from "../../common/api"; // fetchAdminAllChatRooms, fetchPrivateMessagesByRoomId API 추가 가정
+// API 임포트
+import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages, API_BASE_URL, fetchMyChatRooms, fetchPrivateMessagesByRoomId, fetchAdminAllChatRooms, banUser } from "../../common/api";
 import { getCategoryName } from "../../common/util";
 import type { ChatRoomListDto, AdminChatRoomListDto } from "../../common/types";
 
@@ -34,18 +36,88 @@ export default function UserChat({ user }: UserChatProps) {
   const [adminChatRooms, setAdminChatRooms] = useState<AdminChatRoomListDto[]>([]);
   const [filteredList, setFilteredList] = useState<ChatListItem[]>([]);
 
+  // Product Info
+  const [product, setProduct] = useState<any>(null);
+  const [imageError, setImageError] = useState(false);
+
+  // 관리자 메뉴 상태
+  const [activeMenuMessageId, setActiveMenuMessageId] = useState<number | null>(null); // 메뉴가 열린 메시지 ID
+  // ⛔ [TS6133 해결]: 사용되지 않는 selectedMessageId와 setSelectedMessageId 제거
+  // const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null); 
+
   // -----------------------------
-  // 1. 목록 불러오기 (Admin vs General User) [수정]
+  // 화면 클릭하면 메뉴 닫기 로직
   // -----------------------------
+  useEffect(() => {
+    const handleClickOutside = () => setActiveMenuMessageId(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  // [수정] publicChatId 대신 chatId 사용
+  const toggleUserMenu = (messageId: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    e.stopPropagation();
+    setActiveMenuMessageId(prev => (prev === messageId ? null : messageId));
+  };
+
+  const handleWarn = async (targetUser: User) => {
+    if (!window.confirm(`${targetUser.nickName}님에게 경고를 보내시겠습니까?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("로그인 토큰이 없습니다.");
+
+      await fetch("/api/warn", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: targetUser.userId,
+          reason: "※경고 24시간동안 공개채팅이 제한되었습니다.",
+          banHours: 24,
+        }),
+      });
+
+      alert(`${targetUser.nickName}님에게 경고가 전달되었습니다.`);
+      setActiveMenuMessageId(null);
+    } catch (err) {
+      console.error(err);
+      alert("경고 전송 중 오류가 발생했습니다.");
+    }
+  };
+
+  const handleBan = async (targetUser: User) => {
+    if (!window.confirm(`${targetUser.nickName}님을 밴 처리하시겠습니까?`)) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("로그인 토큰이 없습니다.");
+      const adminId = user!.userId;
+
+      await banUser(targetUser.userId, token, adminId);
+
+      alert(`${targetUser.nickName}님이 밴 처리되었습니다.`);
+      setActiveMenuMessageId(null);
+
+      setMessages(prev =>
+        prev.map(m => (m.user?.userId === targetUser.userId ? { ...m, content: "밴 처리된 사용자", user: { ...m.user!, nickName: "(밴 처리됨)" } } : m))
+      );
+    } catch (err) {
+      console.error(err);
+      alert("밴 처리 중 오류가 발생했습니다.");
+    }
+  };
+
+  // 1. 목록 불러오기 (Admin vs General User)
   useEffect(() => {
     console.log("UserChat Component Mounted.");
     if (!user) return;
 
     const loadData = async () => {
       if (isAdmin) {
-        // [관리자] 모든 채팅방 목록 로딩
         try {
-          // ⭐ fetchAdminAllChatRooms API가 AdminChatRoomListDto[]를 반환한다고 가정
           const rooms = await fetchAdminAllChatRooms();
           setAdminChatRooms(rooms);
           setFilteredList(rooms);
@@ -54,13 +126,11 @@ export default function UserChat({ user }: UserChatProps) {
         }
 
       } else {
-        // [일반 유저/판매자] 내 채팅방 목록 로딩
         try {
           const rooms = await fetchMyChatRooms(user.userId);
           setChatRooms(rooms);
           setFilteredList(rooms);
 
-          // 상품 페이지에서 들어온 경우 (state?.sellerId 존재)
           if (state?.sellerId && state?.productId) {
             const existingRoom = rooms.find(r =>
               r.targetUserId === state.sellerId && r.productId === state.productId
@@ -77,15 +147,15 @@ export default function UserChat({ user }: UserChatProps) {
     };
 
     loadData();
-    // selectedUser 의존성은 제거. 초기 로딩은 user/isAdmin/state에 의존
   }, [user, isAdmin, state]);
 
-  // [⭐ 수정] 채팅방 선택 핸들러 함수
+  // 채팅방 선택 핸들러 함수
   const handleRoomSelect = (item: ChatRoomListDto | User | AdminChatRoomListDto) => {
     ws.current?.close();
     setMessages([]);
     setChatRoomId(null);
     setProduct(null);
+    setActiveMenuMessageId(null);
 
     if (!user) return;
 
@@ -93,26 +163,20 @@ export default function UserChat({ user }: UserChatProps) {
     let productId: number | undefined;
     let newChatRoomId: number | null = null;
 
-    if ('chatRoomId' in item) { // ChatRoomListDto 또는 AdminChatRoomListDto 타입
+    if ('chatRoomId' in item) {
       newChatRoomId = item.chatRoomId;
       productId = item.productId;
 
       if (isAdmin) {
-        // [관리자] AdminChatRoomListDto를 선택한 경우
         const adminRoom = item as AdminChatRoomListDto;
-        // selectedUser는 관리자 뷰의 UI 정보를 담는 용도로 사용됨
         targetUser = {
-          // WS 연결은 사용하지 않으므로, userId는 임의로 설정 (필수 아님)
           userId: adminRoom.sellerId,
-          // 채팅창 제목에 사용될 정보
           nickName: `${adminRoom.sellerNickName} vs ${adminRoom.buyerNickName}`,
           role: 'USER',
-          // 관리자 뷰 상단에 사용될 정보
           userName: `판매자: ${adminRoom.sellerNickName} | 구매자: ${adminRoom.buyerNickName}`,
         };
 
       } else {
-        // [일반 유저] ChatRoomListDto를 선택한 경우
         const userRoom = item as ChatRoomListDto;
         targetUser = {
           userId: userRoom.targetUserId,
@@ -122,7 +186,6 @@ export default function UserChat({ user }: UserChatProps) {
         };
       }
     } else {
-      // User 타입은 이제 사용되지 않음. AdminChatRoomListDto와 ChatRoomListDto만 처리
       return;
     }
 
@@ -134,7 +197,7 @@ export default function UserChat({ user }: UserChatProps) {
   };
 
 
-  // [⭐ 수정] 검색(필터링) 로직
+  // 검색(필터링) 로직
   useEffect(() => {
     if (searchKeyword.trim() === "") {
       setFilteredList(isAdmin ? adminChatRooms : chatRooms);
@@ -144,7 +207,6 @@ export default function UserChat({ user }: UserChatProps) {
     const lowerCaseKeyword = searchKeyword.toLowerCase().trim();
 
     if (isAdmin) {
-      // [관리자] 판매자/구매자 닉네임, 상품 제목 검색
       const filtered = adminChatRooms.filter(r =>
         r.sellerNickName?.toLowerCase().includes(lowerCaseKeyword) ||
         r.buyerNickName?.toLowerCase().includes(lowerCaseKeyword) ||
@@ -152,7 +214,6 @@ export default function UserChat({ user }: UserChatProps) {
       );
       setFilteredList(filtered);
     } else {
-      // [일반 유저] 상대방 닉네임 또는 상품 제목 검색
       const filtered = chatRooms.filter((room: ChatRoomListDto) =>
         room.targetNickName?.toLowerCase().includes(lowerCaseKeyword) ||
         room.productTitle?.toLowerCase().includes(lowerCaseKeyword)
@@ -161,18 +222,10 @@ export default function UserChat({ user }: UserChatProps) {
     }
   }, [searchKeyword, isAdmin, adminChatRooms, chatRooms]);
 
-  // -----------------------------
-  // 2. 일반 유저 초기 설정 (Seller 자동 선택) - 상품 페이지 진입 시
-  // 이 로직은 1번 로딩 로직에 통합되었거나, 더 이상 필요하지 않을 수 있습니다. 
-  // 그러나 selectedUser가 null일 때 seller를 찾으려는 기존 로직은 유지합니다.
-  // -----------------------------
+  // 2. 일반 유저 초기 설정 (Seller 자동 선택)
   useEffect(() => {
     if (!user) return;
     if (!isAdmin && state?.sellerId && !selectedUser) {
-      // 이 fetchChatUsers 로직은 이제 ChatRoomListDto를 선택하는 handleRoomSelect와 충돌할 수 있습니다.
-      // 1. 목록 로딩 후 자동 선택 (1번 useEffect에 통합됨)
-      // 2. 새로운 채팅 시작 (fetchPrivateMessages에서 처리)
-      // 이 로직이 남아있다면 fetchPrivateMessages가 targetUserId로 메시지를 가져올 수 있도록 selectedUser를 설정하기 위함입니다.
       fetchChatUsers(user.userId)
         .then((data) => {
           const seller = data.find(u => u.userId === state?.sellerId);
@@ -182,9 +235,7 @@ export default function UserChat({ user }: UserChatProps) {
   }, [isAdmin, state, selectedUser, user]);
 
 
-  // -----------------------------
-  // 3. 개인채팅 초기 메시지 [⭐ 수정 ⭐]
-  // -----------------------------
+  // 3. 개인채팅 초기 메시지
   useEffect(() => {
     if (!user) return;
 
@@ -193,10 +244,8 @@ export default function UserChat({ user }: UserChatProps) {
         let msgData: PrivateChat[] = [];
 
         if (isAdmin && chatRoomId) {
-          // [관리자] ChatRoomId만으로 메시지 조회
-          msgData = await fetchPrivateMessagesByRoomId(chatRoomId); // ⭐ API 호출 가정
+          msgData = await fetchPrivateMessagesByRoomId(chatRoomId);
         } else if (selectedUser && selectedProductId) {
-          // [일반 유저] 기존 로직: 두 유저 ID와 상품 ID로 메시지 조회 (채팅방 생성 포함)
           msgData = await fetchPrivateMessages(
             user.userId,
             selectedUser.userId,
@@ -208,7 +257,6 @@ export default function UserChat({ user }: UserChatProps) {
 
         setMessages(msgData);
 
-        // 채팅방 ID 업데이트 (일반 유저의 경우 채팅방이 새로 생성되었을 때)
         if (!isAdmin && msgData.length > 0 && msgData[0].chatRoomId && !chatRoomId) {
           setChatRoomId(msgData[0].chatRoomId);
         }
@@ -217,19 +265,13 @@ export default function UserChat({ user }: UserChatProps) {
       }
     };
 
-    // selectedUser가 null이면 메시지 로딩을 시도하지 않습니다.
     if (selectedUser || (isAdmin && chatRoomId)) {
       loadPrivateMessages();
     }
   }, [user, selectedUser, selectedProductId, chatRoomId, isAdmin]);
 
 
-  // -----------------------------
-  // Product Info Fetching (변경 없음)
-  // -----------------------------
-  const [product, setProduct] = useState<any>(null);
-  const [imageError, setImageError] = useState(false);
-
+  // Product Info Fetching
   useEffect(() => {
     if (!selectedProductId) {
       setProduct(null);
@@ -241,20 +283,19 @@ export default function UserChat({ user }: UserChatProps) {
   }, [selectedProductId]);
 
 
-  // -----------------------------
-  // 4. WebSocket 연결 (변경 없음, 관리자 모드 제외)
-  // -----------------------------
+  // 4. WebSocket 연결 (관리자 모드 제외)
   useEffect(() => {
     if (!user || !selectedUser || isAdmin) return;
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const host = isLocal ? "localhost:8080" : window.location.host;
-    const url = `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}`;
+    const url = chatRoomId
+      ? `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}&chatRoomId=${chatRoomId}`
+      : `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}`;
+
 
     ws.current?.close();
     ws.current = new WebSocket(url);
-
-    // ... (onmessage 로직 동일)
 
     ws.current.onmessage = (event) => {
       try {
@@ -264,7 +305,6 @@ export default function UserChat({ user }: UserChatProps) {
         }
 
         if (data.type === "PRIVATE") {
-          // 현재 보고 있는 방이면 메시지 추가
           if (data.chatRoomId === chatRoomId || !chatRoomId) {
             setMessages((prev) => [...prev, data]);
             if (!chatRoomId && data.chatRoomId) setChatRoomId(data.chatRoomId);
@@ -276,20 +316,16 @@ export default function UserChat({ user }: UserChatProps) {
     };
 
     return () => ws.current?.close();
-  }, [user, selectedUser, isLocal, chatRoomId, isAdmin]); // selectedProductId는 URL에 사용되지 않으므로 제거 가능
+  }, [user, selectedUser, isLocal, chatRoomId, isAdmin]);
 
-  // -----------------------------
-  // 5. 자동 스크롤 (변경 없음)
-  // -----------------------------
+  // 5. 자동 스크롤
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // -----------------------------
-  // 6. 메시지 전송 (변경 없음, 관리자 모드 제외)
-  // -----------------------------
+  // 6. 메시지 전송 (관리자 모드 제외)
   const sendMessage = () => {
-    if (isAdmin) return; // 관리자 채팅 비활성화
+    if (isAdmin) return;
 
     if (!input.trim() || !user || !ws.current || !selectedUser) return;
     if (ws.current.readyState !== WebSocket.OPEN) return;
@@ -312,7 +348,7 @@ export default function UserChat({ user }: UserChatProps) {
     setInput("");
   };
 
-  // 관리자 메시지 삭제 (변경 없음)
+  // 관리자 메시지 삭제
   const handleDelete = async (chatId: number) => {
     if (!window.confirm("이 메시지를 삭제하시겠습니까?")) return;
     try {
@@ -324,9 +360,7 @@ export default function UserChat({ user }: UserChatProps) {
   };
 
 
-  // -----------------------------
-  // 7. 화면 렌더링 [⭐ 수정 ⭐]
-  // -----------------------------
+  // 7. 화면 렌더링
   return (
     <div className="max-w-[1280px] p-0 mt-[20px] mx-auto flex h-[calc(100vh-180px)] border border-[#ccc] rounded-lg overflow-hidden bg-white shadow-sm">
 
@@ -403,26 +437,25 @@ export default function UserChat({ user }: UserChatProps) {
         </div>
       </div>
 
-      {/* 🔹 채팅 영역 전체 컨테이너 (flex-1 flex flex-col로 수정) */}
+      {/* 🔹 채팅 영역 전체 컨테이너 */}
       <div className="flex-1 flex flex-col">
-        {!selectedUser ? ( // selectedUser가 null이면
+        {!selectedUser ? (
           <div className="flex-1 flex items-center justify-center text-gray-500">채팅 상대를 선택해주세요.</div>
-        ) : ( // selectedUser가 null이 아니면 (빨간 줄 오류 해결)
+        ) : (
           <>
             {/* 채팅 헤더 */}
             <div className="p-4 border-b border-[#eee] bg-white flex justify-between items-center">
               <div className="flex flex-col">
                 <h2 className="text-lg font-bold">
-                  {/* selectedUser!를 사용하여 null이 아님을 TypeScript에 알림 */}
                   {selectedUser!.nickName}
                   <span className="text-sm font-normal text-gray-500 ml-2">
                     {isAdmin ? `(채팅방 ID: ${chatRoomId})` : '님과의 대화'}
                   </span>
                 </h2>
                 {/* 관리자: 판매자/구매자 상세 정보 표시 */}
-                {isAdmin && selectedUser!.userName && ( // selectedUser! 사용
+                {isAdmin && selectedUser!.userName && (
                   <p className="text-xs text-gray-600 mt-1">
-                    {selectedUser!.userName} // selectedUser! 사용
+                    {selectedUser!.userName}
                   </p>
                 )}
               </div>
@@ -431,7 +464,7 @@ export default function UserChat({ user }: UserChatProps) {
                 <button
                   className="text-xs bg-red-50 text-red-500 px-3 py-1 rounded border border-red-200 hover:bg-red-100 flex-shrink-0 ml-4"
                   onClick={() => {
-                    if (window.confirm(`'${selectedUser!.nickName}' 채팅방의 사용자들을 제재하시겠습니까?`)) { // selectedUser! 사용
+                    if (window.confirm(`'${selectedUser!.nickName}' 채팅방의 사용자들을 제재하시겠습니까?`)) {
                       alert("제재 기능 미구현");
                     }
                   }}
@@ -445,7 +478,6 @@ export default function UserChat({ user }: UserChatProps) {
                 className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-3 flex items-center gap-3 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => navigate(`/products/${product.productId}`)}
               >
-                {/* ... 상품 정보 렌더링 로직 (생략) ... */}
                 <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-100 flex items-center justify-center">
                   {product.images?.[0]?.imagePath && !imageError ? (
                     <img
@@ -480,46 +512,119 @@ export default function UserChat({ user }: UserChatProps) {
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
               {messages.map((msg, i) => {
                 const isMe = msg.user?.userId === user?.userId;
-                if (msg.isDeleted) {
+                // ⛔ [TS6133 해결]: 사용되지 않는 msgUserId 제거
+                // const msgUserId = msg.user?.userId; 
+                const isDeleted = msg.isDeleted;
+
+                const displayName = isAdmin && msg.user?.userName
+                  ? `${msg.user.nickName} (${msg.user.userName})`
+                  : msg.user?.nickName;
+
+                if (isDeleted) {
                   return (
                     <div key={i} className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}>
-                      <div className="bg-gray-200 text-gray-400 px-4 py-2 rounded-lg text-sm italic">
-                        삭제된 메시지입니다.
+                      <div className="bg-gray-200 text-gray-400 px-4 py-2 rounded-lg text-sm italic border border-gray-300">
+                        {isAdmin ? '관리자에 의해 삭제된 메시지입니다.' : '삭제된 메시지입니다.'}
                       </div>
                     </div>
                   );
                 }
+
                 return (
                   <div key={i} className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}>
-                    <div
-                      className={`max-w-[70%] group relative px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-all hover:shadow-md
-                        ${isMe ? "bg-[#333] text-white rounded-br-none" : "bg-white border border-gray-200 text-black rounded-bl-none"}
-                      `}
-                      onClick={() => {
-                        if (isAdmin) {
-                          handleDelete(msg.chatId);
-                        }
-                      }}
-                      title={isAdmin ? "클릭하여 메시지 삭제" : ""}
-                    >
-                      {/* [추가] 관리자에게는 누가 보낸 메시지인지 표시 */}
-                      {isAdmin && (
-                        <div className={`text-[10px] mb-1 ${isMe ? "text-gray-300" : "text-gray-500"}`}>
-                          {msg.nickName}
+                    <div className={`max-w-[70%] relative flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+
+                      {/* 닉네임 표시 및 메뉴/프로필 이동 버튼을 감싸는 div */}
+                      {!isMe && msg.user && (
+                        <div className="flex items-center gap-1 mb-1 relative">
+
+                          {/* 1. 메뉴 토글 버튼 (⋮) - 이 부분을 클릭했을 때만 메뉴가 떠야 합니다. */}
+                          {isAdmin && (
+                            <div
+                              className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-200"
+                              onClick={(e) => {
+                                // *** 이 부분이 핵심입니다: 이벤트 버블링 차단 ***
+                                e.stopPropagation();
+                                toggleUserMenu(msg.chatId, e); // 현재 메시지 ID로 상태 토글
+                              }}
+                            >
+                              ⋮
+                            </div>
+                          )}
+
+                          {/* 2. 닉네임 영역 (프로필 이동 기능만) */}
+                          <div
+                            className="text-xs text-gray-500 font-bold hover:text-[#111] hover:underline cursor-pointer px-1 py-1"
+                            onClick={(e) => {
+                              e.stopPropagation(); // 혹시 모를 상위 이벤트 전파 방지
+                              navigate(`/users/${msg.user!.userId}`);
+                            }}
+                          >
+                            {displayName}
+                          </div>
+
+                          {/* 3. 관리자 메뉴 팝업 (조건: 현재 메시지 ID와 일치할 때만) */}
+                          {isAdmin && activeMenuMessageId === msg.chatId && (
+                            <div
+                              className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-300 rounded shadow-md z-50"
+                              style={{ left: '-5px' }}
+                              onClick={(e) => e.stopPropagation()} // 메뉴 내부 클릭 시 메뉴 닫힘 방지
+                            >
+                              <div
+                                className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                onClick={() => handleWarn(msg.user!)}
+                              >
+                                ⚠️ 경고
+                              </div>
+                              <div
+                                className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                onClick={() => handleBan(msg.user!)}
+                              >
+                                ⛔ 밴
+                              </div>
+                              <div
+                                className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                onClick={() => {
+                                  navigate(`/users/${msg.user!.userId}`);
+                                  setActiveMenuMessageId(null);
+                                }}
+                              >
+                                👤 프로필 확인
+                              </div>
+                            </div>
+                          )}
+
                         </div>
                       )}
-                      <div className="text-sm break-all whitespace-pre-wrap">{msg.content}</div>
-                      <div className={`text-[10px] mt-1 text-right ${isMe ? "text-gray-400" : "text-gray-400"}`}>
-                        {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </div>
 
-                      {isAdmin && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDelete(msg.chatId); }}
-                          className="absolute top-[-5px] right-[-5px] w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-md"
-                          title="삭제"
-                        >✕</button>
-                      )}
+                      {/* 메시지 내용 버블 */}
+                      <div
+                        className={`max-w-full group relative px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-all hover:shadow-md
+                          ${isMe ? "bg-[#333] text-white rounded-br-none" : "bg-white border border-gray-200 text-black rounded-bl-none"}
+                        `}
+                        // 관리자 모드에서 클릭 시 메시지 삭제되던 로직은 명시적인 삭제 버튼으로 대체
+                        title={isAdmin ? "관리자 모드 (메시지 삭제는 ✕ 버튼 이용)" : ""}
+                      >
+                        {/* 관리자에게는 누가 보낸 메시지인지 표시 (버블 내부) */}
+                        {isAdmin && isMe && (
+                          <div className={`text-[10px] mb-1 ${isMe ? "text-gray-300" : "text-gray-500"}`}>
+                            {msg.nickName}
+                          </div>
+                        )}
+                        <div className="text-sm break-all whitespace-pre-wrap">{msg.content}</div>
+                        <div className={`text-[10px] mt-1 text-right ${isMe ? "text-gray-400" : "text-gray-400"}`}>
+                          {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+
+                        {/* 관리자 메시지 삭제 버튼 */}
+                        {isAdmin && (
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDelete(msg.chatId); }}
+                            className="absolute top-[-5px] right-[-5px] w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-md"
+                            title="삭제"
+                          >✕</button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
