@@ -369,6 +369,7 @@ export interface PrivateChat {
   chatRoomId: number;       // ★ 없으면 추가
   targetUserId?: number;    // ★ websocket 메시지 받을 때 필요함
   isDeleted: boolean;       // Soft Delete
+  nickName?: string;
 }
 
 // 백엔드 PublicChat 엔티티 기반
@@ -442,3 +443,25 @@ export interface ChatRoomListDto {
   lastMessageTime: string; // ISO 8601 string
   unreadCount: number;
 }
+
+// AdminChatRoomListDto 정의 (백엔드와 필드 일치)
+export interface AdminChatRoomListDto {
+    chatRoomId: number;
+    productId: number;
+    productTitle: string;
+    
+    // 판매자 정보
+    sellerId: number;
+    sellerNickName: string;
+    
+    // 구매자 정보
+    buyerId: number;
+    buyerNickName: string;
+    
+    // 메시지 정보
+    lastMessage: string;
+    lastMessageTime: string; // ISO String
+}
+
+// 목록 타입을 유니온으로 재정의
+export type ChatListItem = ChatRoomListDto | AdminChatRoomListDto | User;

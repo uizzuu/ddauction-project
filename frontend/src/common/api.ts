@@ -3,6 +3,7 @@ import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
 import type { ArticleType, Notification } from './types';
 import type { ChatRoomListDto } from "./types";
+import type { AdminChatRoomListDto, PrivateChat } from "./types";
 
 
 
@@ -558,6 +559,7 @@ export async function getProducts(): Promise<TYPE.Product[]> {
 export async function createProduct(
   productData: TYPE.CreateProductRequest
 ): Promise<TYPE.Product> {
+  console.error("인증 오류: localStorage에 토큰이 없어 API 호출을 건너뜁니다.");
   const token = localStorage.getItem('token');
 
   // 2. 토큰 유효성 검사
@@ -2594,9 +2596,75 @@ export async function banUser(userId: number, adminToken: string, adminId: numbe
 }
 
 export async function fetchMyChatRooms(userId: number): Promise<ChatRoomListDto[]> {
-    const response = await fetch(`${API_BASE_URL}/api/chats/private/rooms/${userId}`);
+  const response = await fetch(`${API_BASE_URL}/api/chats/private/rooms/${userId}`);
+  if (!response.ok) {
+    throw new Error("Failed to fetch chat rooms");
+  }
+  return response.json();
+}
+
+// [2] 관리자용 ChatRoomId 기준 메시지 조회
+export async function fetchPrivateMessagesByRoomId(chatRoomId: number): Promise<PrivateChat[]> {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error("메시지 조회 실패: 인증 토큰 누락");
+
+    // 🚨 [경로 수정]: /api/chats/admin/... 로 경로 수정
+    const response = await fetch(`${API_BASE_URL}/api/chats/admin/messages/${chatRoomId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+        },
+    });
+
     if (!response.ok) {
-        throw new Error("Failed to fetch chat rooms");
+        // 관리자 메시지 조회도 401/403 오류 처리가 필요함
+        // throw new Error(`채팅방 메시지 조회 실패 (Status: ${response.status})`); // 401 또는 403 오류 발생 시 더 자세한 정보 제공
+        throw new Error(`채팅방 메시지 조회 실패 (Status: ${response.status}). 인증/권한 확인이 필요합니다.`);
     }
     return response.json();
+}
+
+export async function fetchAdminAllChatRooms(): Promise<AdminChatRoomListDto[]> {
+  const response = await fetch(`${API_BASE_URL}/api/chats/admin/rooms`, {
+    // [필수] 인증 헤더 추가 (토큰이 저장된 곳에서 가져와야 함)
+    headers: {
+      'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // 1. HTTP 상태 코드 확인
+  if (!response.ok) {
+    // [오류 처리 강화] HTML 응답을 감지하여 JSON 파싱 시도를 막음
+    const contentType = response.headers.get('Content-Type');
+
+    if (contentType && contentType.includes('text/html')) {
+      // 백엔드가 HTML(로그인 페이지/오류 페이지)을 보냈을 때
+      if (response.status === 401 || response.status === 403) {
+        // 토큰 관련 오류일 가능성이 높으므로, 명확하게 알림
+        throw new Error(`[API Error] Status: ${response.status}. 인증/권한 오류: 로그인 세션이 만료되었거나 관리자 권한이 없습니다. (서버가 HTML 응답)`);
+      } else {
+        throw new Error(`[API Error] Status: ${response.status}. 예상치 못한 HTML 응답을 받았습니다. 백엔드 경로 또는 설정 확인이 필요합니다.`);
+      }
+    }
+
+    // HTML이 아니면 일반적인 오류 메시지를 반환하도록 시도
+    const errorText = await response.text();
+    try {
+      const errorData = JSON.parse(errorText);
+      throw new Error(errorData.message || `API Error: ${response.status} - ${errorText}`);
+    } catch {
+      throw new Error(`API Error: ${response.status} - ${errorText}`);
+    }
+  }
+
+  // 2. 응답 본문을 JSON으로 파싱
+  // 이 시점에서 파싱 오류가 나면 (현재 겪고 계신 오류)
+  // 1번의 if (!response.ok) 조건에서 HTML이 제대로 걸러지지 않았거나,
+  // Content-Type 헤더가 잘못 설정되었을 가능성이 있습니다.
+  try {
+    return await response.json() as AdminChatRoomListDto[];
+  } catch (e) {
+    throw new Error(`[JSON Parse Error] 서버 응답을 JSON으로 파싱하는 데 실패했습니다. 응답이 비어있거나, JSON 형식이 아닙니다.`);
+  }
 }

@@ -35,7 +35,7 @@ public class ChattingService {
     private final ProductRepository productRepository;
     private final UserBanRepository userBanRepository;
     public boolean isUserBanned(Long userId) {
-        return userBanRepository.existsByUser_UserIdAndActiveTrue(userId); // 여기 이름 꼭 똑같이
+        return userBanRepository.existsByUser_UserIdAndActiveTrue(userId);
     }
 
 
@@ -99,6 +99,15 @@ public class ChattingService {
         // 시간순 정렬 후 반환
         return allMessages.stream()
                 .sorted(Comparator.comparing(PrivateChat::getCreatedAt))
+                .map(PrivateChatDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<PrivateChatDto> getPrivateChatsByRoomId(Long chatRoomId) {
+        List<PrivateChat> messages = privateChatRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId);
+
+        // isDeleted 필터링은 프론트엔드에서 처리한다고 가정하고, 여기서는 그냥 반환합니다.
+        return messages.stream()
                 .map(PrivateChatDto::fromEntity)
                 .collect(Collectors.toList());
     }
@@ -239,5 +248,49 @@ public class ChattingService {
                     // * unreadCount 등은 별도 로직/쿼리 필요 (생략)
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    // ===================== 관리자: 모든 채팅방 목록 조회 [⭐ 추가 ⭐] =====================
+    /**
+     * 관리자 전용: 시스템 내의 모든 1:1 채팅방 목록을 판매자/구매자 정보를 포함하여 조회합니다.
+     */
+    public List<AdminChatRoomListDto> getAllAdminChatRooms() {
+        // 모든 채팅방을 가져옵니다. (JOIN FETCH를 사용하여 N+1 문제 방지 권장)
+        // ChatRoom 엔티티에 Seller, Sender, Product 정보가 Eager 로딩되거나,
+        // Repository에 JOIN FETCH 쿼리를 추가했다고 가정합니다.
+        List<ChatRoom> rooms = chatRoomRepository.findAll();
+
+        return rooms.stream()
+                .map(room -> {
+                    // 1. 마지막 메시지 가져오기
+                    PrivateChat lastChat = privateChatRepository.findTopByChatRoomIdOrderByCreatedAtDesc(room.getId())
+                            .orElse(null);
+
+                    // 2. DTO 빌드
+                    return AdminChatRoomListDto.builder()
+                            .chatRoomId(room.getId())
+
+                            // 상품 정보
+                            .productId(room.getProduct().getProductId())
+                            .productTitle(room.getProduct().getTitle())
+
+                            // 판매자 정보 (Seller 엔티티를 판매자로 가정)
+                            .sellerId(room.getSeller().getUserId())
+                            .sellerNickName(room.getSeller().getNickName())
+                            // .sellerName(room.getSeller().getUserName()) // 필요시 추가
+
+                            // 구매자 정보 (Sender 엔티티를 구매자로 가정)
+                            .buyerId(room.getSender().getUserId())
+                            .buyerNickName(room.getSender().getNickName())
+                            // .buyerName(room.getSender().getUserName()) // 필요시 추가
+
+                            // 메시지 정보
+                            .lastMessage(lastChat != null ? lastChat.getContent() : "")
+                            .lastMessageTime(lastChat != null ? lastChat.getCreatedAt() : room.getCreatedAt())
+                            .build();
+                })
+                // 최근 활동 시간 순으로 정렬
+                .sorted(Comparator.comparing(AdminChatRoomListDto::getLastMessageTime, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
     }
 }

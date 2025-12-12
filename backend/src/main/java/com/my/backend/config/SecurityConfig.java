@@ -114,7 +114,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/chats/**").permitAll()
                         .requestMatchers("/api/business/verify").permitAll()
                         .requestMatchers("/api/sms/send", "/api/sms/verify").permitAll()
-
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/qrcode/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
                         .requestMatchers("/api/articles/**").permitAll()

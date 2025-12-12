@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.my.backend.service.ChattingService;
 
@@ -99,4 +100,16 @@ public class ChattingController {
         return ResponseEntity.ok().build();
     }
 
+
+    // ===================== Admin: 모든 채팅방 목록 조회 [⭐ 추가 ⭐] =====================
+    @GetMapping("/admin/rooms")
+    public ResponseEntity<List<AdminChatRoomListDto>> getAllAdminChatRooms() {
+        return ResponseEntity.ok(chatService.getAllAdminChatRooms());
+    }
+
+    // ===================== Admin: 특정 채팅방 메시지 조회 (ChatRoomId 기준) [⭐ 추가 ⭐] =====================
+    @GetMapping("/admin/messages/{chatRoomId}")
+    public ResponseEntity<List<PrivateChatDto>> getPrivateChatsByRoomId(@PathVariable Long chatRoomId) {
+        return ResponseEntity.ok(chatService.getPrivateChatsByRoomId(chatRoomId));
+    }
 }
