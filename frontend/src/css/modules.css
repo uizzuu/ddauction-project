@@ -429,6 +429,10 @@ button:disabled {
   @apply bottom-[10px] z-[2];
 }
 
+.product-slider .slick-dots li {
+  @apply w-auto mx-[3px] !important;
+}
+
 /* slider arrows */
 .slick-prev,
 .slick-next {

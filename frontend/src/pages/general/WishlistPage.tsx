@@ -11,6 +11,7 @@ export default function WishlistPage() {
     const [wishlistItems, setWishlistItems] = useState<Product[]>([]);
     const [selectedItems, setSelectedItems] = useState<number[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isEditMode, setIsEditMode] = useState(false);
 
     useEffect(() => {
         const loadWishlist = async () => {
@@ -70,6 +71,11 @@ export default function WishlistPage() {
             setSelectedItems([]);
             // 이벤트 발생 (헤더 업데이트용 - 만약 찜 카운트가 있다면)
             window.dispatchEvent(new Event("cart-updated"));
+
+            // 삭제 후 아이템이 없으면 편집 모드 종료
+            if (wishlistItems.length - selectedItems.length === 0) {
+                setIsEditMode(false);
+            }
         } catch (err) {
             console.error("선택 항목 삭제 실패:", err);
             alert("삭제 중 오류가 발생했습니다.");
@@ -82,10 +88,23 @@ export default function WishlistPage() {
 
     return (
         <div className="containerr md:px-0 mx-auto px-4 py-8 min-h-screen">
-            <h2 className="text-2xl font-bold text-[#111] mb-8 flex items-center gap-2">
-                <Heart className="text-[#666]" />
-                찜 목록
-            </h2>
+            <div className="flex items-center justify-between mb-8">
+                <h2 className="text-2xl font-bold text-[#111] flex items-center gap-2">
+                    <Heart className="text-[#666]" />
+                    찜 목록
+                </h2>
+                {wishlistItems.length > 0 && (
+                    <button
+                        onClick={() => {
+                            setIsEditMode(!isEditMode);
+                            if (isEditMode) setSelectedItems([]); // 편집 모드 종료 시 선택 초기화
+                        }}
+                        className="text-sm font-medium text-gray-500 underline hover:text-black"
+                    >
+                        {isEditMode ? "완료" : "편집"}
+                    </button>
+                )}
+            </div>
 
             {wishlistItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 bg-[#f9f9f9] rounded-lg border border-[#eee]">
@@ -100,45 +119,52 @@ export default function WishlistPage() {
                 </div>
             ) : (
                 <div>
-                    {/* Select All Tool Bar */}
-                    <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-                        <div className="flex items-center gap-2">
-                            <CheckboxStyle
-                                checked={selectedItems.length === wishlistItems.length && wishlistItems.length > 0}
-                                onChange={() => handleSelectAll()}
-                                label={`전체 선택 (${selectedItems.length}/${wishlistItems.length})`}
-                            />
+                    {/* Select All Tool Bar - Only Visible in Edit Mode */}
+                    {isEditMode && (
+                        <div className="flex items-center justify-between pb-2 border-b border-gray-200 mb-6">
+                            <div className="flex items-center gap-2">
+                                <CheckboxStyle
+                                    checked={selectedItems.length === wishlistItems.length && wishlistItems.length > 0}
+                                    onChange={() => handleSelectAll()}
+                                    label={`전체 선택 (${selectedItems.length}/${wishlistItems.length})`}
+                                />
+                            </div>
+                            <button
+                                onClick={handleRemoveSelected}
+                                className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded transition-colors ${selectedItems.length > 0
+                                    ? "text-red-500 hover:bg-red-50"
+                                    : "text-gray-300 cursor-not-allowed"
+                                    }`}
+                                disabled={selectedItems.length === 0}
+                            >
+                                <Trash2 size={16} />
+                                선택 삭제
+                            </button>
                         </div>
-                        <button
-                            onClick={handleRemoveSelected}
-                            className={`flex items-center gap-1 text-sm font-medium px-3 py-1.5 rounded transition-colors ${selectedItems.length > 0
-                                ? "text-red-500 hover:bg-red-50"
-                                : "text-gray-300 cursor-not-allowed"
-                                }`}
-                            disabled={selectedItems.length === 0}
-                        >
-                            <Trash2 size={16} />
-                            선택 삭제
-                        </button>
-                    </div>
+                    )}
 
                     {/* Grid Layout */}
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
                         {wishlistItems.map((item) => (
                             <div key={item.productId} className="relative group/wish">
-                                {/* Checkbox Overlay - Moved outside/above card as requested */}
-                                <div>
-                                    <div onClick={(e) => e.stopPropagation()}>
+                                {/* Checkbox Overlay - Top Right (Replaces Heart Icon visually) */}
+                                {isEditMode && (
+                                    <div className="absolute top-3 right-3 z-20" onClick={(e) => e.stopPropagation()}>
                                         <CheckboxStyle
                                             checked={selectedItems.includes(item.productId)}
                                             onChange={() => handleSelect(item.productId)}
+                                            className="bg-white rounded p-0.5 shadow-sm"
                                         />
                                     </div>
-                                </div>
+                                )}
 
-                                {/* Product Card */}
-                                <div className={selectedItems.includes(item.productId) ? "opacity-100" : ""}>
-                                    <ProductCard key={item.productId} product={item} />
+                                {/* Product Card - hideHeart in Edit Mode */}
+                                <div className={isEditMode && selectedItems.includes(item.productId) ? "opacity-100" : ""}>
+                                    <ProductCard
+                                        key={item.productId}
+                                        product={item}
+                                        hideHeart={isEditMode}
+                                    />
                                 </div>
                             </div>
                         ))}

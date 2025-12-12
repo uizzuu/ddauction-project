@@ -12,9 +12,10 @@ type Props = {
     rankChange?: "UP" | "DOWN" | "SAME";
     mergedBids?: Bid[];       // 외부에서 계산된 모든 입찰 (선택적)
     highestBid?: number;      // 최고 입찰가 (선택적)
+    hideHeart?: boolean;      // 찜 아이콘 숨김 여부 (편집 모드 등)
 };
 
-export default function ProductCard({ product, rank, rankChange, mergedBids: externalBids, highestBid: externalHighestBid }: Props) {
+export default function ProductCard({ product, rank, rankChange, mergedBids: externalBids, highestBid: externalHighestBid, hideHeart }: Props) {
     const navigate = useNavigate();
     const [isLiked, setIsLiked] = useState(!!product.isBookmarked);
 
@@ -190,18 +191,20 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                 </div>
 
                 {/* Top-Right Heart Icon */}
-                <button
-                    className="absolute top-3 right-3 z-10 hover:scale-110 transition-transform"
-                    onClick={handleLike}
-                >
-                    <Heart
-                        size={20}
-                        className={isLiked
-                            ? "fill-red-500 text-red-500 drop-shadow-sm"
-                            : ""}
-                        color={isLiked ? undefined : (isDarkImage ? "white" : "#111")}
-                    />
-                </button>
+                {!hideHeart && (
+                    <button
+                        className="absolute top-3 right-3 z-10 hover:scale-110 transition-transform"
+                        onClick={handleLike}
+                    >
+                        <Heart
+                            size={20}
+                            className={isLiked
+                                ? "fill-red-500 text-red-500 drop-shadow-sm"
+                                : ""}
+                            color={isLiked ? undefined : (isDarkImage ? "white" : "#111")}
+                        />
+                    </button>
+                )}
             </div>
 
             {/* 2. Content Area */}
