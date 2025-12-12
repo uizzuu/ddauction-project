@@ -69,7 +69,7 @@ export default function ProductDetail({ user }: Props) {
         <div className="max-w-[1280px] mx-auto px-4 py-8 md:px-0">
 
             {/* Back Button */}
-            <button
+            {/* <button
                 onClick={() => navigate(-1)}
                 className="mb-6 flex items-center text-gray-500 hover:text-black transition-colors font-medium"
             >
@@ -77,7 +77,7 @@ export default function ProductDetail({ user }: Props) {
                     <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
                 </svg>
                 목록으로 돌아가기
-            </button>
+            </button> */}
 
             {/* Top Section: 3-Column Layout */}
             {/* Height fix: calc(100vh - header - padding) approx. To force fit, we might use max-h and allow internal scroll if needed, or just layout sizing. User asked for data to "fit in". */}

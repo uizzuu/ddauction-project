@@ -666,8 +666,8 @@ export default function Header({ user, setUser }: Props) {
               />
 
               {cartItemCount > 0 && (
-                <div className="absolute top-[0.5px] -right-[0.5px] flex items-center justify-center w-4 h-4 bg-[--color-alert-red] rounded-full">
-                  <div className="font-medium text-[10px] leading-[7px] text-white">{cartItemCount}</div>
+                <div className="absolute top-[0.5px] -right-[0.5px] w-4 h-4 bg-[--color-alert-red] rounded-full flex justify-center items-center ">
+                  <div className="font-bold text-[10px] leading-[5px] text-white text-center">{cartItemCount}</div>
                 </div>
               )}
             </NavLink>

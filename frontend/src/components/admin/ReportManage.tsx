@@ -15,7 +15,7 @@ export default function ReportManage({
       <h2 className="text-xl font-bold text-[#111] mb-6">신고 관리</h2>
 
       {/* Table */}
-      <div className="border border-[#eee] rounded-lg overflow-hidden">
+      <div className="border border-[#eee] rounded-lg">
         <table className="w-full">
           <thead>
             <tr className="bg-[#f9f9f9] border-b-2 border-[#eee]">

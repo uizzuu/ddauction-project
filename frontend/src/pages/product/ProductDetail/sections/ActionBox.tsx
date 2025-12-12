@@ -109,8 +109,8 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
                     <div className="flex flex-col">
                         <div className="space-y-3">
                             {/* ✅ Delivery Info - 수정됨 */}
-                            <div className="flex justify-between items-center text-sm p-3 bg-gray-50 rounded-lg">
-                                <span className="text-gray-500 font-medium">배송 방법</span>
+                            <div className="flex gap-3 justify-between items-start text-sm p-3 bg-gray-50 rounded-lg">
+                                <span className="text-gray-500 font-medium text-nowrap">배송방법</span>
                                 <span className={`font-bold ${product.deliveryIncluded === true ? 'text-green-600' : 'text-gray-800'}`}>
                                     {getDeliveryText()}
                                 </span>
@@ -145,7 +145,7 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
                             onClick={() => navigate(`/payment?productId=${product.productId}`)}
                             className="flex-1 bg-[#111] text-white rounded-xl font-bold hover:bg-black transition-all shadow-lg shadow-black/10"
                         >
-                            구매하기
+                            바로구매
                         </button>
                     </div>
                 ) : product.productType === 'USED' ? (

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchRecentPublicChats, deletePublicChat, banUser } from "../../common/api";
 import type { PublicChat, User, ChatMessagePayload } from "../../common/types";
-import { UserProfileModal } from "../../components/modal/UserProfileModal";
+import { useNavigate } from "react-router-dom";
 
 // -----------------------------
 // PublicChat 컴포넌트
@@ -11,12 +11,11 @@ type Props = {
 };
 
 export default function PublicChat({ user }: Props) {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<PublicChat[]>([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const ws = useRef<WebSocket | null>(null);
-
-  const [profileModalUser, setProfileModalUser] = useState<User | null>(null); // 프로필 모달 상태
 
   const isLocal = window.location.hostname === "localhost";
 
@@ -77,29 +76,6 @@ export default function PublicChat({ user }: Props) {
     } catch (err) {
       console.error(err);
       alert("밴 처리 중 오류가 발생했습니다.");
-    }
-  };
-
-  // 프로필 모달 열기
-  const viewProfile = async (clickedUser: User) => {
-    try {
-      const token = localStorage.getItem("token"); // 관리자 토큰
-      if (!token) throw new Error("관리자 토큰이 없습니다.");
-
-      const res = await fetch(`/api/users/${clickedUser.userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // 토큰 반드시 넣어야 서버에서 전체 정보 줌
-        },
-      });
-
-      if (!res.ok) throw new Error("유저 정보를 불러오지 못했습니다.");
-
-      const fullUser: User = await res.json();
-      setProfileModalUser(fullUser); // 모달에 전체 정보 세팅
-      setActiveMenuMessageId(null);
-    } catch (err) {
-      console.error(err);
-      alert("유저 정보를 불러오는 중 오류가 발생했습니다.");
     }
   };
 
@@ -196,21 +172,32 @@ export default function PublicChat({ user }: Props) {
               <div key={i} className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}>
                 <div className={`max-w-[70%] relative flex flex-col ${isMe ? "items-end" : "items-start"}`}>
 
-                  {/* 관리자: 닉네임 + 메뉴 버튼 */}
-                  {!isMe && isAdmin && msg.user && (
+                  {/* 닉네임 표시 (관리자 여부 상관없이 모든 유저에게 표시, 본인 제외) */}
+                  {!isMe && msg.user && (
                     <div
                       className="flex items-center gap-1 mb-1 cursor-pointer hover:bg-gray-100 px-2 py-1 rounded relative"
-                      onClick={(e) => toggleUserMenu(msg.publicChatId, e)}
+                      onClick={(e) => {
+                        if (isAdmin) {
+                          toggleUserMenu(msg.publicChatId, e);
+                        } else {
+                          // 일반 유저: 바로 프로필 이동
+                          navigate(`/users/${msg.user!.userId}`);
+                        }
+                      }}
                     >
-                      <div className="text-gray-400 hover:text-gray-600">
-                        ⋮
-                      </div>
-                      <div className="text-xs text-gray-500 font-bold hover:text-red-500 hover:underline">
+                      {/* 관리자만 메뉴 아이콘 표시 */}
+                      {isAdmin && (
+                        <div className="text-gray-400 hover:text-gray-600">
+                          ⋮
+                        </div>
+                      )}
+
+                      <div className="text-xs text-gray-500 font-bold hover:text-[#111] hover:underline">
                         {displayName}
                       </div>
 
                       {/* 관리자 메뉴 (해당 메시지에만 표시) */}
-                      {activeMenuMessageId === msg.publicChatId && (
+                      {isAdmin && activeMenuMessageId === msg.publicChatId && (
                         <div
                           className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-300 rounded shadow-md z-50"
                           onClick={(e) => e.stopPropagation()}
@@ -229,7 +216,10 @@ export default function PublicChat({ user }: Props) {
                           </div>
                           <div
                             className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                            onClick={() => viewProfile(msg.user!)}
+                            onClick={() => {
+                              navigate(`/users/${msg.user!.userId}`);
+                              setActiveMenuMessageId(null);
+                            }}
                           >
                             👤 프로필 확인
                           </div>
@@ -300,17 +290,6 @@ export default function PublicChat({ user }: Props) {
             <div className="p-3 bg-gray-100 text-center text-gray-500 text-sm rounded-lg border border-gray-200">
               🔒 관리자 모드: 메시지를 클릭하여 삭제하거나, 유저 이름 옆 ⋮ 버튼으로 제재 메뉴 사용
             </div>
-          )
-        }
-
-        {/* 프로필 모달 */}
-        {
-          profileModalUser && (
-            <UserProfileModal
-              user={profileModalUser}
-              isOpen={!!profileModalUser}
-              onClose={() => setProfileModalUser(null)}
-            />
           )
         }
       </div>

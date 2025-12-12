@@ -25,7 +25,7 @@ export default function CheckboxStyle({ id, checked, onChange, label, disabled, 
 
                 {/* Custom Checkbox Box */}
                 <div className={`
-                    w-5 h-5 rounded border-[1.5px] flex items-center justify-center transition-all duration-200
+                    w-4 h-4 rounded border-[1.5px] flex items-center justify-center transition-all duration-200
                     ${checked
                         ? "bg-black border-black text-white"
                         : "bg-white border-gray-300 text-transparent hover:border-black"
@@ -37,7 +37,7 @@ export default function CheckboxStyle({ id, checked, onChange, label, disabled, 
 
                 {/* Label */}
                 {label && (
-                    <span className={`ml-3 text-sm font-medium transition-colors ${checked ? "text-black" : "text-gray-600"} group-hover:text-black`}>
+                    <span className={`ml-2 text-sm font-medium transition-colors ${checked ? "text-black" : "text-gray-600"} group-hover:text-black`}>
                         {label}
                     </span>
                 )}

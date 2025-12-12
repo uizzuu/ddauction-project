@@ -448,7 +448,7 @@ export default function ArticleDetail({ user }: Props) {
   return (
     <div className="max-w-[1280px] mx-auto py-8">
       {/* Back Button */}
-      <button
+      {/* <button
         onClick={() => navigate("/community")}
         className="mb-6 flex items-center text-gray-500 hover:text-black transition-colors font-medium"
       >
@@ -456,7 +456,7 @@ export default function ArticleDetail({ user }: Props) {
           <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
         </svg>
         목록으로 돌아가기
-      </button>
+      </button> */}
 
       {/* 글 영역 */}
       <div className="bg-white border border-[#ddd] rounded-lg p-6 shadow-sm mb-6">
