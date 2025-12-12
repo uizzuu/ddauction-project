@@ -7,12 +7,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.my.backend.ban.UserBanRepository;
+import com.my.backend.dto.*;
 import org.springframework.stereotype.Service;
 
-import com.my.backend.dto.ChatRoomDto;
-import com.my.backend.dto.PrivateChatDto;
-import com.my.backend.dto.PublicChatDto;
-import com.my.backend.dto.SimpleUserDto;
 import com.my.backend.entity.ChatRoom;
 import com.my.backend.entity.PrivateChat;
 import com.my.backend.entity.Product;
@@ -202,5 +199,45 @@ public class ChattingService {
                 .map(PrivateChatDto::fromEntity)
                 .sorted(Comparator.comparing(PrivateChatDto::getCreatedAt))
                 .collect(Collectors.toList());
+    }
+
+    // ===================== 채팅방 목록 조회 (판매자/구매자 모두 사용) =====================
+    public List<ChatRoomListDto> getMyChatRooms(Long userId) {
+        // 1. 내가 Sender(구매자)이거나 Seller(판매자)인 모든 채팅방을 찾습니다.
+        List<ChatRoom> rooms = chatRoomRepository.findBySenderUserIdOrSellerUserIdOrderByCreatedAtDesc(userId, userId);
+
+        // 2. DTO로 변환
+        return rooms.stream().map(room -> {
+
+            // 상대방(Target) 결정
+            Users targetUser;
+            // 로그인한 유저가 이 방의 구매자(sender)라면, 상대는 판매자(seller)
+            if (room.getSender().getUserId().equals(userId)) {
+                targetUser = room.getSeller();
+            } else {
+                // 로그인한 유저가 이 방의 판매자(seller)라면, 상대는 구매자(sender)
+                targetUser = room.getSender();
+            }
+
+            // 마지막 메시지 가져오기 (성능을 위해 ChatRoom 엔티티에 필드를 추가하거나, 별도 쿼리 필요)
+            // 여기서는 가장 최근 PrivateChat을 쿼리합니다.
+            PrivateChat lastChat = privateChatRepository.findTopByChatRoomIdOrderByCreatedAtDesc(room.getId())
+                    .orElse(null);
+
+            return ChatRoomListDto.builder()
+                    .chatRoomId(room.getId())
+                    .productId(room.getProduct().getProductId())
+                    .productTitle(room.getProduct().getTitle()) // 상품 제목이 Product 엔티티에 있다고 가정
+
+                    // 상대방 정보
+                    .targetUserId(targetUser.getUserId())
+                    .targetNickName(targetUser.getNickName())
+
+                    // 마지막 메시지 정보
+                    .lastMessage(lastChat != null ? lastChat.getContent() : "")
+                    .lastMessageTime(lastChat != null ? lastChat.getCreatedAt() : room.getCreatedAt())
+                    // * unreadCount 등은 별도 로직/쿼리 필요 (생략)
+                    .build();
+        }).collect(Collectors.toList());
     }
 }

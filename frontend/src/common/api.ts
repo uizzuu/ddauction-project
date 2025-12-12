@@ -2,6 +2,7 @@ import type * as TYPE from "./types";
 import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
 import type { ArticleType, Notification } from './types';
+import type { ChatRoomListDto } from "./types";
 
 
 
@@ -1992,7 +1993,7 @@ export async function updateUserProfile(userId: number, data: any): Promise<TYPE
   });
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error("정보 수정 실패: " + errorText);
+    throw new Error("정보 수정 실패 " + errorText);
   }
   const text = await res.text();
   if (!text) throw new Error("수정된 정보가 없습니다.");
@@ -2592,3 +2593,10 @@ export async function banUser(userId: number, adminToken: string, adminId: numbe
   }
 }
 
+export async function fetchMyChatRooms(userId: number): Promise<ChatRoomListDto[]> {
+    const response = await fetch(`${API_BASE_URL}/api/chats/private/rooms/${userId}`);
+    if (!response.ok) {
+        throw new Error("Failed to fetch chat rooms");
+    }
+    return response.json();
+}

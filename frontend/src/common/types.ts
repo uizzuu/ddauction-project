@@ -99,7 +99,7 @@ export interface Product {
   bookmarkCount?: number;
   isBookmarked?: boolean;
   viewCount?: number;
-  
+
   bidCount?: number;
   highestBidPrice?: number;
 }
@@ -430,3 +430,15 @@ export type Notification = {
   isRead: boolean;
   createdAt: string;
 };
+
+// [⭐ 추가할 부분: ChatRoomListDto 인터페이스 ⭐]
+export interface ChatRoomListDto {
+  chatRoomId: number;
+  productId: number;
+  productTitle: string;
+  targetUserId: number;
+  targetNickName: string;
+  lastMessage: string;
+  lastMessageTime: string; // ISO 8601 string
+  unreadCount: number;
+}

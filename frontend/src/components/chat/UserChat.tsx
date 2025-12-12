@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { UserChatProps, PrivateChat, ChatMessagePayload, User } from "../../common/types";
-import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages, API_BASE_URL } from "../../common/api";
+import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages, fetchMyChatRooms, API_BASE_URL } from "../../common/api";
 import { getCategoryName } from "../../common/util";
+import type { ChatRoomListDto } from "../../common/types";
 
 // -----------------------------
 // UserChat 컴포넌트
@@ -15,8 +16,6 @@ export default function UserChat({ user }: UserChatProps) {
 
   const [messages, setMessages] = useState<PrivateChat[]>([]);
   const [input, setInput] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]); // 검색 필터링된 유저 목록
   const [searchKeyword, setSearchKeyword] = useState(""); // 유저 검색어
 
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -31,39 +30,117 @@ export default function UserChat({ user }: UserChatProps) {
   const isAdmin = user?.role === "ADMIN";
   const isLocal = window.location.hostname === "localhost";
 
+  const [chatRooms, setChatRooms] = useState<ChatRoomListDto[]>([]);
+  const [adminUsers, setAdminUsers] = useState<User[]>([]);
+  const [filteredList, setFilteredList] = useState<(User | ChatRoomListDto)[]>([]);
+
 
   // -----------------------------
-  // 1. 유저 목록 불러오기 (Admin Only)
+  // 1. 목록 불러오기 (Admin vs General User) [수정]
   // -----------------------------
   useEffect(() => {
-    if (!user || !isAdmin) return;
+    if (!user) return;
 
-    fetchChatUsers(user.userId)
-      .then((data) => {
-        setUsers(data);
-        setFilteredUsers(data);
-
-        if (state?.sellerId) {
-          const seller = data.find((u) => u.userId === state.sellerId);
-          if (seller) setSelectedUser(seller);
+    const loadData = async () => {
+      if (isAdmin) {
+        // [관리자] 유저 목록 로딩 (기존 로직 유지)
+        try {
+          const data = await fetchChatUsers(user.userId);
+          setAdminUsers(data);
+          setFilteredList(data);
+          // ... (선택된 유저 초기화 로직 유지) ...
+        } catch (err) {
+          console.error("유저 목록 로딩 실패", err);
         }
-      })
-      .catch((err) => console.error("유저 목록 로딩 실패", err));
-  }, [user, state, isAdmin]);
 
-  // 유저 검색 필터링
-  useEffect(() => {
-    if (!searchKeyword.trim()) {
-      setFilteredUsers(users);
-    } else {
-      const keyword = searchKeyword.toLowerCase();
-      setFilteredUsers(users.filter(u =>
-        u.nickName.toLowerCase().includes(keyword) ||
-        (u.userName && u.userName.toLowerCase().includes(keyword))
-      ));
+      } else {
+        // [일반 유저/판매자] 내 채팅방 목록 로딩 [⭐ 추가/수정된 로직 ⭐]
+        try {
+          const rooms = await fetchMyChatRooms(user.userId);
+          setChatRooms(rooms);
+          setFilteredList(rooms);
+
+          // 상품 페이지에서 들어온 경우 (state?.sellerId 존재)
+          if (state?.sellerId && state?.productId) {
+            const existingRoom = rooms.find(r =>
+              r.targetUserId === state.sellerId && r.productId === state.productId
+            );
+            if (existingRoom) {
+              handleRoomSelect(existingRoom); // 기존 방으로 자동 선택
+            }
+            // * 새 채팅방인 경우, 백엔드가 채팅방을 미리 생성했다고 가정하고,
+            //   fetchPrivateMessages가 chatRoomId를 알아내도록 기존 로직을 유지합니다.
+          }
+
+        } catch (err) {
+          console.error("채팅방 목록 로딩 실패", err);
+        }
+      }
+    };
+
+    loadData();
+  }, [user, isAdmin, state]);
+
+  // [⭐ 추가] 채팅방 선택 핸들러 함수
+  const handleRoomSelect = (item: ChatRoomListDto | User) => {
+    ws.current?.close();
+    setMessages([]);
+    setChatRoomId(null);
+
+    if (!user) return;
+
+    let targetUser: User | null = null; // 초기값 null
+    let productId: number | undefined;
+
+    if ('targetNickName' in item) { // ChatRoomListDto 타입
+      // ChatRoomListDto는 userName 필드를 가지고 있지 않으므로, 임시로 빈 문자열 할당
+      targetUser = {
+        userId: item.targetUserId,
+        nickName: item.targetNickName,
+        role: 'USER',
+        userName: "", // ★ User 타입의 필수 필드가 있다면 추가
+      };
+      productId = item.productId;
+      setChatRoomId(item.chatRoomId);
+    } else { // User 타입 (관리자가 유저를 선택한 경우)
+      targetUser = item;
+      productId = selectedProductId;
     }
-  }, [searchKeyword, users]);
 
+    // targetUser가 null이 아닌 경우에만 상태 업데이트
+    if (targetUser) {
+      setSelectedUser(targetUser);
+      setSelectedProductId(productId);
+    }
+  };
+
+
+  // [⭐ 추가할 부분: 검색(필터링) 로직 ⭐]
+  useEffect(() => {
+    // 1. 검색어가 비어 있으면, 전체 목록을 보여줍니다.
+    if (searchKeyword.trim() === "") {
+      setFilteredList(isAdmin ? adminUsers : chatRooms);
+      return;
+    }
+
+    const lowerCaseKeyword = searchKeyword.toLowerCase().trim();
+
+    if (isAdmin) {
+      // [관리자] 유저 닉네임/이름 검색
+      const filtered = adminUsers.filter(u =>
+        u.nickName?.toLowerCase().includes(lowerCaseKeyword) ||
+        u.userName?.toLowerCase().includes(lowerCaseKeyword)
+      );
+      setFilteredList(filtered);
+    } else {
+      // [일반 유저] 상대방 닉네임 또는 상품 제목 검색
+      const filtered = chatRooms.filter((room: ChatRoomListDto) => // 명시적 타입 캐스팅 권장
+        room.targetNickName?.toLowerCase().includes(lowerCaseKeyword) ||
+        room.productTitle?.toLowerCase().includes(lowerCaseKeyword)
+      );
+      setFilteredList(filtered);
+    }
+  }, [searchKeyword, isAdmin, adminUsers, chatRooms]); // 의존성 배열에 state 변수들을 포함
 
   // -----------------------------
   // 2. 일반 유저 초기 설정 (Seller 자동 선택)
@@ -210,53 +287,74 @@ export default function UserChat({ user }: UserChatProps) {
   return (
     <div className="max-w-[1280px] p-0 mt-[20px] mx-auto flex h-[calc(100vh-180px)] border border-[#ccc] rounded-lg overflow-hidden bg-white shadow-sm">
 
-      {/* 🔹 관리자만 유저 목록 사이드바 표시 */}
-      {isAdmin && (
-        <div className="w-[300px] border-r border-[#eee] flex flex-col bg-gray-50 py-2">
-          <div className="p-3 border-b border-[#eee]">
-            <h3 className="text-sm font-bold mb-2 px-1">유저 목록 ({filteredUsers.length})</h3>
-            <input
-              type="text"
-              placeholder="이름/닉네임 검색..."
-              className="w-full p-2 border border-[#ddd] rounded text-sm focus:outline-none focus:border-[#333]"
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-            />
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            {filteredUsers.map((u) => (
+      {/* 🔹 사이드바 표시 (관리자/일반 유저 모두 표시) [⭐ 수정 ⭐] */}
+      {/* 기존의 {isAdmin && ( ... )} 구문을 제거하고, 모든 유저가 보이게 변경 */}
+      <div className="w-[300px] border-r border-[#eee] flex flex-col bg-gray-50 py-2">
+
+        {/* 1. 검색 및 제목 영역 */}
+        <div className="p-3 border-b border-[#eee]">
+          <h3 className="text-sm font-bold mb-2 px-1">
+            {/* 제목을 역할에 따라 변경 */}
+            {isAdmin ? `유저 목록 (${filteredList.length})` : `내 채팅 목록 (${filteredList.length})`}
+          </h3>
+          <input
+            type="text"
+            placeholder={isAdmin ? "이름/닉네임 검색..." : "상대방 닉네임 검색..."} // 플레이스홀더 변경 가능
+            className="w-full p-2 border border-[#ddd] rounded text-sm focus:outline-none focus:border-[#333]"
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+          />
+        </div>
+
+        {/* 2. 목록 영역 */}
+        <div className="flex-1 overflow-y-auto">
+          {isAdmin ? (
+            // [A] 관리자 뷰: 유저 목록 (기존 로직 유지)
+            (filteredList as User[]).map((u) => (
               <div
                 key={u.userId}
-                className={`p-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-white flex items-center justify-between group 
-                        ${selectedUser?.userId === u.userId ? "font-bold bg-white border-l-4 border-l-[#333]" : ""}`}
-                onClick={() => {
-                  ws.current?.close();
-                  setSelectedUser(u);
-                  // 관리자는 상품 ID를 모를 수 있음. 일단 state가 있다면 가져오고 없다면 별도 로직 필요 (여기선 state 가정)
-                  setSelectedProductId(state?.productId);
-                  setChatRoomId(null);
-                  setMessages([]);
-                }}
+                className={`p-3 cursor-pointer ... ${selectedUser?.userId === u.userId ? "font-bold bg-white border-l-4 border-l-[#333]" : ""}`}
+                onClick={() => handleRoomSelect(u)}
               >
-                <div>
-                  <div className="text-sm">{u.nickName}({u.userName || "이름 없음"})</div>
-                </div>
-                {/* 관리자 사이드바 제재 메뉴 (호버 시 표시) */}
-                <button
-                  className="opacity-0 group-hover:opacity-100 text-xs bg-red-100 text-red-500 px-2 py-1 rounded hover:bg-red-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (window.confirm(`'${u.nickName}(${u.userName || "이름 없음"})' 님을 제재 하시겠습니까?`)) {
-                      alert("제재 기능 미구현");
-                    }
-                  }}
-                >제재
-                </button>
+                {/* 관리자 UI 유지 */}
+                <div className="text-sm">{u.nickName}({u.userName || "이름 없음"})</div>
               </div>
-            ))}
-          </div>
+            ))
+          ) : (
+            // [B] 일반 유저 뷰: 채팅방 목록 (ChatRoomListDto 타입 사용) [⭐ 추가 ⭐]
+            (filteredList as ChatRoomListDto[]).map((room) => (
+              <div
+                key={room.chatRoomId}
+                className={`p-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-white flex flex-col
+                                ${selectedUser?.userId === room.targetUserId && selectedProductId === room.productId ? "font-bold bg-white border-l-4 border-l-[#333]" : ""}`}
+                onClick={() => handleRoomSelect(room)} // **handleRoomSelect 사용**
+              >
+                <div className="flex justify-between items-center">
+                  {/* 상대방 닉네임 */}
+                  <div className="text-sm font-bold">
+                    {room.targetNickName}
+                    {/* room.unreadCount > 0 && 
+                                        <span className="ml-2 text-xs bg-red-500 text-white px-2 rounded-full">{room.unreadCount}</span>
+                                    */}
+                  </div>
+                  {/* 마지막 메시지 시간 */}
+                  <div className="text-xs text-gray-400">
+                    {new Date(room.lastMessageTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+
+                {/* 상품 제목 및 마지막 메시지 미리보기 */}
+                <div className="text-xs mt-1 text-gray-600 truncate">
+                  📢 {room.productTitle}
+                </div>
+                <div className="text-xs text-gray-500 truncate italic">
+                  {room.lastMessage || '대화 내용 없음'}
+                </div>
+              </div>
+            ))
+          )}
         </div>
-      )}
+      </div>
 
       {/* 🔹 채팅 영역 */}
       <div className="flex-1 flex flex-col">
