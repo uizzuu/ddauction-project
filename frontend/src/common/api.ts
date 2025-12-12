@@ -2268,7 +2268,10 @@ export async function extractImageMetadata(imageBase64: string): Promise<{
 
 
 // 사업자 인증 요청
-export async function verifyBusiness(userId: number, businessNumber: string): Promise<{ verified: boolean; companyName?: string }> {
+export async function verifyBusiness(
+  userId: number,
+  businessNumber: string
+): Promise<{ businessNumber: string; valid: boolean }> { // 🔹 verified -> valid
   const token = localStorage.getItem("token");
   if (!token) throw new Error("로그인이 필요합니다.");
 
@@ -2278,7 +2281,7 @@ export async function verifyBusiness(userId: number, businessNumber: string): Pr
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ userId, businessNumber }), // userId 포함
+    body: JSON.stringify({ userId, businessNumber }),
   });
 
   if (!res.ok) {
@@ -2286,7 +2289,7 @@ export async function verifyBusiness(userId: number, businessNumber: string): Pr
     throw new Error(text || "사업자 인증 실패");
   }
 
-  return res.json();
+  return res.json(); // 이제 타입스크립트가 valid를 알게 됨
 }
 
 // 사용자 주소 업데이트 (결제 페이지용)

@@ -14,14 +14,21 @@ export default function BusinessVerify({ userId, onVerified, onCancel }: Props) 
   const [error, setError] = useState("");
 
   const handleVerify = async () => {
+    if (!businessNumber) return;
+
     setLoading(true);
     setError("");
     try {
-      await API.verifyBusiness(userId, businessNumber); // DB에 저장
-      onVerified(businessNumber); // 부모에게 번호 전달
-      alert("사업자 인증 완료!");
+      const result: { businessNumber: string; valid: boolean } = await API.verifyBusiness(userId, businessNumber);
+
+      if (result.valid) { // valid가 true면 성공
+        onVerified(businessNumber);
+        alert("사업자 인증 완료!");
+      } else { // valid가 false면 실패
+        setError("사업자 번호 인증 실패");
+      }
     } catch (err: any) {
-      setError(err.message || "인증 실패");
+      setError(err.message || "인증 중 오류 발생");
     } finally {
       setLoading(false);
     }
