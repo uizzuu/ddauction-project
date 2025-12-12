@@ -2,6 +2,7 @@ package com.my.backend.myjwt;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.crypto.SecretKey;
@@ -45,14 +46,18 @@ public class JWTUtil {
     }
 
     public String createJwt(Long userId, String email, Role role, String nickName, String businessNumber, Long expiredMs) {
-        Map<String, Object> claims = Map.of(
-                "userId",userId,
-                "email", email,
-                "role", role,
-                "nickName", nickName,
-                "businessNumber", businessNumber
-        );
-        return createJwt(claims, expiredMs); // 이미 Map 기반 메서드로 처리
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("email", email);
+        claims.put("role", role);
+        claims.put("nickName", nickName);
+
+        // ✅ businessNumber가 null이어도 OK
+        if (businessNumber != null) {
+            claims.put("businessNumber", businessNumber);
+        }
+
+        return createJwt(claims, expiredMs);
     }
     public String createJwt(Map<String, Object> claims, Long expiredMs) {
         return Jwts.builder()
