@@ -4,6 +4,7 @@ import type { Product, Bid } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
 import { Heart, Truck, ChevronRight, Minus } from "lucide-react";
 import { toggleBookmark, fetchBookmarkCheck, API_BASE_URL } from "../../common/api";
+import { PRODUCT_CATEGORIES } from "../../common/enums";
 
 type Props = {
     product: Product;
@@ -73,7 +74,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
         // 3. product.bids에서 직접 계산
         const bids = product.bids || [];
         let maxBid = Number(product.startingPrice) || 0;
-        
+
         if (bids.length > 0) {
             const maxBidPrice = Math.max(...bids.map(bid => Number(bid.bidPrice) || 0));
             maxBid = Math.max(maxBid, maxBidPrice);
@@ -252,15 +253,17 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                 )}
 
                 {/* Type-Specific Header Info */}
-                <div className="mb-1 min-h-[16px]">
+                <div>
                     {product.productType === "AUCTION" && product.auctionEndTime && (
-                        <span className="text-[0.8rem] text-[#888]">
+                        <span className="flex items-center gap-0.5 text-[0.8rem] font-bold text-[#333]">
                             {calculateRemainingTime(product.auctionEndTime)}
                         </span>
                     )}
                     {product.productType === "USED" && (
-                        <span className="text-[0.8rem] text-[#888]">
-                            {/* 카테고리나 브랜드 명 */}
+                        <span className="flex items-center gap-0.5 text-[0.8rem] font-bold text-[#333]">
+                            {product.productCategoryType
+                                ? PRODUCT_CATEGORIES[product.productCategoryType]
+                                : "카테고리 없음"}
                         </span>
                     )}
                     {product.productType === "STORE" && (
@@ -272,7 +275,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                 </div>
 
                 {/* Title */}
-                <h3 className="text-[0.95rem] font-semibold text-[#111] mb-2 leading-tight line-clamp-2 break-keep">
+                <h3 className="text-[0.95rem] font-semibold text-[#111] mb-2 leading-tight line-clamp-2 break-keep truncate">
                     {product.title}
                 </h3>
 
@@ -284,7 +287,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                             <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
                                 시작가 {formatPrice(product.startingPrice)}
                             </div>
-                            <div className="flex items-baseline gap-1 mt-0.5">
+                            <div className="flex items-baseline gap-1">
                                 <span className="text-[0.85rem] text-[#111] font-bold">현재가</span>
                                 <span className="text-[0.95rem] font-bold text-[#333]">
                                     {formatPrice(bidInfo.highestBidPrice)}
@@ -331,10 +334,10 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                         </div>
                     ) : (
                         /* ✅ USED: 실제 주소 사용 */
-                        <div className="flex items-center gap-1">
-                            <span>{product.address || "지역 미설정"}</span>
-                            <span className="w-[1px] h-[8px] bg-[#ddd] inline-block mx-0.5"></span>
-                            <span>{formatTimeAgo(product.createdAt)}</span>
+                        <div className="flex items-center gap-1 min-w-0">
+                            <span className="truncate">{product.address || "지역 미설정"}</span>
+                            <span className="w-[1px] h-[8px] flex-shrink-0 bg-[#ddd] inline-block mx-0.5"></span>
+                            <span className="text-nowrap flex-shrink-0">{formatTimeAgo(product.createdAt)}</span>
                         </div>
                     )}
                 </div>

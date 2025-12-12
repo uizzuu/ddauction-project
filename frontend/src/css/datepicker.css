@@ -15,7 +15,7 @@
 
   /* 1. Navigation Arrows Alignment */
   .custom-datepicker-container .react-datepicker__navigation {
-    @apply top-[10px] !important; /* Adjusted for centered alignment */
+    @apply top-[2px] !important; /* Adjusted for centered alignment */
   }
 
   .custom-datepicker-container
@@ -26,11 +26,11 @@
   }
 
   .custom-datepicker-container .react-datepicker__header {
-    @apply bg-white border-b border-gray-100 pb-2 pt-3 px-3 w-full !important;
+    @apply bg-white border-b border-gray-100 pb-2 pt-3 w-full !important;
   }
 
   .custom-datepicker-container .react-datepicker__current-month {
-    @apply text-base font-bold text-[#111] mb-2 !important;
+    @apply text-base font-bold text-[#111] !important;
   }
 
   .custom-datepicker-container .react-datepicker__header--time {
