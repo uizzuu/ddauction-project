@@ -15,6 +15,11 @@ declare global {
         callback: (response: any) => void
       ) => void;
     };
+    daum?: {
+      Postcode: new (options: {
+        oncomplete: (data: any) => void;
+      }) => { open: () => void };
+    };
   }
 }
 
@@ -164,14 +169,50 @@ export default function PaymentPage() {
     }
   };
 
-  // Load PortOne SDK
+  // Load PortOne SDK & Daum Postcode SDK
   useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.iamport.kr/v1/iamport.js";
-    script.async = true;
-    document.body.appendChild(script);
-    return () => { document.body.removeChild(script); };
+    // PortOne SDK
+    const portOneScript = document.createElement("script");
+    portOneScript.src = "https://cdn.iamport.kr/v1/iamport.js";
+    portOneScript.async = true;
+    document.body.appendChild(portOneScript);
+
+    // Daum Postcode SDK
+    const daumScript = document.createElement("script");
+    daumScript.src = "//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js";
+    daumScript.async = true;
+    document.body.appendChild(daumScript);
+
+    return () => {
+      document.body.removeChild(portOneScript);
+      document.body.removeChild(daumScript);
+    };
   }, []);
+
+  // 우편번호 찾기 핸들러
+  const handleSearchAddress = () => {
+    if (!window.daum) {
+      alert("주소 검색 모듈을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
+
+    new window.daum.Postcode({
+      oncomplete: function (data: any) {
+        let fullAddress = data.address;
+        let extraAddress = "";
+
+        if (data.addressType === "R") {
+          if (data.bname !== "") extraAddress += data.bname;
+          if (data.buildingName !== "")
+            extraAddress += extraAddress !== "" ? `, ${data.buildingName}` : data.buildingName;
+          fullAddress += extraAddress !== "" ? ` (${extraAddress})` : "";
+        }
+
+        setPostcode(data.zonecode);
+        setAddress(fullAddress);
+      },
+    }).open();
+  };
 
   const handleLoadAddress = async () => {
     try {
@@ -482,9 +523,16 @@ export default function PaymentPage() {
                         type="text"
                         value={postcode} onChange={(e) => setPostcode(e.target.value)}
                         placeholder="우편번호"
-                        className="w-32 border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
+                        readOnly
+                        className="w-32 border border-gray-300 rounded-lg p-3 bg-gray-50 focus:border-black outline-none transition-colors"
                       />
-                      <button className="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">우편번호 찾기</button>
+                      <button
+                        type="button"
+                        onClick={handleSearchAddress}
+                        className="px-4 py-3 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200"
+                      >
+                        우편번호 찾기
+                      </button>
                     </div>
                     <input
                       type="text"
