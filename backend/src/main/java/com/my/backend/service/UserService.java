@@ -116,10 +116,24 @@ public class UserService {
         if (dto.getRole() != null) {
             user.setRole(dto.getRole());
         }
-        if (dto.getAddressId() != null) {
-            Address address = findAddressOrNull(dto.getAddressId());
-            if (address != null) {
-                user.setAddress(address);
+        // 주소 저장
+        if (dto.getAddress() != null && !dto.getAddress().isBlank()) {
+            Address addressEntity = user.getAddress();
+            if (addressEntity == null) {
+                // 새 주소 생성
+                addressEntity = Address.builder()
+                        .address(dto.getAddress())
+                        .detailAddress(dto.getDetailAddress())
+                        .zipCode(dto.getZipCode())
+                        .build();
+                addressEntity = addressRepository.save(addressEntity);
+                user.setAddress(addressEntity);
+            } else {
+                // 기존 주소 업데이트
+                addressEntity.setAddress(dto.getAddress());
+                addressEntity.setDetailAddress(dto.getDetailAddress());
+                addressEntity.setZipCode(dto.getZipCode());
+                addressRepository.save(addressEntity);
             }
         }
         

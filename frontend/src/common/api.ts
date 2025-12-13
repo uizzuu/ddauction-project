@@ -515,7 +515,7 @@ export async function checkVerificationCode(email: string, code: string): Promis
 
 // 휴대폰 인증 코드 전송
 export async function sendPhoneVerificationCode(phone: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/sms/send`, {
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/sms/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ phone }),
@@ -1837,9 +1837,13 @@ export async function updateMyInfo(userId: number, payload: {
   password?: string;
   phone: string;
 }): Promise<TYPE.User> {
+  const token = localStorage.getItem("token");
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+     },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -1990,14 +1994,13 @@ export async function fetchCurrentUser(token: string): Promise<TYPE.User> {
 export async function updateUserProfile(userId: number, data: any): Promise<TYPE.User> {
   const res = await authFetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error("정보 수정 실패 " + errorText);
-  }
   const text = await res.text();
+  if (!res.ok) {
+    throw new Error("정보 수정 실패 " +text);
+  }
+  
   if (!text) throw new Error("수정된 정보가 없습니다.");
   return JSON.parse(text);
 }

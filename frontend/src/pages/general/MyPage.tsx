@@ -350,52 +350,47 @@ export default function MyPage({ user, setUser }: Props) {
 
 
   // Handle Update Profile
-  const handleUpdateProfile = async () => {
-    if (!user) return;
+const handleUpdateProfile = async () => {
+  if (!user) return;
 
-    // 유효성 검사
-    if (nicknameError) {
-      alert("닉네임을 확인해주세요.");
-      return;
-    }
+  if (nicknameError) {
+    alert("닉네임을 확인해주세요.");
+    return;
+  }
 
-    if (!verification.isEmailVerified) {
-      alert("이메일 인증을 완료해주세요.");
-      return;
-    }
-    if (!verification.isPhoneVerified) {
-      alert("휴대폰 인증을 완료해주세요.");
-      return;
-    }
+  if (!verification.isEmailVerified) {
+    alert("이메일 인증을 완료해주세요.");
+    return;
+  }
+  if (!verification.isPhoneVerified) {
+    alert("휴대폰 인증을 완료해주세요.");
+    return;
+  }
+   if (addressForm.address && !addressForm.detailAddress.trim()) {
+    alert("상세 주소를 입력해주세요.");
+    return;
+  }
 
-    try {
-      // 1. Update basic info
-      const updatedUser = await API.updateUserProfile(user.userId, {
-        userName: profileForm.userName,
-        nickName: profileForm.nickName,
-        password: profileForm.password, // Empty string will be ignored by backend
-        phone: profileForm.phone,
-        email: profileForm.email,
-        birthday: profileForm.birthday || undefined, // Send undefined if empty
-      });
+  try {
+    // ⭐ 모든 정보를 한 번에 보내기
+    const updatedUser = await API.updateUserProfile(user.userId, {
+      userName: profileForm.userName,
+      nickName: profileForm.nickName,
+      password: profileForm.password || undefined,
+      phone: profileForm.phone,
+      email: profileForm.email,
+      birthday: profileForm.birthday || undefined,
+      address: addressForm.address,
+      detailAddress: addressForm.detailAddress,
+      zipCode: addressForm.zipCode,
+    });
 
-      // 2. Update address if provided
-      if (addressForm.address) {
-        await API.updateUserAddress(user.userId, {
-          address: addressForm.address,
-          detailAddress: addressForm.detailAddress,
-          zipCode: addressForm.zipCode,
-          phone: profileForm.phone
-        });
-      }
-
-      setUser(updatedUser);
-      API.fetchCurrentUser(localStorage.getItem("token")!).then(setUser);
-      alert("프로필이 수정되었습니다.");
-    } catch (err: any) {
-      alert(err.message || "프로필 수정 실패");
-    }
-  };
+    setUser(updatedUser);
+    alert("프로필이 수정되었습니다.");
+  } catch (err: any) {
+    alert(err.message || "프로필 수정 실패");
+  }
+};
 
   // Handle Disconnect Social
   const handleDisconnectSocial = async () => {
