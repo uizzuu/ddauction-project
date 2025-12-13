@@ -30,6 +30,8 @@ export default function ProductDetail({ user }: Props) {
         isWinner,
         qnaList,
         setQnaList,
+        reviews,
+        
         navigate,
         handleToggleBookmark,
         handleReport,
@@ -136,6 +138,7 @@ export default function ProductDetail({ user }: Props) {
                 handleChangeProductForm={handleChangeProductForm}
                 editingProductId={editingProductId}
                 mergedBids={mergedBids} // Added mergedBids
+                reviews={reviews}
             />
 
             {/* AR Modal */}

@@ -10,7 +10,8 @@ import {
     checkWinner,
     getQnaList,
     reportProduct,
-    deleteProduct
+    deleteProduct,
+    fetchUserReviews,
 } from "../../../../common/api";
 import type {
     Product,
@@ -18,6 +19,7 @@ import type {
     ProductQna,
     Bid,
     EditProductForm,
+    Review,
 } from "../../../../common/types";
 
 interface UseAuctionProps {
@@ -90,6 +92,7 @@ export const useProductDetail = (user: User | null) => {
     const [isBookMarked, setIsBookMarked] = useState(false);
     const [bookmarkCount, setBookmarkCount] = useState(0);
     const [qnaList, setQnaList] = useState<ProductQna[]>([]);
+    const [reviews, setReviews] = useState<Review[]>([]);
     const [isWinner, setIsWinner] = useState(false);
 
     // Edit State
@@ -203,6 +206,16 @@ export const useProductDetail = (user: User | null) => {
                 const qnas = await getQnaList(Number(id));
                 setQnaList(qnas);
 
+                // ⭐ 여기에 추가 - Fetch Reviews (판매자 리뷰)
+                if (data.sellerId) {
+                    try {
+                        const reviewList = await fetchUserReviews(data.sellerId);
+                        setReviews(reviewList);
+                    } catch (e) {
+                        console.error("리뷰 조회 실패:", e);
+                    }
+                }
+
             } catch (err) {
                 console.error(err);
             }
@@ -290,6 +303,8 @@ export const useProductDetail = (user: User | null) => {
         handlePlaceBid,
         qnaList,
         setQnaList,
+        reviews,  
+        setReviews,
         isWinner,
         editingProductId,
         setEditingProductId,

@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import ProductQnA from "../../../../components/product/ProductQnA";
 import { AuctionBidGraph } from "../../../../components/product/AuctionBidGraph";
-import type { Product, User, ProductQna, EditProductForm, Bid } from "../../../../common/types";
+import type { Product, User, ProductQna, EditProductForm, Bid, Review } from "../../../../common/types";
 
 interface TabSectionProps {
     product: Product;
@@ -14,6 +14,7 @@ interface TabSectionProps {
     handleChangeProductForm: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
     editingProductId: number | null;
     mergedBids: Bid[];
+    reviews: Review[];
 }
 
 export const TabSection: React.FC<TabSectionProps> = ({
@@ -27,12 +28,13 @@ export const TabSection: React.FC<TabSectionProps> = ({
     handleChangeProductForm,
     editingProductId,
     mergedBids,
+    reviews,
 }) => {
     const tabs = [
         ...(product.productType === 'AUCTION' ? [{ id: 'bid_history', label: '입찰 그래프' }] : []),
         { id: 'detail', label: '상세정보' },
         { id: 'qna', label: `상품문의(${qnaList.length})` },
-        { id: 'review', label: '상품후기(0)' },
+        { id: 'review', label: `상품후기(${reviews.length})` },
         { id: 'return', label: '반품/교환정보' },
     ];
 
@@ -130,8 +132,27 @@ export const TabSection: React.FC<TabSectionProps> = ({
 
                     {/* 4. Review */}
                     {activeTab === 'review' && (
-                        <div className="text-center mt-6">
-                            아직 등록된 후기가 없습니다.
+                        <div className="bg-white rounded-xl p-8">
+                            {reviews.length === 0 ? (
+                                <div className="text-center text-gray-500 py-8">
+                                    아직 등록된 후기가 없습니다.
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {reviews.map((review) => (
+                                        <div key={review.reviewId} className="border-b border-gray-100 pb-4">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="font-bold">{review.nickName || "익명"}</span>
+                                                <span className="text-yellow-500">
+                                                    {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                                                </span>
+                                            </div>
+                                            <p className="text-gray-700">{review.content}</p>
+                                            <span className="text-xs text-gray-400">{review.createdAt}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
                     )}
 
