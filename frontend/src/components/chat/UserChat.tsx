@@ -40,24 +40,23 @@ export default function UserChat({ user }: UserChatProps) {
   const [product, setProduct] = useState<any>(null);
   const [imageError, setImageError] = useState(false);
 
-  // 관리자 메뉴 상태
-  const [activeMenuMessageId, setActiveMenuMessageId] = useState<number | null>(null); // 메뉴가 열린 메시지 ID
-  // ⛔ [TS6133 해결]: 사용되지 않는 selectedMessageId와 setSelectedMessageId 제거
-  // const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null); 
+  // 관리자 메뉴 상태 (인덱스 기반)
+  const [activeMenuMessageIndex, setActiveMenuMessageIndex] = useState<number | null>(null);
 
   // -----------------------------
   // 화면 클릭하면 메뉴 닫기 로직
   // -----------------------------
   useEffect(() => {
-    const handleClickOutside = () => setActiveMenuMessageId(null);
+    const handleClickOutside = () => setActiveMenuMessageIndex(null);
     window.addEventListener("click", handleClickOutside);
     return () => window.removeEventListener("click", handleClickOutside);
   }, []);
 
-  // [수정] publicChatId 대신 chatId 사용
-  const toggleUserMenu = (messageId: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+  const toggleUserMenu = (index: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    console.log('toggleUserMenu 호출됨! index:', index, 'current active:', activeMenuMessageIndex); // ← 이 로그 추가
+
     e.stopPropagation();
-    setActiveMenuMessageId(prev => (prev === messageId ? null : messageId));
+    setActiveMenuMessageIndex(prev => (prev === index ? null : index));
   };
 
   const handleWarn = async (targetUser: User) => {
@@ -81,7 +80,7 @@ export default function UserChat({ user }: UserChatProps) {
       });
 
       alert(`${targetUser.nickName}님에게 경고가 전달되었습니다.`);
-      setActiveMenuMessageId(null);
+      setActiveMenuMessageIndex(null);
     } catch (err) {
       console.error(err);
       alert("경고 전송 중 오류가 발생했습니다.");
@@ -99,7 +98,7 @@ export default function UserChat({ user }: UserChatProps) {
       await banUser(targetUser.userId, token, adminId);
 
       alert(`${targetUser.nickName}님이 밴 처리되었습니다.`);
-      setActiveMenuMessageId(null);
+      setActiveMenuMessageIndex(null);
 
       setMessages(prev =>
         prev.map(m => (m.user?.userId === targetUser.userId ? { ...m, content: "밴 처리된 사용자", user: { ...m.user!, nickName: "(밴 처리됨)" } } : m))
@@ -155,7 +154,7 @@ export default function UserChat({ user }: UserChatProps) {
     setMessages([]);
     setChatRoomId(null);
     setProduct(null);
-    setActiveMenuMessageId(null);
+    setActiveMenuMessageIndex(null);
 
     if (!user) return;
 
@@ -511,9 +510,8 @@ export default function UserChat({ user }: UserChatProps) {
             {/* 채팅 메시지 영역 */}
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
               {messages.map((msg, i) => {
+                console.log(`렌더링 - 인덱스: ${i}, activeMenuMessageIndex: ${activeMenuMessageIndex}`);
                 const isMe = msg.user?.userId === user?.userId;
-                // ⛔ [TS6133 해결]: 사용되지 않는 msgUserId 제거
-                // const msgUserId = msg.user?.userId; 
                 const isDeleted = msg.isDeleted;
 
                 const displayName = isAdmin && msg.user?.userName
@@ -543,9 +541,9 @@ export default function UserChat({ user }: UserChatProps) {
                             <div
                               className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-200"
                               onClick={(e) => {
-                                // *** 이 부분이 핵심입니다: 이벤트 버블링 차단 ***
+                                console.log('⋮ 버튼 클릭됨! 인덱스:', i);
                                 e.stopPropagation();
-                                toggleUserMenu(msg.chatId, e); // 현재 메시지 ID로 상태 토글
+                                toggleUserMenu(i, e);
                               }}
                             >
                               ⋮
@@ -556,19 +554,19 @@ export default function UserChat({ user }: UserChatProps) {
                           <div
                             className="text-xs text-gray-500 font-bold hover:text-[#111] hover:underline cursor-pointer px-1 py-1"
                             onClick={(e) => {
-                              e.stopPropagation(); // 혹시 모를 상위 이벤트 전파 방지
+                              e.stopPropagation();
                               navigate(`/users/${msg.user!.userId}`);
                             }}
                           >
                             {displayName}
                           </div>
 
-                          {/* 3. 관리자 메뉴 팝업 (조건: 현재 메시지 ID와 일치할 때만) */}
-                          {isAdmin && activeMenuMessageId === msg.chatId && (
+                          {/* 3. 관리자 메뉴 팝업 (조건: 현재 메시지 인덱스와 일치할 때만) */}
+                          {isAdmin && activeMenuMessageIndex === i && (
                             <div
                               className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-300 rounded shadow-md z-50"
                               style={{ left: '-5px' }}
-                              onClick={(e) => e.stopPropagation()} // 메뉴 내부 클릭 시 메뉴 닫힘 방지
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <div
                                 className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
@@ -586,7 +584,7 @@ export default function UserChat({ user }: UserChatProps) {
                                 className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
                                 onClick={() => {
                                   navigate(`/users/${msg.user!.userId}`);
-                                  setActiveMenuMessageId(null);
+                                  setActiveMenuMessageIndex(null);
                                 }}
                               >
                                 👤 프로필 확인
@@ -602,7 +600,6 @@ export default function UserChat({ user }: UserChatProps) {
                         className={`max-w-full group relative px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-all hover:shadow-md
                           ${isMe ? "bg-[#333] text-white rounded-br-none" : "bg-white border border-gray-200 text-black rounded-bl-none"}
                         `}
-                        // 관리자 모드에서 클릭 시 메시지 삭제되던 로직은 명시적인 삭제 버튼으로 대체
                         title={isAdmin ? "관리자 모드 (메시지 삭제는 ✕ 버튼 이용)" : ""}
                       >
                         {/* 관리자에게는 누가 보낸 메시지인지 표시 (버블 내부) */}
