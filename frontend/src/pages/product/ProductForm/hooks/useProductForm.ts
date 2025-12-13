@@ -135,17 +135,21 @@ export default function useProductForm(user: User | null, productId?: number) {
         }
     };
 
-    // ✅ 타입별 가격 가져오기
-    const getPriceByType = (): number => {
-        if (form.productType === "AUCTION") {
-            return Number(form.startingPrice) || 0;
-        } else if (form.productType === "STORE") {
-            return Number(form.salePrice) || 0;
-        } else {
-            // USED
-            return Number(form.originalPrice) || 0;
-        }
-    };
+    // ✅ 타입별 가격 가져오기 (수정됨)
+const getPriceByType = (): number => {
+    const cleanNumber = (val?: string) =>
+        Number(String(val ?? "").replace(/[^0-9]/g, "")) || 0;
+
+    if (form.productType === "AUCTION") {
+        return cleanNumber(form.startingPrice);
+    } else if (form.productType === "STORE") {
+        return cleanNumber(form.salePrice);
+    } else {
+        // USED
+        return cleanNumber(form.originalPrice);
+    }
+};
+
 
     const validateForm = () => {
         if (!form.title) return "제목은 필수 입력 항목입니다";
