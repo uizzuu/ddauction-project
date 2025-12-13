@@ -269,7 +269,6 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                                 : "카테고리 없음"}
                         </span>
                     )}
-                    // 수정 코드 - 클릭 이벤트 추가
                     {product.productType === "STORE" && (
                         <div
                             className="flex items-center gap-0.5 text-[0.8rem] font-bold text-[#333] hover:underline cursor-pointer"
