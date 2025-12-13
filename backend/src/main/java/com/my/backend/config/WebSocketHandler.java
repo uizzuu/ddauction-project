@@ -3,6 +3,8 @@ package com.my.backend.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.my.backend.ban.BanStatusDto;
+import com.my.backend.ban.UserBanService;
 import com.my.backend.dto.ChatRoomDto;
 import com.my.backend.dto.PrivateChatDto;
 import com.my.backend.service.ChattingService;
@@ -20,12 +22,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class WebSocketHandler extends TextWebSocketHandler {
 
     private final ChattingService chatService;
+    private final UserBanService userBanService; // ⭐ 추가
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .registerModule(new JavaTimeModule())
             .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-    // 세션 관리: userId -> 여러 WebSocketSession
     private final Map<Long, List<WebSocketSession>> userSessions = new ConcurrentHashMap<>();
 
     @Override
@@ -44,7 +46,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        // targetUserId 선택 사항
         Object targetIdAttr = session.getAttributes().get("targetUserId");
         Long targetUserId = null;
         if (targetIdAttr != null) {
@@ -63,7 +64,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         Map<String, Object> map = objectMapper.readValue(message.getPayload(), Map.class);
         String type = (String) map.get("type");
-        if (!"PRIVATE".equalsIgnoreCase(type)) return; // 개인채팅만 처리
+        if (!"PRIVATE".equalsIgnoreCase(type)) return;
 
         Long userId = map.get("userId") != null ? Long.valueOf(map.get("userId").toString()) : null;
         Long targetUserId = map.get("targetUserId") != null ? Long.valueOf(map.get("targetUserId").toString()) : null;
@@ -72,6 +73,19 @@ public class WebSocketHandler extends TextWebSocketHandler {
 
         if (userId == null || targetUserId == null || productId == null || content == null || content.trim().isEmpty()) {
             return;
+        }
+
+        // ⭐ 밴 상태 체크 추가
+        BanStatusDto banStatus = userBanService.checkBanStatus(userId);
+        if (banStatus.isBanned()) {
+            // 밴된 유저에게 에러 메시지 전송
+            Map<String, Object> errorMap = new HashMap<>();
+            errorMap.put("type", "ERROR");
+            errorMap.put("message", "경고 처리되어 채팅이 제한되었습니다. 해제 시간: " + banStatus.getBanUntil());
+            String errorJson = objectMapper.writeValueAsString(errorMap);
+            session.sendMessage(new TextMessage(errorJson));
+            System.out.println("[PrivateChat] 밴된 유저 메시지 차단: userId=" + userId);
+            return; // 메시지 처리 중단
         }
 
         // 채팅방 조회 또는 생성
