@@ -124,6 +124,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/bid/*/bids").permitAll() // 입찰 내역 공개
                         .requestMatchers(HttpMethod.GET, "/api/bid/*/chart").permitAll() // 입찰 그래프 공개
 
+                        .requestMatchers(HttpMethod.GET, "/api/users/*/public").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/phone").permitAll()
@@ -138,7 +139,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/comments/*").authenticated()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/api/geo/**").permitAll() // 주소 변환 허용
-                        .requestMatchers(HttpMethod.GET, "/reviews/**").permitAll() // 리뷰 조회 허용
+                        .requestMatchers(HttpMethod.GET, "/api/reviews/**").permitAll() // 리뷰 조회 허용
 
                         .anyRequest().authenticated()
                 )

@@ -12,13 +12,13 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/reviews")
+@RequestMapping("/api/reviews")
 public class ReviewController {
 
     private final ReviewService reviewService;
 
     // 리뷰 작성
-    @PostMapping("/{targetUserId}")
+    @PostMapping
     public ResponseEntity<?> createReview(@Valid @RequestBody ReviewDto dto) {
         ReviewDto saved = reviewService.createReview(dto);
         return ResponseEntity.ok(Map.of("message", "리뷰 작성 성공", "review", saved));
