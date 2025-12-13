@@ -141,7 +141,11 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                 </div>
 
                 <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                    <Link to={`/users/${product.sellerId}`} className="flex items-center gap-1.5 hover:underline decoration-gray-400 underline-offset-2">
+                    <Link
+                        to={`/users/${product.sellerId}`}
+                        className="flex items-center gap-1.5 hover:underline decoration-gray-400 underline-offset-2"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                             <Avatar
                                 src={product.sellerProfileImage || null}
@@ -198,7 +202,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                                     <span className="text-gray-500">시작 입찰가</span>
                                     <span className="font-bold text-gray-700">{Number(product.startingPrice).toLocaleString()}원</span>
                                 </div>
-                                
+
                                 {/* ✅ 입찰 건수 표시 */}
                                 <div className="flex justify-between items-center text-sm">
                                     <span className="text-gray-500">입찰 건수</span>
