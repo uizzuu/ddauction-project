@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import com.my.backend.ban.UserBanRepository;
 import com.my.backend.dto.*;
+import com.my.backend.enums.Role;
 import org.springframework.stereotype.Service;
 
 import com.my.backend.entity.ChatRoom;
@@ -127,7 +128,25 @@ public class ChattingService {
     public List<PublicChatDto> getRecentPublicChats() {
         return publicChatRepository.findTop50ByOrderByCreatedAtAsc()
                 .stream()
-                .map(PublicChatDto::fromEntity)
+                .map(chat -> {
+                    PublicChatDto dto = PublicChatDto.fromEntity(chat);
+
+                    // 1. 메시지가 이미 Soft Delete 되었는지 확인
+                    if (chat.isDeleted()) { // PublicChat 엔티티에 isDeleted() 메소드가 있다고 가정
+                        dto.setContent("관리자에 의해 삭제된 메시지입니다.");
+                        return dto;
+                    }
+
+                    // 2. 메시지 작성자가 밴 처리되었는지 확인
+                    // PublicChat 엔티티에 Users user 필드가 있고, Users 엔티티에 Role role 필드가 있다고 가정
+                    if (chat.getUser() != null && chat.getUser().getRole() == Role.BANNED) {
+                        // 밴된 사용자의 메시지 내용을 변경
+                        dto.setContent("밴 처리된 사용자");
+                        // 닉네임도 익명 처리할 수 있지만, 현재 프론트에서 닉네임만 표시하므로 content만 변경해도 됨
+                    }
+
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 

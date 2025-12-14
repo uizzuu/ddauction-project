@@ -242,22 +242,28 @@ public class AuthService {
             String email = request.getEmail().trim().toLowerCase();
             Users user = userRepository.findByEmail(email)
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
-            
+
             // 탈퇴한 회원 체크
             if (user.getDeletedAt() != null) {
                 throw new IllegalArgumentException("탈퇴한 회원입니다.");
             }
 
+            // 🔥🔥🔥 밴 상태 체크: Role.BANNED인 경우 로그인 차단 🔥🔥🔥
+            if (user.getRole() == Role.BANNED) {
+                throw new IllegalArgumentException("영구 정지된 계정입니다. 관리자에게 문의하세요.");
+            }
+            // 🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥🔥
+
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
 
             String token = jwtUtil.createJwt(
-                    user.getUserId(),
-                    user.getEmail(),
-                    user.getRole(),
-                    user.getNickName(),
-                    user.getBusinessNumber(),
-                    24 * 60 * 60 * 1000L  // 24시간
+                    user.getUserId(),        // 1. userId
+                    user.getEmail(),         // 2. email
+                    user.getRole(),          // 3. role
+                    user.getNickName(),      // 4. nickName
+                    user.getBusinessNumber(), // 5. businessNumber
+                    24 * 60 * 60 * 1000L     // 6. 24시간 만료 시간 (Long)
             );
             TokenResponse tokenResponse = new TokenResponse(token, null);
             log.info("로그인 성공: {}", request.getEmail());
@@ -285,23 +291,30 @@ public class AuthService {
                 throw new IllegalArgumentException("탈퇴한 회원입니다.");
             }
 
+            //  밴 상태 체크: Role.BANNED인 경우 로그인 차단
+            if (user.getRole() == Role.BANNED) {
+                throw new IllegalArgumentException("영구 정지된 계정입니다. 관리자에게 문의하세요.");
+            }
+            //
+
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword()))
                 throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
 
+            //  'token' 변수 선언 및 JWT 생성 로직 추가
             String token = jwtUtil.createJwt(
                     user.getUserId(),
-                    user.getEmail() != null ? user.getEmail() : "",
+                    user.getEmail() != null ? user.getEmail() : "", // 이메일이 null일 경우 빈 문자열 처리
                     user.getRole(),
                     user.getNickName(),
                     user.getBusinessNumber(),
-                    24 * 60 * 60 * 1000L
+                    24 * 60 * 60 * 1000L  // 24시간
             );
+            //
 
             return ResponseEntity.ok(new TokenResponse(token, null));
 
         } catch (IllegalArgumentException e) {
             log.warn("전화번호 로그인 실패: {}", e.getMessage());
-            // 인증 실패는 401(Unauthorized)로 응답하는 것이 RESTful 원칙에 더 적합합니다.
             return ResponseEntity.status(401).body(Map.of("message", e.getMessage()));
         }
     }

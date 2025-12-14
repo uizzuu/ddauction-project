@@ -9,6 +9,7 @@ import com.my.backend.dto.auth.PhoneLoginRequest;
 import com.my.backend.dto.auth.RegisterRequest;
 import com.my.backend.entity.Users;
 import com.my.backend.enums.ImageType;
+import com.my.backend.enums.Role;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.repository.ImageRepository;
 import com.my.backend.repository.UserRepository;
@@ -131,8 +132,21 @@ public class AuthController {
         if (!jwtUtil.validateToken(token)) {
             throw new RuntimeException("토큰이 유효하지 않습니다.");
         }
-        return userRepository.findByEmail(jwtUtil.getEmail(token))
+
+        // 1. 사용자 정보 조회 (최신 상태)
+        Users user = userRepository.findByEmail(jwtUtil.getEmail(token))
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 밴 상태 확인 (실시간 강제 로그아웃 유도)
+        // DB에서 조회한 Role이 BANNED인지 확인
+        if (user.getRole() == Role.BANNED) {
+            log.warn("Banned user attempted access with old token: {}", user.getEmail());
+            // RuntimeException 발생 시 클라이언트가 401/403 응답을 받고 로그아웃 처리합니다.
+            throw new RuntimeException("계정이 영구 정지되어 접근이 차단되었습니다.");
+        }
+
+
+        return user;
     }
 
 }
