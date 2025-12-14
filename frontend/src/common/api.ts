@@ -1283,22 +1283,44 @@ export async function updateProductWithImages(
   return updateProduct(productId, payload);
 }
 
-// 상품 정보 수정 (JSON)
+
 // 상품 정보 수정 (JSON)
 export async function updateProduct(productId: number, productData: Partial<TYPE.Product>): Promise<TYPE.Product> {
-  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
+
+  // 1. 토큰 존재 여부 명시적 확인 (가장 안전한 방법)
+  const token = localStorage.getItem("token");
+  if (!token) {
+    // 클라이언트 측에서 에러를 던져, 이전 문제 메시지("로그인이 필요합니다.")와 일치시킵니다.
+    throw new Error("로그인이 필요합니다.");
+  }
+
+  // 2. authFetch 대신 표준 fetch 사용 (authFetch가 문제일 경우 대비)
+  const response = await fetch(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
     method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`, // 토큰 직접 삽입
+    },
     body: JSON.stringify(productData),
   });
 
+  // 3. 에러 처리
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || "상품 수정 실패");
+    let errorMessage = "상품 수정 실패";
+    try {
+      const data = JSON.parse(text);
+      errorMessage = data.message || data.error || errorMessage;
+    } catch {
+      errorMessage = text || errorMessage;
+    }
+    // 백엔드에서 받은 실제 에러 메시지를 사용
+    throw new Error(errorMessage);
   }
 
+  // 4. 성공 시 JSON 파싱
   return response.json();
 }
-
 // admin 관련 API (api.ts에 추가하지 않고 AdminPage에서만 사용)
 export const fetchStatsApi = async () => {
   const token = localStorage.getItem("token");
@@ -1840,10 +1862,10 @@ export async function updateMyInfo(userId: number, payload: {
   const token = localStorage.getItem("token");
   const res = await fetch(`${API_BASE_URL}${SPRING_API}/users/${userId}/mypage`, {
     method: "PUT",
-    headers: { 
+    headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
-     },
+    },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
@@ -1998,9 +2020,9 @@ export async function updateUserProfile(userId: number, data: any): Promise<TYPE
   });
   const text = await res.text();
   if (!res.ok) {
-    throw new Error("정보 수정 실패 " +text);
+    throw new Error("정보 수정 실패 " + text);
   }
-  
+
   if (!text) throw new Error("수정된 정보가 없습니다.");
   return JSON.parse(text);
 }
@@ -2608,23 +2630,23 @@ export async function fetchMyChatRooms(userId: number): Promise<ChatRoomListDto[
 
 // [2] 관리자용 ChatRoomId 기준 메시지 조회
 export async function fetchPrivateMessagesByRoomId(chatRoomId: number): Promise<PrivateChat[]> {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error("메시지 조회 실패: 인증 토큰 누락");
+  const token = localStorage.getItem('token');
+  if (!token) throw new Error("메시지 조회 실패: 인증 토큰 누락");
 
-    // 🚨 [경로 수정]: /api/chats/admin/... 로 경로 수정
-    const response = await fetch(`${API_BASE_URL}/api/chats/admin/messages/${chatRoomId}`, {
-        headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-        },
-    });
+  // 🚨 [경로 수정]: /api/chats/admin/... 로 경로 수정
+  const response = await fetch(`${API_BASE_URL}/api/chats/admin/messages/${chatRoomId}`, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
 
-    if (!response.ok) {
-        // 관리자 메시지 조회도 401/403 오류 처리가 필요함
-        // throw new Error(`채팅방 메시지 조회 실패 (Status: ${response.status})`); // 401 또는 403 오류 발생 시 더 자세한 정보 제공
-        throw new Error(`채팅방 메시지 조회 실패 (Status: ${response.status}). 인증/권한 확인이 필요합니다.`);
-    }
-    return response.json();
+  if (!response.ok) {
+    // 관리자 메시지 조회도 401/403 오류 처리가 필요함
+    // throw new Error(`채팅방 메시지 조회 실패 (Status: ${response.status})`); // 401 또는 403 오류 발생 시 더 자세한 정보 제공
+    throw new Error(`채팅방 메시지 조회 실패 (Status: ${response.status}). 인증/권한 확인이 필요합니다.`);
+  }
+  return response.json();
 }
 
 export async function fetchAdminAllChatRooms(): Promise<AdminChatRoomListDto[]> {
