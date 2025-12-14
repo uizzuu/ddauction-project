@@ -100,15 +100,17 @@ export default function UserChat({ user }: UserChatProps) {
       alert(`${targetUser.nickName}님이 밴 처리되었습니다.`);
       setActiveMenuMessageIndex(null);
 
-      setMessages(prev =>
-        prev.map(m => (m.user?.userId === targetUser.userId ? { ...m, content: "밴 처리된 사용자", user: { ...m.user!, nickName: "(밴 처리됨)" } } : m))
-      );
+      // ✅ 메시지 다시 불러오기
+      if (chatRoomId) {
+        const updatedMessages = await fetchPrivateMessagesByRoomId(chatRoomId);
+        setMessages(updatedMessages);
+      }
+
     } catch (err) {
       console.error(err);
       alert("밴 처리 중 오류가 발생했습니다.");
     }
   };
-
   // 1. 목록 불러오기 (Admin vs General User)
   useEffect(() => {
     console.log("UserChat Component Mounted.");
@@ -458,17 +460,6 @@ export default function UserChat({ user }: UserChatProps) {
                   </p>
                 )}
               </div>
-              {/* 관리자: 상단 사용자 제재 버튼 */}
-              {isAdmin && (
-                <button
-                  className="text-xs bg-red-50 text-red-500 px-3 py-1 rounded border border-red-200 hover:bg-red-100 flex-shrink-0 ml-4"
-                  onClick={() => {
-                    if (window.confirm(`'${selectedUser!.nickName}' 채팅방의 사용자들을 제재하시겠습니까?`)) {
-                      alert("제재 기능 미구현");
-                    }
-                  }}
-                >🚨 사용자 제재</button>
-              )}
             </div>
 
             {/* 상품 정보 */}

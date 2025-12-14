@@ -77,6 +77,11 @@ public class ChattingService {
 
     // ===================== 개인 채팅 조회 =====================
     public List<PrivateChatDto> getPrivateChatsByUsers(Long userId, Long targetUserId, Long productId) {
+        // 1. 밴 상태 체크 로직 추가
+        Users user = usersRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Sender not found"));
+        Users targetUser = usersRepository.findById(targetUserId)
+                .orElseThrow(() -> new RuntimeException("Target user not found"));
 
         // 양방향 채팅방 모두 찾기
         Optional<ChatRoom> room1 = chatRoomRepository
@@ -100,16 +105,44 @@ public class ChattingService {
         // 시간순 정렬 후 반환
         return allMessages.stream()
                 .sorted(Comparator.comparing(PrivateChat::getCreatedAt))
-                .map(PrivateChatDto::fromEntity)
+                .map(chat -> {
+                    PrivateChatDto dto = PrivateChatDto.fromEntity(chat);
+
+                    if (chat.isDeleted()) {
+                        dto.setContent("관리자에 의해 삭제된 메시지입니다.");
+                        return dto;
+                    }
+
+                    // 메시지 작성자가 밴되었는지만 확인
+                    if (chat.getUser() != null && chat.getUser().getRole() == Role.BANNED) {
+                        dto.setContent("밴 처리된 사용자");
+                    }
+
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
     public List<PrivateChatDto> getPrivateChatsByRoomId(Long chatRoomId) {
         List<PrivateChat> messages = privateChatRepository.findByChatRoomIdOrderByCreatedAtAsc(chatRoomId);
 
-        // isDeleted 필터링은 프론트엔드에서 처리한다고 가정하고, 여기서는 그냥 반환합니다.
         return messages.stream()
-                .map(PrivateChatDto::fromEntity)
+                .map(chat -> {
+                    PrivateChatDto dto = PrivateChatDto.fromEntity(chat);
+
+                    // 1. Soft Delete 확인
+                    if (chat.isDeleted()) {
+                        dto.setContent("관리자에 의해 삭제된 메시지입니다.");
+                        return dto;
+                    }
+
+                    // 2. 메시지 작성자가 밴되었는지 확인
+                    if (chat.getUser() != null && chat.getUser().getRole() == Role.BANNED) {
+                        dto.setContent("밴 처리된 사용자");  // ✅ 공개 채팅과 동일하게!
+                    }
+
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
