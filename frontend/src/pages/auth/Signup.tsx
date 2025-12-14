@@ -1,11 +1,13 @@
-import { useState } from "react";
-import DatePickerStyle from "../../components/ui/DatePickerStyle";
+import { useState, useRef } from "react";
+import SignupBirthDatePicker from "../../components/ui/SignupBirthDatePicker";
 import { useNavigate } from "react-router-dom";
 import type { SignupForm } from "../../common/types";
+import DatePicker from "react-datepicker";
 import { signup, sendVerificationCode, checkVerificationCode, sendPhoneVerificationCode, verifyPhoneCode } from "../../common/api";
 
 export default function Signup() {
   const navigate = useNavigate();
+  const birthDatePickerRef = useRef<DatePicker>(null);
 
   const [form, setForm] = useState<SignupForm & {
     address?: string;
@@ -446,24 +448,26 @@ export default function Signup() {
               </div>
             </div>
 
-            <div className="flex flex-col">
-              <DatePickerStyle
-                selected={form.birthday ? new Date(form.birthday) : null}
-                onChange={(date) => {
-                  if (date) {
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, "0");
-                    const day = String(date.getDate()).padStart(2, "0");
-                    setForm((prev) => ({ ...prev, birthday: `${year}-${month}-${day}` }));
-                  } else {
-                    setForm((prev) => ({ ...prev, birthday: "" }));
-                  }
-                }}
-                placeholder="생일"
-                noDefaultStyle
-                className={`w-full px-4 py-3 border ${errors.birthday ? 'border-red-500' : 'border-gray-300'} focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] transition-colors bg-white rounded-[4px] text-left ${!form.birthday ? "text-gray-400" : "text-[#333]"}`}
-              />
-              {errors.birthday && <p className="text-xs text-red-500 mt-1">{errors.birthday}</p>}
+            {/* 생일을 별도 행으로 분리하고 오른쪽으로 더 넓게 */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="col-span-3 flex flex-col">
+                <SignupBirthDatePicker
+                  ref={birthDatePickerRef}
+                  value={form.birthday ? new Date(form.birthday) : null}
+                  onChange={(date) => {
+                    if (date) {
+                      const year = date.getFullYear();
+                      const month = String(date.getMonth() + 1).padStart(2, "0");
+                      const day = String(date.getDate()).padStart(2, "0");
+                      setForm((prev) => ({ ...prev, birthday: `${year}-${month}-${day}` }));
+                    } else {
+                      setForm((prev) => ({ ...prev, birthday: "" }));
+                    }
+                  }}
+                  minAge={1}
+                />
+                {errors.birthday && <p className="text-xs text-red-500 mt-1">{errors.birthday}</p>}
+              </div>
             </div>
 
             {/* 교차 정보 (이메일 인증 시 폰 번호 입력, 폰 인증 시 이메일 입력) */}
