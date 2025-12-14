@@ -71,6 +71,8 @@ export default function MyPage({ user, setUser }: Props) {
   const [myBids, setMyBids] = useState<Bid[]>([]);
   const [confirmTargetId, setConfirmTargetId] = useState<number | null>(null);
 
+  
+
   // Profile Edit State
   const [profileForm, setProfileForm] = useState({
     userName: "",
@@ -148,6 +150,17 @@ export default function MyPage({ user, setUser }: Props) {
       }
     }
   };
+
+  const handleLogout = () => {
+    // 1. JWT 토큰 제거
+    localStorage.removeItem("token");
+    
+    // 2. 사용자 상태 초기화 (UI 업데이트)
+    setUser(null);
+    
+    // 3. 로그인 페이지로 리다이렉트
+    navigate("/login");
+};
 
   // Verification Logic
   const handleSendEmailCode = async () => {
@@ -647,7 +660,7 @@ const handleUpdateProfile = async () => {
                           <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full">인증됨</span>
                         </div>
                       ) : (
-                        showBusinessVerify ? (<BusinessVerify userId={user.userId} onVerified={(bn) => { setUser({ ...user, businessNumber: bn }); setShowBusinessVerify(false); }} onCancel={() => setShowBusinessVerify(false)} />) : (
+                        showBusinessVerify ? (<BusinessVerify userId={user.userId} onVerified={(bn) => { setUser({ ...user, businessNumber: bn }); setShowBusinessVerify(false); }} onCancel={() => setShowBusinessVerify(false)}onLogout={handleLogout} />) : (
                           <button onClick={() => setShowBusinessVerify(true)} className="px-4 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-medium transition-colors">사업자 인증하기</button>
                         )
                       )}
