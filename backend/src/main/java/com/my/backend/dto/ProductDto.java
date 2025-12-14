@@ -55,7 +55,7 @@ public class ProductDto {
     private String tag;
 
     // 배송 정보
-    private boolean deliveryIncluded;
+    private Boolean deliveryIncluded;
     private Long deliveryPrice;
     private Long deliveryAddPrice;
     private Double latitude;

@@ -207,17 +207,10 @@ public class ProductService {
         mapDtoToProduct(product, dto, seller, bid, payment);
 
         // 이미지 업데이트
-        if (dto.getImages() != null) {
-            // 기존 이미지 삭제
-            List<Image> existingImages = imageRepository.findByRefIdAndImageType(
-                    product.getProductId(),
-                    ImageType.PRODUCT
-            );
-            if (!existingImages.isEmpty()) {
-                imageRepository.deleteAll(existingImages);
-            }
+        if (dto.getImages() != null && !dto.getImages().isEmpty()) {
+            // ✅ dto.getImages()가 null이 아니고 비어있지 않을 때만 이미지 업데이트
 
-            // 새로운 이미지 저장
+            // 1️⃣ 새로운 이미지 목록 생성
             List<Image> newImages = dto.getImages().stream()
                     .map(imageDto -> {
                         Image image = imageDto.toEntity();
@@ -228,10 +221,19 @@ public class ProductService {
                     })
                     .toList();
 
-            imageRepository.saveAll(newImages);
+            // 2️⃣ 기존 이미지 삭제
+            List<Image> existingImages = imageRepository.findByRefIdAndImageType(
+                    product.getProductId(),
+                    ImageType.PRODUCT
+            );
+            if (!existingImages.isEmpty()) {
+                imageRepository.deleteAll(existingImages);
+            }
 
+            // 3️⃣ 새 이미지 저장
             imageRepository.saveAll(newImages);
         }
+// ✅ dto.getImages()가 null이거나 빈 배열이면 기존 이미지 유지
 
         Product saved = productRepository.save(product);
         return convertToDto(saved);
@@ -497,23 +499,51 @@ public class ProductService {
     }
 
     private void mapDtoToProduct(Product product, ProductDto dto, Users seller, Bid bid, Payment payment) {
-        product.setTitle(dto.getTitle());
-        product.setContent(dto.getContent());
-        product.setTag(dto.getTag());
-        product.setStartingPrice(dto.getStartingPrice());
-        product.setOriginalPrice(dto.getOriginalPrice());
-        product.setSalePrice(dto.getSalePrice());
-        product.setDiscountRate(dto.getDiscountRate());
-        product.setAuctionEndTime(dto.getAuctionEndTime());
-        product.setDeliveryIncluded(dto.isDeliveryIncluded());
-        product.setDeliveryPrice(dto.getDeliveryPrice());
-        product.setDeliveryAddPrice(dto.getDeliveryAddPrice());
-        product.setProductType(dto.getProductType());
-        product.setProductStatus(dto.getProductStatus());
-        product.setPaymentStatus(dto.getPaymentStatus());
-        product.setDeliveryType(dto.getDeliveryType());
-        product.setProductCategoryType(dto.getProductCategoryType());
-        product.setProductBanners(dto.getProductBanners()); // ✅ 배너(상세이미지) 업데이트 추가
+
+        // String 필드 (null 및 빈 문자열 체크)
+        if (dto.getTitle() != null && !dto.getTitle().isEmpty()) {
+            product.setTitle(dto.getTitle());
+        }
+        if (dto.getContent() != null && !dto.getContent().isEmpty()) {
+            product.setContent(dto.getContent());
+        }
+        if (dto.getTag() != null && !dto.getTag().isEmpty()) {
+            product.setTag(dto.getTag());
+        }
+        if (dto.getAddress() != null && !dto.getAddress().isEmpty()) {
+            product.setAddress(dto.getAddress());
+        }
+        if (dto.getDeliveryAvailable() != null && !dto.getDeliveryAvailable().isEmpty()) {
+            product.setDeliveryAvailable(dto.getDeliveryAvailable());
+        }
+
+        // 숫자/타임스탬프 필드 (null 체크)
+        if (dto.getStartingPrice() != null) product.setStartingPrice(dto.getStartingPrice());
+        if (dto.getOriginalPrice() != null) product.setOriginalPrice(dto.getOriginalPrice());
+        if (dto.getSalePrice() != null) product.setSalePrice(dto.getSalePrice());
+        if (dto.getDiscountRate() != null) product.setDiscountRate(dto.getDiscountRate());
+        if (dto.getDeliveryPrice() != null) product.setDeliveryPrice(dto.getDeliveryPrice());
+        if (dto.getDeliveryAddPrice() != null) product.setDeliveryAddPrice(dto.getDeliveryAddPrice());
+        if (dto.getLatitude() != null) product.setLatitude(dto.getLatitude());
+        if (dto.getLongitude() != null) product.setLongitude(dto.getLongitude());
+        if (dto.getAuctionEndTime() != null) product.setAuctionEndTime(dto.getAuctionEndTime());
+
+        // Enum/List 필드 (null 체크)
+        if (dto.getProductType() != null) product.setProductType(dto.getProductType());
+        if (dto.getProductStatus() != null) product.setProductStatus(dto.getProductStatus());
+        if (dto.getPaymentStatus() != null) product.setPaymentStatus(dto.getPaymentStatus());
+        if (dto.getDeliveryType() != null) product.setDeliveryType(dto.getDeliveryType());
+        if (dto.getProductCategoryType() != null) product.setProductCategoryType(dto.getProductCategoryType());
+        if (dto.getProductBanners() != null) product.setProductBanners(dto.getProductBanners());
+
+        // ⭐️ Boolean 필드 (ProductDto를 Boolean 래퍼 타입으로 수정했을 경우) ⭐️
+        // DTO를 수정하지 않았다면 (boolean 원시 타입이라면), 이 로직은 여전히 덮어쓰기 문제가 있습니다.
+        // 하지만 일단 getDeliveryIncluded()를 사용하며 DTO가 수정되었다고 가정합니다.
+        if (dto.getDeliveryIncluded() != null) {
+            product.setDeliveryIncluded(dto.getDeliveryIncluded());
+        }
+
+        // 연관 엔티티 설정 (기존 값 유지)
         product.setSeller(seller);
         product.setBid(bid);
         product.setPayment(payment);

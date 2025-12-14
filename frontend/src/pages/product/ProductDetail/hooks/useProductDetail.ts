@@ -125,14 +125,14 @@ export const useProductDetail = (user: User | null) => {
         const now = new Date();
         const end = new Date(endTime);
         const diffMs = end.getTime() - now.getTime();
-        
+
         if (diffMs <= 0) return "경매 종료";
-        
+
         const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
         const minutes = Math.floor((diffMs / (1000 * 60)) % 60);
         const seconds = Math.floor((diffMs / 1000) % 60);
-        
+
         // ✅ 초 단위 추가하여 실시간 업데이트 체감 향상
         if (days > 0) {
             return `${days}일 ${hours}시간 ${minutes}분`;
@@ -147,24 +147,24 @@ export const useProductDetail = (user: User | null) => {
 
     useEffect(() => {
         if (!product) return;
-        
+
         // ✅ 즉시 한 번 실행
         const remaining = calculateRemainingTime(product.auctionEndTime || "");
         setRemainingTime(remaining);
-        
+
         if (remaining === "경매 종료") return;
-        
+
         const interval = setInterval(() => {
             const remaining = calculateRemainingTime(product.auctionEndTime || "");
             setRemainingTime(remaining);
             if (remaining === "경매 종료") clearInterval(interval);
         }, 1000);
-        
+
         return () => clearInterval(interval);
     }, [product]);
-    
+
     const viewedRef = useRef(false);
-    
+
     useEffect(() => {
         // 조회수 증가 한 번만 체크
         if (viewedRef.current) return;
@@ -176,6 +176,18 @@ export const useProductDetail = (user: User | null) => {
                 setSellerNickName(data.sellerNickName ?? "알 수 없음");
                 setRemainingTime(calculateRemainingTime(data.auctionEndTime || ""));
                 viewedRef.current = true;
+
+                // ✅ 기존 이미지를 productForm에 설정
+                setProductForm({
+                    title: data.title,
+                    content: data.content || "",
+                    productCategoryType: data.productCategoryType || null,
+                    startingPrice: data.startingPrice?.toString() || "",
+                    productStatus: data.productStatus,
+                    auctionEndTime: data.auctionEndTime || "",
+                    productType: data.productType || "AUCTION",
+                    images: data.images || [], // ✅ 기존 이미지 포함
+                });
 
                 // Bookmark Check
                 try {
@@ -303,7 +315,7 @@ export const useProductDetail = (user: User | null) => {
         handlePlaceBid,
         qnaList,
         setQnaList,
-        reviews,  
+        reviews,
         setReviews,
         isWinner,
         editingProductId,

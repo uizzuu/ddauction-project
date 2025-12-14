@@ -154,7 +154,7 @@ export type EditProductForm = {
   productStatus: ProductStatus;
   auctionEndTime: string;
   productType: ProductType; // 상품 타입 필드 추가
-  images?: File[];
+ images?: (File | Image)[];
 };
 
 export interface EditUserForm {

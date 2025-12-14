@@ -195,6 +195,7 @@ const handleChangeRole = async (userId: number, newRole: User["role"]) => {
       productStatus: product.productStatus || "ACTIVE",
       productType: product.productType || "AUCTION",
       auctionEndTime: product.auctionEndTime || "",
+      images: product.images || [],
     });
   };
 
