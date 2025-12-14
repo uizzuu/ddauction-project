@@ -124,6 +124,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/bid/*/bids").permitAll() // 입찰 내역 공개
                         .requestMatchers(HttpMethod.GET, "/api/bid/*/chart").permitAll() // 입찰 그래프 공개
 
+                        .requestMatchers(HttpMethod.POST, "/api/products/**").authenticated() // 상품 생성/수정은 인증된 사용자면 허용
+                        .requestMatchers(HttpMethod.PUT, "/api/products/**").authenticated()  // PUT, PATCH 등도 필요하면 추가
+                        .requestMatchers(HttpMethod.PATCH, "/api/products/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/products/**").authenticated()
+
+
                         .requestMatchers(HttpMethod.GET, "/api/users/*/public").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/signup").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()

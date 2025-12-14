@@ -98,45 +98,51 @@ public class ProductController {
     }
 
     // 새 상품 생성 (로그인 체크 필요하면 session 확인 후 수정 가능)
+    // 새 상품 생성
     @PostMapping
-    public ResponseEntity<ProductDto> createProduct(@Valid @RequestBody ProductDto dto) {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        if (!(principal instanceof CustomUserDetails userDetails)) {
+    public ResponseEntity<ProductDto> createProduct(
+            @Valid @RequestBody ProductDto dto,
+            @AuthenticationPrincipal CustomUserDetails userDetails // 💡 변경: AuthenticationPrincipal로 사용자 정보 받음
+    ) {
+        // 1. 인증되지 않은 사용자 체크 (토큰이 유효하지 않은 경우)
+        if (userDetails == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
 
-        Users user = userDetails.getUser();
-        ProductType type = dto.getProductType();  // ★ enum 직접 사용
+        Long authenticatedUserId = userDetails.getUser().getUserId();
 
-        switch (type) {
-            case AUCTION:
-            case USED:
-                // 중고, 경매 → 누구나 가능
-                break;
+        /*
+        // ⚠️ 기존 컨트롤러의 중복 로직 제거 (사업자 체크는 서비스에서 처리)
+        // switch (dto.getProductType()) {...}
+        // 이 로직은 ProductService로 이동하여 더 일관성 있게 처리됩니다.
+        */
 
-            case STORE:
-                // STORE 상품은 사업자만 가능
-                if (user.getBusinessNumber() == null || user.getBusinessNumber().isEmpty()) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null); // ★ 차단
-                }
-                break;
+        // 2. 판매자 ID 설정 (Payload 신뢰하지 않고 인증된 사용자 ID 강제)
+        // -> Service에서 이 ID를 인증 ID와 비교하여 보안 검증을 수행합니다.
+        dto.setSellerId(authenticatedUserId);
 
-            default:
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
+        // 3. Service 호출 시 인증된 ID 전달 (Service의 보안 검증 활성화)
+        ProductDto created = productService.createProduct(dto, authenticatedUserId); // 💡 Service의 변경된 시그니처 사용
 
-        // 판매자 ID 설정
-        dto.setSellerId(user.getUserId());
-
-        ProductDto created = productService.createProduct(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     // 상품 수정
     @PutMapping("/{id}")
-    public ResponseEntity<ProductDto> updateProduct(@PathVariable Long id, @RequestBody ProductDto dto) {
-        ProductDto updated = productService.updateProduct(id, dto);
+    public ResponseEntity<ProductDto> updateProduct(
+            @PathVariable Long id,
+            @RequestBody ProductDto dto,
+            @AuthenticationPrincipal CustomUserDetails userDetails // 💡 추가: 인증된 사용자 정보
+    ) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        Long authenticatedUserId = userDetails.getUser().getUserId();
+
+        // 💡 Service 호출 시 인증된 ID 전달 (소유자 및 사업자 검증 활성화)
+        ProductDto updated = productService.updateProduct(id, dto, authenticatedUserId); // 💡 Service의 변경된 시그니처 사용
+
         return ResponseEntity.ok(updated);
     }
 

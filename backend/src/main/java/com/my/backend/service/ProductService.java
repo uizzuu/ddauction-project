@@ -125,13 +125,19 @@ public class ProductService {
     }
 
     // 상품 생성
-    public ProductDto createProduct(ProductDto dto) {
+    public ProductDto createProduct(ProductDto dto, Long authenticatedUserId) { // 👈 시그니처 변경
+
+        // 1️⃣ [추가] 보안 검증: DTO의 sellerId와 현재 인증된 사용자 ID가 일치하는지 확인
+        if (!dto.getSellerId().equals(authenticatedUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "상품 등록은 본인 계정으로만 가능합니다.");
+        }
+
         Users seller = findUserOrThrow(dto.getSellerId());
 
-        // ★ 사업자만 STORE 상품 등록 가능
+        // 2️⃣ [기존] 사업자만 STORE 상품 등록 가능 로직 (유지)
         if (dto.getProductType() == ProductType.STORE
                 && (seller.getBusinessNumber() == null || seller.getBusinessNumber().isEmpty())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "사업자만 일반판매(STORE) 상품을 등록할 수 있습니다."); // ★추가
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "사업자만 일반판매(STORE) 상품을 등록할 수 있습니다.");
         }
 
         Bid bid = findBidOrNull(dto.getBidId());
@@ -160,14 +166,25 @@ public class ProductService {
     }
 
     // 상품 수정
-    public ProductDto updateProduct(Long id, ProductDto dto) {
+    public ProductDto updateProduct(Long id, ProductDto dto, Long authenticatedUserId) { // 👈 시그니처 변경
         Product product = findProductOrThrow(id);
         Users seller = findUserOrThrow(dto.getSellerId());
 
-        // ★ 사업자만 STORE 상품 수정 가능
+        // 1️⃣ [추가] 보안 검증 A: DTO의 sellerId와 현재 인증된 사용자 ID가 일치하는지 확인
+        if (!dto.getSellerId().equals(authenticatedUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "상품 수정은 본인 계정으로만 가능합니다.");
+        }
+
+        // 2️⃣ [추가] 보안 검증 B: 수정하려는 상품의 소유자가 현재 사용자와 일치하는지 확인
+        if (!product.getSeller().getUserId().equals(authenticatedUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 권한이 없습니다. 해당 상품의 판매자가 아닙니다.");
+        }
+
+
+        // 3️⃣ [기존] 사업자만 STORE 상품 수정 가능 로직 (유지)
         if (dto.getProductType() == ProductType.STORE
                 && (seller.getBusinessNumber() == null || seller.getBusinessNumber().isEmpty())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "사업자만 일반판매(STORE) 상품을 수정할 수 있습니다."); // ★추가
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "사업자만 일반판매(STORE) 상품을 수정할 수 있습니다.");
         }
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
