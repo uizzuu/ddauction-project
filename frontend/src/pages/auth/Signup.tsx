@@ -471,7 +471,7 @@ export default function Signup() {
               <div className="flex flex-col">
                 <input
                   type="text"
-                  placeholder="이메일 (선택)"
+                  placeholder="이메일"
                   value={form.email}
                   onChange={(e) => {
                     const val = e.target.value.replace(/[ㄱ-ㅎㅏ-ㅣ가-힣\s]/g, "");
@@ -488,7 +488,7 @@ export default function Signup() {
               <div className="flex flex-col">
                 <input
                   type="tel"
-                  placeholder="전화번호 (선택)"
+                  placeholder="전화번호"
                   value={form.phone}
                   onChange={(e) => {
                     const filtered = e.target.value.replace(/[^0-9]/g, "").slice(0, 11);
