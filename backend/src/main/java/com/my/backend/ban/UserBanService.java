@@ -52,12 +52,14 @@ public class UserBanService {
         int banHours = request.getBanHours() != null ? request.getBanHours() : DEFAULT_BAN_HOURS;
         LocalDateTime banUntil = LocalDateTime.now().plusHours(banHours);
 
+        String reason = "※경고 " + banHours + "시간동안 채팅이 제한되었습니다.";
+
         // 4. 제재 생성
         UserBan ban = UserBan.builder()
                 .user(user)
                 .bannedBy(admin)
                 .banUntil(banUntil)
-                .reason(request.getReason())
+                .reason(reason)
                 .active(true)
                 .build();
 
@@ -67,7 +69,7 @@ public class UserBanService {
                 user.getUserId(), admin.getUserId(), banUntil);
 
         // 5. 실시간 알림 전송 (WebSocket 등)
-        sendBanNotification(user.getUserId(), banUntil, request.getReason());
+        sendBanNotification(user.getUserId(), banUntil, savedBan.getReason());
 
         return convertToDto(savedBan);
     }

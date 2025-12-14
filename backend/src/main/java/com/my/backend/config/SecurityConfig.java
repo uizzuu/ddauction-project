@@ -130,7 +130,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/phone").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/email-find").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/password-reset").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/auth/email/send").permitAll() // 이메일 인증 발송 허용
+                        .requestMatchers(HttpMethod.POST, "/api/auth/send-code").permitAll() // 이메일 인증 발송 허용
                         .requestMatchers(HttpMethod.POST, "/api/auth/verify-email").permitAll() // 이메일 인증
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()// 확인 허용
 
