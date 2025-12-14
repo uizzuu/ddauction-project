@@ -183,13 +183,22 @@ export const reportProduct = (productId: number, reason: string, token?: string)
 };
 
 // 상품 수정
-export const editProduct = (productId: number, payload: any, token?: string) => {
-  const t = ensureToken(token);
-  return fetchJson<TYPE.Product>(`${API_BASE_URL}${SPRING_API}/products/${productId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
-    body: JSON.stringify(payload),
-  });
+export const editProduct = async (productId: number, payload: any): Promise<TYPE.Product> => {
+  // 💡 authFetch를 사용하여 토큰을 자동으로 포함하고 API를 호출합니다.
+  const response = await authFetch(
+    `${SPRING_API}/products/${productId}`, // ⬅️ /api 프리픽스 추가!
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }
+  );
+
+  if (!response.ok) {
+    // ... (에러 처리)
+    throw new Error("상품 수정 실패");
+  }
+
+  return response.json();
 };
 
 // 상품 삭제

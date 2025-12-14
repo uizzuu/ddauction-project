@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 import com.my.backend.enums.*;
 import com.my.backend.repository.*;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,7 @@ import com.my.backend.entity.Payment;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.ProductViewLog;
 import com.my.backend.entity.Users;
+import com.my.backend.enums.Role;
 
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
@@ -166,36 +168,42 @@ public class ProductService {
     }
 
     // 상품 수정
-    public ProductDto updateProduct(Long id, ProductDto dto, Long authenticatedUserId) { // 👈 시그니처 변경
+    public ProductDto updateProduct(Long id, ProductDto dto, Long authenticatedUserId) {
         Product product = findProductOrThrow(id);
-        Users seller = findUserOrThrow(dto.getSellerId());
+        Users user = findUserOrThrow(authenticatedUserId); // 현재 로그인된 사용자 (관리자)
 
-        // 1️⃣ [추가] 보안 검증 A: DTO의 sellerId와 현재 인증된 사용자 ID가 일치하는지 확인
-        if (!dto.getSellerId().equals(authenticatedUserId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "상품 수정은 본인 계정으로만 가능합니다.");
+        // ⭐⭐ 수정: DTO의 sellerId 대신 기존 상품의 판매자 엔티티를 사용 ⭐⭐
+        // 상품 수정 시 판매자 정보는 바뀌지 않으므로, 기존 상품의 판매자 정보를 가져옵니다.
+        Users seller = product.getSeller(); // 기존 상품의 판매자 엔티티를 사용
+
+        // DTO에 새로운 판매자 ID가 있다면 (매우 특수한 경우)
+        if (dto.getSellerId() != null && !dto.getSellerId().equals(seller.getUserId())) {
+            // 관리자가 판매자를 변경하는 경우 등, 필요한 로직을 추가하거나
+            // 이 로직을 통해 seller 객체를 새로 찾도록 할 수 있습니다.
+            // 현재는 기존 판매자를 유지한다고 가정합니다.
         }
 
-        // 2️⃣ [추가] 보안 검증 B: 수정하려는 상품의 소유자가 현재 사용자와 일치하는지 확인
-        if (!product.getSeller().getUserId().equals(authenticatedUserId)) {
+        // 2️⃣ [수정]: 소유자 검증 OR 관리자 검증 (이 로직은 유지)
+        boolean isAdmin = user.getRole() == Role.ADMIN;
+        boolean isOwner = product.getSeller().getUserId().equals(authenticatedUserId);
+
+        if (!isAdmin && !isOwner) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "수정 권한이 없습니다. 해당 상품의 판매자가 아닙니다.");
         }
-
 
         // 3️⃣ [기존] 사업자만 STORE 상품 수정 가능 로직 (유지)
         if (dto.getProductType() == ProductType.STORE
                 && (seller.getBusinessNumber() == null || seller.getBusinessNumber().isEmpty())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "사업자만 일반판매(STORE) 상품을 수정할 수 있습니다.");
         }
+
+        // ... (Bid, Payment 조회 로직은 그대로)
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
 
-        product.setTitle(dto.getTitle());
-        product.setContent(dto.getContent());
-        if (dto.getStartingPrice() != null) {
-            product.setStartingPrice(dto.getStartingPrice());
-        }
 
         // DTO → Entity 매핑
+        // mapDtoToProduct 호출 시, 위에서 정의한 Users seller 변수를 전달합니다.
         mapDtoToProduct(product, dto, seller, bid, payment);
 
         // 이미지 업데이트
