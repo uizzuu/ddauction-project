@@ -221,11 +221,14 @@ public class ProductService {
             List<Image> newImages = dto.getImages().stream()
                     .map(imageDto -> {
                         Image image = imageDto.toEntity();
+                        image.setImageId(null);
                         image.setRefId(product.getProductId());
                         image.setImageType(ImageType.PRODUCT);
                         return image;
                     })
                     .toList();
+
+            imageRepository.saveAll(newImages);
 
             imageRepository.saveAll(newImages);
         }
