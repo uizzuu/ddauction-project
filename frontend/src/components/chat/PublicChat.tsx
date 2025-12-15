@@ -26,7 +26,7 @@ export default function PublicChat({ user }: Props) {
   // 채팅 금지 상태
   const [isBanned, setIsBanned] = useState(false);
   const [banEndTime, setBanEndTime] = useState<Date | null>(null);
-  const [banReason, setBanReason] = useState("");
+ 
 
   // 남은 시간 계산
   const getRemainingTime = () => {
@@ -75,12 +75,12 @@ export default function PublicChat({ user }: Props) {
               setBanEndTime(endTime);
               console.log("종료시간:", endTime);
             }
-            setBanReason(data.reason || "");
+       
           } else {
             console.log("경고 없음");
             setIsBanned(false);
             setBanEndTime(null);
-            setBanReason("");
+     
           }
         } else {
           console.error("API 응답 실패:", response.status);

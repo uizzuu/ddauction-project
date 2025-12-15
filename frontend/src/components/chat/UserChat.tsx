@@ -39,7 +39,7 @@ export default function UserChat({ user }: UserChatProps) {
   // 채팅 금지 상태
   const [isBanned, setIsBanned] = useState(false);
   const [banEndTime, setBanEndTime] = useState<Date | null>(null);
-  const [banReason, setBanReason] = useState("");
+
 
   // 남은 시간 계산
   const getRemainingTime = () => {
@@ -85,11 +85,11 @@ export default function UserChat({ user }: UserChatProps) {
               const endTime = new Date(data.banUntil.replace(' ', 'T'));
               setBanEndTime(endTime);
             }
-            setBanReason(data.reason || "");
+       
           } else {
             setIsBanned(false);
             setBanEndTime(null);
-            setBanReason("");
+         
           }
         }
       } catch (err) {
