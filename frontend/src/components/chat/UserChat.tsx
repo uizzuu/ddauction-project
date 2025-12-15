@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-// 타입 임포트 (PrivateChat, User 등)
 import type { UserChatProps, PrivateChat, ChatMessagePayload, User, ChatListItem } from "../../common/types";
-// API 임포트
 import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages, API_BASE_URL, fetchMyChatRooms, fetchPrivateMessagesByRoomId, fetchAdminAllChatRooms, banUser } from "../../common/api";
 import { getCategoryName } from "../../common/util";
 import type { ChatRoomListDto, AdminChatRoomListDto } from "../../common/types";
 
-// -----------------------------
-// UserChat 컴포넌트
-// -----------------------------
 export default function UserChat({ user }: UserChatProps) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -36,16 +31,77 @@ export default function UserChat({ user }: UserChatProps) {
   const [adminChatRooms, setAdminChatRooms] = useState<AdminChatRoomListDto[]>([]);
   const [filteredList, setFilteredList] = useState<ChatListItem[]>([]);
 
-  // Product Info
   const [product, setProduct] = useState<any>(null);
   const [imageError, setImageError] = useState(false);
 
-  // 관리자 메뉴 상태 (인덱스 기반)
   const [activeMenuMessageIndex, setActiveMenuMessageIndex] = useState<number | null>(null);
 
-  // -----------------------------
-  // 화면 클릭하면 메뉴 닫기 로직
-  // -----------------------------
+  // 채팅 금지 상태
+  const [isBanned, setIsBanned] = useState(false);
+  const [banEndTime, setBanEndTime] = useState<Date | null>(null);
+  const [banReason, setBanReason] = useState("");
+
+  // 남은 시간 계산
+  const getRemainingTime = () => {
+    if (!banEndTime) return "";
+    const now = new Date();
+    const diff = banEndTime.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      setIsBanned(false);
+      return "";
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 0) {
+      return `${hours}시간 ${minutes}분`;
+    }
+    return `${minutes}분`;
+  };
+
+  // 채팅 금지 상태 확인
+  useEffect(() => {
+    if (!user) return;
+
+    const checkBanStatus = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+
+        const response = await fetch(`/api/warn/status/${user.userId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.banned) {
+            setIsBanned(true);
+            if (data.banUntil) {
+              const endTime = new Date(data.banUntil.replace(' ', 'T'));
+              setBanEndTime(endTime);
+            }
+            setBanReason(data.reason || "");
+          } else {
+            setIsBanned(false);
+            setBanEndTime(null);
+            setBanReason("");
+          }
+        }
+      } catch (err) {
+        console.error("채팅 금지 상태 확인 실패:", err);
+      }
+    };
+
+    checkBanStatus();
+    const interval = setInterval(checkBanStatus, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   useEffect(() => {
     const handleClickOutside = () => setActiveMenuMessageIndex(null);
     window.addEventListener("click", handleClickOutside);
@@ -53,8 +109,6 @@ export default function UserChat({ user }: UserChatProps) {
   }, []);
 
   const toggleUserMenu = (index: number, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    console.log('toggleUserMenu 호출됨! index:', index, 'current active:', activeMenuMessageIndex); // ← 이 로그 추가
-
     e.stopPropagation();
     setActiveMenuMessageIndex(prev => (prev === index ? null : index));
   };
@@ -100,7 +154,6 @@ export default function UserChat({ user }: UserChatProps) {
       alert(`${targetUser.nickName}님이 밴 처리되었습니다.`);
       setActiveMenuMessageIndex(null);
 
-      // ✅ 메시지 다시 불러오기
       if (chatRoomId) {
         const updatedMessages = await fetchPrivateMessagesByRoomId(chatRoomId);
         setMessages(updatedMessages);
@@ -111,9 +164,8 @@ export default function UserChat({ user }: UserChatProps) {
       alert("밴 처리 중 오류가 발생했습니다.");
     }
   };
-  // 1. 목록 불러오기 (Admin vs General User)
+
   useEffect(() => {
-    console.log("UserChat Component Mounted.");
     if (!user) return;
 
     const loadData = async () => {
@@ -150,7 +202,6 @@ export default function UserChat({ user }: UserChatProps) {
     loadData();
   }, [user, isAdmin, state]);
 
-  // 채팅방 선택 핸들러 함수
   const handleRoomSelect = (item: ChatRoomListDto | User | AdminChatRoomListDto) => {
     ws.current?.close();
     setMessages([]);
@@ -197,8 +248,6 @@ export default function UserChat({ user }: UserChatProps) {
     }
   };
 
-
-  // 검색(필터링) 로직
   useEffect(() => {
     if (searchKeyword.trim() === "") {
       setFilteredList(isAdmin ? adminChatRooms : chatRooms);
@@ -223,7 +272,6 @@ export default function UserChat({ user }: UserChatProps) {
     }
   }, [searchKeyword, isAdmin, adminChatRooms, chatRooms]);
 
-  // 2. 일반 유저 초기 설정 (Seller 자동 선택)
   useEffect(() => {
     if (!user) return;
     if (!isAdmin && state?.sellerId && !selectedUser) {
@@ -235,8 +283,6 @@ export default function UserChat({ user }: UserChatProps) {
     }
   }, [isAdmin, state, selectedUser, user]);
 
-
-  // 3. 개인채팅 초기 메시지
   useEffect(() => {
     if (!user) return;
 
@@ -271,8 +317,6 @@ export default function UserChat({ user }: UserChatProps) {
     }
   }, [user, selectedUser, selectedProductId, chatRoomId, isAdmin]);
 
-
-  // Product Info Fetching
   useEffect(() => {
     if (!selectedProductId) {
       setProduct(null);
@@ -283,8 +327,6 @@ export default function UserChat({ user }: UserChatProps) {
       .catch((err: any) => console.error("상품 정보 조회 실패:", err));
   }, [selectedProductId]);
 
-
-  // 4. WebSocket 연결 (관리자 모드 제외)
   useEffect(() => {
     if (!user || !selectedUser || isAdmin) return;
 
@@ -293,7 +335,6 @@ export default function UserChat({ user }: UserChatProps) {
     const url = chatRoomId
       ? `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}&chatRoomId=${chatRoomId}`
       : `${protocol}://${host}/ws/chat?userId=${user.userId}&targetUserId=${selectedUser.userId}`;
-
 
     ws.current?.close();
     ws.current = new WebSocket(url);
@@ -319,14 +360,17 @@ export default function UserChat({ user }: UserChatProps) {
     return () => ws.current?.close();
   }, [user, selectedUser, isLocal, chatRoomId, isAdmin]);
 
-  // 5. 자동 스크롤
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 6. 메시지 전송 (관리자 모드 제외)
   const sendMessage = () => {
     if (isAdmin) return;
+
+    if (isBanned) {
+      alert(`채팅이 제한되었습니다. ${getRemainingTime()} 후 이용 가능합니다.`);
+      return;
+    }
 
     if (!input.trim() || !user || !ws.current || !selectedUser) return;
     if (ws.current.readyState !== WebSocket.OPEN) return;
@@ -349,7 +393,6 @@ export default function UserChat({ user }: UserChatProps) {
     setInput("");
   };
 
-  // 관리자 메시지 삭제
   const handleDelete = async (chatId: number) => {
     if (!window.confirm("이 메시지를 삭제하시겠습니까?")) return;
     try {
@@ -360,15 +403,11 @@ export default function UserChat({ user }: UserChatProps) {
     }
   };
 
-
-  // 7. 화면 렌더링
   return (
     <div className="max-w-[1280px] p-0 mt-[20px] mx-auto flex h-[calc(100vh-180px)] border border-[#ccc] rounded-lg overflow-hidden bg-white shadow-sm">
 
-      {/* 🔹 사이드바 표시 */}
       <div className="w-[300px] border-r border-[#eee] flex flex-col bg-gray-50 py-2">
 
-        {/* 1. 검색 및 제목 영역 */}
         <div className="p-3 border-b border-[#eee]">
           <h3 className="text-sm font-bold mb-2 px-1">
             {isAdmin ? `전체 채팅방 목록 (${filteredList.length})` : `내 채팅 목록 (${filteredList.length})`}
@@ -382,10 +421,8 @@ export default function UserChat({ user }: UserChatProps) {
           />
         </div>
 
-        {/* 2. 목록 영역 */}
         <div className="flex-1 overflow-y-auto">
           {isAdmin ? (
-            // [A] 관리자 뷰: 모든 채팅방 목록
             (filteredList as AdminChatRoomListDto[]).map((room) => (
               <div
                 key={room.chatRoomId}
@@ -410,7 +447,6 @@ export default function UserChat({ user }: UserChatProps) {
               </div>
             ))
           ) : (
-            // [B] 일반 유저 뷰: 채팅방 목록
             (filteredList as ChatRoomListDto[]).map((room) => (
               <div
                 key={room.chatRoomId}
@@ -438,13 +474,11 @@ export default function UserChat({ user }: UserChatProps) {
         </div>
       </div>
 
-      {/* 🔹 채팅 영역 전체 컨테이너 */}
       <div className="flex-1 flex flex-col">
         {!selectedUser ? (
           <div className="flex-1 flex items-center justify-center text-gray-500">채팅 상대를 선택해주세요.</div>
         ) : (
           <>
-            {/* 채팅 헤더 */}
             <div className="p-4 border-b border-[#eee] bg-white flex justify-between items-center">
               <div className="flex flex-col">
                 <h2 className="text-lg font-bold">
@@ -453,7 +487,6 @@ export default function UserChat({ user }: UserChatProps) {
                     {isAdmin ? `(채팅방 ID: ${chatRoomId})` : '님과의 대화'}
                   </span>
                 </h2>
-                {/* 관리자: 판매자/구매자 상세 정보 표시 */}
                 {isAdmin && selectedUser!.userName && (
                   <p className="text-xs text-gray-600 mt-1">
                     {selectedUser!.userName}
@@ -462,7 +495,6 @@ export default function UserChat({ user }: UserChatProps) {
               </div>
             </div>
 
-            {/* 상품 정보 */}
             {product && (
               <div
                 className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-3 flex items-center gap-3 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
@@ -498,10 +530,8 @@ export default function UserChat({ user }: UserChatProps) {
               </div>
             )}
 
-            {/* 채팅 메시지 영역 */}
             <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
               {messages.map((msg, i) => {
-                console.log(`렌더링 - 인덱스: ${i}, activeMenuMessageIndex: ${activeMenuMessageIndex}`);
                 const isMe = msg.user?.userId === user?.userId;
                 const isDeleted = msg.isDeleted;
 
@@ -523,16 +553,13 @@ export default function UserChat({ user }: UserChatProps) {
                   <div key={i} className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[70%] relative flex flex-col ${isMe ? "items-end" : "items-start"}`}>
 
-                      {/* 닉네임 표시 및 메뉴/프로필 이동 버튼을 감싸는 div */}
                       {!isMe && msg.user && (
                         <div className="flex items-center gap-1 mb-1 relative">
 
-                          {/* 1. 메뉴 토글 버튼 (⋮) - 이 부분을 클릭했을 때만 메뉴가 떠야 합니다. */}
                           {isAdmin && (
                             <div
                               className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-200"
                               onClick={(e) => {
-                                console.log('⋮ 버튼 클릭됨! 인덱스:', i);
                                 e.stopPropagation();
                                 toggleUserMenu(i, e);
                               }}
@@ -541,7 +568,6 @@ export default function UserChat({ user }: UserChatProps) {
                             </div>
                           )}
 
-                          {/* 2. 닉네임 영역 (프로필 이동 기능만) */}
                           <div
                             className="text-xs text-gray-500 font-bold hover:text-[#111] hover:underline cursor-pointer px-1 py-1"
                             onClick={(e) => {
@@ -552,7 +578,6 @@ export default function UserChat({ user }: UserChatProps) {
                             {displayName}
                           </div>
 
-                          {/* 3. 관리자 메뉴 팝업 (조건: 현재 메시지 인덱스와 일치할 때만) */}
                           {isAdmin && activeMenuMessageIndex === i && (
                             <div
                               className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-300 rounded shadow-md z-50"
@@ -586,14 +611,12 @@ export default function UserChat({ user }: UserChatProps) {
                         </div>
                       )}
 
-                      {/* 메시지 내용 버블 */}
                       <div
                         className={`max-w-full group relative px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-all hover:shadow-md
                           ${isMe ? "bg-[#333] text-white rounded-br-none" : "bg-white border border-gray-200 text-black rounded-bl-none"}
                         `}
                         title={isAdmin ? "관리자 모드 (메시지 삭제는 ✕ 버튼 이용)" : ""}
                       >
-                        {/* 관리자에게는 누가 보낸 메시지인지 표시 (버블 내부) */}
                         {isAdmin && isMe && (
                           <div className={`text-[10px] mb-1 ${isMe ? "text-gray-300" : "text-gray-500"}`}>
                             {msg.nickName}
@@ -604,7 +627,6 @@ export default function UserChat({ user }: UserChatProps) {
                           {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
 
-                        {/* 관리자 메시지 삭제 버튼 */}
                         {isAdmin && (
                           <button
                             onClick={(e) => { e.stopPropagation(); handleDelete(msg.chatId); }}
@@ -620,7 +642,6 @@ export default function UserChat({ user }: UserChatProps) {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* 메시지 입력/전송 영역 */}
             <div className="p-4 bg-white border-t border-[#eee] flex gap-2">
               {isAdmin ? (
                 <div className="w-full text-center text-gray-400 text-sm py-2 bg-gray-50 rounded">
@@ -633,10 +654,21 @@ export default function UserChat({ user }: UserChatProps) {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
-                    className="flex-1 p-3 border border-[#ddd] rounded-lg focus:outline-none focus:border-[#333] text-sm shadow-sm"
-                    placeholder="메시지를 입력하세요..."
+                    disabled={isBanned}
+                    className={`flex-1 p-3 border rounded-lg text-sm shadow-sm ${isBanned
+                        ? "bg-red-50 border-red-300 text-red-600 cursor-not-allowed"
+                        : "border-[#ddd] focus:outline-none focus:border-[#333]"
+                      }`}
+                    placeholder={isBanned ? `🚫 이용이 제한되었습니다 (남은 시간: ${getRemainingTime()})` : "메시지를 입력하세요..."}
                   />
-                  <button onClick={sendMessage} className="px-5 py-2 bg-[#333] text-white rounded-lg hover:bg-[#555] transition-colors font-medium text-sm shadow">
+                  <button
+                    onClick={sendMessage}
+                    disabled={isBanned}
+                    className={`px-5 py-2 rounded-lg font-medium text-sm shadow transition-colors ${isBanned
+                        ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                        : "bg-[#333] text-white hover:bg-[#555]"
+                      }`}
+                  >
                     전송
                   </button>
                 </>
