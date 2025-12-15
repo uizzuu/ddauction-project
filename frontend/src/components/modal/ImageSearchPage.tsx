@@ -2,32 +2,9 @@ import React, { useState, useRef } from "react";
 import { searchByImageFile } from "../../common/api";
 import ProductCard from "../ui/ProductCard";
 import type { Product, ProductCategoryType } from "../../common/types";
+import { CATEGORY_OPTIONS } from "../../common/enums";
+import SelectStyle from "../ui/SelectStyle";
 import { ImagePlus, X, Search, Loader2 } from "lucide-react";
-
-// 🔥 프론트 전용 카테고리 라벨 테이블
-// 👉 enums.ts 의 PRODUCT_CATEGORIES와 동일 구조로 만들어야 함
-const CATEGORY_LABELS: Record<ProductCategoryType, string> = {
-  ELECTRONICS: "디지털기기",
-  APPLIANCES: "생활가전",
-  FURNITURE_INTERIOR: "가구/인테리어",
-  KITCHENWARE: "생활/주방",
-  FOODS: "식품",
-  KIDS: "유아동",
-  BOOKS: "도서",
-  STATIONERY: "문구류",
-  CLOTHING: "의류",
-  ACCESSORIES: "잡화",
-  BEAUTY: "뷰티/미용",
-  SPORTS: "스포츠레저",
-  ENTERTAINMENT: "취미/게임/음반",
-  TICKETS: "티켓/교환권",
-  PET: "반려동물용품",
-  PLANTS: "식물",
-  ETC: "기타 물품",
-};
-
-// 모든 key 가져오기
-const CATEGORY_KEYS = Object.keys(CATEGORY_LABELS) as ProductCategoryType[];
 
 export default function ImageSearchPage() {
   // 상태 선언
@@ -41,15 +18,6 @@ export default function ImageSearchPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-
-  // 카테고리 옵션 (Select용)
-  const categoryOptions = [
-    { value: "" as const, label: "전체 카테고리" },
-    ...CATEGORY_KEYS.map((key) => ({
-      value: key,
-      label: CATEGORY_LABELS[key],
-    })),
-  ];
 
   // 이미지 선택
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -122,7 +90,7 @@ export default function ImageSearchPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
         {/* 왼쪽: 업로드 및 설정 패널 */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div>
             <h2 className="text-lg font-bold text-[#111] mb-4 flex items-center gap-2">
               <ImagePlus size={20} />
               이미지 업로드
@@ -145,7 +113,7 @@ export default function ImageSearchPage() {
                   <img
                     src={previewUrl}
                     alt="Preview"
-                    className="w-full h-full object-contain"
+                    className="w-full h-full object-cover"
                   />
                 </div>
                 <button
@@ -190,17 +158,13 @@ export default function ImageSearchPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">카테고리 필터</label>
-                  <select
+                  <SelectStyle
                     value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value as ProductCategoryType | "")}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:border-[#111] focus:ring-1 focus:ring-[#111] text-sm"
-                  >
-                    {categoryOptions.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setCategoryFilter(val as ProductCategoryType | "")}
+                    options={CATEGORY_OPTIONS}
+                    placeholder="전체 카테고리"
+                    className="w-full"
+                  />
                 </div>
 
                 <div>

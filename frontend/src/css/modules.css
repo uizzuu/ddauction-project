@@ -39,6 +39,12 @@
   @apply absolute top-full left-[-1px] w-[calc(100%+2px)] bg-white 
   border border-solid border-[#666] border-t-0 rounded-b-lg 
   max-h-[400px] overflow-y-auto z-10 mt-0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.autocomplete-dropdown::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
 }
 
 .autocomplete-item {
