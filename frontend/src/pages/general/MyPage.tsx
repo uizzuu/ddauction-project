@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import DatePickerStyle from "../../components/ui/DatePickerStyle";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText, Search, Check, AlertCircle } from "lucide-react";
 import { COURIER_OPTIONS } from "../../common/enums";
 import type { User, Product, Report, ProductQna, Inquiry, Review, Bid } from "../../common/types";
@@ -43,12 +43,28 @@ const ProviderBadge = ({ provider }: { provider: string }) => {
     </span>
   );
 };
-
+const VALID_TABS: TabId[] = ["selling", "buying", "reviews", "community", "profile_edit"];
 export default function MyPage({ user, setUser }: Props) {
   const navigate = useNavigate();
+  // URL 쿼리 파라미터를 관리합니다.
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // 1. activeTab 상태를 URL에서 가져오거나 기본값으로 설정합니다.
+  const urlTab = searchParams.get("tab") as TabId | null;
+  const initialTab: TabId = (urlTab && VALID_TABS.includes(urlTab))
+    ? urlTab
+    : "profile_edit";
+
+  const [activeTab, setActiveTab] = useState<TabId>(initialTab); // <-- URL에서 초기값 설정
+
+  // 탭을 변경하고 URL 쿼리 파라미터를 업데이트하는 함수 (핸들러)
+  const handleTabChange = (tab: TabId) => {
+    // setSearchParams를 호출하여 URL을 변경합니다. (예: /mypage?tab=selling)
+    setSearchParams({ tab: tab }, { replace: true });
+    // useEffect가 searchParams 변경을 감지하여 activeTab 상태를 동기화합니다.
+  };
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<TabId>("profile_edit");
   const tabRefs = useRef<{ [key in TabId]?: HTMLButtonElement }>({});
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const [showBusinessVerify, setShowBusinessVerify] = useState(false);
@@ -71,7 +87,7 @@ export default function MyPage({ user, setUser }: Props) {
   const [myBids, setMyBids] = useState<Bid[]>([]);
   const [confirmTargetId, setConfirmTargetId] = useState<number | null>(null);
 
-  
+
 
   // Profile Edit State
   const [profileForm, setProfileForm] = useState({
@@ -154,13 +170,13 @@ export default function MyPage({ user, setUser }: Props) {
   const handleLogout = () => {
     // 1. JWT 토큰 제거
     localStorage.removeItem("token");
-    
+
     // 2. 사용자 상태 초기화 (UI 업데이트)
     setUser(null);
-    
+
     // 3. 로그인 페이지로 리다이렉트
     navigate("/login");
-};
+  };
 
   // Verification Logic
   const handleSendEmailCode = async () => {
@@ -361,49 +377,77 @@ export default function MyPage({ user, setUser }: Props) {
 
   useEffect(() => { loadTabContent(activeTab); }, [activeTab, user]);
 
+  // 2. URL 파라미터 변경을 감지하고 activeTab을 업데이트합니다. (새로고침 시 탭 유지 핵심)
+  useEffect(() => {
+    const currentUrlTab = searchParams.get("tab") as TabId | null;
+    const newTab: TabId = (currentUrlTab && VALID_TABS.includes(currentUrlTab))
+      ? currentUrlTab
+      : "profile_edit";
+
+    setActiveTab(newTab); // activeTab 상태를 URL 값으로 업데이트
+  }, [searchParams]); // searchParams가 변경될 때마다 실행
+
+  // Tab Styling Effect
+  useEffect(() => {
+    const currentTab = tabRefs.current[activeTab];
+    if (currentTab) {
+      setIndicatorStyle({
+        left: currentTab.offsetLeft,
+        width: currentTab.offsetWidth,
+      });
+    }
+  }, [activeTab]);
+
+  // Tab Content Loading
+  useEffect(() => {
+    if (user) {
+      loadTabContent(activeTab); // activeTab이 변경될 때마다 데이터 로드
+    }
+  }, [activeTab, user]);
+
 
   // Handle Update Profile
-const handleUpdateProfile = async () => {
-  if (!user) return;
+  const handleUpdateProfile = async () => {
+    if (!user) return;
 
-  if (nicknameError) {
-    alert("닉네임을 확인해주세요.");
-    return;
-  }
+    if (nicknameError) {
+      alert("닉네임을 확인해주세요.");
+      return;
+    }
 
-  if (!verification.isEmailVerified) {
-    alert("이메일 인증을 완료해주세요.");
-    return;
-  }
-  if (!verification.isPhoneVerified) {
-    alert("휴대폰 인증을 완료해주세요.");
-    return;
-  }
-   if (addressForm.address && !addressForm.detailAddress.trim()) {
-    alert("상세 주소를 입력해주세요.");
-    return;
-  }
+    if (!verification.isEmailVerified) {
+      alert("이메일 인증을 완료해주세요.");
+      return;
+    }
+    if (!verification.isPhoneVerified) {
+      alert("휴대폰 인증을 완료해주세요.");
+      return;
+    }
+    if (addressForm.address && !addressForm.detailAddress.trim()) {
+      alert("상세 주소를 입력해주세요.");
+      return;
+    }
 
-  try {
-    // ⭐ 모든 정보를 한 번에 보내기
-    const updatedUser = await API.updateUserProfile(user.userId, {
-      userName: profileForm.userName,
-      nickName: profileForm.nickName,
-      password: profileForm.password || undefined,
-      phone: profileForm.phone,
-      email: profileForm.email,
-      birthday: profileForm.birthday || undefined,
-      address: addressForm.address,
-      detailAddress: addressForm.detailAddress,
-      zipCode: addressForm.zipCode,
-    });
+    try {
+      // ⭐ 모든 정보를 한 번에 보내기
+      const updatedUser = await API.updateUserProfile(user.userId, {
+        userName: profileForm.userName,
+        nickName: profileForm.nickName,
+        password: profileForm.password || undefined,
+        phone: profileForm.phone,
+        email: profileForm.email,
+        birthday: profileForm.birthday || undefined,
+        address: addressForm.address,
+        detailAddress: addressForm.detailAddress,
+        zipCode: addressForm.zipCode,
+      });
 
-    setUser(updatedUser);
-    alert("프로필이 수정되었습니다.");
-  } catch (err: any) {
-    alert(err.message || "프로필 수정 실패");
-  }
-};
+      setUser(updatedUser);
+      alert("프로필이 수정되었습니다.");
+    } catch (err: any) {
+      alert(err.message || "프로필 수정 실패");
+    }
+  };
 
   // Handle Disconnect Social
   const handleDisconnectSocial = async () => {
@@ -512,7 +556,13 @@ const handleUpdateProfile = async () => {
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
-                <button key={tab.id} ref={(el) => { if (el) tabRefs.current[tab.id] = el; }} onClick={() => setActiveTab(tab.id)} className={`flex-1 px-4 md:px-6 py-4 text-sm font-medium transition-colors relative flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === tab.id ? "text-[#333]" : "text-gray-600 hover:text-gray-900"}`}>
+                <button
+                  key={tab.id}
+                  ref={(el) => { if (el) tabRefs.current[tab.id] = el; }}
+                  // ⭐ 수정: setActiveTab 대신 handleTabChange 호출
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`flex-1 px-4 md:px-6 py-4 text-sm font-medium transition-colors relative flex items-center justify-center gap-2 whitespace-nowrap ${activeTab === tab.id ? "text-[#333]" : "text-gray-600 hover:text-gray-900"}`}
+                >
                   <Icon size={18} /> {tab.label}
                 </button>
               );
@@ -660,7 +710,7 @@ const handleUpdateProfile = async () => {
                           <span className="px-3 py-1 bg-green-100 text-green-700 text-sm font-bold rounded-full">인증됨</span>
                         </div>
                       ) : (
-                        showBusinessVerify ? (<BusinessVerify userId={user.userId} onVerified={(bn) => { setUser({ ...user, businessNumber: bn }); setShowBusinessVerify(false); }} onCancel={() => setShowBusinessVerify(false)}onLogout={handleLogout} />) : (
+                        showBusinessVerify ? (<BusinessVerify userId={user.userId} onVerified={(bn) => { setUser({ ...user, businessNumber: bn }); setShowBusinessVerify(false); }} onCancel={() => setShowBusinessVerify(false)} onLogout={handleLogout} />) : (
                           <button onClick={() => setShowBusinessVerify(true)} className="px-4 py-2 border border-blue-200 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 font-medium transition-colors">사업자 인증하기</button>
                         )
                       )}
