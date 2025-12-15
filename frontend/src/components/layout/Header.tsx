@@ -1,7 +1,14 @@
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import type { User } from "../../common/types";
-import { logout, fetchSuggestions, fetchPopularKeywords, saveSearchLog } from "../../common/api";
+import type { User, Notification } from "../../common/types"; // Notification 타입 추가
+import { 
+  logout, 
+  fetchSuggestions, 
+  fetchPopularKeywords, 
+  saveSearchLog, 
+  getNotifications, // 추가
+  API_BASE_URL,     // 추가
+} from "../../common/api";
 import { NotificationModal } from "../../common/import";
 import { RealTimeSearch } from "../../common/websocket";
 import { getCartItems } from "../../common/util";
@@ -11,10 +18,12 @@ type Props = {
   setUser: (user: User | null) => void;
 };
 
-// Update Header Props and Component
 export default function Header({ user, setUser }: Props) {
-  console.log("🔍 Header user:", user);
-  console.log("🔍 Header businessNumber:", user?.businessNumber);
+  // console.log("🔍 Header user:", user);
+
+  // ----------------------------------------------------
+  // 🛒 장바구니 로직
+  // ----------------------------------------------------
   const [cartItemCount, setCartItemCount] = useState(0);
 
   const updateCartCount = () => {
@@ -27,20 +36,81 @@ export default function Header({ user, setUser }: Props) {
 
   useEffect(() => {
     updateCartCount();
-
     const handleCartUpdate = () => updateCartCount();
     window.addEventListener("cart-updated", handleCartUpdate);
     return () => window.removeEventListener("cart-updated", handleCartUpdate);
   }, [user, location.pathname]);
 
+  // ----------------------------------------------------
+  // 🔔 [NEW] 알림 로직 (데이터 관리 & WebSocket)
+  // ----------------------------------------------------
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
 
+  // 읽지 않은 알림 개수 계산
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
+
+  useEffect(() => {
+    // 로그아웃 상태면 알림 초기화 및 리턴
+    if (!user) {
+      setNotifications([]);
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      return;
+    }
+
+    // 1. 기존 알림 불러오기 (REST API)
+    getNotifications(user.userId)
+      .then((data) => {
+        setNotifications(data);
+      })
+      .catch((err) => console.error("❌ 알림 로드 실패:", err));
+
+    // 2. WebSocket 연결 (실시간 알림 수신)
+    const wsUrl = API_BASE_URL.replace("http", "ws").replace("/api", "") +
+      `/ws/notifications?userId=${user.userId}`;
+
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log("✅ WebSocket Connected (Header Notifications)");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const newNoti: Notification = JSON.parse(event.data);
+        console.log("📩 새 알림 도착:", newNoti);
+        // 새 알림을 리스트 최상단에 추가
+        setNotifications((prev) => [newNoti, ...prev]);
+      } catch (e) {
+        console.error("JSON 파싱 에러:", e);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("🔌 WebSocket Disconnected (Header)");
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [user]); // 유저 변경(로그인/로그아웃) 시 재실행
+
+  // ----------------------------------------------------
+  // 📜 스크롤 및 헤더 스타일 로직
+  // ----------------------------------------------------
   const lastScrollY = useRef(0);
   const [isScrollDown, setIsScrollDown] = useState(false);
   const [isSticky, setIsSticky] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
-  const [showNotifications, setShowNotifications] = useState(false);
 
   // Header Sliding Indicator
   const navRef = useRef<HTMLDivElement>(null);
@@ -69,7 +139,6 @@ export default function Header({ user, setUser }: Props) {
         window.requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
 
-          // 1. At top - always show header
           if (currentScrollY <= 0) {
             setIsSticky(false);
             setIsScrollDown(false);
@@ -78,21 +147,17 @@ export default function Header({ user, setUser }: Props) {
             return;
           }
 
-          // 2. Calculate delta and direction
           const delta = Math.abs(currentScrollY - lastScrollY.current);
           const isScrollingDown = currentScrollY > lastScrollY.current;
 
-          // 3. Update lastScrollY first (prevent accumulation)
           lastScrollY.current = currentScrollY;
 
-          // 4. Different thresholds: higher for down (prevent jitter)
           const threshold = isScrollingDown ? 15 : 5;
           if (delta < threshold) {
             ticking = false;
             return;
           }
 
-          // 5. Update states
           if (currentScrollY > 60) {
             setIsScrollDown(isScrollingDown);
             setIsSticky(true);
@@ -111,11 +176,13 @@ export default function Header({ user, setUser }: Props) {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // 실시간 검색어 & 최근 검색어
-  const [popularKeywords, setPopularKeywords] = useState<string[]>([]); // API 인기 검색어
-  const { rankings } = RealTimeSearch(); // WebSocket 실시간
-  const [recentKeywords, setRecentKeywords] = useState<string[]>([]); // 로컬스토리지 최근검색어
-  const [isAutoSave, setIsAutoSave] = useState(true); // 자동저장 여부
+  // ----------------------------------------------------
+  // 🔍 검색 관련 로직 (실시간 검색어, 최근 검색어, 자동완성)
+  // ----------------------------------------------------
+  const [popularKeywords, setPopularKeywords] = useState<string[]>([]);
+  const { rankings } = RealTimeSearch();
+  const [recentKeywords, setRecentKeywords] = useState<string[]>([]);
+  const [isAutoSave, setIsAutoSave] = useState(true);
 
   const [isShowingPopular, setIsShowingPopular] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -123,7 +190,6 @@ export default function Header({ user, setUser }: Props) {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [searchKeyword, setSearchKeyword] = useState("");
 
-  // 보호된 경로 이동 핸들러
   const handleProtectedNavigation = (e: React.MouseEvent, path: string) => {
     if (!user) {
       e.preventDefault();
@@ -144,26 +210,22 @@ export default function Header({ user, setUser }: Props) {
     }
   };
 
-  // URL 쿼리 변화 감지 → input에 동기화
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const kw = params.get("keyword") || "";
     setSearchKeyword(kw);
   }, [location.search]);
 
-  // 컴포넌트 마운트 시 인기 검색어 가져오기
   useEffect(() => {
     handleFetchPopularKeywords();
   }, []);
 
-  // 🆕 실시간 순위 반영 (WebSocket)
   useEffect(() => {
     if (rankings.length > 0) {
       setPopularKeywords(rankings.map(item => item.keyword));
     }
   }, [rankings]);
 
-  // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
@@ -175,7 +237,6 @@ export default function Header({ user, setUser }: Props) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // 인기 검색어 API 호출
   const handleFetchPopularKeywords = async () => {
     try {
       const keywords = await fetchPopularKeywords(10);
@@ -186,13 +247,10 @@ export default function Header({ user, setUser }: Props) {
     }
   };
 
-  // 자동완성 API 호출
   const handleFetchSuggestions = async (keyword: string) => {
     try {
       const results = await fetchSuggestions(keyword);
       setSuggestions(results);
-
-      // API 응답 후에만 드롭다운 표시
       setIsShowingPopular(false);
       setShowSuggestions(true);
     } catch (error) {
@@ -202,7 +260,6 @@ export default function Header({ user, setUser }: Props) {
     }
   };
 
-  // 검색어 입력 시 디바운스 처리
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchKeyword(value);
@@ -219,7 +276,6 @@ export default function Header({ user, setUser }: Props) {
       return;
     }
 
-    // API 응답 대기 (즉시 드롭다운 표시하지 않음)
     setIsShowingPopular(false);
 
     debounceTimer.current = setTimeout(() => {
@@ -227,7 +283,6 @@ export default function Header({ user, setUser }: Props) {
     }, 300);
   };
 
-  // 검색 시 URL 쿼리로 이동
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -243,10 +298,7 @@ export default function Header({ user, setUser }: Props) {
 
     if (trimmed !== "") {
       query.append("keyword", trimmed);
-
-      // 🆕 검색 로그 저장 (API)
       saveSearchLog(trimmed).catch(err => console.error("검색 로그 저장 실패:", err));
-      // 로컬 저장
       saveRecentKeyword(trimmed);
     }
 
@@ -258,14 +310,12 @@ export default function Header({ user, setUser }: Props) {
     setShowSuggestions(false);
   };
 
-  // 연관 검색어 클릭
   const handleSuggestionClick = (suggestion: string) => {
     setSearchKeyword(suggestion);
 
     const query = new URLSearchParams();
     query.append("keyword", suggestion);
 
-    // 🆕 검색 로그 저장
     saveSearchLog(suggestion).catch(err => console.error("검색 로그 저장 실패:", err));
     saveRecentKeyword(suggestion);
 
@@ -275,16 +325,12 @@ export default function Header({ user, setUser }: Props) {
 
     navigate(`/search?${query.toString()}`);
     setShowSuggestions(false);
-
-    // 검색바로 포커스 이동
     inputRef.current?.focus();
   };
 
-  // 키보드 네비게이션
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const currentDisplayList = isShowingPopular ? popularKeywords : suggestions;
 
-    // 드롭다운이 안 보이면 키보드 네비게이션 비활성화
     if (!showSuggestions) return;
 
     switch (e.key) {
@@ -303,14 +349,12 @@ export default function Header({ user, setUser }: Props) {
         }
         break;
       case "Enter":
-        // 키보드로 선택한 항목이 있으면 input에 입력만 하고 검색 안 함
         if (selectedIndex >= 0 && currentDisplayList.length > 0) {
           e.preventDefault();
           setSearchKeyword(currentDisplayList[selectedIndex]);
           setShowSuggestions(false);
           setSelectedIndex(-1);
         }
-        // selectedIndex === -1 이면 그냥 form submit (검색 실행)
         break;
       case "Escape":
         setShowSuggestions(false);
@@ -319,7 +363,6 @@ export default function Header({ user, setUser }: Props) {
     }
   };
 
-  // 최근 검색어 로드
   useEffect(() => {
     const saved = localStorage.getItem("recent_searches");
     if (saved) {
@@ -327,29 +370,28 @@ export default function Header({ user, setUser }: Props) {
     }
   }, []);
 
-  // 최근 검색어 저장
   const saveRecentKeyword = (keyword: string) => {
     if (!isAutoSave || !keyword.trim()) return;
-
     const newKeywords = [keyword, ...recentKeywords.filter(k => k !== keyword)].slice(0, 10);
     setRecentKeywords(newKeywords);
     localStorage.setItem("recent_searches", JSON.stringify(newKeywords));
   };
 
-  // 최근 검색어 삭제
   const removeRecentKeyword = (keyword: string) => {
     const newKeywords = recentKeywords.filter(k => k !== keyword);
     setRecentKeywords(newKeywords);
     localStorage.setItem("recent_searches", JSON.stringify(newKeywords));
   };
 
-  // 검색창 포커스 시
   const handleInputFocus = () => {
     if (searchKeyword.trim() === "") {
       setShowSuggestions(true);
     }
   };
 
+  // ----------------------------------------------------
+  // 🖥️ UI 렌더링
+  // ----------------------------------------------------
   return (
     <div className={`sticky top-0 z-50 bg-white transition-shadow duration-300 ${isSticky ? "shadow-sm" : ""}`}>
       {/* 상단 네비 */}
@@ -363,9 +405,6 @@ export default function Header({ user, setUser }: Props) {
                   관리자 페이지
                 </NavLink>
               )}
-              {/* <NavLink to="/mypage/qna/new" className="hover:text-[#666] transition-colors">
-                                1:1 문의
-                            </NavLink> */}
               <button onClick={handleLogout} className="hover:text-[#666] transition-colors">
                 로그아웃
               </button>
@@ -378,17 +417,11 @@ export default function Header({ user, setUser }: Props) {
               <NavLink to="/terms" className="hover:text-[#666] transition-colors">
                 회원가입
               </NavLink>
-              {/* <NavLink
-                                to="/mypage/qna/new"
-                                onClick={(e) => handleProtectedNavigation(e, "/mypage/qna/new")}
-                                className="hover:text-[#666] transition-colors"
-                            >
-                                1:1 문의
-                            </NavLink> */}
             </>
           )}
         </nav>
       </div>
+
       {/* 메인헤더 */}
       <div className="w-full bg-white py-2">
         <div className="w-full max-w-[1280px] mx-auto flex flex-wrap md:flex-nowrap gap-y-3 md:gap-4 items-center px-4 xl:px-0">
@@ -405,6 +438,7 @@ export default function Header({ user, setUser }: Props) {
             />
           </a>
 
+          {/* 검색창 영역 */}
           <div
             className={`search-container w-full md:w-[450px] order-3 md:order-2 ${showSuggestions ? "active" : ""}`}
             ref={searchRef}
@@ -415,9 +449,7 @@ export default function Header({ user, setUser }: Props) {
               role="search"
               onSubmit={handleSearch}
             >
-              <label htmlFor="search-input" className="sr-only">
-                검색
-              </label>
+              <label htmlFor="search-input" className="sr-only">검색</label>
               <input
                 id="search-input"
                 type="text"
@@ -470,10 +502,7 @@ export default function Header({ user, setUser }: Props) {
                 />
               </button>
 
-              <div
-                className="w-[1px] h-[14px] bg-[#888] ml-1"
-                aria-hidden="true"
-              />
+              <div className="w-[1px] h-[14px] bg-[#888] ml-1" aria-hidden="true" />
               <button type="submit" aria-label="검색" className="ml-1">
                 <img
                   className="relative flex-[0_0_auto] w-5 h-5 md:w-[22px] md:h-[22px]"
@@ -484,11 +513,10 @@ export default function Header({ user, setUser }: Props) {
               </button>
             </form>
 
-            {/* Dropdown */}
+            {/* Suggestions Dropdown (생략 없이 기존 코드 유지) */}
             {showSuggestions && (
               <div className="autocomplete-dropdown">
                 {searchKeyword ? (
-                  /* 1. 자동완성 목록 (검색어 있을 때) */
                   suggestions.length > 0 && suggestions.map((item, index) => (
                     <div
                       key={index}
@@ -507,9 +535,7 @@ export default function Header({ user, setUser }: Props) {
                     </div>
                   ))
                 ) : (
-                  /* 2. 최근 검색어 + 인기 검색어 (검색어 없을 때) */
                   <div className="px-3 py-5">
-                    {/* 최근 검색어 */}
                     <div className="mb-4">
                       <div className="flex justify-between items-center mb-3">
                         <h3 className="text-sm font-bold text-[#333]">최근 검색어</h3>
@@ -547,7 +573,6 @@ export default function Header({ user, setUser }: Props) {
                       )}
                     </div>
 
-                    {/* 실시간 검색어 */}
                     <div>
                       <h3 className="text-sm font-bold text-[#333] mb-3">실시간 검색어</h3>
                       <div className="grid grid-cols-2 gap-x-4 gap-y-3">
@@ -561,15 +586,12 @@ export default function Header({ user, setUser }: Props) {
                               {index + 1}
                             </span>
                             <span className="text-[14px] text-[#333] truncate">{keyword}</span>
-                            {/* 등락폭은 API 데이터 부재로 생략, 추후 추가 가능 */}
                           </div>
                         ))}
                       </div>
                     </div>
                   </div>
                 )}
-
-                {/* Footer Controls */}
                 <div className="flex justify-between items-center px-4 py-3 bg-[#f9f9f9] border-t border-[#eee]">
                   <div
                     className="flex items-center gap-2 text-xs text-[#777] cursor-pointer"
@@ -597,32 +619,45 @@ export default function Header({ user, setUser }: Props) {
             )}
           </div>
 
-          {/* 아이콘 */}
-
+          {/* 아이콘 메뉴 */}
           <nav
             className="flex items-center gap-2 md:gap-3 relative flex-shrink-0 ml-auto order-2 md:order-3"
             aria-label="주요 메뉴"
           >
+            {/* 🔔 알림 아이콘 & 배지 [수정됨] */}
             <div className="relative">
               <button
-                className="p-1 hover:opacity-70 transition-opacity"
-                aria-label="알림"
+                className="p-1 hover:opacity-70 transition-opacity relative"
+                aria-label={`알림 ${unreadCount > 0 ? unreadCount + '개' : ''}`}
                 onClick={() => setShowNotifications(!showNotifications)}
               >
                 <img
                   className="w-5 h-5 md:w-[21px] md:h-[23px]"
-                  alt=""
+                  alt="알림"
                   src="https://c.animaapp.com/vpqlbV8X/img/group@2x.png"
                   style={{ filter: "invert(20%)" }}
                 />
+                
+                {/* 알림 배지 (장바구니와 동일 스타일) */}
+                {user && unreadCount > 0 && (
+                  <div className="absolute top-[0.5px] -right-[0.5px] w-4 h-4 bg-[--color-alert-red] rounded-full flex justify-center items-center pointer-events-none">
+                    <div className="font-bold text-[10px] leading-[5px] text-white text-center">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </div>
+                  </div>
+                )}
               </button>
+
+              {/* 알림 모달 (Props 전달) */}
               {user && (
                 <NotificationModal
                   isOpen={showNotifications}
                   onClose={() => setShowNotifications(false)}
-                  userId={user.userId}
+                  notifications={notifications}     // Header에서 관리하는 상태 전달
+                  setNotifications={setNotifications} // 상태 변경 함수 전달
                 />
-              )}</div>
+              )}
+            </div>
 
             <NavLink
               to="/wishlist"
@@ -674,7 +709,8 @@ export default function Header({ user, setUser }: Props) {
           </nav>
         </div>
       </div>
-      {/* PC/Mobile 카테고리 탭 (Full Width Border) */}
+
+      {/* 카테고리 탭 (PC/Mobile) */}
       <div
         className={`w-full bg-white transition-all duration-300 ease-in-out ${isScrollDown ? "max-h-0 opacity-0 border-none" : "max-h-[60px] opacity-100 border-b"}`}
       >
