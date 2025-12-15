@@ -37,10 +37,29 @@ export const TabSection: React.FC<TabSectionProps> = ({
         { id: 'review', label: `상품후기(${reviews.length})` },
         { id: 'return', label: '반품/교환정보' },
     ];
+    
+    // 💡 변경 사항 1: 기본 탭 ID 정의
+    const defaultTabId = tabs[0]?.id || 'detail';
 
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
+    // 💡 변경 사항 2: 컴포넌트 마운트 시 URL 해시를 읽어 activeTab 설정 (새로고침 시 탭 유지)
+    useEffect(() => {
+        const hash = window.location.hash.replace('#', '');
+        const foundTab = tabs.find(tab => tab.id === hash);
+        
+        if (foundTab && activeTab !== foundTab.id) {
+            // URL 해시가 유효한 탭 ID일 경우 해당 탭으로 설정
+            setActiveTab(foundTab.id);
+        } else if (!foundTab && activeTab !== defaultTabId) {
+            // URL 해시가 없거나 유효하지 않으면 기본 탭으로 설정하고 URL 업데이트
+            setActiveTab(defaultTabId);
+            window.history.replaceState(null, '', window.location.pathname + window.location.search + `#${defaultTabId}`);
+        }
+    }, [tabs.length]); // 탭 목록이 변경될 수 있으므로 tabs.length에 의존
+
+    // 💡 기존 로직 유지: 탭 인디케이터 스타일 업데이트
     useEffect(() => {
         const activeIndex = tabs.findIndex(tab => tab.id === activeTab);
         const currentTab = tabRefs.current[activeIndex];
@@ -53,6 +72,15 @@ export const TabSection: React.FC<TabSectionProps> = ({
         }
     }, [activeTab, tabs.length, product.productType]);
 
+    // 💡 변경 사항 3: 탭 클릭 시 activeTab 설정 및 URL 해시 업데이트
+    const handleTabClick = (tabId: string) => {
+        if (tabId !== activeTab) {
+            setActiveTab(tabId);
+            window.location.hash = tabId; // URL 해시 업데이트
+        }
+    };
+
+
     return (
         <>
             {/* Sticky Tab Bar */}
@@ -62,7 +90,8 @@ export const TabSection: React.FC<TabSectionProps> = ({
                         <button
                             key={tab.id}
                             ref={el => { tabRefs.current[index] = el; }}
-                            onClick={() => setActiveTab(tab.id)}
+                            // 💡 onClick 이벤트 핸들러 변경: URL 해시 업데이트 로직 추가
+                            onClick={() => handleTabClick(tab.id)}
                             className={`flex-1 py-4 text-center font-bold text-sm transition-colors ${activeTab === tab.id ? 'text-black' : 'text-gray-400 hover:text-gray-600'}`}
                         >
                             {tab.label}
