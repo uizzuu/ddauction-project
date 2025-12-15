@@ -1,6 +1,12 @@
 // BusinessVerify.tsx
 import { useState } from "react";
 import * as API from "../../common/api";
+// 💡 공통 타입 파일에서 BusinessVerifyResponse 인터페이스를 import 합니다.
+// (경로는 프로젝트 구조에 맞게 수정해주세요. 예를 들어, '../../types' 등)
+import type { BusinessVerifyResponse } from '../../common/types';
+
+
+// 💡 1. API 응답 타입 정의 (로컬 정의 삭제)
 
 type Props = {
   userId: number;
@@ -8,13 +14,8 @@ type Props = {
   onCancel?: () => void;           // 선택적 취소 콜백
 };
 
-// 로그아웃 기능을 포함하기 위해 Props 타입을 확장합니다.
-type PropsWithLogout = Props & {
-  onLogout: () => void; // 로그아웃을 처리하고 로그인 페이지로 이동시키는 함수
-};
-
-// ⭐️⭐️ PropsWithLogout 타입을 사용하고 onLogout을 props로 받도록 수정 ⭐️⭐️
-export default function BusinessVerify({ userId, onVerified, onCancel, onLogout }: PropsWithLogout) {
+// ⭐️⭐️ PropsWithLogout 대신, onLogout이 필요 없으므로 기본 Props 타입만 사용합니다. ⭐️⭐️
+export default function BusinessVerify({ userId, onVerified, onCancel }: Props) {
   const [businessNumber, setBusinessNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,21 +26,25 @@ export default function BusinessVerify({ userId, onVerified, onCancel, onLogout 
     setLoading(true);
     setError("");
     try {
-      const result: { businessNumber: string; valid: boolean } = await API.verifyBusiness(userId, businessNumber);
+      // 2. 💡 API 호출 시 반환 타입을 import한 타입으로 지정
+      const result: BusinessVerifyResponse = await API.verifyBusiness(userId, businessNumber);
 
       if (result.valid) { // valid가 true면 성공
         onVerified(businessNumber);
 
-        // ⭐️⭐️⭐️ 토큰 삭제 및 재로그인 유도 로직 (B 방식) ⭐️⭐️⭐️
-        alert("사업자 인증 완료! 최신 권한 적용을 위해 다시 로그인합니다.");
+        // ⭐️⭐️⭐️ 핵심 로직: 토큰 즉시 갱신 (A 방식) ⭐️⭐️⭐️
 
-        // 1. 로컬 저장소에서 기존 토큰을 삭제 (인증 정보 무효화)
-        localStorage.removeItem('accessToken');
+        if (result.newToken) {
+          // 1. 로컬 저장소의 기존 토큰을 새 토큰으로 덮어씁니다.
+          localStorage.setItem('token', result.newToken);
 
-        // 2. 로그아웃 상태로 전환하고 로그인 페이지로 이동
-        onLogout();
-        // 이 함수 호출 후 사용자는 로그인 페이지로 리디렉션되며, 
-        // 새로 로그인할 때 DB의 최신 정보(사업자 번호)가 담긴 토큰을 받게 됩니다.
+          // 💡 갱신 성공 흐름 시각화: 
+
+          alert("✅ 사업자 인증 완료! 스토어 물품 등록이 허용되었습니다.");
+        } else {
+          // 백엔드 설정 오류 등에 대비
+          alert("사업자 인증 완료! 하지만 토큰 갱신 정보가 누락되었습니다. (문제가 있다면 재로그인 필요)");
+        }
 
       } else { // valid가 false면 실패
         setError("사업자 번호 인증 실패");

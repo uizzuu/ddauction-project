@@ -425,6 +425,13 @@ export interface BusinessVerifyProps {
   onCancel?: () => void;
 }
 
+export interface BusinessVerifyResponse {
+  businessNumber: string;
+  valid: boolean;
+  // 백엔드에서 새로 발급된 토큰이 담기는 필드
+  newToken?: string;
+}
+
 //알림 타입
 export type Notification = {
   notificationId: number;

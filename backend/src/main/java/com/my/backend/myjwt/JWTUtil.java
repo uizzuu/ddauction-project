@@ -78,4 +78,12 @@ public class JWTUtil {
             return false;
         }
     }
+
+    // 💡 추가: 토큰에서 businessNumber 클레임을 추출하는 메서드
+    public String getBusinessNumber(String token) {
+        // 사업자 번호가 없을 경우 null을 반환하도록 처리합니다.
+        // String.class로 추출 시 null 클레임은 null로 반환될 수 있습니다.
+        return Jwts.parser().verifyWith(secretKey).build()
+                .parseSignedClaims(token).getPayload().get("businessNumber", String.class);
+    }
 }

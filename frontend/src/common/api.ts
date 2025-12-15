@@ -4,6 +4,8 @@ import type { SortOption } from "./util";
 import type { ArticleType, Notification } from './types';
 import type { ChatRoomListDto } from "./types";
 import type { AdminChatRoomListDto, PrivateChat } from "./types";
+import type { BusinessVerifyResponse } from './types';
+
 
 
 
@@ -2308,7 +2310,7 @@ export async function extractImageMetadata(imageBase64: string): Promise<{
 export async function verifyBusiness(
   userId: number,
   businessNumber: string
-): Promise<{ businessNumber: string; valid: boolean }> { // 🔹 verified -> valid
+): Promise<BusinessVerifyResponse> {
   const token = localStorage.getItem("token");
   if (!token) throw new Error("로그인이 필요합니다.");
 
@@ -2326,7 +2328,19 @@ export async function verifyBusiness(
     throw new Error(text || "사업자 인증 실패");
   }
 
-  return res.json(); // 이제 타입스크립트가 valid를 알게 됨
+  // 1. 응답 데이터를 파싱하고 타입 지정
+  const data: BusinessVerifyResponse = await res.json();
+
+  // 2. 💡 핵심 로직: 새 토큰이 응답에 포함되어 있다면 로컬 토큰 갱신
+  if (data.valid && data.newToken) {
+    // 기존에 저장된 토큰("token")을 새 토큰으로 덮어씁니다.
+    localStorage.setItem("token", data.newToken);
+
+    console.log("✅ JWT 토큰이 성공적으로 갱신되었습니다.");
+    // 이 시점부터 클라이언트의 모든 API 요청은 갱신된 사업자 번호가 포함된 토큰을 사용합니다.
+  }
+
+  return data;
 }
 
 // 사용자 주소 업데이트 (결제 페이지용)
