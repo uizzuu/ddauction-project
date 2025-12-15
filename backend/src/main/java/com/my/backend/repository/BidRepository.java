@@ -4,6 +4,7 @@ import com.my.backend.entity.Bid;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -32,5 +33,14 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
             Product product, Users user, Long bidPrice, LocalDateTime createdAt
     );
     List<Bid> findByUserOrderByCreatedAtDesc(Users user);
+    @Query("""
+    select b
+    from Bid b
+    join fetch b.product p
+    where b.user = :user
+    order by b.createdAt desc
+""")
+    List<Bid> findByUserWithProductOrderByCreatedAtDesc(@Param("user") Users user);
+
 
 }

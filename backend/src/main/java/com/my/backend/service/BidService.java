@@ -301,7 +301,9 @@ public class BidService {
                     .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
             // 유저 기준 입찰 내역 (최근순)
-            List<Bid> bids = bidRepository.findByUserOrderByCreatedAtDesc(user);
+            List<Bid> bids =
+                    bidRepository.findByUserWithProductOrderByCreatedAtDesc(user);
+
 
             // 프론트에서 바로 써먹기 편한 형태로 가볍게 매핑
             List<Map<String, Object>> resp = bids.stream()
