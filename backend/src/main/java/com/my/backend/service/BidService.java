@@ -315,7 +315,7 @@ public class BidService {
                                     ? b.getCreatedAt().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
                                     : null,
                             "productId", b.getProduct() != null ? b.getProduct().getProductId() : null,
-                            "productTitle", b.getProduct() != null ? b.getProduct().getTitle() : null,
+                            "productName", b.getProduct() != null ? b.getProduct().getTitle() : null,
                             "isWinning", b.isWinning()
                     ))
                     .toList();
