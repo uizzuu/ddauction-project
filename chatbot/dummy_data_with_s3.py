@@ -656,23 +656,71 @@ def get_solid_bg_image() -> str:
 def create_users(cursor) -> Dict[str, List[int]]:
     user_ids = {'test': [], 'regular': []}
 
-    logging.info(f"테스트 유저 {len(TEST_USERS)}명 생성 중...")
-    for user_data in TEST_USERS:
-        created = random_datetime(90, 30)
-        cursor.execute("""
-                       INSERT INTO users (user_name, nick_name, email, password, phone, birthday,
-                                          business_number, role, verified, created_at, updated_at)
-                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                       """, (
-                           user_data['name'], user_data['nick'], user_data['email'],
-                           hash_password(user_data['password']),
-                           f"010{random.randint(10000000, 99999999)}",
-                           f"{random.randint(1985, 2000)}-{random.randint(1, 12):02d}-01",
-                           user_data['business_number'], user_data['role'], True, created, created
-                       ))
-        user_ids['test'].append(cursor.lastrowid)
-        logging.info(f"✅ {user_data['nick']} ({user_data['email']})")
+    # 1. 관리자 계정 정보 (Java Spring Boot의 정보로 대체)
+    # 이 정보는 TEST_USERS 리스트의 첫 번째 항목을 대체합니다.
+    ADMIN_USER_DATA = {
+        'name': "관리자",
+        'nick': "admin",
+        'email': "admin@example.com",
+        'password': "Admin1234!",  # hash_password로 해싱될 예정
+        'phone': "01000000000",
+        'role': 'ADMIN',
+        'birthday': "1990-01-01",
+        'business_number': None,
+    }
 
+    # 기존 TEST_USERS 리스트에서 첫 번째 항목을 삭제하거나,
+    # 코드를 명시적으로 분리하여 관리자 계정을 먼저 생성합니다.
+
+    # ----------------------------------------------------
+    # 1. 관리자(Admin) 계정 생성 (TEST_USERS 1번 항목 대체)
+    # ----------------------------------------------------
+    logging.info(f"관리자 계정 admin@example.com 생성 중...")
+
+    admin_created = random_datetime(90, 30)
+
+    # DB에 삽입
+    cursor.execute("""
+                   INSERT INTO users (user_name, nick_name, email, password, phone, birthday,
+                                      business_number, role, verified, created_at, updated_at)
+                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                   """, (
+        ADMIN_USER_DATA['name'], ADMIN_USER_DATA['nick'], ADMIN_USER_DATA['email'],
+        hash_password(ADMIN_USER_DATA['password']),
+        ADMIN_USER_DATA['phone'],
+        ADMIN_USER_DATA['birthday'],
+        ADMIN_USER_DATA['business_number'], ADMIN_USER_DATA['role'],
+        True, admin_created, admin_created
+    ))
+    user_ids['test'].append(cursor.lastrowid)
+    logging.info(f"✅ 관리자 계정 admin@example.com 생성 완료")
+
+    # TEST_USERS의 나머지 항목 (만약 TEST_USERS가 ADMIN_USER_DATA를 포함하고 있었다면 수정이 필요할 수 있습니다.
+    # 여기서는 ADMIN_USER_DATA를 TEST_USERS의 첫 항목으로 간주하고, 나머지 TEST_USERS는 두 번째 항목부터 처리한다고 가정합니다.)
+
+    remaining_test_users = TEST_USERS[1:] if len(TEST_USERS) > 0 else []
+
+    if remaining_test_users:
+        logging.info(f"추가 테스트 유저 {len(remaining_test_users)}명 생성 중...")
+        for user_data in remaining_test_users:
+            created = random_datetime(90, 30)
+            cursor.execute("""
+                           INSERT INTO users (user_name, nick_name, email, password, phone, birthday,
+                                              business_number, role, verified, created_at, updated_at)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                           """, (
+                user_data['name'], user_data['nick'], user_data['email'],
+                hash_password(user_data['password']),
+                f"010{random.randint(10000000, 99999999)}",
+                f"{random.randint(1985, 2000)}-{random.randint(1, 12):02d}-01",
+                user_data['business_number'], user_data['role'], True, created, created
+            ))
+            user_ids['test'].append(cursor.lastrowid)
+            logging.info(f"✅ {user_data['nick']} ({user_data['email']})")
+
+    # ----------------------------------------------------
+    # 2. 일반 유저 생성
+    # ----------------------------------------------------
     logging.info(f"일반 유저 {NUM_REGULAR_USERS}명 생성 중...")
     for i in range(NUM_REGULAR_USERS):
         email = generate_random_email(i + 100)
@@ -687,11 +735,11 @@ def create_users(cursor) -> Dict[str, List[int]]:
                                           business_number, role, verified, created_at, updated_at)
                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                        """, (
-                           f"유저{i + 1}", f"닉네임{i + 1}", email, hash_password("Test1234!"),
-                           f"010{random.randint(10000000, 99999999)}",
-                           f"{random.randint(1985, 2005)}-{random.randint(1, 12):02d}-01",
-                           business_number, role, True, created, created
-                       ))
+            f"유저{i + 1}", f"닉네임{i + 1}", email, hash_password("Test1234!"),
+            f"010{random.randint(10000000, 99999999)}",
+            f"{random.randint(1985, 2005)}-{random.randint(1, 12):02d}-01",
+            business_number, role, True, created, created
+        ))
         user_ids['regular'].append(cursor.lastrowid)
 
         if (i + 1) % 5 == 0:
@@ -699,7 +747,6 @@ def create_users(cursor) -> Dict[str, List[int]]:
 
     logging.info(f"✅ 총 {len(user_ids['test']) + len(user_ids['regular'])}명 생성 완료")
     return user_ids
-
 
 def add_product_images(cursor, product_id: int, category: str, product_type: str, s3_uploader):
     """이미지 2-5개 생성 (20% 확률로 단색 배경)"""
