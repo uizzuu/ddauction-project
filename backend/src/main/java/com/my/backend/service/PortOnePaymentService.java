@@ -261,66 +261,60 @@ public class PortOnePaymentService {
     }
 
     // ============================
-    //  일반/중고 결제 준비
+    //  일반/중고 결제 준비 (가격 계산 로직 수정)
     // ============================
 
     public Map<String, Object> prepareDirectPayment(Product product, Users buyer) {
-        // 상품 다시 조회 (항상 영속 상태 보장)
         Product p = productRepository.findById(product.getProductId())
                 .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
-        // 판매자 본인 결제 방지
         if (p.getSeller() != null && p.getSeller().getUserId().equals(buyer.getUserId())) {
             throw new IllegalArgumentException("판매자는 자신의 상품을 구매할 수 없습니다.");
         }
 
-        // 판매 상태 검증
         if (p.getProductStatus() != ProductStatus.ACTIVE) {
             throw new IllegalStateException("결제가 가능한 상태의 상품이 아닙니다.");
         }
-
-//        // 결제 금액 결정 (일반 판매 기준)
-//        Long amount = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
-//        if (amount == null || amount <= 0) {
-//            throw new IllegalStateException("상품 결제 금액이 설정되어 있지 않습니다.");
-//        }
 
         // 결제 금액 계산 (상품 타입별 분기)
         Long amount;
 
         if (p.getProductType() == com.my.backend.enums.ProductType.STORE) {
-            // STORE: 정가 - 할인 + 배송비
-            Long originalPrice = p.getOriginalPrice();
-            if (originalPrice == null || originalPrice <= 0) {
-                throw new IllegalStateException("일반판매 상품의 정가가 설정되지 않았습니다.");
+            // ⭐ STORE: salePrice (정상가) - 할인 + 배송비
+            Long basePrice = p.getSalePrice(); // 프론트 인터페이스에 따라 salePrice를 기준 가격으로 사용
+            if (basePrice == null || basePrice <= 0) {
+                throw new IllegalStateException("스토어 상품의 판매가(salePrice)가 설정되지 않았습니다.");
             }
 
             Long discountRate = p.getDiscountRate() != null ? p.getDiscountRate() : 0L;
-            Long salePrice = originalPrice * (100 - discountRate) / 100;
+
+            // 할인 적용 금액
+            Long discountedSalePrice = basePrice * (100 - discountRate) / 100;
+
             Long shippingFee = p.isDeliveryIncluded() ? 0L :
                     (p.getDeliveryPrice() != null ? p.getDeliveryPrice() : 0L);
 
-            amount = salePrice + shippingFee;
+            amount = discountedSalePrice + shippingFee;
 
-            log.info("[STORE] 정가={}, 할인={}%, 판매가={}, 배송비={}, 최종={}",
-                    originalPrice, discountRate, salePrice, shippingFee, amount);
+            log.info("[STORE] 기준가={}, 할인={}%, 할인적용가={}, 배송비={}, 최종={}",
+                    basePrice, discountRate, discountedSalePrice, shippingFee, amount);
 
         } else if (p.getProductType() == com.my.backend.enums.ProductType.USED) {
-            // USED: 판매가 + 배송비
-            Long usedPrice = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
+            // ⭐ USED: originalPrice (판매가) + 배송비
+            Long usedPrice = p.getOriginalPrice(); // 프론트 인터페이스에 따라 originalPrice를 중고 판매가로 사용
             if (usedPrice == null || usedPrice <= 0) {
-                throw new IllegalStateException("중고상품의 가격이 설정되지 않았습니다.");
+                // used 상품은 salePrice를 사용하지 않는다는 가정을 따름
+                throw new IllegalStateException("중고상품의 가격(originalPrice)이 설정되지 않았습니다.");
             }
             Long shippingFee = p.isDeliveryIncluded() ? 0L :
                     (p.getDeliveryPrice() != null ? p.getDeliveryPrice() : 0L);
             amount = usedPrice + shippingFee;
             log.info("[USED] 판매가={}, 배송비={}, 최종={}", usedPrice, shippingFee, amount);
         } else {
-            amount = p.getOriginalPrice();
-            if (amount == null || amount <= 0) {
-                throw new IllegalStateException("상품 가격이 설정되지 않았습니다.");
-            }
+            // 기타 타입 (예: AUCTION): 낙찰가 등을 사용해야 하지만, 여기서는 일반 결제 시도 방지.
+            throw new IllegalStateException("해당 상품 유형(" + p.getProductType() + ")은 직접 결제를 지원하지 않습니다.");
         }
+
         if (amount == null || amount <= 0) {
             throw new IllegalStateException("결제 금액이 유효하지 않습니다.");
         }
@@ -387,7 +381,7 @@ public class PortOnePaymentService {
     }
 
     // ============================
-    //  일반/중고 결제 완료 검증
+    //  일반/중고 결제 완료 검증 (가격 계산 로직 수정)
     // ============================
 
     public PortOnePaymentResponse verifyAndCompleteDirect(String impUid, Product product, Users buyer) {
@@ -412,45 +406,43 @@ public class PortOnePaymentService {
             throw new IllegalStateException("이미 판매 완료된 상품입니다.");
         }
 
-//        // 3) 우리 시스템 기준 기대 금액
-//        Long expectedAmountLong = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
-//        if (expectedAmountLong == null || expectedAmountLong <= 0) {
-//            throw new IllegalStateException("상품 결제 금액이 설정되어 있지 않습니다.");
-//        }
-//        int expectedAmount = expectedAmountLong.intValue();
-
-        //  3) 우리 시스템 기준 기대 금액 계산
+        //  3) 우리 시스템 기준 기대 금액 계산 (수정된 로직)
         Long expectedAmountLong;
         if (p.getProductType() == com.my.backend.enums.ProductType.STORE) {
-            // STORE: 정가 - 할인 + 배송비
-            Long originalPrice = p.getOriginalPrice();
-            if (originalPrice == null || originalPrice <= 0) {
-                throw new IllegalStateException("일반판매 상품의 정가가 설정되지 않았습니다.");
+            // ⭐ STORE: salePrice (정상가) - 할인 + 배송비
+            Long basePrice = p.getSalePrice();
+            if (basePrice == null || basePrice <= 0) {
+                throw new IllegalStateException("스토어 상품의 판매가(salePrice)가 설정되지 않았습니다.");
             }
             Long discountRate = p.getDiscountRate() != null ? p.getDiscountRate() : 0L;
-            Long salePrice = originalPrice * (100 - discountRate) / 100;
+
+            // 할인 적용 금액
+            Long discountedSalePrice = basePrice * (100 - discountRate) / 100;
+
             Long shippingFee = p.isDeliveryIncluded() ? 0L :
                     (p.getDeliveryPrice() != null ? p.getDeliveryPrice() : 0L);
-            expectedAmountLong = salePrice + shippingFee;
-        } else if (p.getProductType() == com.my.backend.enums.ProductType.USED) {
+            expectedAmountLong = discountedSalePrice + shippingFee;
 
-            // USED: 판매가 + 배송비
-            Long usedPrice = p.getSalePrice() != null ? p.getSalePrice() : p.getOriginalPrice();
+        } else if (p.getProductType() == com.my.backend.enums.ProductType.USED) {
+            // ⭐ USED: originalPrice (판매가) + 배송비
+            Long usedPrice = p.getOriginalPrice();
             if (usedPrice == null || usedPrice <= 0) {
-                throw new IllegalStateException("중고상품의 가격이 설정되지 않았습니다.");
+                throw new IllegalStateException("중고상품의 가격(originalPrice)이 설정되지 않았습니다.");
             }
             Long shippingFee = p.isDeliveryIncluded() ? 0L :
                     (p.getDeliveryPrice() != null ? p.getDeliveryPrice() : 0L);
             expectedAmountLong = usedPrice + shippingFee;
         } else {
-            expectedAmountLong = p.getOriginalPrice();
+            // AUCTION 등은 이 로직으로 들어오면 안 됨
+            throw new IllegalStateException("지원하지 않는 상품 유형입니다.");
         }
+
         if (expectedAmountLong == null || expectedAmountLong <= 0) {
             throw new IllegalStateException("상품 결제 금액이 설정되어 있지 않습니다.");
         }
         int expectedAmount = expectedAmountLong.intValue();
 
-        // 4) PortOne 금액 검증 (null 방어)
+        // 4) PortOne 금액 검증 (변경 없음)
         Integer paidAmount = resp.getPaidAmount();
         if (paidAmount == null) {
             log.warn("[PortOne] paidAmount가 null 입니다. impUid={}, expectedAmount={}",
@@ -460,22 +452,22 @@ public class PortOnePaymentService {
             throw new IllegalStateException("결제 금액 불일치");
         }
 
-        // 5) PortOne 결제 수단
+        // 5) PortOne 결제 수단 (변경 없음)
         PaymentMethodType methodType = PaymentMethodType.fromPortOne(resp.getPayMethod());
 
-        // 6) Payment 엔티티 생성
+        // 6) Payment 엔티티 생성 (변경 없음)
         Payment payment = Payment.builder()
                 .product(p)
                 .user(buyer)
                 .paymentMethodType(methodType)
-                .totalPrice(expectedAmountLong)   // ⭐ 상품 가격 그대로 저장
+                .totalPrice(expectedAmountLong)
                 .paymentStatus(PaymentStatus.PAID)
                 .productType(p.getProductType())
                 .build();
 
         paymentRepository.save(payment);
 
-        // 7) Product <-> Payment 양방향 연결
+        // 7) Product <-> Payment 양방향 연결 (변경 없음)
         p.setPayment(payment);
         p.setProductStatus(ProductStatus.SOLD);
         p.setPaymentStatus(PaymentStatus.PAID);
