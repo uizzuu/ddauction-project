@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { formatPrice, getCartItems, removeFromCart } from "../../common/util";
 import { API_BASE_URL } from "../../common/api";
 import type { CartItem } from "../../common/types";
+import { PRODUCT_CATEGORIES } from "../../common/enums";
 
 export default function CartPage() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function CartPage() {
 
   useEffect(() => {
     const items = getCartItems().filter(item => item.salePrice != null); // sale 상품만 담기
+    console.log("cart items:", items);
     setCartItems(items);
     setSelectedItems(items.map(i => i.productId));
     setLoading(false);
@@ -134,7 +136,7 @@ export default function CartPage() {
                       >
                         {item.title}
                       </h3>
-                      <p className="text-sm text-gray-500 mb-2">{item.option}</p>
+                      <p className="text-sm text-gray-500 mb-2">{PRODUCT_CATEGORIES[item.option as keyof typeof PRODUCT_CATEGORIES] || "카테고리 없음"}</p>
                       <div className="text-sm font-bold text-gray-900">
                         {item.salePrice != null ? formatPrice(item.salePrice) : "가격 미정"}
                       </div>
