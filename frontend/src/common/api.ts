@@ -1393,7 +1393,7 @@ export async function updateUserRole(userId: number, role: TYPE.User["role"]): P
 export async function fetchAdminProducts(keyword?: string, category?: TYPE.ProductCategoryType | null): Promise<TYPE.Product[]> {
   let url = `${API_BASE_URL}${SPRING_API}/products/search?`;
   if (keyword) url += `keyword=${encodeURIComponent(keyword)}&`;
-  if (category) url += `category=${category}&`;
+  if (category) url += `productCategoryType=${category}&`; // 👈 여기 변경
   const token = localStorage.getItem("token");
   return fetchJson<TYPE.Product[]>(url, {
     headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },

@@ -104,11 +104,13 @@ export default function ProductManage({
           </label>
           <CustomSelect
             value={filterCategory ?? ""}
-            onChange={(value) =>
-              setFilterCategory(
-                (value || null) as ProductCategoryType | null
-              )
-            }
+            onChange={(value) => {
+              const newCategory = (value || null) as ProductCategoryType | null;
+              setFilterCategory(newCategory);
+
+              // ✅ 카테고리 변경 시 즉시 목록을 업데이트합니다.
+              fetchProducts();
+            }}
             options={[
               { value: "", label: "전체 카테고리" },
               ...CATEGORY_OPTIONS,
@@ -231,19 +233,18 @@ export default function ProductManage({
                     />
                   ) : (
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        p.productStatus === "ACTIVE"
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${p.productStatus === "ACTIVE"
                           ? "bg-green-50 text-green-700"
                           : p.productStatus === "SOLD"
-                          ? "bg-gray-100 text-gray-700"
-                          : "bg-red-50 text-red-700"
-                      }`}
+                            ? "bg-gray-100 text-gray-700"
+                            : "bg-red-50 text-red-700"
+                        }`}
                     >
                       {p.productStatus === "ACTIVE"
                         ? "판매중"
                         : p.productStatus === "SOLD"
-                        ? "판매완료"
-                        : "비활성"}
+                          ? "판매완료"
+                          : "비활성"}
                     </span>
                   )}
                 </td>
