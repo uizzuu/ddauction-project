@@ -21,14 +21,29 @@ import { Users, Package, AlertCircle, BarChart3, MessageSquare, MessagesSquare }
 
 type TabId = "user" | "product" | "report" | "stats" | "inquiry" | "publicChat" | "privateChat";
 
+// 탭 ID를 localStorage에 저장할 때 사용할 키
+const LAST_ACTIVE_TAB_KEY = "admin_page_last_active_tab";
+
+// 유효한 TabId인지 확인하는 헬퍼 함수
+const isValidTabId = (id: string | null): id is TabId => {
+  const validIds: TabId[] = ["user", "product", "report", "stats", "inquiry", "publicChat", "privateChat"];
+  return validIds.includes(id as TabId);
+};
+
 
 export default function AdminPage({ user }: { user: User }) {
-  // Tab state
-  const [activeTab, setActiveTab] = useState<TabId>("user");
+  // 1. Tab state: localStorage에서 초기 상태를 로드하도록 수정
+  const [activeTab, setActiveTab] = useState<TabId>(() => {
+    const savedTab = localStorage.getItem(LAST_ACTIVE_TAB_KEY);
+    // 저장된 값이 유효한 TabId이면 사용, 아니면 기본값 "user" 사용
+    return isValidTabId(savedTab) ? savedTab : "user";
+  });
+  
   const tabRefs = useRef<{ [key in TabId]?: HTMLButtonElement }>({});
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
   const [users, setUsers] = useState<User[]>([]);
+// ... (나머지 상태 선언은 동일)
   const [products, setProducts] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [stats, setStats] = useState<{
@@ -72,6 +87,12 @@ export default function AdminPage({ user }: { user: User }) {
     password: "",
     phone: "",
   });
+
+  // 2. activeTab 변경 시 localStorage에 저장하는 useEffect 추가
+  useEffect(() => {
+    localStorage.setItem(LAST_ACTIVE_TAB_KEY, activeTab);
+  }, [activeTab]);
+
 
   // Update indicator position when tab changes
   useEffect(() => {
@@ -195,7 +216,8 @@ export default function AdminPage({ user }: { user: User }) {
       productStatus: product.productStatus || "ACTIVE",
       productType: product.productType || "AUCTION",
       auctionEndTime: product.auctionEndTime || "",
-      images: product.images || [],
+      // @ts-ignore: images 속성이 EditProductForm에 추가된 경우를 위해 임시 무시
+      images: product.images || [], 
     });
   };
 
@@ -260,28 +282,26 @@ export default function AdminPage({ user }: { user: User }) {
   };
 
   // ===================================
-  // useEffect - 데이터 로딩
+  // useEffect - 데이터 로딩 (기존과 동일)
   // ===================================
 
-useEffect(() => {
-  if (activeTab === "user") fetchUsers();
-  else if (activeTab === "product") fetchProducts();
-  else if (activeTab === "report") fetchReports();
-  else if (activeTab === "stats") fetchStats();
-  else if (activeTab === "inquiry") fetchInquiries();
-}, [
-  activeTab,
-  fetchUsers,
-  fetchProducts,
-  fetchReports,
-  fetchStats,
-  fetchInquiries,
-  // 이미 fetchProducts가 filterKeyword, filterCategory를 의존성으로 가지고 있으므로
-  // 이들이 변경되면 fetchProducts가 재생성되고, 이 useEffect도 실행됨
-]);
+  useEffect(() => {
+    if (activeTab === "user") fetchUsers();
+    else if (activeTab === "product") fetchProducts();
+    else if (activeTab === "report") fetchReports();
+    else if (activeTab === "stats") fetchStats();
+    else if (activeTab === "inquiry") fetchInquiries();
+  }, [
+    activeTab,
+    fetchUsers,
+    fetchProducts,
+    fetchReports,
+    fetchStats,
+    fetchInquiries,
+  ]);
 
   // ===================================
-  // 렌더링
+  // 렌더링 (기존과 동일)
   // ===================================
 
   const tabs = [
