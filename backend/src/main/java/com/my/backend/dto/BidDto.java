@@ -17,6 +17,8 @@ public class BidDto {
     private Long bidPrice;
     private boolean isWinning;
     private LocalDateTime createdAt;
+    private String productName;
+
 
     // Entity → DTO
     public static BidDto fromEntity(Bid bid) {
@@ -28,6 +30,11 @@ public class BidDto {
                 .bidPrice(bid.getBidPrice())
                 .isWinning(bid.isWinning())
                 .createdAt(bid.getCreatedAt())
+                .productName(
+                        bid.getProduct() != null
+                                ? bid.getProduct().getTitle()
+                                : null
+                )
                 .build();
     }
 
