@@ -13,7 +13,7 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const items = getCartItems();
+    const items = getCartItems().filter(item => item.salePrice != null); // sale 상품만 담기
     setCartItems(items);
     setSelectedItems(items.map(i => i.productId));
     setLoading(false);
@@ -39,12 +39,18 @@ export default function CartPage() {
     }
   };
 
+  // 배송비 계산
+  const getItemShipping = (item: CartItem) => {
+    if (item.deliveryIncluded) return 0;       // 무료배송
+    return item.deliveryPrice ?? 0;           // deliveryPrice가 없으면 0
+  };
+
   const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.productId));
   const totalProductPrice = selectedCartItems.reduce(
     (acc, item) => acc + (item.salePrice || 0) * item.quantity,
     0
   );
-  const totalShipping = selectedCartItems.reduce((acc, item) => acc + item.shipping, 0);
+  const totalShipping = selectedCartItems.reduce((acc, item) => acc + getItemShipping(item), 0);
   const totalPrice = totalProductPrice + totalShipping;
 
   if (loading) {
@@ -141,7 +147,7 @@ export default function CartPage() {
                         <Trash2 size={16} />
                       </button>
                       <div className="text-xs text-gray-500">
-                        {item.shipping === 0 ? "무료배송" : `배송비 ${formatPrice(item.shipping)}`}
+                        {getItemShipping(item) === 0 ? "무료배송" : `배송비 ${formatPrice(getItemShipping(item))}`}
                       </div>
                     </div>
                   </div>
@@ -161,7 +167,7 @@ export default function CartPage() {
               </div>
               <div className="flex justify-between mb-4 text-sm text-gray-600">
                 <span>배송비</span>
-                <span>+ {formatPrice(totalShipping)}</span>
+                <span>+ {totalShipping === 0 ? "무료" : formatPrice(totalShipping)}</span>
               </div>
 
               <div className="border-t border-gray-100 pt-4 mb-6 flex justify-between items-center">
