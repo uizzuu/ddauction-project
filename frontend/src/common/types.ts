@@ -49,6 +49,7 @@ export interface Bid {
   bidTime?: string;     // Alias for createdAt or specific bid timestamp
   bidAmount?: number;   // Alias for bidPrice
   userNickName?: string; // Sometimes needed for list display
+  productId?: number;
 }
 
 export interface Image {
