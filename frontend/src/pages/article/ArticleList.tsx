@@ -1,33 +1,53 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom"; // useSearchParams 추가
 import { getArticles } from "../../common/api";
 import type { ArticleDto, User } from "../../common/types";
 import { ArticleType } from "../../common/types";
 import { formatShortDate } from "../../common/util";
+
+// 사용 가능한 탭 키 목록을 정의합니다.
+const TABS = [
+  ArticleType.COMMUNITY,
+  ArticleType.NOTICE,
+  ArticleType.FAQ,
+];
+type TabKey = ArticleType | "COMMUNITY"; // 실제 탭 키 타입
 
 interface Props {
   user: User | null;
 }
 
 export default function ArticleList({ user }: Props) {
-  const [activeTab, setActiveTab] = useState<ArticleType | "COMMUNITY">(ArticleType.COMMUNITY);
+  const navigate = useNavigate();
+  // URL 쿼리 파라미터를 관리합니다.
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  // URL에서 'tab' 파라미터를 읽습니다.
+  const urlTab = searchParams.get("tab") as TabKey | null;
+
+  // 1. activeTab 상태를 URL에서 가져오거나 기본값으로 설정합니다.
+  // URL 파라미터가 유효한 탭 키가 아닐 경우 기본값 COMMUNITY를 사용합니다.
+  const initialTab: TabKey = (urlTab && TABS.includes(urlTab as ArticleType))
+    ? urlTab
+    : ArticleType.COMMUNITY;
+
+  const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [articles, setArticles] = useState<ArticleDto[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   // 슬라이딩 언더바 관련 state & ref
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   // 언더바 위치 업데이트 함수
-  const updateUnderlinePosition = () => {
+  const updateUnderlinePosition = (currentTab: TabKey) => {
     const tabs = [
       { key: ArticleType.COMMUNITY },
       { key: ArticleType.NOTICE },
       { key: ArticleType.FAQ },
     ];
-    const index = tabs.findIndex((t) => t.key === activeTab);
+    // 현재 활성화된 탭의 인덱스를 찾습니다.
+    const index = tabs.findIndex((t) => t.key === currentTab);
     const el = tabRefs.current[index];
     if (el) {
       setUnderlineStyle({
@@ -37,33 +57,57 @@ export default function ArticleList({ user }: Props) {
     }
   };
 
-  // activeTab 변경 시 언더바 위치 조정
+  // 2. URL 파라미터 변경을 감지하고 activeTab을 업데이트합니다.
   useEffect(() => {
-    updateUnderlinePosition();
-  }, [activeTab]);
+    // searchParams의 'tab'이 변경되면 activeTab 상태를 업데이트합니다.
+    const currentUrlTab = searchParams.get("tab") as TabKey | null;
+    const newTab: TabKey = (currentUrlTab && TABS.includes(currentUrlTab as ArticleType))
+      ? currentUrlTab
+      : ArticleType.COMMUNITY;
+      
+    setActiveTab(newTab);
+    // 탭이 변경되었으므로 언더바 위치를 업데이트합니다.
+    updateUnderlinePosition(newTab);
 
-  // 초기 렌더링 후 언더바 위치 설정 (마운트 시)
-  useEffect(() => {
-    // DOM이 완전히 렌더링되고 ref가 설정된 후 언더바 위치 계산
-    // requestAnimationFrame을 사용하여 브라우저가 DOM을 완전히 그린 후 실행
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        updateUnderlinePosition();
-      }, 50); // 50ms 후 실행하여 DOM 완전 렌더링 보장
-    });
-  }, []);
+  }, [searchParams]); // searchParams가 변경될 때마다 실행
 
+  // 3. activeTab 변경 시 (URL 변경으로 인한) API 호출
   useEffect(() => {
-    // 탭 변경 시 API 호출 (필터링)
+    // API 호출 전에 로딩 상태를 true로 설정합니다.
+    setLoading(true);
+
     const params = { articleType: activeTab };
-
+    
+    // API 호출 (필터링)
     getArticles(params)
       .then(setArticles)
       .catch(() => console.log("게시글 목록을 불러오지 못했습니다."))
       .finally(() => setLoading(false));
-  }, [activeTab]);
 
+  }, [activeTab]); // activeTab이 변경될 때마다 실행 (URL 변경 감지 후 실행)
+
+
+  // 4. 초기 렌더링 후 언더바 위치 설정 (마운트 시)
+  useEffect(() => {
+    // DOM이 완전히 렌더링되고 ref가 설정된 후 언더바 위치 계산
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        // 초기 activeTab을 기준으로 위치를 설정합니다.
+        updateUnderlinePosition(initialTab); 
+      }, 50); 
+    });
+  }, []); // [] : 최초 마운트 시 한 번만 실행
+
+  // 탭 클릭 핸들러: URL 쿼리 파라미터를 변경합니다.
+  const handleTabClick = (tabKey: TabKey) => {
+    // URL 쿼리 파라미터를 업데이트합니다. 
+    // 이 변경은 위의 useEffect([searchParams])를 트리거하고 activeTab이 업데이트됩니다.
+    setSearchParams({ tab: tabKey });
+  };
+  
+  // (생략된 기타 함수 및 렌더링 로직은 동일)
   const getArticleTypeBadge = (type: ArticleType) => {
+    // ... (기존 코드와 동일)
     const badges = {
       [ArticleType.NOTICE]: { label: "공지", bg: "bg-red-100", text: "text-red-600" },
       [ArticleType.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-[#333]" },
@@ -105,7 +149,6 @@ export default function ArticleList({ user }: Props) {
       {/* 탭 네비게이션 */}
       <div className="relative flex gap-2 mb-6 border-b border-gray-200">
         {[
-          // { key: "ALL", label: "전체" },
           { key: ArticleType.COMMUNITY, label: "자유게시판" },
           { key: ArticleType.NOTICE, label: "공지사항" },
           { key: ArticleType.FAQ, label: "FAQ" },
@@ -113,7 +156,7 @@ export default function ArticleList({ user }: Props) {
           <button
             key={tab.key}
             ref={(el) => { tabRefs.current[index] = el; }}
-            onClick={() => setActiveTab(tab.key as ArticleType | "COMMUNITY")}
+            onClick={() => handleTabClick(tab.key as TabKey)} // 핸들러 변경
             className={`
               relative z-10 px-4 py-2 text-sm font-bold transition-colors whitespace-nowrap
               ${activeTab === tab.key ? "text-[#111]" : "text-gray-500 hover:text-[#333]"}
