@@ -29,7 +29,7 @@ export default function MyReports({ reports }: Props) {
                 style={{ borderBottom: "1px solid #eee" }}
               >
                 <td style={{ padding: "10px" }}>{report.reportId}</td>
-                <td style={{ padding: "10px" }}>{report.targetId}</td>
+                <td style={{ padding: "10px" }}>{report.refId}</td>
                 <td style={{ padding: "10px" }}>{report.reason}</td>
                 <td style={{ padding: "10px" }}>
                   {report.status ? "처리 완료" : "대기"}
