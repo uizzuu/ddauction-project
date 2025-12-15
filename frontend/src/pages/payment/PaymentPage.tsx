@@ -150,7 +150,7 @@ export default function PaymentPage() {
       }
 
       const totalPrice = selectedItems.reduce((sum, item) =>
-        sum + (item.startingPrice || 0) * item.quantity, 0
+        sum + (item.salePrice || 0) * item.quantity, 0
       );
       const totalShipping = selectedItems.reduce((sum, item) =>
         sum + item.shipping, 0
@@ -458,7 +458,7 @@ export default function PaymentPage() {
                         <div className="font-medium text-gray-900 mb-1 line-clamp-2">{item.title}</div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm text-gray-500">수량: {item.quantity}개</span>
-                          <span className="font-bold text-gray-900">{((item.startingPrice || 0) * item.quantity).toLocaleString()}원</span>
+                          <span className="font-bold text-gray-900">{((item.salePrice || 0) * item.quantity).toLocaleString()}원</span>
                         </div>
                       </div>
                     </div>
