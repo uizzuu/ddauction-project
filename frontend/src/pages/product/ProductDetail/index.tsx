@@ -22,6 +22,7 @@ type Props = {
 export default function ProductDetail({ user }: Props) {
     const {
         product,
+        isLoading,
         remainingTime,
         sellerNickName,
         mergedBids,
@@ -31,7 +32,7 @@ export default function ProductDetail({ user }: Props) {
         qnaList,
         setQnaList,
         reviews,
-        
+
         navigate,
         handleToggleBookmark,
         handleReport,
@@ -48,6 +49,10 @@ export default function ProductDetail({ user }: Props) {
 
     const [showARModal, setShowARModal] = useState(false);
     const [activeTab, setActiveTab] = useState("detail");
+
+    if (isLoading) {
+        return <div className="w-[1280px] mx-auto pt-4 text-center">상품 정보를 불러오는 중입니다...</div>;
+    }
 
     if (!product) return <div className="w-[1280px] mx-auto pt-4">상품을 찾을 수 없습니다.</div>;
 
@@ -86,7 +91,7 @@ export default function ProductDetail({ user }: Props) {
             <div className="flex flex-col xl:flex-row gap-6 mb-12 h-fit">
 
                 {/* Left: Image Section (Fixed width) */}
-                <div className="w-full xl:w-[400px] top-24 h-fit">
+                <div className="w-full xl:w-[400px] top-24 ">
                     <ImageSection product={product} setShowARModal={setShowARModal} />
                 </div>
 
@@ -111,7 +116,7 @@ export default function ProductDetail({ user }: Props) {
                 </div>
 
                 {/* Right: Action Box (Fixed width) */}
-                <div className="w-full xl:w-[300px] sticky top-24 h-fit z-10">
+                <div className="w-full xl:w-[300px] h-fit z-10">
                     <ActionBox
                         product={product}
                         mergedBids={mergedBids}

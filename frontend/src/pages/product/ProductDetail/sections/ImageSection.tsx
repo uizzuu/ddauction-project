@@ -115,22 +115,32 @@ export const ImageSection: React.FC<ImageSectionProps> = ({ product, setShowARMo
                     onMouseLeave={handleMouseLeave}
                 >
                     {product.images?.length ? (
-                        <Slider {...settings} className="product-slider h-full">
-                            {product.images.map((img, idx) => (
-                                <div key={idx} className="h-full flex items-center justify-center outline-none bg-gray-50">
-                                    <img
-                                        src={img.imagePath.startsWith('http')
-                                            ? img.imagePath
-                                            : `${API_BASE_URL}${img.imagePath}`}
-                                        alt={`${product.title} - ${idx + 1}`}
-                                        className="w-full h-full object-contain"
-                                        onError={(e) => {
-                                            e.currentTarget.style.display = 'none';
-                                        }}
-                                    />
-                                </div>
-                            ))}
-                        </Slider>
+                        <>
+                            <Slider {...settings} className="product-slider h-full">
+                                {product.images.map((img, idx) => (
+                                    <div key={idx} className="h-full !flex items-center justify-center outline-none bg-gray-50 overflow-hidden relative">
+                                        <img
+                                            src={img.imagePath.startsWith('http')
+                                                ? img.imagePath
+                                                : `${API_BASE_URL}${img.imagePath}`}
+                                            alt={`${product.title} - ${idx + 1}`}
+                                            className="w-full h-full object-cover absolute top-0 left-0"
+                                            onError={(e) => {
+                                                e.currentTarget.style.display = 'none';
+                                            }}
+                                        />
+                                    </div>
+                                ))}
+                            </Slider>
+                            <style>{`
+                                .product-slider .slick-list,
+                                .product-slider .slick-track,
+                                .product-slider .slick-slide,
+                                .product-slider .slick-slide > div {
+                                    height: 100%;
+                                }
+                            `}</style>
+                        </>
                     ) : (
                         <div className="flex items-center justify-center h-full text-gray-400 bg-gray-200">
                         </div>

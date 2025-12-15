@@ -80,6 +80,7 @@ export const useProductDetail = (user: User | null) => {
     const productId = Number(id);
 
     const [product, setProduct] = useState<Product | null>(null);
+    const [isLoading, setIsLoading] = useState(true); // Added isLoading
     const [remainingTime, setRemainingTime] = useState("");
     const [sellerNickName, setSellerNickName] = useState("로딩중...");
     const [allBids, setAllBids] = useState<Bid[]>([]);
@@ -163,11 +164,14 @@ export const useProductDetail = (user: User | null) => {
         return () => clearInterval(interval);
     }, [product]);
 
-    const viewedRef = useRef(false);
+    const lastVisitedIdRef = useRef<number | null>(null);
 
     useEffect(() => {
-        // 조회수 증가 한 번만 체크
-        if (viewedRef.current) return;
+        // 조회수 증가 한 번만 체크 (ID가 바뀌면 다시 실행)
+        if (lastVisitedIdRef.current === Number(id)) return;
+        
+        // ID가 바뀌었으므로 로딩 상태 초기화
+        setIsLoading(true);
 
         const fetchProduct = async () => {
             try {
@@ -175,7 +179,7 @@ export const useProductDetail = (user: User | null) => {
                 setProduct(data);
                 setSellerNickName(data.sellerNickName ?? "알 수 없음");
                 setRemainingTime(calculateRemainingTime(data.auctionEndTime || ""));
-                viewedRef.current = true;
+                lastVisitedIdRef.current = Number(id);
 
                 // ✅ 기존 이미지를 productForm에 설정
                 setProductForm({
@@ -230,6 +234,9 @@ export const useProductDetail = (user: User | null) => {
 
             } catch (err) {
                 console.error(err);
+                setProduct(null); // 에러 시 product null 처리
+            } finally {
+                setIsLoading(false); // 로딩 끝
             }
         };
         fetchProduct();
@@ -300,6 +307,7 @@ export const useProductDetail = (user: User | null) => {
     return {
         product,
         setProduct,
+        isLoading, // Exposed isLoading
         remainingTime,
         sellerNickName,
         mergedBids,

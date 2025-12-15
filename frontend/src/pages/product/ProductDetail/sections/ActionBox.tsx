@@ -41,7 +41,7 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
         if (product.deliveryIncluded === true) {
             return "무료배송";
         }
-        
+
         // deliveryAvailable에서 배송 방법들 가져와서 한글로 변환
         if (product.deliveryAvailable) {
             const methods = product.deliveryAvailable.split(",").map(m => {
@@ -50,18 +50,18 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
             });
             return methods.join(", ");
         }
-        
+
         // 배송비만 있는 경우
         const deliveryPrice = Number(product.deliveryPrice) || 0;
         if (deliveryPrice > 0) {
             return `${DELIVERY_TYPES.PARCEL} ${deliveryPrice.toLocaleString()}원`;
         }
-        
+
         return DELIVERY_TYPES.PARCEL; // 기본값: "택배"
     };
 
     return (
-        <div className="rounded-xl border border-gray-200 shadow-sm p-5 sticky top-24 h-[400px] box-border flex flex-col bg-white">
+        <div className="rounded-xl border border-gray-200 shadow-sm p-5 h-[400px] box-border flex flex-col bg-white">
 
             {/* Fixed Header Area */}
             <div className="mb-2 shrink-0">

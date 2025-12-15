@@ -89,9 +89,9 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
     const priceInfo = getPriceInfo();
 
     return (
-        <div className="w-full md:w-full flex flex-col h-full justify-start gap-3">
+        <div className="w-full md:w-full flex flex-col h-full justify-start gap-2">
             {/* Header: Title & Meta */}
-            <div className="border-b border-gray-100 mb-3">
+            <div className="border-b border-gray-100 mb-1 pb-2">
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <span className="inline-block px-3 py-[6px] bg-gray-100 text-gray-600 text-[11px] font-semibold rounded-full mb-1">
@@ -124,7 +124,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                                     </svg>
                                 </button>
                                 <div className="absolute right-1 w-28 bg-white rounded-lg shadow-xl border border-gray-100 hidden group-hover:block z-50 overflow-hidden">
-                                    <button onClick={handleEditProduct} className="block w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 border-b border-gray-50">수정하기</button>
+                                    <button onClick={handleEditProduct} className="block w-full text-left px-6 py-2 text-xs text-gray-700 hover:bg-gray-50 border-b border-gray-50">수정하기</button>
                                     {!(product.productType === 'AUCTION' && mergedBids.length > 0) && (
                                         <button onClick={handleDeleteProduct} className="block w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50">삭제하기</button>
                                     )}
@@ -143,14 +143,14 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                 <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
                     <Link
                         to={`/users/${product.sellerId}`}
-                        className="flex items-center gap-1.5 hover:underline decoration-gray-400 underline-offset-2"
+                        className="flex items-center gap-1.5 hover:bg-gray-50 hover rounded-full decoration-gray-400"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <span className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
                             <Avatar
                                 src={product.sellerProfileImage || null}
                                 alt={sellerNickName}
-                                className="w-full h-full text-[10px]"
+                                className="w-full h-full text-[6px]"
                                 fallbackText={sellerNickName}
                             />
                         </span>
@@ -171,7 +171,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
 
             {/* Tags */}
             {product.tag && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
+                <div className="flex flex-wrap gap-1.5 mb-1">
                     {product.tag.split(",").map((tag, idx) => (
                         <span key={idx} className="px-1.5 py-0.5 bg-gray-50 text-gray-500 text-[13px] rounded-full border border-gray-100">
                             #{tag.trim()}
@@ -222,20 +222,23 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                             </div>
                         ) : product.productType === 'STORE' ? (
                             /* ✅ STORE 가격 표시 - salePrice 사용 */
-                            <div>
+                            <div className="space-y-1">
+                                {priceInfo.hasDiscount && (
+                                    <div className="flex justify-between items-center text-sm text-gray-500">
+                                        <span>판매가</span>
+                                        <div className="flex gap-1.5 items-center">
+                                            <span className="line-through text-gray-400">{priceInfo.originalPrice.toLocaleString()}원</span>
+                                            <span className="text-red-500 text-base font-bold">
+                                                {priceInfo.discountRate}%
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex justify-between items-end mb-1">
-                                    <span className="text-gray-500 text-sm">판매가</span>
+                                    <span className={`text-sm ${priceInfo.hasDiscount ? "text-red-500 font-bold" : "text-gray-500"}`}>
+                                        {priceInfo.hasDiscount ? "할인가" : "판매가"}
+                                    </span>
                                     <div className="text-right">
-                                        {priceInfo.hasDiscount && (
-                                            <div className="flex items-center justify-end gap-2 mb-0.5">
-                                                <span className="text-gray-400 text-xs line-through">
-                                                    {priceInfo.originalPrice.toLocaleString()}원
-                                                </span>
-                                                <span className="text-red-500 text-base font-bold">
-                                                    {priceInfo.discountRate}%
-                                                </span>
-                                            </div>
-                                        )}
                                         <div className="flex items-baseline justify-end gap-1">
                                             <span className="text-3xl font-extrabold text-gray-900">
                                                 {priceInfo.finalPrice.toLocaleString()}
@@ -286,7 +289,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                 {/* Delivery Methods */}
                 {product.deliveryAvailable && (
                     <div className="flex items-start gap-4">
-                        <span className="w-16 text-gray-500 text-xs font-medium shrink-0">배송 방법</span>
+                        <span className="w-16 text-gray-500 text-sm font-medium shrink-0">배송 방법</span>
                         <div className="text-xs text-gray-900 flex flex-wrap gap-1">
                             {product.deliveryAvailable.split(",").map((method, idx) => (
                                 <span key={idx} className="inline-block border border-gray-300 border-solid px-1.5 py-0.5 rounded text-[12px] text-gray-600 bg-white">
@@ -301,11 +304,11 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
             {/* Auction Info: Time Only (Compact) */}
             {!editingProductId && product.productType === 'AUCTION' && (
                 <div className="mt-auto pt-2">
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 flex items-center justify-between">
-                        <span className="text-gray-500 font-bold text-xs">남은 시간</span>
+                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 flex items-start justify-between">
+                        <span className="text-gray-500 font-bold text-sm">남은 시간</span>
                         <div className="text-right">
-                            <span className="block text-lg font-bold text-gray-900 font-mono leading-none mb-0.5">{remainingTime}</span>
-                            <span className="text-[10px] text-gray-400">{formatDateTimeNoSec(product.auctionEndTime || "")} 마감</span>
+                            <span className="block text-lg font-bold text-gray-900 leading-none">{remainingTime}</span>
+                            <span className="text-[14px] text-gray-400">{formatDateTimeNoSec(product.auctionEndTime || "")} 마감</span>
                         </div>
                     </div>
                 </div>
