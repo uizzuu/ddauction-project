@@ -387,16 +387,35 @@ export default function MyPage({ user, setUser }: Props) {
     setActiveTab(newTab); // activeTab 상태를 URL 값으로 업데이트
   }, [searchParams]); // searchParams가 변경될 때마다 실행
 
-  // Tab Styling Effect
+  // Tab Styling Effect - 탭 변경 및 레이아웃 로드 시 인디케이터 업데이트
   useEffect(() => {
-    const currentTab = tabRefs.current[activeTab];
-    if (currentTab) {
-      setIndicatorStyle({
-        left: currentTab.offsetLeft,
-        width: currentTab.offsetWidth,
-      });
-    }
+    // DOM이 완전히 렌더링된 후 인디케이터 위치 계산
+    const updateIndicator = () => {
+      const currentTab = tabRefs.current[activeTab];
+      if (currentTab) {
+        setIndicatorStyle({
+          left: currentTab.offsetLeft,
+          width: currentTab.offsetWidth,
+        });
+      }
+    };
+
+    // requestAnimationFrame을 사용하여 브라우저가 레이아웃을 계산한 후 실행
+    const rafId = requestAnimationFrame(() => {
+      updateIndicator();
+      // 한 번 더 실행하여 확실하게 적용
+      requestAnimationFrame(updateIndicator);
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [activeTab]);
+
+  // Tab Content Loading
+  useEffect(() => {
+    if (user) {
+      loadTabContent(activeTab); // activeTab이 변경될 때마다 데이터 로드
+    }
+  }, [activeTab, user]);
 
   // Tab Content Loading
   useEffect(() => {
