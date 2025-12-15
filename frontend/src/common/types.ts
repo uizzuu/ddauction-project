@@ -154,7 +154,7 @@ export type EditProductForm = {
   productStatus: ProductStatus;
   auctionEndTime: string;
   productType: ProductType; // 상품 타입 필드 추가
- images?: (File | Image)[];
+  images?: (File | Image)[];
 };
 
 export interface EditUserForm {
@@ -241,8 +241,10 @@ export interface SelectStyleProps {
 
 export interface Report {
   reportId: number;
-  reporterId: number;
-  targetId: number;
+  userId: number;      // reporterId → userId
+  refId: number;       // targetId → refId
+  reportType?: string; // 추가
+  userName?: string;   // 추가 (백엔드에서 제공)
   reason: string;
   status: boolean;
   createdAt: string;
@@ -446,21 +448,21 @@ export interface ChatRoomListDto {
 
 // AdminChatRoomListDto 정의 (백엔드와 필드 일치)
 export interface AdminChatRoomListDto {
-    chatRoomId: number;
-    productId: number;
-    productTitle: string;
-    
-    // 판매자 정보
-    sellerId: number;
-    sellerNickName: string;
-    
-    // 구매자 정보
-    buyerId: number;
-    buyerNickName: string;
-    
-    // 메시지 정보
-    lastMessage: string;
-    lastMessageTime: string; // ISO String
+  chatRoomId: number;
+  productId: number;
+  productTitle: string;
+
+  // 판매자 정보
+  sellerId: number;
+  sellerNickName: string;
+
+  // 구매자 정보
+  buyerId: number;
+  buyerNickName: string;
+
+  // 메시지 정보
+  lastMessage: string;
+  lastMessageTime: string; // ISO String
 }
 
 // 목록 타입을 유니온으로 재정의

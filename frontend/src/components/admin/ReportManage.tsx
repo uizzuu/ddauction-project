@@ -32,8 +32,8 @@ export default function ReportManage({
             {reports.map((r) => (
               <tr key={r.reportId} className="hover:bg-[#f9f9f9] transition-colors">
                 <td className="px-4 py-3 text-sm text-[#111]">{r.reportId}</td>
-                <td className="px-4 py-3 text-sm text-[#666]">{r.reporterId}</td>
-                <td className="px-4 py-3 text-sm text-[#666]">{r.targetId}</td>
+                <td className="px-4 py-3 text-sm text-[#666]">{r.userId}</td>
+                <td className="px-4 py-3 text-sm text-[#666]">{r.refId}</td>
                 <td className="px-4 py-3 text-sm text-[#111]">{r.reason}</td>
                 <td className="px-4 py-3 text-sm text-[#666]">
                   {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "-"}
