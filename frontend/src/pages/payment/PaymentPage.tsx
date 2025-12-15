@@ -80,7 +80,7 @@ export default function PaymentPage() {
       }
 
       const product = await fetchProductById(id);
-
+      console.log("📦 상품 정보:", product);
       if (product.productType === 'USED') {
         alert("중고 거래 상품은 1:1 채팅을 통해 거래해주세요.");
         navigate(`/products/${id}`);
@@ -88,10 +88,9 @@ export default function PaymentPage() {
       }
 
       if (product.productType === 'STORE') {
-        const originalPrice = Number(product.originalPrice || 0);
-        const discountRate = Number(product.discountRate || 0);
-        const salePrice = Math.round(originalPrice * (100 - discountRate) / 100);
+        const salePrice = Number(product.salePrice || 0);
         const shippingFee = product.deliveryIncluded ? 0 : Number(product.deliveryPrice || 0);
+
 
         setPaymentInfo({
           productTitle: product.title,
@@ -436,7 +435,7 @@ export default function PaymentPage() {
             {/* Product Info Card */}
             <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
               <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                주문 상품 
+                주문 상품
                 <span className="text-gray-400 text-sm font-normal">
                   {cartMode && cartPaymentInfo ? `${cartPaymentInfo.items.length}건` : "1건"}
                 </span>
