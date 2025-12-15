@@ -1650,7 +1650,7 @@ def main():
         logging.info("   - 관리자 계정(user_id=1) 보존 완료")
 
         # AUTO_INCREMENT 리셋
-        cursor.execute("ALTER TABLE users AUTO_INCREMENT = 2")
+        cursor.execute("ALTER TABLE users AUTO_INCREMENT = 1")
         cursor.execute("ALTER TABLE product AUTO_INCREMENT = 1")
         logging.info("   - AUTO_INCREMENT 리셋 완료")
 
