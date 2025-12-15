@@ -213,13 +213,13 @@ export default function Main() {
                   <div key={i} className="h-[250px] md:h-[400px] outline-none">
                     <div
                       className="w-full h-full cursor-pointer relative bg-[#333] rounded-[12px] overflow-hidden"
-                      // onClick={() => {
-                      //   if (b.product) {
-                      //     navigate(`/products/${b.product.productId}`);
-                      //   } else if (b.link) {
-                      //     navigate(b.link);
-                      //   }
-                      // }}
+                    // onClick={() => {
+                    //   if (b.product) {
+                    //     navigate(`/products/${b.product.productId}`);
+                    //   } else if (b.link) {
+                    //     navigate(b.link);
+                    //   }
+                    // }}
                     >
                       {b.image && <img src={b.image} alt={`Banner ${b.id}`} className="w-full h-full object-cover" />}
                     </div>
@@ -285,7 +285,10 @@ export default function Main() {
                 let highestBid = 0;
                 if (p.productType === "AUCTION") {
                   mergedBids = p.bids ?? [];
-                  highestBid = mergedBids.length > 0 ? Math.max(...mergedBids.map(b => b.bidPrice)) : 0;
+                  // ⭐ 입찰이 없으면 시작가를 현재가로 사용
+                  highestBid = mergedBids.length > 0
+                    ? Math.max(...mergedBids.map(b => b.bidPrice))
+                    : (Number(p.startingPrice) || 0);
                 }
 
                 return (

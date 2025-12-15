@@ -469,7 +469,22 @@ public class PortOnePaymentService {
 
         // 7) Product <-> Payment 양방향 연결 (변경 없음)
         p.setPayment(payment);
-        p.setProductStatus(ProductStatus.SOLD);
+
+// ⭐ 상품 타입별로 상태 처리
+        if (p.getProductType() == com.my.backend.enums.ProductType.USED) {
+            // 중고 거래: 1개만 있으므로 판매 완료 처리
+            p.setProductStatus(ProductStatus.SOLD);
+            log.info("[USED] 상품 판매완료 처리: productId={}", p.getProductId());
+        } else if (p.getProductType() == com.my.backend.enums.ProductType.STORE) {
+            // 스토어: 재고가 여러 개일 수 있으므로 상태 유지
+            // p.setProductStatus는 변경하지 않음 (ACTIVE 유지)
+            log.info("[STORE] 상품 상태 유지 (ACTIVE): productId={}", p.getProductId());
+        } else if (p.getProductType() == com.my.backend.enums.ProductType.AUCTION) {
+            // 경매: 낙찰자 1명만 구매 가능하므로 판매 완료 처리
+            p.setProductStatus(ProductStatus.SOLD);
+            log.info("[AUCTION] 경매 낙찰완료 처리: productId={}", p.getProductId());
+        }
+
         p.setPaymentStatus(PaymentStatus.PAID);
         productRepository.save(p);
 
