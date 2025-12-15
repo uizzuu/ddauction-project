@@ -314,8 +314,8 @@ export default function PaymentPage() {
       window.IMP.init(prepareData.impCode);
 
       const payParams = {
-        pg: "html5_inicis",
-        pay_method: paymentMethod,
+        pg: "kakaopay.TC0ONETIME",  // 카카오페이 테스트용
+        pay_method: paymentMethod,  // 카카오페이는 이 값을 무시하지만 유지
         merchant_uid: prepareData.merchantUid,
         name: prepareData.name,
         amount: singleFinalAmount,
