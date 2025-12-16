@@ -1,6 +1,5 @@
 package com.my.backend.entity;
 
-import com.my.backend.enums.ProductType;
 import com.my.backend.enums.ReportType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -8,7 +7,6 @@ import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import org.springframework.security.core.userdetails.User;
 
 import java.time.LocalDateTime;
 
@@ -34,6 +32,9 @@ public class Report {
 
     @Column(nullable = false)
     private boolean status;
+
+    @Column(columnDefinition = "TEXT")
+    private String answer;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

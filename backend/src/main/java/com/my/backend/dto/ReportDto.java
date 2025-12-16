@@ -19,6 +19,7 @@ public class ReportDto {
     private Long refId;            // 신고 대상 ID (상품/게시글/댓글 등)
     private ReportType reportType; // 신고 타입
     private String reason;
+    private String answer; // 답변 추가
     private boolean status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -34,6 +35,7 @@ public class ReportDto {
                 .refId(report.getRefId())
                 .reportType(report.getReportType())
                 .reason(report.getReason())
+                .answer(report.getAnswer())
                 .status(report.isStatus())
                 .createdAt(report.getCreatedAt())
                 .updatedAt(report.getUpdatedAt())
@@ -48,6 +50,7 @@ public class ReportDto {
                 .refId(this.refId)
                 .reportType(this.reportType)
                 .reason(this.reason)
+                .answer(this.answer)
                 .status(this.status)
                 .build();
     }

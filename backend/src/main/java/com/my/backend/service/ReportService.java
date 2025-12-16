@@ -54,6 +54,15 @@ public class ReportService {
         report.setStatus(status);
     }
 
+    // 신고 답변 등록 (관리자용)
+    @Transactional
+    public void answerReport(Long reportId, String answer) {
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new EntityNotFoundException("신고가 존재하지 않습니다. id=" + reportId));
+        report.setAnswer(answer);
+        report.setStatus(true); // 답변 시 자동으로 처리 완료
+    }
+
     // 내가 신고한 목록 조회 (마이페이지용)
     public List<ReportDto> getReportsByReporter(Long reporterId) {
         return reportRepository.findByUserUserId(reporterId).stream()

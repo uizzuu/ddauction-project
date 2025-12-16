@@ -184,6 +184,14 @@ export const reportProduct = (productId: number, reason: string, token?: string)
   });
 };
 
+// 신고 답변 등록 (관리자용)
+export const saveReportAnswer = (reportId: number, answer: string) => {
+  return authFetch(`${SPRING_API}/reports/${reportId}/answer`, {
+    method: "PATCH",
+    body: JSON.stringify({ answer }),
+  });
+};
+
 // 상품 수정
 export const editProduct = async (productId: number, payload: any): Promise<TYPE.Product> => {
   // 💡 authFetch를 사용하여 토큰을 자동으로 포함하고 API를 호출합니다.

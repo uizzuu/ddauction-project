@@ -248,6 +248,7 @@ export interface Report {
   reportType?: string; // 추가
   userName?: string;   // 추가 (백엔드에서 제공)
   reason: string;
+  answer?: string; // 추가
   status: boolean;
   createdAt: string;
   updatedAt: string;

@@ -675,25 +675,34 @@ def create_users(cursor) -> Dict[str, List[int]]:
     # ----------------------------------------------------
     # 1. 관리자(Admin) 계정 생성 (TEST_USERS 1번 항목 대체)
     # ----------------------------------------------------
-    logging.info(f"관리자 계정 admin@example.com 생성 중...")
+    logging.info(f"관리자 계정 admin@example.com 확인 중...")
 
-    admin_created = random_datetime(90, 30)
+    # 이미 존재하는지 확인 (Step 0에서 보존되었을 수 있음)
+    cursor.execute("SELECT user_id FROM users WHERE email = %s", (ADMIN_USER_DATA['email'],))
+    existing_admin = cursor.fetchone()
 
-    # DB에 삽입
-    cursor.execute("""
-                   INSERT INTO users (user_name, nick_name, email, password, phone, birthday,
-                                      business_number, role, verified, created_at, updated_at)
-                   VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                   """, (
-        ADMIN_USER_DATA['name'], ADMIN_USER_DATA['nick'], ADMIN_USER_DATA['email'],
-        hash_password(ADMIN_USER_DATA['password']),
-        ADMIN_USER_DATA['phone'],
-        ADMIN_USER_DATA['birthday'],
-        ADMIN_USER_DATA['business_number'], ADMIN_USER_DATA['role'],
-        True, admin_created, admin_created
-    ))
-    user_ids['test'].append(cursor.lastrowid)
-    logging.info(f"✅ 관리자 계정 admin@example.com 생성 완료")
+    if existing_admin:
+        user_ids['test'].append(existing_admin[0])
+        logging.info(f"✅ 관리자 계정 admin@example.com 이미 존재함 (ID: {existing_admin[0]}) - 생성 건너뜀")
+    else:
+        logging.info(f"관리자 계정 admin@example.com 생성 중...")
+        admin_created = random_datetime(90, 30)
+
+        # DB에 삽입
+        cursor.execute("""
+                       INSERT INTO users (user_name, nick_name, email, password, phone, birthday,
+                                          business_number, role, verified, created_at, updated_at)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                       """, (
+            ADMIN_USER_DATA['name'], ADMIN_USER_DATA['nick'], ADMIN_USER_DATA['email'],
+            hash_password(ADMIN_USER_DATA['password']),
+            ADMIN_USER_DATA['phone'],
+            ADMIN_USER_DATA['birthday'],
+            ADMIN_USER_DATA['business_number'], ADMIN_USER_DATA['role'],
+            True, admin_created, admin_created
+        ))
+        user_ids['test'].append(cursor.lastrowid)
+        logging.info(f"✅ 관리자 계정 admin@example.com 생성 완료")
 
     # TEST_USERS의 나머지 항목 (만약 TEST_USERS가 ADMIN_USER_DATA를 포함하고 있었다면 수정이 필요할 수 있습니다.
     # 여기서는 ADMIN_USER_DATA를 TEST_USERS의 첫 항목으로 간주하고, 나머지 TEST_USERS는 두 번째 항목부터 처리한다고 가정합니다.)

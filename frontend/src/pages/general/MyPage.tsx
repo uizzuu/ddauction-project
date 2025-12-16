@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import DatePickerStyle from "../../components/ui/DatePickerStyle";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText, Search, Check, AlertCircle } from "lucide-react";
+import { Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText, Search, Check, AlertCircle, ChevronDown, HelpCircle } from "lucide-react";
 import { COURIER_OPTIONS, ARTICLE_TYPE_LABELS } from "../../common/enums";
 import type { User, Product, Report, ProductQna, Inquiry, Review, Bid, ArticleDto, CommentDto } from "../../common/types";
 import * as API from "../../common/api";
@@ -15,7 +15,7 @@ import ProfileImageUploader from "../../components/mypage/ProfileImageUploader";
 import Avatar from "../../components/ui/Avatar";
 import CollapsibleSection from "../../components/ui/CollapsibleSection";
 
-type TabId = "selling" | "buying" | "reviews" | "community" | "profile_edit";
+type TabId = "selling" | "buying" | "reviews" | "community" | "profile_edit" | "inquiry";
 
 type Props = {
   user: User | null;
@@ -55,7 +55,7 @@ const ProviderBadge = ({ provider }: { provider: string }) => {
     </span>
   );
 };
-const VALID_TABS: TabId[] = ["selling", "buying", "reviews", "community", "profile_edit"];
+const VALID_TABS: TabId[] = ["selling", "buying", "reviews", "community", "profile_edit", "inquiry"];
 export default function MyPage({ user, setUser }: Props) {
   const navigate = useNavigate();
   // URL 쿼리 파라미터를 관리합니다.
@@ -94,6 +94,19 @@ export default function MyPage({ user, setUser }: Props) {
   const [shippingModalOpen, setShippingModalOpen] = useState(false);
   const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
   const [modalDefaults, setModalDefaults] = useState({ courier: "CJ", trackingNumber: "" });
+  const [expandedReportIds, setExpandedReportIds] = useState<Set<number>>(new Set());
+
+  const toggleReportAnswer = (reportId: number) => {
+    setExpandedReportIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(reportId)) {
+        next.delete(reportId);
+      } else {
+        next.add(reportId);
+      }
+      return next;
+    });
+  };
 
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [myBids, setMyBids] = useState<Bid[]>([]);
@@ -338,18 +351,14 @@ export default function MyPage({ user, setUser }: Props) {
     try {
       switch (tab) {
         case "selling":
-          // ... (same as before)
-          const [sellingResult, qnasResult, sHistoryResult] = await Promise.allSettled([
+          const [sellingResult, sHistoryResult] = await Promise.allSettled([
             API.fetchSellingProducts(user.userId),
-            API.fetchUserQnas(user.userId),
             API.fetchSellingHistory()
           ]);
           if (sellingResult.status === "fulfilled") setSellingProducts(sellingResult.value);
-          if (qnasResult.status === "fulfilled") setMyQnas(qnasResult.value);
           if (sHistoryResult.status === "fulfilled") setSellingHistory(sHistoryResult.value);
           break;
         case "buying":
-          // ... (same as before)
           const [likes, bHistory] = await Promise.all([
             API.fetchMyLikes(token),
             API.fetchBuyingHistory()
@@ -361,21 +370,25 @@ export default function MyPage({ user, setUser }: Props) {
           setMyReviews(await API.fetchUserReviews(user.userId));
           break;
         case "community":
-          // ... (same as before)
-          const [inquiries, reportsData, articles, comments] = await Promise.all([
-            API.fetchUserInquiries(token),
-            API.fetchReports(token),
+          const [articles, comments] = await Promise.all([
             API.getArticles({ userId: user.userId }),
             API.fetchUserComments(user.userId),
           ]);
+          setMyArticles(articles);
+          setMyComments(comments);
+          break;
+        case "inquiry":
+          const [qnasResult, reportsData, inquiries] = await Promise.all([
+            API.fetchUserQnas(user.userId),
+            API.fetchReports(token),
+            API.fetchUserInquiries(token),
+          ]);
+          setMyQnas(qnasResult);
+          setReports(reportsData);
           setMyInquiries(inquiries.map((i: any) => ({
-            // ... map logic
             inquiryId: i.inquiryId, title: i.title, question: i.content, createdAt: i.createdAt,
             answers: (i.answers ?? []).map((a: any) => ({ inquiryReviewId: a.inquiryReviewId, answer: a.answer, nickName: a.nickName ?? "익명", createdAt: a.createdAt ?? new Date().toISOString() }))
           })));
-          setReports(reportsData);
-          setMyArticles(articles);
-          setMyComments(comments);
           break;
       }
     } catch (err) {
@@ -549,6 +562,7 @@ export default function MyPage({ user, setUser }: Props) {
     { id: "buying" as TabId, label: "구매 활동", icon: ShoppingBag },
     { id: "reviews" as TabId, label: "받은 리뷰", icon: Star },
     { id: "community" as TabId, label: "커뮤니티", icon: MessageSquare },
+    { id: "inquiry" as TabId, label: "문의", icon: HelpCircle },
   ];
 
   return (
@@ -557,7 +571,7 @@ export default function MyPage({ user, setUser }: Props) {
         {/* Profile Summary Card */}
         <div className="py-8 mb-8 border-b border-[#eee]">
           <div className="flex items-start gap-6">
-            <div className="w-16 h-16 rounded-lg bg-[#333] flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-32 h-32 rounded-lg bg-[#333] flex items-center justify-center overflow-hidden flex-shrink-0">
               <Avatar src={user.images?.[0]?.imagePath} alt="Profile" className="w-full h-full text-3xl" fallbackText={user.nickName} />
             </div>
             <div className="flex-1 min-w-0">
@@ -578,7 +592,7 @@ export default function MyPage({ user, setUser }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="bg-white rounded-t-xl border-b border-gray-200 sticky top-14 z-900 shadow-sm">
+        <div className="bg-white rounded-t-xl border-b border-gray-200 sticky top-14 z-990 shadow-sm">
           <div className="flex relative overflow-x-auto scrollbar-hide">
             {tabs.map((tab) => {
               const Icon = tab.icon;
@@ -603,7 +617,7 @@ export default function MyPage({ user, setUser }: Props) {
           {loading ? <div className="text-center py-10">로딩 중...</div> : (
             <>
               {activeTab === "profile_edit" && (
-                <div className="space-y-8 max-w-2xl mx-auto">
+                <div className="space-y-8 w-full mx-auto">
                   <CollapsibleSection title="프로필 이미지" icon={<Settings size={20} />} className="border-0">
                     <ProfileImageUploader user={user} isEditing={true} onUpload={(url: string) => setUser({ ...user, images: [{ imageId: 0, refId: user.userId, imagePath: url, imageType: "USER" }] })} onDelete={() => setUser({ ...user, images: [] })} />
                   </CollapsibleSection>
@@ -755,7 +769,7 @@ export default function MyPage({ user, setUser }: Props) {
                     {sellingHistory.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">판매 내역이 없습니다.</p></div> :
                       <div>{sellingHistory.map((item) => <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                         <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}>
-                          <div className="w-24 h-24 bg-[#f8f8f8] rounded-[10px] border border-[#f0f0f0] overflow-hidden flex-shrink-0 relative">
+                          <div className="w-20 h-20 bg-[#f8f8f8] rounded-[10px] border border-[#f0f0f0] overflow-hidden flex-shrink-0 relative">
                             {item.productImage ? (
                               <img
                                 src={getImageUrl(item.productImage)}
@@ -777,9 +791,7 @@ export default function MyPage({ user, setUser }: Props) {
                   <CollapsibleSection title="판매 중인 상품" icon={<Package size={20} />}>
                     {sellingProducts.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><Package size={48} className="mx-auto text-gray-300 mb-3" /><p className="text-gray-500 mb-4">판매 중인 상품이 없습니다.</p><button onClick={() => navigate("/register")} className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors">상품 등록하기</button></div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-3">{sellingProducts.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}
                   </CollapsibleSection>
-                  <CollapsibleSection title="상품 Q&A" icon={<MessageSquare size={20} />}>
-                    {myQnas.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">문의 내역이 없습니다.</p></div> : <div>{myQnas.map((qna, idx) => <div key={qna.productQnaId} className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""} hover:bg-gray-50`}><div className="flex justify-between items-start mb-2"><p className="font-medium text-gray-900 mb-1">{qna.title}</p><span className="text-xs text-gray-500">{new Date(qna.createdAt).toLocaleDateString()}</span></div><p className="text-sm text-gray-600 mb-2">{qna.content}</p>{qna.answers?.map(a => <div key={a.qnaReviewId} className="mt-2 pl-4 border-l-2 border-blue-500 bg-blue-50 p-3 rounded-r"><p className="text-sm text-gray-700">{a.content}</p></div>)}</div>)}</div>}
-                  </CollapsibleSection>
+
                 </div>
               )}
               {activeTab === "buying" && (
@@ -788,7 +800,7 @@ export default function MyPage({ user, setUser }: Props) {
                     {buyingHistory.length === 0 ? <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]"><ShoppingBag size={40} className="mx-auto text-[#ddd] mb-2" /><p className="text-[#666]">구매 내역이 없습니다.</p></div> :
                       <div>{buyingHistory.map((item) => <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
                         <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}>
-                          <div className="w-16 h-16 bg-[#f8f8f8] rounded-[10px] border border-[#f0f0f0] overflow-hidden flex-shrink-0 relative">
+                          <div className="w-20 h-20 bg-[#f8f8f8] rounded-[10px] border border-[#f0f0f0] overflow-hidden flex-shrink-0 relative">
                             {item.productImage ? (
                               <img
                                 src={getImageUrl(item.productImage)}
@@ -894,7 +906,14 @@ export default function MyPage({ user, setUser }: Props) {
                     )}
                   </CollapsibleSection>
 
-                  {/* 신고 내역 */}
+                </div>
+              )}
+              {activeTab === "inquiry" && (
+                <div className="space-y-8">
+                  <CollapsibleSection title="상품 Q&A" icon={<MessageSquare size={20} />}>
+                    {myQnas.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">문의 내역이 없습니다.</p></div> : <div>{myQnas.map((qna, idx) => <div key={qna.productQnaId} className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""} hover:bg-gray-50`}><div className="flex justify-between items-start mb-2"><p className="font-medium text-gray-900 mb-1">{qna.title}</p><span className="text-xs text-gray-500">{new Date(qna.createdAt).toLocaleDateString()}</span></div><p className="text-sm text-gray-600 mb-2">{qna.content}</p>{qna.answers?.map(a => <div key={a.qnaReviewId} className="mt-2 pl-4 border-l-2 border-blue-500 bg-blue-50 p-3 rounded-r"><p className="text-sm text-gray-700">{a.content}</p></div>)}</div>)}</div>}
+                  </CollapsibleSection>
+
                   <CollapsibleSection title="신고 내역" icon={<AlertCircle size={20} />}>
                     {reports.length === 0 ? (
                       <div className="text-center py-12 bg-gray-50 rounded-lg">
@@ -925,6 +944,27 @@ export default function MyPage({ user, setUser }: Props) {
                                 {report.status ? "처리 완료" : "처리 중"}
                               </span>
                             </div>
+                            {report.answer && (
+                              <div className="mt-2">
+                                <button
+                                  onClick={() => toggleReportAnswer(report.reportId)}
+                                  className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                                >
+                                  {expandedReportIds.has(report.reportId) ? "답변 접기" : "답변 보기"}
+                                  <ChevronDown
+                                    size={16}
+                                    className={`transition-transform duration-200 ${expandedReportIds.has(report.reportId) ? "rotate-180" : ""
+                                      }`}
+                                  />
+                                </button>
+                                {expandedReportIds.has(report.reportId) && (
+                                  <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm text-gray-700 animate-in fade-in slide-in-from-top-1 duration-200">
+                                    <span className="font-bold text-black block mb-1">답변:</span>
+                                    {report.answer}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -932,40 +972,46 @@ export default function MyPage({ user, setUser }: Props) {
                   </CollapsibleSection>
                 </div>
               )}
+
+
+
+              <ShippingModal isOpen={shippingModalOpen} onClose={() => setShippingModalOpen(false)} onSubmit={handleShippingSubmit} defaultCourier={modalDefaults.courier} defaultTrackingNumber={modalDefaults.trackingNumber} />
+
+              <ConfirmModal isOpen={confirmModalOpen} onClose={() => setConfirmModalOpen(false)} onConfirm={executeConfirmPurchase} title="구매 확정" message="구매를 확정하시겠습니까?" confirmText="확인" cancelText="취소" />
+
+              {/* Disconnect Social Modal */}
+              {
+                showDisconnectModal && (
+                  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl max-w-md w-full p-6 relative">
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">계정 연동 해제</h3>
+                      <p className="text-sm text-gray-500 mb-6">
+                        소셜 계정 연동을 해제하려면 새로운 비밀번호를 설정해야 합니다.<br />
+                        연동 해제 후에는 <strong>{profileForm.email}</strong> 이메일과 설정한 비밀번호로 로그인할 수 있습니다.
+                        <br /><span className="text-red-500 text-xs">* 이메일/전화번호 인증이 완료되어야 합니다.</span>
+                      </p>
+
+                      <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">새 비밀번호 설정</label>
+                        <input type="password" value={disconnectPassword} onChange={(e) => setDisconnectPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="8자 이상, 숫자/특수문자 포함" />
+                      </div>
+
+                      <div className="flex justify-end gap-3">
+                        <button onClick={() => setShowDisconnectModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">취소</button>
+                        <button onClick={handleDisconnectSocial} disabled={!verification.isEmailVerified || !verification.isPhoneVerified} className="px-4 py-2 bg-[#333] text-white rounded-lg hover:bg-black transition-colors font-medium disabled:bg-gray-300">
+                          연동 해제 및 전환
+                        </button>
+                      </div>
+                      <button onClick={() => setShowDisconnectModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><AlertCircle className="rotate-45" size={20} /></button>
+                    </div>
+                  </div>
+                )
+              }
             </>
-          )}
+          )
+          }
         </div>
       </div>
-      <ShippingModal isOpen={shippingModalOpen} onClose={() => setShippingModalOpen(false)} onSubmit={handleShippingSubmit} defaultCourier={modalDefaults.courier} defaultTrackingNumber={modalDefaults.trackingNumber} />
-
-      <ConfirmModal isOpen={confirmModalOpen} onClose={() => setConfirmModalOpen(false)} onConfirm={executeConfirmPurchase} title="구매 확정" message="구매를 확정하시겠습니까?" confirmText="확인" cancelText="취소" />
-
-      {/* Disconnect Social Modal */}
-      {showDisconnectModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl max-w-md w-full p-6 relative">
-            <h3 className="text-xl font-bold text-gray-900 mb-2">계정 연동 해제</h3>
-            <p className="text-sm text-gray-500 mb-6">
-              소셜 계정 연동을 해제하려면 새로운 비밀번호를 설정해야 합니다.<br />
-              연동 해제 후에는 <strong>{profileForm.email}</strong> 이메일과 설정한 비밀번호로 로그인할 수 있습니다.
-              <br /><span className="text-red-500 text-xs">* 이메일/전화번호 인증이 완료되어야 합니다.</span>
-            </p>
-
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-1">새 비밀번호 설정</label>
-              <input type="password" value={disconnectPassword} onChange={(e) => setDisconnectPassword(e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-lg" placeholder="8자 이상, 숫자/특수문자 포함" />
-            </div>
-
-            <div className="flex justify-end gap-3">
-              <button onClick={() => setShowDisconnectModal(false)} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">취소</button>
-              <button onClick={handleDisconnectSocial} disabled={!verification.isEmailVerified || !verification.isPhoneVerified} className="px-4 py-2 bg-[#333] text-white rounded-lg hover:bg-black transition-colors font-medium disabled:bg-gray-300">
-                연동 해제 및 전환
-              </button>
-            </div>
-            <button onClick={() => setShowDisconnectModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"><AlertCircle className="rotate-45" size={20} /></button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -82,6 +82,17 @@ public class ReportController {
         return ResponseEntity.ok(Map.of("message", "신고 상태가 변경되었습니다."));
     }
 
+    // 신고 답변 등록 (관리자용)
+    @PatchMapping("/{reportId}/answer")
+    public ResponseEntity<?> answerReport(
+            @PathVariable Long reportId,
+            @RequestBody Map<String, String> body
+    ) {
+        String answer = body.get("answer");
+        reportService.answerReport(reportId, answer);
+        return ResponseEntity.ok(Map.of("message", "답변이 등록되었습니다."));
+    }
+
     // 마이페이지: 내가 신고한 내역 조회
     @GetMapping("/mypage")
     public ResponseEntity<?> getMyReports(

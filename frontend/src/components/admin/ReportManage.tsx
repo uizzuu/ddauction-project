@@ -3,6 +3,7 @@ import CustomSelect from "../ui/CustomSelect";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import * as API from "../../common/api";
 
 type Props = {
   reports: Report[];
@@ -23,12 +24,39 @@ export default function ReportManage({
   const [targetInfo, setTargetInfo] = useState<Record<number, TargetInfo>>({});
   const [loading, setLoading] = useState(true);
 
-  // 신고 대상 정보 조회
+  // 답변 관련 상태
+  const [answeringReportId, setAnsweringReportId] = useState<number | null>(null);
+  const [answerText, setAnswerText] = useState("");
+
+  const handleOpenAnswer = (report: Report) => {
+    setAnsweringReportId(report.reportId);
+    setAnswerText(report.answer || "");
+  };
+
+  const handleSaveAnswer = async () => {
+    if (!answeringReportId) return;
+    if (!answerText.trim()) {
+      alert("답변 내용을 입력해주세요.");
+      return;
+    }
+
+    try {
+      await API.saveReportAnswer(answeringReportId, answerText);
+      alert("답변이 등록되었습니다.");
+      handleUpdateReportStatus(answeringReportId, true); // 처리 완료로 변경
+      setAnsweringReportId(null);
+      setAnswerText("");
+    } catch (error) {
+      console.error("답변 등록 실패:", error);
+      alert("답변 등록에 실패했습니다.");
+    }
+  };
+
   useEffect(() => {
     const fetchTargetInfo = async () => {
       setLoading(true);
       const info: Record<number, TargetInfo> = {};
-      
+
       for (const report of reports) {
         try {
           switch (report.reportType) {
@@ -79,8 +107,8 @@ export default function ReportManage({
               try {
                 // 댓글 정보 조회 (댓글 API가 있다면)
                 const res = await axios.get(`/api/comments/${report.refId}`);
-                const preview = res.data.content.length > 30 
-                  ? res.data.content.substring(0, 30) + '...' 
+                const preview = res.data.content.length > 30
+                  ? res.data.content.substring(0, 30) + '...'
                   : res.data.content;
                 info[report.reportId] = {
                   title: preview,
@@ -112,7 +140,7 @@ export default function ReportManage({
           };
         }
       }
-      
+
       setTargetInfo(info);
       setLoading(false);
     };
@@ -147,18 +175,19 @@ export default function ReportManage({
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">신고일</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">상태</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">처리</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">답변</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-[#eee]">
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-[#666]">
+                <td colSpan={9} className="px-4 py-8 text-center text-[#666]">
                   로딩 중...
                 </td>
               </tr>
             ) : reports.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-[#666]">
+                <td colSpan={9} className="px-4 py-8 text-center text-[#666]">
                   신고 내역이 없습니다.
                 </td>
               </tr>
@@ -200,11 +229,10 @@ export default function ReportManage({
                     {r.createdAt ? new Date(r.createdAt).toLocaleDateString('ko-KR') : "-"}
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                      r.status 
-                        ? "bg-green-50 text-green-700" 
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${r.status
+                        ? "bg-green-50 text-green-700"
                         : "bg-yellow-50 text-yellow-700"
-                    }`}>
+                      }`}>
                       {r.status ? "처리 완료" : "보류 중"}
                     </span>
                   </td>
@@ -224,12 +252,49 @@ export default function ReportManage({
                       className="w-32"
                     />
                   </td>
+                  <td className="px-4 py-3 text-sm">
+                    <button
+                      onClick={() => handleOpenAnswer(r)}
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-xs transition-colors whitespace-nowrap"
+                    >
+                      {r.answer ? "답변 수정" : "답변 하기"}
+                    </button>
+                  </td>
                 </tr>
               ))
             )}
           </tbody>
         </table>
       </div>
+
+      {/* 답변 모달 */}
+      {answeringReportId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-lg shadow-xl animate-in fade-in zoom-in duration-200">
+            <h3 className="text-lg font-bold mb-4">신고 답변 작성</h3>
+            <textarea
+              className="w-full h-32 p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all"
+              placeholder="답변 내용을 입력하세요..."
+              value={answerText}
+              onChange={(e) => setAnswerText(e.target.value)}
+            />
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setAnsweringReportId(null)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-900 font-medium"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleSaveAnswer}
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors font-medium"
+              >
+                등록
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
