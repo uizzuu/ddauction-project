@@ -175,7 +175,7 @@ export default function RankPage() {
                     랭킹을 집계하고 있습니다...
                 </div>
             ) : products.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-12">
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-6 gap-y-12">
                     {products.map((product, index) => {
                         const rand = Math.random();
                         const rankChange = rand < 0.3 ? "UP" : rand < 0.6 ? "DOWN" : "SAME";

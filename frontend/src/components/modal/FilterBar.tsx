@@ -140,7 +140,7 @@ export default function FilterBar({
     };
 
     return (
-        <div className="sticky top-[60px] z-30 bg-white border-b border-gray-100">
+        <div className="sticky top-[60px] z-30 bg-white border-b border-gray-100 scrollbar-hide">
             <div className="max-w-[1280px] mx-auto px-0">
                 {/* 1. Product Type Filter (Top Row) */}
                 <div className="flex gap-2 overflow-x-auto scrollbar-hide">

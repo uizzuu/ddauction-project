@@ -806,7 +806,7 @@ export default function MyPage({ user, setUser }: Props) {
                       </div>)}</div>}
                   </CollapsibleSection>
                   <CollapsibleSection title="판매 중인 상품" icon={<Package size={20} />}>
-                    {sellingProducts.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><Package size={48} className="mx-auto text-gray-300 mb-3" /><p className="text-gray-500 mb-4">판매 중인 상품이 없습니다.</p><button onClick={() => navigate("/register")} className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors">상품 등록하기</button></div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-3">{sellingProducts.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}
+                    {sellingProducts.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><Package size={48} className="mx-auto text-gray-300 mb-3" /><p className="text-gray-500 mb-4">판매 중인 상품이 없습니다.</p><button onClick={() => navigate("/register")} className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors">상품 등록하기</button></div> : <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-3">{sellingProducts.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}
                   </CollapsibleSection>
 
                 </div>
@@ -865,7 +865,7 @@ export default function MyPage({ user, setUser }: Props) {
                     >{bid.productName || "상품명 없음"}</div><div>{(bid.bidAmount || bid.bidPrice).toLocaleString()}원</div><div className="text-xs text-gray-500">{new Date(bid.bidTime || bid.createdAt).toLocaleString()}</div></div>)}</div>}
                   </CollapsibleSection>
                   <CollapsibleSection title="찜한 상품" icon={<Heart size={20} />}>
-                    {myLikes.length === 0 ? <div className="text-center py-16 bg-[#f9f9f9] rounded-lg border border-[#eee]"><Heart size={48} className="mx-auto text-[#ddd] mb-3" /><p className="text-[#666] mb-4">찜한 상품이 없습니다.</p><button onClick={() => navigate("/products")} className="px-6 py-2.5 bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors font-medium">상품 둘러보기</button></div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-3">{myLikes.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}
+                    {myLikes.length === 0 ? <div className="text-center py-16 bg-[#f9f9f9] rounded-lg border border-[#eee]"><Heart size={48} className="mx-auto text-[#ddd] mb-3" /><p className="text-[#666] mb-4">찜한 상품이 없습니다.</p><button onClick={() => navigate("/products")} className="px-6 py-2.5 bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors font-medium">상품 둘러보기</button></div> : <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-3">{myLikes.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}
                   </CollapsibleSection>
                 </div>
               )}

@@ -61,12 +61,12 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
     };
 
     return (
-        <div className="rounded-xl border border-gray-200 shadow-sm p-5 h-[400px] md:h-[300px] box-border flex flex-col bg-white">
+        <div className="rounded-xl border border-gray-200 shadow-sm p-5 h-[400px] md:h-[300px] h-fit box-border flex flex-col bg-white">
 
             {/* Fixed Header Area */}
             <div className="mb-2 shrink-0">
                 <div className="flex justify-between items-center">
-                    <span className="font-bold text-gray-800 text-lg">
+                    <span className="font-bold text-gray-800 text-lg text-nowrap">
                         {product.productType === "AUCTION"
                             ? "입찰하기"
                             : product.productType === 'STORE' ? "스토어 구매" : "중고 거래"}

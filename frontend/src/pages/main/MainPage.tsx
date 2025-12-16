@@ -45,7 +45,7 @@ function CategoryNextArrow({ onClick, visible }: { onClick?: () => void; visible
   return (
     <button
       onClick={onClick}
-      className="absolute top-1/2 -translate-y-1/2 right-0 md:-right-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all bg-white/80 md:bg-transparent rounded-full shadow-sm md:shadow-none"
+      className="absolute top-1/2 -translate-y-1/2 right-0 xl:-right-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all bg-transparent rounded-full"
     >
       <ChevronRight size={28} />
     </button>
@@ -57,7 +57,7 @@ function CategoryPrevArrow({ onClick, visible }: { onClick?: () => void; visible
   return (
     <button
       onClick={onClick}
-      className="absolute top-1/2 -translate-y-1/2 left-0 md:-left-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all bg-white/80 md:bg-transparent rounded-full shadow-sm md:shadow-none"
+      className="absolute top-1/2 -translate-y-1/2 left-0 xl:-left-12 z-10 p-2 text-gray-400 hover:text-black cursor-pointer transition-all bg-transparent rounded-full"
     >
       <ChevronLeft size={28} />
     </button>
@@ -198,11 +198,11 @@ export default function Main() {
   };
 
   return (
-    <div className="w-full bg-white pb-20 containerr">
+    <div className="w-full containerr">
       {/* Banner Section */}
-      <div className="w-full mb-6 mt-6 md:mb-10 md:mt-0 px-4 xl:px-0 ">
+      <div className="w-full mb-6 px-4 xl:px-0">
         <div
-          className="w-full max-w-[1280px] mx-auto h-[250px] md:h-[400px] relative group rounded-[12px] overflow-hidden bg-[#f4f4f4] md:px-4 xl:px-0"
+          className="w-full max-w-[1280px] mx-auto relative group rounded-[12px] overflow-hidden px-0"
           onMouseEnter={() => setIsBannerHovered(true)}
           onMouseLeave={() => setIsBannerHovered(false)}
         >
@@ -210,9 +210,9 @@ export default function Main() {
             <>
               <Slider {...bannerSettings} className="h-full">
                 {banners.map((b, i) => (
-                  <div key={i} className="h-[250px] md:h-[400px] outline-none">
+                  <div key={i} className="h-[120px] md:h-[240px] xl:h-[380px] outline-none">
                     <div
-                      className="w-full h-full cursor-pointer relative bg-[#333] rounded-[12px] overflow-hidden"
+                      className="w-full h-full cursor-pointer relative rounded-[12px] overflow-hidden"
                     // onClick={() => {
                     //   if (b.product) {
                     //     navigate(`/products/${b.product.productId}`);
@@ -226,7 +226,7 @@ export default function Main() {
                   </div>
                 ))}
               </Slider>
-              <div className="absolute bottom-6 right-6 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full text-white text-xs font-medium z-20 tracking-widest">
+              <div className="absolute bottom-3 right-2 xl:bottom-6 xl:right-6 bg-black/40 backdrop-blur-md px-2 py-0.5 xl:px-4 xl:py-1.5 rounded-full text-white text-[10px] xl:text-xs font-medium z-20 tracking-widest">
                 {currentSlide + 1} / {banners.length}
               </div>
             </>
@@ -279,7 +279,7 @@ export default function Main() {
           {loading ? (
             <div className="h-60 flex items-center justify-center text-[#999]">로딩중...</div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-8">
               {products.map(p => {
                 let mergedBids: Bid[] = [];
                 let highestBid = 0;
@@ -320,7 +320,7 @@ export default function Main() {
           {loading ? (
             <div className="h-60 flex items-center justify-center text-[#999]">로딩중...</div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-8">
               {[...products].reverse().slice(0, 6).map(p => {
                 let mergedBids: Bid[] = [];
                 let highestBid = 0;

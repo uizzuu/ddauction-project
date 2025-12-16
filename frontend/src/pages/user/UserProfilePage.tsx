@@ -14,8 +14,8 @@ export default function UserProfilePage() {
     const { userId } = useParams<{ userId: string }>();
     const navigate = useNavigate();
     // 💡 변경 1: URL 쿼리 매개변수 관리 훅 사용
-    const [searchParams, setSearchParams] = useSearchParams(); 
-    
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const numericUserId = Number(userId);
 
     const [user, setUser] = useState<TYPE.User | null>(null);
@@ -23,13 +23,13 @@ export default function UserProfilePage() {
     const [reviews, setReviews] = useState<TYPE.Review[]>([]);
     const [avgRating, setAvgRating] = useState<number>(0);
     const [loading, setLoading] = useState(true);
-    
+
     // 💡 변경 2: activeTab 상태 제거 (URL에서 읽어옴)
     // const [activeTab, setActiveTab] = useState<"products" | "reviews">("products"); 
 
     // 💡 새로운 탭 상태 로직: URL에서 현재 탭 상태를 읽어옴
     const currentTab = searchParams.get("tab") === "reviews" ? "reviews" : "products";
-    
+
     // 💡 탭 변경 함수: URL 쿼리 매개변수를 업데이트
     const setActiveTabInUrl = (tab: "products" | "reviews") => {
         if (tab === "products") {
@@ -43,7 +43,7 @@ export default function UserProfilePage() {
     // 컴포넌트 마운트 시 URL에 탭 정보가 없으면 기본값으로 설정 (선택 사항이지만 일관성 유지에 도움)
     useEffect(() => {
         if (!searchParams.get("tab")) {
-             setActiveTabInUrl("products");
+            setActiveTabInUrl("products");
         }
     }, [userId]);
 
@@ -190,7 +190,7 @@ export default function UserProfilePage() {
                 {currentTab === "products" ? (
                     <div>
                         {products.length > 0 ? (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-4">
                                 {products.map((p) => (
                                     <ProductCard key={p.productId} product={p} />
                                 ))}

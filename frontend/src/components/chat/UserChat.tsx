@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { Menu, X } from "lucide-react";
+
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { UserChatProps, PrivateChat, ChatMessagePayload, User, ChatListItem } from "../../common/types";
 import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages, API_BASE_URL, fetchMyChatRooms, fetchPrivateMessagesByRoomId, fetchAdminAllChatRooms, banUser } from "../../common/api";
@@ -39,6 +41,8 @@ export default function UserChat({ user }: UserChatProps) {
   // 채팅 금지 상태
   const [isBanned, setIsBanned] = useState(false);
   const [banEndTime, setBanEndTime] = useState<Date | null>(null);
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
 
   // 남은 시간 계산
@@ -85,11 +89,11 @@ export default function UserChat({ user }: UserChatProps) {
               const endTime = new Date(data.banUntil.replace(' ', 'T'));
               setBanEndTime(endTime);
             }
-       
+
           } else {
             setIsBanned(false);
             setBanEndTime(null);
-         
+
           }
         }
       } catch (err) {
@@ -404,279 +408,317 @@ export default function UserChat({ user }: UserChatProps) {
   };
 
   return (
-    <div className="max-w-[1280px] p-0 mt-[20px] mx-auto flex h-[calc(100vh-180px)] border border-[#ccc] rounded-lg overflow-hidden bg-white shadow-sm">
+    <div className="px-4 xl:px-0">
+      <div className="max-w-[1280px] mt-3 mx-auto flex h-[calc(100vh-180px)] border border-[#ccc] rounded-lg overflow-hidden bg-white shadow-sm">
 
-      <div className="w-[300px] border-r border-[#eee] flex flex-col bg-gray-50 py-2">
-
-        <div className="p-3 border-b border-[#eee]">
-          <h3 className="text-sm font-bold mb-2 px-1">
-            {isAdmin ? `전체 채팅방 목록 (${filteredList.length})` : `내 채팅 목록 (${filteredList.length})`}
-          </h3>
-          <input
-            type="text"
-            placeholder={isAdmin ? "판매자/구매자 닉네임, 상품 검색..." : "상대방 닉네임, 상품 검색..."}
-            className="w-full p-2 border border-[#ddd] rounded text-sm focus:outline-none focus:border-[#333]"
-            value={searchKeyword}
-            onChange={(e) => setSearchKeyword(e.target.value)}
+        {/* Mobile Sidebar Overlay */}
+        {isSidebarOpen && (
+          <div
+            className="absolute inset-0 bg-black/50 z-40 md:hidden"
+            onClick={() => setIsSidebarOpen(false)}
           />
-        </div>
+        )}
 
-        <div className="flex-1 overflow-y-auto">
-          {isAdmin ? (
-            (filteredList as AdminChatRoomListDto[]).map((room) => (
-              <div
-                key={room.chatRoomId}
-                className={`p-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-white flex flex-col
+        {/* Sidebar - Responsive Drawer */}
+        <div className={`
+        absolute inset-y-0 left-0 z-50 w-[300px] bg-gray-50 border-r border-[#eee] flex flex-col transition-transform duration-300 ease-in-out
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        md:relative md:translate-x-0
+      `}>
+
+          <div className="p-3 border-b border-[#eee] flex items-center justify-between">
+            <h3 className="text-sm font-bold px-1">
+              {isAdmin ? `전체 채팅방 (${filteredList.length})` : `내 채팅 (${filteredList.length})`}
+            </h3>
+            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden text-gray-500 hover:text-black p-1">
+              <X size={20} />
+            </button>
+          </div>
+
+          <div className="px-3 pb-3 border-b border-[#eee]">
+            <input
+              type="text"
+              placeholder={isAdmin ? "닉네임, 상품 검색..." : "상대방, 상품 검색..."}
+              className="w-full p-2 border border-[#ddd] rounded text-sm focus:outline-none focus:border-[#333] mt-2"
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+            />
+          </div>
+
+          <div className="flex-1 overflow-y-auto">
+            {isAdmin ? (
+              (filteredList as AdminChatRoomListDto[]).map((room) => (
+                <div
+                  key={room.chatRoomId}
+                  className={`p-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-white flex flex-col
                   ${chatRoomId === room.chatRoomId ? "font-bold bg-white border-l-4 border-l-[#333]" : ""}`}
-                onClick={() => handleRoomSelect(room)}
-              >
-                <div className="flex justify-between items-center">
-                  <div className="text-sm font-bold">
-                    {room.sellerNickName} vs {room.buyerNickName}
+                  onClick={() => { handleRoomSelect(room); setIsSidebarOpen(false); }}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm font-bold truncate pr-2">
+                      {room.sellerNickName} vs {room.buyerNickName}
+                    </div>
+                    <div className="text-xs text-gray-400 whitespace-nowrap">
+                      {new Date(room.lastMessageTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400">
-                    {new Date(room.lastMessageTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                  <div className="text-xs mt-1 text-gray-600 truncate">
+                    📢 {room.productTitle}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate italic">
+                    {room.lastMessage || '대화 내용 없음'}
                   </div>
                 </div>
-                <div className="text-xs mt-1 text-gray-600 truncate">
-                  📢 {room.productTitle}
-                </div>
-                <div className="text-xs text-gray-500 truncate italic">
-                  {room.lastMessage || '대화 내용 없음'}
-                </div>
-              </div>
-            ))
-          ) : (
-            (filteredList as ChatRoomListDto[]).map((room) => (
-              <div
-                key={room.chatRoomId}
-                className={`p-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-white flex flex-col
+              ))
+            ) : (
+              (filteredList as ChatRoomListDto[]).map((room) => (
+                <div
+                  key={room.chatRoomId}
+                  className={`p-3 cursor-pointer transition-colors border-b border-gray-100 hover:bg-white flex flex-col
                   ${selectedUser?.userId === room.targetUserId && selectedProductId === room.productId ? "font-bold bg-white border-l-4 border-l-[#333]" : ""}`}
-                onClick={() => handleRoomSelect(room)}
-              >
-                <div className="flex justify-between items-center">
-                  <div className="text-sm font-bold">
-                    {room.targetNickName}
+                  onClick={() => { handleRoomSelect(room); setIsSidebarOpen(false); }}
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm font-bold truncate pr-2">
+                      {room.targetNickName}
+                    </div>
+                    <div className="text-xs text-gray-400 whitespace-nowrap">
+                      {new Date(room.lastMessageTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-                  <div className="text-xs text-gray-400">
-                    {new Date(room.lastMessageTime).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                  <div className="text-xs mt-1 text-gray-600 truncate">
+                    📢 {room.productTitle}
+                  </div>
+                  <div className="text-xs text-gray-500 truncate italic">
+                    {room.lastMessage || '대화 내용 없음'}
                   </div>
                 </div>
-                <div className="text-xs mt-1 text-gray-600 truncate">
-                  📢 {room.productTitle}
-                </div>
-                <div className="text-xs text-gray-500 truncate italic">
-                  {room.lastMessage || '대화 내용 없음'}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col">
-        {!selectedUser ? (
-          <div className="flex-1 flex items-center justify-center text-gray-500">채팅 상대를 선택해주세요.</div>
-        ) : (
-          <>
-            <div className="p-4 border-b border-[#eee] bg-white flex justify-between items-center">
-              <div className="flex flex-col">
-                <h2 className="text-lg font-bold">
-                  {selectedUser!.nickName}
-                  <span className="text-sm font-normal text-gray-500 ml-2">
-                    {isAdmin ? `(채팅방 ID: ${chatRoomId})` : '님과의 대화'}
-                  </span>
-                </h2>
-                {isAdmin && selectedUser!.userName && (
-                  <p className="text-xs text-gray-600 mt-1">
-                    {selectedUser!.userName}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {product && (
-              <div
-                className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-3 flex items-center gap-3 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
-                onClick={() => navigate(`/products/${product.productId}`)}
-              >
-                <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-100 flex items-center justify-center">
-                  {product.images?.[0]?.imagePath && !imageError ? (
-                    <img
-                      src={
-                        product.images[0].imagePath.startsWith("http")
-                          ? product.images[0].imagePath
-                          : `${API_BASE_URL}${product.images[0].imagePath}`
-                      }
-                      alt={product.title}
-                      className="w-full h-full object-cover"
-                      onError={() => setImageError(true)}
-                    />
-                  ) : (
-                    <></>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-semibold text-[#333] bg-blue-50 px-1.5 py-0.5 rounded">
-                      {getCategoryName(product.productCategoryType)}
-                    </span>
-                    <h3 className="text-sm font-medium text-gray-900 truncate">{product.title}</h3>
-                  </div>
-                  <p className="text-sm font-bold text-gray-900">
-                    {product.originalPrice?.toLocaleString()}원
-                  </p>
-                </div>
-              </div>
+              ))
             )}
+          </div>
+        </div>
 
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              {messages.map((msg, i) => {
-                const isMe = msg.user?.userId === user?.userId;
-                const isDeleted = msg.isDeleted;
+        <div className="flex-1 flex flex-col min-w-0">
+          {!selectedUser ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-500 relative">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="md:hidden absolute top-4 left-4 p-2 text-gray-600 hover:bg-gray-100 rounded-full"
+              >
+                <Menu size={24} />
+              </button>
+              <div className="text-center">채팅 상대를 선택해주세요.</div>
+            </div>
+          ) : (
+            <React.Fragment>
+              <div className="p-4 border-b border-[#eee] bg-white flex items-center gap-3">
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="md:hidden text-gray-600 hover:text-black"
+                >
+                  <Menu size={24} />
+                </button>
+                <div className="flex justify-between items-center flex-1">
+                  <div className="flex flex-col">
+                    <h2 className="text-lg font-bold">
+                      {selectedUser!.nickName}
+                      <span className="text-sm font-normal text-gray-500 ml-2">
+                        {isAdmin ? `(채팅방 ID: ${chatRoomId})` : '님과의 대화'}
+                      </span>
+                    </h2>
+                    {isAdmin && selectedUser!.userName && (
+                      <p className="text-xs text-gray-600 mt-1">
+                        {selectedUser!.userName}
+                      </p>
+                    )}
+                  </div>
 
-                const displayName = isAdmin && msg.user?.userName
-                  ? `${msg.user.nickName} (${msg.user.userName})`
-                  : msg.user?.nickName;
+                </div>
+              </div>
 
-                if (isDeleted) {
+              {product && (
+                <div
+                  className="sticky top-0 z-10 bg-white/95 backdrop-blur-sm border-b border-gray-200 p-3 flex items-center gap-3 shadow-sm cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => navigate(`/products/${product.productId}`)}
+                >
+                  <div className="w-12 h-12 rounded-lg overflow-hidden border border-gray-100 flex-shrink-0 bg-gray-100 flex items-center justify-center">
+                    {product.images?.[0]?.imagePath && !imageError ? (
+                      <img
+                        src={
+                          product.images[0].imagePath.startsWith("http")
+                            ? product.images[0].imagePath
+                            : `${API_BASE_URL}${product.images[0].imagePath}`
+                        }
+                        alt={product.title}
+                        className="w-full h-full object-cover"
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <></>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-semibold text-[#333] bg-blue-50 px-1.5 py-0.5 rounded">
+                        {getCategoryName(product.productCategoryType)}
+                      </span>
+                      <h3 className="text-sm font-medium text-gray-900 truncate">{product.title}</h3>
+                    </div>
+                    <p className="text-sm font-bold text-gray-900">
+                      {product.originalPrice?.toLocaleString()}원
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
+                {messages.map((msg, i) => {
+                  const isMe = msg.user?.userId === user?.userId;
+                  const isDeleted = msg.isDeleted;
+
+                  const displayName = isAdmin && msg.user?.userName
+                    ? `${msg.user.nickName} (${msg.user.userName})`
+                    : msg.user?.nickName;
+
+                  if (isDeleted) {
+                    return (
+                      <div key={i} className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}>
+                        <div className="bg-gray-200 text-gray-400 px-4 py-2 rounded-lg text-sm italic border border-gray-300">
+                          {isAdmin ? '관리자에 의해 삭제된 메시지입니다.' : '삭제된 메시지입니다.'}
+                        </div>
+                      </div>
+                    );
+                  }
+
                   return (
                     <div key={i} className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}>
-                      <div className="bg-gray-200 text-gray-400 px-4 py-2 rounded-lg text-sm italic border border-gray-300">
-                        {isAdmin ? '관리자에 의해 삭제된 메시지입니다.' : '삭제된 메시지입니다.'}
+                      <div className={`max-w-[70%] relative flex flex-col ${isMe ? "items-end" : "items-start"}`}>
+
+                        {!isMe && msg.user && (
+                          <div className="flex items-center gap-1 mb-1 relative">
+
+                            {isAdmin && (
+                              <div
+                                className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-200"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleUserMenu(i, e);
+                                }}
+                              >
+                                ⋮
+                              </div>
+                            )}
+
+                            <div
+                              className="text-xs text-gray-500 font-bold hover:text-[#111] hover:underline cursor-pointer px-1 py-1"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/users/${msg.user!.userId}`);
+                              }}
+                            >
+                              {displayName}
+                            </div>
+
+                            {isAdmin && activeMenuMessageIndex === i && (
+                              <div
+                                className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-300 rounded shadow-md z-50"
+                                style={{ left: '-5px' }}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <div
+                                  className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                  onClick={() => handleWarn(msg.user!)}
+                                >
+                                  ⚠️ 경고
+                                </div>
+                                <div
+                                  className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                  onClick={() => handleBan(msg.user!)}
+                                >
+                                  ⛔ 밴
+                                </div>
+                                <div
+                                  className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                                  onClick={() => {
+                                    navigate(`/users/${msg.user!.userId}`);
+                                    setActiveMenuMessageIndex(null);
+                                  }}
+                                >
+                                  👤 프로필 확인
+                                </div>
+                              </div>
+                            )}
+
+                          </div>
+                        )}
+
+                        <div
+                          className={`max-w-full group relative px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-all hover:shadow-md
+                          ${isMe ? "bg-[#333] text-white rounded-br-none" : "bg-white border border-gray-200 text-black rounded-bl-none"}
+                        `}
+                          title={isAdmin ? "관리자 모드 (메시지 삭제는 ✕ 버튼 이용)" : ""}
+                        >
+                          {isAdmin && isMe && (
+                            <div className={`text-[10px] mb-1 ${isMe ? "text-gray-300" : "text-gray-500"}`}>
+                              {msg.nickName}
+                            </div>
+                          )}
+                          <div className="text-sm break-all whitespace-pre-wrap">{msg.content}</div>
+                          <div className={`text-[10px] mt-1 text-right ${isMe ? "text-gray-400" : "text-gray-400"}`}>
+                            {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+
+                          {isAdmin && (
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDelete(msg.chatId); }}
+                              className="absolute top-[-5px] right-[-5px] w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-md"
+                              title="삭제"
+                            >✕</button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
-                }
+                })}
+                <div ref={messagesEndRef} />
+              </div>
 
-                return (
-                  <div key={i} className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[70%] relative flex flex-col ${isMe ? "items-end" : "items-start"}`}>
-
-                      {!isMe && msg.user && (
-                        <div className="flex items-center gap-1 mb-1 relative">
-
-                          {isAdmin && (
-                            <div
-                              className="text-gray-400 hover:text-gray-600 cursor-pointer p-1 rounded hover:bg-gray-200"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleUserMenu(i, e);
-                              }}
-                            >
-                              ⋮
-                            </div>
-                          )}
-
-                          <div
-                            className="text-xs text-gray-500 font-bold hover:text-[#111] hover:underline cursor-pointer px-1 py-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/users/${msg.user!.userId}`);
-                            }}
-                          >
-                            {displayName}
-                          </div>
-
-                          {isAdmin && activeMenuMessageIndex === i && (
-                            <div
-                              className="absolute top-full left-0 mt-1 w-32 bg-white border border-gray-300 rounded shadow-md z-50"
-                              style={{ left: '-5px' }}
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <div
-                                className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                                onClick={() => handleWarn(msg.user!)}
-                              >
-                                ⚠️ 경고
-                              </div>
-                              <div
-                                className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                                onClick={() => handleBan(msg.user!)}
-                              >
-                                ⛔ 밴
-                              </div>
-                              <div
-                                className="px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
-                                onClick={() => {
-                                  navigate(`/users/${msg.user!.userId}`);
-                                  setActiveMenuMessageIndex(null);
-                                }}
-                              >
-                                👤 프로필 확인
-                              </div>
-                            </div>
-                          )}
-
-                        </div>
-                      )}
-
-                      <div
-                        className={`max-w-full group relative px-4 py-2 rounded-lg shadow-sm cursor-pointer transition-all hover:shadow-md
-                          ${isMe ? "bg-[#333] text-white rounded-br-none" : "bg-white border border-gray-200 text-black rounded-bl-none"}
-                        `}
-                        title={isAdmin ? "관리자 모드 (메시지 삭제는 ✕ 버튼 이용)" : ""}
-                      >
-                        {isAdmin && isMe && (
-                          <div className={`text-[10px] mb-1 ${isMe ? "text-gray-300" : "text-gray-500"}`}>
-                            {msg.nickName}
-                          </div>
-                        )}
-                        <div className="text-sm break-all whitespace-pre-wrap">{msg.content}</div>
-                        <div className={`text-[10px] mt-1 text-right ${isMe ? "text-gray-400" : "text-gray-400"}`}>
-                          {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-
-                        {isAdmin && (
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(msg.chatId); }}
-                            className="absolute top-[-5px] right-[-5px] w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-xs shadow-md"
-                            title="삭제"
-                          >✕</button>
-                        )}
-                      </div>
-                    </div>
+              <div className="p-4 bg-white border-t border-[#eee] flex gap-2">
+                {isAdmin ? (
+                  <div className="w-full text-center text-gray-400 text-sm py-2 bg-gray-50 rounded">
+                    🔒 관리자는 대화 내용을 조회 및 삭제할 수 있습니다. (채팅 불가)
                   </div>
-                );
-              })}
-              <div ref={messagesEndRef} />
-            </div>
-
-            <div className="p-4 bg-white border-t border-[#eee] flex gap-2">
-              {isAdmin ? (
-                <div className="w-full text-center text-gray-400 text-sm py-2 bg-gray-50 rounded">
-                  🔒 관리자는 대화 내용을 조회 및 삭제할 수 있습니다. (채팅 불가)
-                </div>
-              ) : (
-                <>
-                  <input
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
-                    disabled={isBanned}
-                    className={`flex-1 p-3 border rounded-lg text-sm shadow-sm ${isBanned
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
+                      disabled={isBanned}
+                      className={`flex-1 p-3 border rounded-lg text-sm shadow-sm ${isBanned
                         ? "bg-red-50 border-red-300 text-red-600 cursor-not-allowed"
                         : "border-[#ddd] focus:outline-none focus:border-[#333]"
-                      }`}
-                    placeholder={isBanned ? `🚫 이용이 제한되었습니다 (남은 시간: ${getRemainingTime()})` : "메시지를 입력하세요..."}
-                  />
-                  <button
-                    onClick={sendMessage}
-                    disabled={isBanned}
-                    className={`px-5 py-2 rounded-lg font-medium text-sm shadow transition-colors ${isBanned
+                        }`}
+                      placeholder={isBanned ? `🚫 이용이 제한되었습니다 (남은 시간: ${getRemainingTime()})` : "메시지를 입력하세요..."}
+                    />
+                    <button
+                      onClick={sendMessage}
+                      disabled={isBanned}
+                      className={`px-5 py-2 rounded-lg font-medium text-sm shadow transition-colors ${isBanned
                         ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                         : "bg-[#333] text-white hover:bg-[#555]"
-                      }`}
-                  >
-                    전송
-                  </button>
-                </>
-              )}
-            </div>
-          </>
-        )}
-      </div >
-    </div >
+                        }`}
+                    >
+                      전송
+                    </button>
+                  </>
+                )}
+              </div>
+            </React.Fragment>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

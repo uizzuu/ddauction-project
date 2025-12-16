@@ -157,7 +157,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                         <span className="font-medium text-gray-900">{sellerNickName}</span>
                     </Link>
                     <span className="w-px h-2.5 bg-gray-300"></span>
-                    <span>{product.createdAt ? formatDateTimeNoSec(product.createdAt) : ""}</span>
+                    <span className="text-nowrap">{product.createdAt ? formatDateTimeNoSec(product.createdAt) : ""}</span>
                     <span className="w-px h-2.5 bg-gray-300"></span>
                     <span className="flex items-center gap-0.5">
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">

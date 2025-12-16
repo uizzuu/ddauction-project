@@ -449,7 +449,7 @@ export default function Signup() {
             </div>
 
             {/* 생일을 별도 행으로 분리하고 오른쪽으로 더 넓게 */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-4 gap-3">
               <div className="col-span-3 flex flex-col">
                 <SignupBirthDatePicker
                   ref={birthDatePickerRef}

@@ -244,7 +244,7 @@ export default function ProductSearchPage() {
           {loading ? (
             <div className="text-[#aaa] text-sm text-center py-20">검색중...</div>
           ) : products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-4 gap-y-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-x-4 gap-y-8">
               {products.map((p) => (
                 <ProductCard key={p.productId} product={p} />
               ))}
