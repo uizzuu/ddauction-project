@@ -150,7 +150,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                             <Avatar
                                 src={product.sellerProfileImage || null}
                                 alt={sellerNickName}
-                                className="w-full h-full text-[6px]"
+                                className="w-full h-full text-[10px]"
                                 fallbackText={sellerNickName}
                             />
                         </span>

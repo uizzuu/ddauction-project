@@ -368,7 +368,7 @@ export default function PublicChat({ user }: Props) {
             </button>
           </div>
         ) : (
-          <div className="p-3 bg-gray-100 text-center text-gray-500 text-sm rounded-lg border border-gray-200">
+          <div className="p-3 bg-gray-100 text-center text-gray-500 text-sm rounded-lg border border-gray-20 mx-3">
             🔒 관리자 모드: 메시지를 클릭하여 삭제하거나, 유저 이름 옆 ⋮ 버튼으로 제재 메뉴 사용
           </div>
         )}

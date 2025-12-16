@@ -7,6 +7,7 @@ interface CollapsibleSectionProps {
     children: React.ReactNode;
     defaultOpen?: boolean;
     className?: string;
+    maxHeight?: string;
 }
 
 export default function CollapsibleSection({
@@ -15,8 +16,10 @@ export default function CollapsibleSection({
     children,
     defaultOpen = true,
     className = "",
+    maxHeight = "max-h-[400px]", // Default large enough for animation
 }: CollapsibleSectionProps) {
     const [isOpen, setIsOpen] = useState(defaultOpen);
+    const hasBorder = !className.includes("border-0");
 
     return (
         <div className={`mb-8 ${className}`}>
@@ -36,10 +39,17 @@ export default function CollapsibleSection({
             </button>
 
             <div
-                className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"
-                    }`}
+                className={`transition-all duration-300 ease-in-out ${isOpen ? `${maxHeight} opacity-100` : "max-h-0 opacity-0 overflow-hidden"}`}
             >
-                {children}
+                {hasBorder ? (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+                            {children}
+                        </div>
+                    </div>
+                ) : (
+                    children
+                )}
             </div>
         </div>
     );

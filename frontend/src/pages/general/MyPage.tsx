@@ -5,6 +5,7 @@ import { Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, File
 import { COURIER_OPTIONS, ARTICLE_TYPE_LABELS } from "../../common/enums";
 import type { User, Product, Report, ProductQna, Inquiry, Review, Bid, ArticleDto, CommentDto } from "../../common/types";
 import * as API from "../../common/api";
+import { API_BASE_URL } from "../../common/api";
 import type { PaymentHistoryResponse } from "../../common/api";
 import ProductCard from "../../components/ui/ProductCard";
 import BusinessVerify from "../../components/mypage/BusinessVerify";
@@ -19,6 +20,16 @@ type TabId = "selling" | "buying" | "reviews" | "community" | "profile_edit";
 type Props = {
   user: User | null;
   setUser: (user: User | null) => void;
+};
+
+// Helper to construct image URL robustly
+const getImageUrl = (path: string | null) => {
+  if (!path) return "";
+  if (path.startsWith("http") || path.startsWith("blob:")) return path;
+  const baseUrl = API_BASE_URL || "";
+  // Ensure path starts with / if it doesn't, to avoid concatenation issues
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `${baseUrl}${cleanPath}`;
 };
 
 // Social Provider Badges
@@ -49,8 +60,6 @@ export default function MyPage({ user, setUser }: Props) {
   const navigate = useNavigate();
   // URL 쿼리 파라미터를 관리합니다.
   const [searchParams, setSearchParams] = useSearchParams();
-
-  // 1. activeTab 상태를 URL에서 가져오거나 기본값으로 설정합니다.
   const urlTab = searchParams.get("tab") as TabId | null;
   const initialTab: TabId = (urlTab && VALID_TABS.includes(urlTab))
     ? urlTab
@@ -548,7 +557,7 @@ export default function MyPage({ user, setUser }: Props) {
         {/* Profile Summary Card */}
         <div className="py-8 mb-8 border-b border-[#eee]">
           <div className="flex items-start gap-6">
-            <div className="w-24 h-24 rounded-lg bg-[#333] flex items-center justify-center overflow-hidden flex-shrink-0">
+            <div className="w-16 h-16 rounded-lg bg-[#333] flex items-center justify-center overflow-hidden flex-shrink-0">
               <Avatar src={user.images?.[0]?.imagePath} alt="Profile" className="w-full h-full text-3xl" fallbackText={user.nickName} />
             </div>
             <div className="flex-1 min-w-0">
@@ -595,12 +604,12 @@ export default function MyPage({ user, setUser }: Props) {
             <>
               {activeTab === "profile_edit" && (
                 <div className="space-y-8 max-w-2xl mx-auto">
-                  <CollapsibleSection title="프로필 이미지" icon={<Settings size={20} />}>
+                  <CollapsibleSection title="프로필 이미지" icon={<Settings size={20} />} className="border-0">
                     <ProfileImageUploader user={user} isEditing={true} onUpload={(url: string) => setUser({ ...user, images: [{ imageId: 0, refId: user.userId, imagePath: url, imageType: "USER" }] })} onDelete={() => setUser({ ...user, images: [] })} />
                   </CollapsibleSection>
 
                   <CollapsibleSection title="회원 정보 수정" icon={<Settings size={20} />}>
-                    <div className="space-y-6 bg-white p-6 rounded-lg border border-gray-200">
+                    <div className="space-y-6 bg-white p-6">
                       {/* Name */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">이름</label>
@@ -718,7 +727,7 @@ export default function MyPage({ user, setUser }: Props) {
                   </CollapsibleSection>
                   {/* Business Verify & Delete Account sections ... keep as is */}
                   <CollapsibleSection title="사업자 인증" icon={<Check size={20} />}>
-                    <div className="bg-white p-6 rounded-lg border border-gray-200">
+                    <div className="bg-white p-6">
                       {user.businessNumber ? (
                         <div className="flex items-center justify-between">
                           <div><p className="text-sm text-gray-500 mb-1">사업자 등록번호</p><p className="font-medium text-gray-900">{user.businessNumber}</p></div>
@@ -731,7 +740,7 @@ export default function MyPage({ user, setUser }: Props) {
                       )}
                     </div>
                   </CollapsibleSection>
-                  <CollapsibleSection title="계정 관리" icon={<AlertCircle size={20} />}>
+                  <CollapsibleSection title="계정 관리" icon={<AlertCircle size={20} />} className="border-0">
                     <div className="bg-red-50 border border-red-100 rounded-lg p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                       <div><h4 className="font-bold text-red-900 mb-1">회원 탈퇴</h4><p className="text-sm text-red-700">회원 탈퇴 시 모든 데이터가 삭제되며 복구할 수 없습니다.</p></div>
                       <button onClick={handleDeleteAccount} className="px-4 py-2 bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-medium whitespace-nowrap">회원 탈퇴</button>
@@ -743,42 +752,76 @@ export default function MyPage({ user, setUser }: Props) {
               {activeTab === "selling" && (
                 <div className="space-y-8">
                   <CollapsibleSection title="판매 완료 및 배송 관리" icon={<ShoppingBag size={20} />}>
-                    {sellingHistory.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">판매 내역이 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{sellingHistory.map((item) => <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                      <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}><div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">{item.productImage && <img src={item.productImage} alt="product" className="w-full h-full object-cover" />}</div><div><div className="font-medium text-gray-900">{item.productTitle}</div><div className="text-sm text-gray-500">구매자: {item.buyerName}</div><div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div><div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div></div></div>
-                      <div className="flex flex-col items-end gap-2 min-w-[200px]"><div className="text-sm font-bold text-blue-600">{item.status}</div>{item.courier && item.trackingNumber ? <div className="text-sm text-gray-600 text-right"><div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div><div className="text-xs mb-1">{item.trackingNumber}</div><button onClick={() => openShippingModal(item.paymentId, item.courier!, item.trackingNumber!)} className="text-xs text-gray-400 underline hover:text-gray-600">수정</button></div> : <button onClick={() => openShippingModal(item.paymentId)} className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800">배송 정보 입력</button>}</div>
-                    </div>)}</div>}
+                    {sellingHistory.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">판매 내역이 없습니다.</p></div> :
+                      <div>{sellingHistory.map((item) => <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                        <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}>
+                          <div className="w-24 h-24 bg-[#f8f8f8] rounded-[10px] border border-[#f0f0f0] overflow-hidden flex-shrink-0 relative">
+                            {item.productImage ? (
+                              <img
+                                src={getImageUrl(item.productImage)}
+                                alt="product"
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                onError={(e) => {
+                                  console.error("Image Load Error:", getImageUrl(item.productImage));
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="flex justify-center items-center w-full h-full text-[#aaa] text-xs"></div>
+                            )}
+                          </div>
+                          <div><div className="font-medium text-gray-900">{item.productTitle}</div><div className="text-sm text-gray-500">구매자: {item.buyerName}</div><div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div><div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div></div></div>
+                        <div className="flex flex-col items-end gap-2 min-w-[200px]"><div className="text-sm font-bold text-blue-600">{item.status}</div>{item.courier && item.trackingNumber ? <div className="text-sm text-gray-600 text-right"><div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div><div className="text-xs mb-1">{item.trackingNumber}</div><button onClick={() => openShippingModal(item.paymentId, item.courier!, item.trackingNumber!)} className="text-xs text-gray-400 underline hover:text-gray-600">수정</button></div> : <button onClick={() => openShippingModal(item.paymentId)} className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800">배송 정보 입력</button>}</div>
+                      </div>)}</div>}
                   </CollapsibleSection>
                   <CollapsibleSection title="판매 중인 상품" icon={<Package size={20} />}>
-                    {sellingProducts.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><Package size={48} className="mx-auto text-gray-300 mb-3" /><p className="text-gray-500 mb-4">판매 중인 상품이 없습니다.</p><button onClick={() => navigate("/register")} className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors">상품 등록하기</button></div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">{sellingProducts.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}
+                    {sellingProducts.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><Package size={48} className="mx-auto text-gray-300 mb-3" /><p className="text-gray-500 mb-4">판매 중인 상품이 없습니다.</p><button onClick={() => navigate("/register")} className="px-6 py-2 bg-[#333] text-white rounded-lg hover:bg-blue-700 transition-colors">상품 등록하기</button></div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-3">{sellingProducts.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}
                   </CollapsibleSection>
                   <CollapsibleSection title="상품 Q&A" icon={<MessageSquare size={20} />}>
-                    {myQnas.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">문의 내역이 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{myQnas.map((qna, idx) => <div key={qna.productQnaId} className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""} hover:bg-gray-50`}><div className="flex justify-between items-start mb-2"><p className="font-medium text-gray-900 mb-1">{qna.title}</p><span className="text-xs text-gray-500">{new Date(qna.createdAt).toLocaleDateString()}</span></div><p className="text-sm text-gray-600 mb-2">{qna.content}</p>{qna.answers?.map(a => <div key={a.qnaReviewId} className="mt-2 pl-4 border-l-2 border-blue-500 bg-blue-50 p-3 rounded-r"><p className="text-sm text-gray-700">{a.content}</p></div>)}</div>)}</div>}
+                    {myQnas.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">문의 내역이 없습니다.</p></div> : <div>{myQnas.map((qna, idx) => <div key={qna.productQnaId} className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""} hover:bg-gray-50`}><div className="flex justify-between items-start mb-2"><p className="font-medium text-gray-900 mb-1">{qna.title}</p><span className="text-xs text-gray-500">{new Date(qna.createdAt).toLocaleDateString()}</span></div><p className="text-sm text-gray-600 mb-2">{qna.content}</p>{qna.answers?.map(a => <div key={a.qnaReviewId} className="mt-2 pl-4 border-l-2 border-blue-500 bg-blue-50 p-3 rounded-r"><p className="text-sm text-gray-700">{a.content}</p></div>)}</div>)}</div>}
                   </CollapsibleSection>
                 </div>
               )}
               {activeTab === "buying" && (
                 <div className="space-y-8 px-1">
+                  <CollapsibleSection title="구매 내역" icon={<ShoppingBag size={20} />}>
+                    {buyingHistory.length === 0 ? <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]"><ShoppingBag size={40} className="mx-auto text-[#ddd] mb-2" /><p className="text-[#666]">구매 내역이 없습니다.</p></div> :
+                      <div>{buyingHistory.map((item) => <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                        <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}>
+                          <div className="w-16 h-16 bg-[#f8f8f8] rounded-[10px] border border-[#f0f0f0] overflow-hidden flex-shrink-0 relative">
+                            {item.productImage ? (
+                              <img
+                                src={getImageUrl(item.productImage)}
+                                alt="product"
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                onError={(e) => {
+                                  console.error("Image Load Error:", getImageUrl(item.productImage));
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            ) : (
+                              <div className="flex justify-center items-center w-full h-full text-[#aaa] text-xs"></div>
+                            )}
+                          </div>
+                          <div><div className="font-medium text-gray-900">{item.productTitle}</div><div className="text-sm text-gray-500">판매자: {item.sellerNickName}</div><div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div><div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div></div></div>
+                        <div className="flex flex-col items-end gap-2 text-right"><div className="text-sm font-bold text-blue-600">{item.status}</div>{item.status === "PAID" && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleConfirmPurchase(item.paymentId); }} className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 font-medium">구매 확정</button>}{item.status === "CONFIRMED" && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/reviews/write/${item.productId}`); }} className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 font-medium">리뷰 작성</button>}{item.courier && item.trackingNumber && <div className="text-sm text-gray-600"><div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div><div className="text-xs">{item.trackingNumber}</div></div>}</div>
+                      </div>)}</div>}
+                  </CollapsibleSection>
                   <CollapsibleSection title="입찰 내역" icon={<Gavel size={20} />}>
-                    {myBids.length === 0 ? <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]"><Gavel size={40} className="mx-auto text-[#ddd] mb-2" /><p className="text-[#666]">입찰 내역이 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{myBids.map(bid => <div key={bid.bidId} className="p-4 border-b"><div
+                    {myBids.length === 0 ? <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]"><Gavel size={40} className="mx-auto text-[#ddd] mb-2" /><p className="text-[#666]">입찰 내역이 없습니다.</p></div> : <div>{myBids.map(bid => <div key={bid.bidId} className="p-4 border-b"><div
                       className="font-bold hover:underline cursor-pointer"
                       onClick={() => navigate(`/products/${bid.productId}`)}
                     >{bid.productName || "상품명 없음"}</div><div>{(bid.bidAmount || bid.bidPrice).toLocaleString()}원</div><div className="text-xs text-gray-500">{new Date(bid.bidTime || bid.createdAt).toLocaleString()}</div></div>)}</div>}
                   </CollapsibleSection>
-                  <CollapsibleSection title="구매 내역" icon={<ShoppingBag size={20} />}>
-                    {buyingHistory.length === 0 ? <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]"><ShoppingBag size={40} className="mx-auto text-[#ddd] mb-2" /><p className="text-[#666]">구매 내역이 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{buyingHistory.map((item) => <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                      <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}><div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">{item.productImage && <img src={item.productImage} alt="product" className="w-full h-full object-cover" />}</div><div><div className="font-medium text-gray-900">{item.productTitle}</div><div className="text-sm text-gray-500">판매자: {item.sellerNickName}</div><div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div><div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div></div></div>
-                      <div className="flex flex-col items-end gap-2 text-right"><div className="text-sm font-bold text-blue-600">{item.status}</div>{item.status === "PAID" && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleConfirmPurchase(item.paymentId); }} className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 font-medium">구매 확정</button>}{item.status === "CONFIRMED" && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/reviews/write/${item.productId}`); }} className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 font-medium">리뷰 작성</button>}{item.courier && item.trackingNumber && <div className="text-sm text-gray-600"><div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div><div className="text-xs">{item.trackingNumber}</div></div>}</div>
-                    </div>)}</div>}
-                  </CollapsibleSection>
                   <CollapsibleSection title="찜한 상품" icon={<Heart size={20} />}>
-                    {myLikes.length === 0 ? <div className="text-center py-16 bg-[#f9f9f9] rounded-lg border border-[#eee]"><Heart size={48} className="mx-auto text-[#ddd] mb-3" /><p className="text-[#666] mb-4">찜한 상품이 없습니다.</p><button onClick={() => navigate("/products")} className="px-6 py-2.5 bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors font-medium">상품 둘러보기</button></div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">{myLikes.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}
+                    {myLikes.length === 0 ? <div className="text-center py-16 bg-[#f9f9f9] rounded-lg border border-[#eee]"><Heart size={48} className="mx-auto text-[#ddd] mb-3" /><p className="text-[#666] mb-4">찜한 상품이 없습니다.</p><button onClick={() => navigate("/products")} className="px-6 py-2.5 bg-[#111] text-white rounded-lg hover:bg-[#333] transition-colors font-medium">상품 둘러보기</button></div> : <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 p-3">{myLikes.map((p) => <ProductCard key={p.productId} product={p} />)}</div>}
                   </CollapsibleSection>
                 </div>
               )}
               {activeTab === "reviews" && (
                 <div className="space-y-8">
                   <CollapsibleSection title="받은 리뷰" icon={<Star size={20} className="text-yellow-600" />}>
-                    {myReviews.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">받은 리뷰가 없습니다.</p></div> : <div className="border border-gray-200 rounded-lg overflow-hidden">{myReviews.map((review, idx) => <div key={review.reviewId} className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""}`}><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><div className="flex items-center">{[...Array(5)].map((_, i) => <Star key={i} size={16} className={i < review.rating ? "text-yellow-500" : "text-gray-300"} fill={i < review.rating ? "currentColor" : "none"} />)}</div><span className="text-sm font-bold text-gray-900">{review.nickName}</span></div><span className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</span></div><p className="text-sm text-gray-700">{review.content}</p></div>)}</div>}
+                    {myReviews.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">받은 리뷰가 없습니다.</p></div> : <div>{myReviews.map((review, idx) => <div key={review.reviewId} className={`p-4 ${idx !== 0 ? "border-t border-gray-200" : ""}`}><div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><div className="flex items-center">{[...Array(5)].map((_, i) => <Star key={i} size={16} className={i < review.rating ? "text-yellow-500" : "text-gray-300"} fill={i < review.rating ? "currentColor" : "none"} />)}</div><span className="text-sm font-bold text-gray-900">{review.nickName}</span></div><span className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</span></div><p className="text-sm text-gray-700">{review.content}</p></div>)}</div>}
                   </CollapsibleSection>
                 </div>
               )}
@@ -791,7 +834,7 @@ export default function MyPage({ user, setUser }: Props) {
                         <p className="text-gray-500">작성한 글이 없습니다.</p>
                       </div>
                     ) : (
-                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div>
                         {myArticles.map((article, idx) => (
                           <div
                             key={article.articleId}
@@ -825,7 +868,7 @@ export default function MyPage({ user, setUser }: Props) {
                         <p className="text-gray-500">작성한 댓글이 없습니다.</p>
                       </div>
                     ) : (
-                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div>
                         {myComments.map((comment, idx) => (
                           <div
                             key={comment.commentId}
@@ -858,7 +901,7 @@ export default function MyPage({ user, setUser }: Props) {
                         <p className="text-gray-500">신고 내역이 없습니다.</p>
                       </div>
                     ) : (
-                      <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div>
                         {reports.map((report, idx) => (
                           <div
                             key={report.reportId}

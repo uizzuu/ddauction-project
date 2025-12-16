@@ -23,7 +23,7 @@ export default function Avatar({ src, alt, className = "", fallbackText = "U" }:
                 className={`bg-gray-200 flex items-center justify-center text-gray-500 font-bold ${className}`}
                 aria-label={alt}
             >
-                <span className="text-[12px] uppercase select-none">
+                <span className="uppercase select-none">
                     {fallbackText.charAt(0)}
                 </span>
             </div>
