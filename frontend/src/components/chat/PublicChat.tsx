@@ -225,7 +225,7 @@ export default function PublicChat({ user }: Props) {
 
   return (
     <div className="max-w-[1280px] mx-auto flex flex-col mt-[20px] h-[calc(100vh-180px)]">
-      <div className="border border-[#ccc] pb-3 md:px-0 w-full h-full flex flex-col rounded-lg shadow-sm bg-white relative">
+      <div className="border border-[#ccc] pb-3 px-4 xl:px-0 w-full h-full flex flex-col rounded-lg shadow-sm bg-white relative">
         <div className="flex-1 overflow-y-auto mb-3 p-4 rounded-lg">
           {messages.map((msg, i) => {
             const isMe = msg.user?.userId === user?.userId;

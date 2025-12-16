@@ -61,7 +61,7 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
     };
 
     return (
-        <div className="rounded-xl border border-gray-200 shadow-sm p-5 h-[400px] box-border flex flex-col bg-white">
+        <div className="rounded-xl border border-gray-200 shadow-sm p-5 h-[400px] md:h-[300px] box-border flex flex-col bg-white">
 
             {/* Fixed Header Area */}
             <div className="mb-2 shrink-0">

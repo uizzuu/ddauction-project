@@ -79,7 +79,7 @@ export default function ImageSearchPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 md:px-0 min-h-screen max-w-7xl">
+    <div className="container mx-auto px-4 py-8 xl:px-0 min-h-screen max-w-7xl">
       <div className="mb-8 text-left">
         <h1 className="text-3xl font-bold text-[#111] mb-2">이미지 검색</h1>
         <p className="text-gray-500">

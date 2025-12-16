@@ -83,11 +83,11 @@ export default function WishlistPage() {
     };
 
     if (loading) {
-        return <div className="containerr md:px-0 mx-auto px-4 py-8 flex justify-center">로딩 중...</div>;
+        return <div className="containerr px-4 xl:px-0 mx-auto px-4 py-8 flex justify-center">로딩 중...</div>;
     }
 
     return (
-        <div className="containerr md:px-0 mx-auto px-4 py-8 min-h-screen">
+        <div className="containerr px-4 xl:px-0 mx-auto px-4 py-8 min-h-screen">
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-2xl font-bold text-[#111] flex items-center gap-2">
                     <Heart className="text-[#666]" />

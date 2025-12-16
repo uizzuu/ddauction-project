@@ -101,7 +101,7 @@ export default function ProductEdit({ user }: Props) {
     }
 
     return (
-        <div className="containerr mx-auto md:px-0 px-4">
+        <div className="containerr mx-auto px-4 xl:px-0">
             <div className="mb-8 text-left">
                 <h2 className="text-3xl font-bold text-[#111] mb-2">물품 수정</h2>
                 <p className="text-gray-500">

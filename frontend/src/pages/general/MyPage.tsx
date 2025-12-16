@@ -570,17 +570,17 @@ export default function MyPage({ user, setUser }: Props) {
       <div className="w-full max-w-[1280px] mx-auto px-4 xl:px-0">
         {/* Profile Summary Card */}
         <div className="py-8 mb-8 border-b border-[#eee]">
-          <div className="flex items-start gap-6">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
             <div className="w-32 h-32 rounded-lg bg-[#333] flex items-center justify-center overflow-hidden flex-shrink-0">
               <Avatar src={user.images?.[0]?.imagePath} alt="Profile" className="w-full h-full text-3xl" fallbackText={user.nickName} />
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-1">
-                <h2 className="text-2xl font-bold text-[#111] truncate">{user.nickName || user.userName}</h2>
+            <div className="flex-1 min-w-0 w-full text-center md:text-left">
+              <div className="flex flex-col md:flex-row items-center gap-2 md:gap-3 mb-1 justify-center md:justify-start">
+                <h2 className="text-2xl font-bold text-[#111] truncate max-w-full md:max-w-md">{user.nickName || user.userName}</h2>
                 {user.provider && <ProviderBadge provider={user.provider} />}
               </div>
               <p className="text-sm text-[#666] truncate">{user.email}</p>
-              <div className="flex flex-wrap gap-4 sm:gap-6 md:gap-8 mt-6 pt-6 border-t border-[#eee]">
+              <div className="flex flex-wrap gap-4 sm:gap-6 md:gap-8 mt-6 pt-6 border-t border-[#eee] justify-center md:justify-start">
                 {/* Stats items... added whitespace-nowrap */}
                 <div className="flex items-center gap-2 whitespace-nowrap"><Package size={18} className="text-[#666]" /><span className="text-sm text-[#666]">판매중 <span className="font-bold text-[#111]">{stats.sellingCount}</span></span></div>
                 <div className="flex items-center gap-2 whitespace-nowrap"><Heart size={18} className="text-[#666]" /><span className="text-sm text-[#666]">찜 <span className="font-bold text-[#111]">{stats.likesCount}</span></span></div>
@@ -768,7 +768,7 @@ export default function MyPage({ user, setUser }: Props) {
                   <CollapsibleSection title="판매 완료 및 배송 관리" icon={<ShoppingBag size={20} />}>
                     {sellingHistory.length === 0 ? <div className="text-center py-12 bg-gray-50 rounded-lg"><p className="text-gray-500">판매 내역이 없습니다.</p></div> :
                       <div>{sellingHistory.map((item) => <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                        <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}>
+                        <div className="flex-1 min-w-0 flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}>
                           <div className="w-20 h-20 bg-[#f8f8f8] rounded-[10px] border border-[#f0f0f0] overflow-hidden flex-shrink-0 relative">
                             {item.productImage ? (
                               <img
@@ -784,8 +784,25 @@ export default function MyPage({ user, setUser }: Props) {
                               <div className="flex justify-center items-center w-full h-full text-[#aaa] text-xs"></div>
                             )}
                           </div>
-                          <div><div className="font-medium text-gray-900">{item.productTitle}</div><div className="text-sm text-gray-500">구매자: {item.buyerName}</div><div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div><div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div></div></div>
-                        <div className="flex flex-col items-end gap-2 min-w-[200px]"><div className="text-sm font-bold text-blue-600">{item.status}</div>{item.courier && item.trackingNumber ? <div className="text-sm text-gray-600 text-right"><div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div><div className="text-xs mb-1">{item.trackingNumber}</div><button onClick={() => openShippingModal(item.paymentId, item.courier!, item.trackingNumber!)} className="text-xs text-gray-400 underline hover:text-gray-600">수정</button></div> : <button onClick={() => openShippingModal(item.paymentId)} className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800">배송 정보 입력</button>}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-900 truncate">{item.productTitle}</div>
+                            <div className="text-sm text-gray-500">구매자: {item.buyerName}</div>
+                            <div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div>
+                            <div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 min-w-[200px] w-full md:w-auto">
+                          <div className="text-sm font-bold text-blue-600">{item.status}</div>
+                          {item.courier && item.trackingNumber ? (
+                            <div className="text-sm text-gray-600 text-right">
+                              <div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div>
+                              <div className="text-xs mb-1">{item.trackingNumber}</div>
+                              <button onClick={() => openShippingModal(item.paymentId, item.courier!, item.trackingNumber!)} className="text-xs text-gray-400 underline hover:text-gray-600">수정</button>
+                            </div>
+                          ) : (
+                            <button onClick={() => openShippingModal(item.paymentId)} className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800">배송 정보 입력</button>
+                          )}
+                        </div>
                       </div>)}</div>}
                   </CollapsibleSection>
                   <CollapsibleSection title="판매 중인 상품" icon={<Package size={20} />}>
@@ -799,7 +816,7 @@ export default function MyPage({ user, setUser }: Props) {
                   <CollapsibleSection title="구매 내역" icon={<ShoppingBag size={20} />}>
                     {buyingHistory.length === 0 ? <div className="text-center py-12 bg-[#f9f9f9] rounded-lg border border-[#eee]"><ShoppingBag size={40} className="mx-auto text-[#ddd] mb-2" /><p className="text-[#666]">구매 내역이 없습니다.</p></div> :
                       <div>{buyingHistory.map((item) => <div key={item.paymentId} className="p-4 border-b border-gray-200 last:border-0 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-                        <div className="flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}>
+                        <div className="flex-1 min-w-0 flex gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate(`/products/${item.productId}`)}>
                           <div className="w-20 h-20 bg-[#f8f8f8] rounded-[10px] border border-[#f0f0f0] overflow-hidden flex-shrink-0 relative">
                             {item.productImage ? (
                               <img
@@ -815,8 +832,30 @@ export default function MyPage({ user, setUser }: Props) {
                               <div className="flex justify-center items-center w-full h-full text-[#aaa] text-xs"></div>
                             )}
                           </div>
-                          <div><div className="font-medium text-gray-900">{item.productTitle}</div><div className="text-sm text-gray-500">판매자: {item.sellerNickName}</div><div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div><div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div></div></div>
-                        <div className="flex flex-col items-end gap-2 text-right"><div className="text-sm font-bold text-blue-600">{item.status}</div>{item.status === "PAID" && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleConfirmPurchase(item.paymentId); }} className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 font-medium">구매 확정</button>}{item.status === "CONFIRMED" && <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/reviews/write/${item.productId}`); }} className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 font-medium">리뷰 작성</button>}{item.courier && item.trackingNumber && <div className="text-sm text-gray-600"><div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div><div className="text-xs">{item.trackingNumber}</div></div>}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="font-medium text-gray-900 truncate">{item.productTitle}</div>
+                            <div className="text-sm text-gray-500">판매자: {item.sellerNickName}</div>
+                            <div className="text-sm text-gray-500">가격: {item.price.toLocaleString()}원</div>
+                            <div className="text-xs text-gray-400">{new Date(item.paidAt).toLocaleDateString()}</div>
+                          </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-2 text-right w-full md:w-auto">
+                          <div className="text-sm font-bold text-blue-600">{item.status}</div>
+                          <div className="flex gap-2 justify-end">
+                            {item.status === "PAID" && (
+                              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleConfirmPurchase(item.paymentId); }} className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 font-medium whitespace-nowrap">구매 확정</button>
+                            )}
+                            {item.status === "CONFIRMED" && (
+                              <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(`/reviews/write/${item.productId}`); }} className="px-3 py-1 bg-black text-white text-xs rounded hover:bg-gray-800 font-medium whitespace-nowrap">리뷰 작성</button>
+                            )}
+                          </div>
+                          {item.courier && item.trackingNumber && (
+                            <div className="text-sm text-gray-600">
+                              <div>{COURIER_OPTIONS.find(c => c.value === item.courier)?.label || item.courier}</div>
+                              <div className="text-xs">{item.trackingNumber}</div>
+                            </div>
+                          )}
+                        </div>
                       </div>)}</div>}
                   </CollapsibleSection>
                   <CollapsibleSection title="입찰 내역" icon={<Gavel size={20} />}>

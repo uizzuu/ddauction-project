@@ -127,13 +127,13 @@ export default function ArticleList({ user }: Props) {
   };
 
   if (loading) return (
-    <div className="max-w-[1280px] mx-auto py-8 flex items-center justify-center">
+    <div className="max-w-[1280px] mx-auto px-4 xl:px-0 py-8 flex items-center justify-center ">
       <div className="text-gray-500">로딩 중...</div>
     </div>
   );
 
   return (
-    <div className="max-w-[1280px] mx-auto py-8 px-5 md:px-0">
+    <div className="max-w-[1280px] mx-auto py-8 px-5 px-4 xl:px-0">
       <div className="flex md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-[#111]">커뮤니티</h1>
         {user && (

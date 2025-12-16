@@ -73,7 +73,7 @@ export default function ProductDetail({ user }: Props) {
 
 
     return (
-        <div className="max-w-[1280px] mx-auto px-4 py-8 md:px-0">
+        <div className="max-w-[1280px] mx-auto px-4 xl:px-0 py-8">
 
             {/* Back Button */}
             {/* <button
@@ -88,10 +88,10 @@ export default function ProductDetail({ user }: Props) {
 
             {/* Top Section: 3-Column Layout */}
             {/* Height fix: calc(100vh - header - padding) approx. To force fit, we might use max-h and allow internal scroll if needed, or just layout sizing. User asked for data to "fit in". */}
-            <div className="flex flex-col xl:flex-row gap-6 mb-12 h-fit">
+            <div className="flex flex-col xl:flex-row md:flex-row gap-6 mb-12 h-fit">
 
                 {/* Left: Image Section (Fixed width) */}
-                <div className="w-full xl:w-[400px] top-24 ">
+                <div className="w-full xl:w-[400px] md:w-[300px] top-24 ">
                     <ImageSection product={product} setShowARModal={setShowARModal} />
                 </div>
 
@@ -116,7 +116,7 @@ export default function ProductDetail({ user }: Props) {
                 </div>
 
                 {/* Right: Action Box (Fixed width) */}
-                <div className="w-full xl:w-[300px] h-fit z-10">
+                <div className="w-full xl:w-[300px] md:w-[280px] h-fit z-10">
                     <ActionBox
                         product={product}
                         mergedBids={mergedBids}

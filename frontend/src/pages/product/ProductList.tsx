@@ -141,7 +141,7 @@ export default function ProductSearchPage() {
   };
 
   return (
-    <div className="containerr mx-auto md:px-0 px-4 py-8 min-h-screen">
+    <div className="containerr mx-auto px-4 xl:px-0 py-8 min-h-screen">
 
       {/* Filter Bar & Modal */}
       <div className="mb-6">

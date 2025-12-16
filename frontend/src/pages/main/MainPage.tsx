@@ -200,7 +200,7 @@ export default function Main() {
   return (
     <div className="w-full bg-white pb-20 containerr">
       {/* Banner Section */}
-      <div className="w-full mb-6 mt-6 md:mb-10 md:mt-0 px-4 md:px-0">
+      <div className="w-full mb-6 mt-6 md:mb-10 md:mt-0 px-4 xl:px-0 ">
         <div
           className="w-full max-w-[1280px] mx-auto h-[250px] md:h-[400px] relative group rounded-[12px] overflow-hidden bg-[#f4f4f4] md:px-4 xl:px-0"
           onMouseEnter={() => setIsBannerHovered(true)}
