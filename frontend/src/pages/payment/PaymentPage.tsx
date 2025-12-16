@@ -315,7 +315,7 @@ export default function PaymentPage() {
 
       const payParams = {
         pg: "html5_inicis",
-        pay_method: paymentMethod,
+        pay_method: paymentMethod,  // 카카오페이는 이 값을 무시하지만 유지
         merchant_uid: prepareData.merchantUid,
         name: prepareData.name,
         amount: singleFinalAmount,

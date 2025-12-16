@@ -22,18 +22,18 @@ export default function PublicChat({ user }: Props) {
   // 관리자 메뉴 상태
   const [activeMenuMessageId, setActiveMenuMessageId] = useState<number | null>(null);
   const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
-  
+
   // 채팅 금지 상태
   const [isBanned, setIsBanned] = useState(false);
   const [banEndTime, setBanEndTime] = useState<Date | null>(null);
- 
+
 
   // 남은 시간 계산
   const getRemainingTime = () => {
     if (!banEndTime) return "";
     const now = new Date();
     const diff = banEndTime.getTime() - now.getTime();
-    
+
     if (diff <= 0) {
       setIsBanned(false);
       return "";
@@ -41,7 +41,7 @@ export default function PublicChat({ user }: Props) {
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 0) {
       return `${hours}시간 ${minutes}분`;
     }
@@ -64,7 +64,7 @@ export default function PublicChat({ user }: Props) {
         if (response.ok) {
           const data = await response.json();
           console.log("경고 상태 응답:", data);
-          
+
           // banned가 true이면 경고 상태
           if (data.banned) {
             console.log("경고 상태 감지!");
@@ -75,12 +75,12 @@ export default function PublicChat({ user }: Props) {
               setBanEndTime(endTime);
               console.log("종료시간:", endTime);
             }
-       
+
           } else {
             console.log("경고 없음");
             setIsBanned(false);
             setBanEndTime(null);
-     
+
           }
         } else {
           console.error("API 응답 실패:", response.status);
@@ -163,6 +163,8 @@ export default function PublicChat({ user }: Props) {
   useEffect(() => {
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const host = isLocal ? "localhost:8080" : window.location.host;
+    // navigate 함수를 사용하기 위해 의존성 배열에 추가해야 하므로, 여기에 navigate가 필요함을 명시합니다.
+    // (navigate는 이미 컴포넌트 상단에 정의되어 있으므로 그대로 사용 가능합니다.)
     const url = `${protocol}://${host}/ws/public-chat?userId=${user.userId}`;
 
     ws.current = new WebSocket(url);
@@ -172,6 +174,26 @@ export default function PublicChat({ user }: Props) {
     ws.current.onmessage = (event) => {
       try {
         const data: any = JSON.parse(event.data);
+
+        // --- 🎯 강제 로그아웃 처리 로직 추가 시작 🎯 ---
+        if (data.command === "FORCE_LOGOUT") {
+          console.log("강제 로그아웃 명령 수신:", data.message);
+
+          // 1. 유저에게 알림
+          alert(data.message);
+
+          // 2. 인증 정보 삭제 (클라이언트 측 로그아웃)
+          // JWT 토큰을 사용하는 경우:
+          localStorage.removeItem("token");
+
+          // 3. 페이지 이동 (로그인 또는 메인 페이지로)
+          navigate("/"); // 메인 페이지나 /login 페이지로 이동
+
+          // 명령 처리 후, 이후의 채팅 메시지 처리 로직은 건너뜁니다.
+          return;
+        }
+        // --- 강제 로그아웃 처리 로직 추가 끝 ---
+
         if (!data.user && data.nickName) {
           data.user = { userId: data.userId, nickName: data.nickName };
         }
@@ -181,14 +203,16 @@ export default function PublicChat({ user }: Props) {
         }
       } catch (err) {
         console.error("메시지 파싱 오류:", err);
+        // 서버에서 JSON 형식이 아닌 단순 텍스트 메시지를 보냈을 경우 처리 로직 추가 가능
       }
     };
 
     ws.current.onclose = () => console.log("PublicChat WebSocket 종료");
     ws.current.onerror = (err) => console.error("PublicChat 웹소켓 에러:", err);
 
+    // navigate 함수를 사용했으므로, 의존성 배열에 navigate를 추가해야 합니다.
     return () => ws.current?.close();
-  }, [user.userId, isLocal]);
+  }, [user.userId, isLocal, navigate]);
 
   // 자동 스크롤
   useEffect(() => {
@@ -201,7 +225,7 @@ export default function PublicChat({ user }: Props) {
       alert(`채팅이 제한되었습니다. ${getRemainingTime()} 후 이용 가능합니다.`);
       return;
     }
-    
+
     if (!input.trim() || !ws.current) return;
     if (ws.current.readyState !== WebSocket.OPEN) return;
 
@@ -348,21 +372,19 @@ export default function PublicChat({ user }: Props) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
               disabled={isBanned}
-              className={`flex-1 p-3 border rounded-lg text-sm shadow-sm ${
-                isBanned 
-                  ? "bg-red-50 border-red-300 text-red-600 cursor-not-allowed" 
+              className={`flex-1 p-3 border rounded-lg text-sm shadow-sm ${isBanned
+                  ? "bg-red-50 border-red-300 text-red-600 cursor-not-allowed"
                   : "border-[#ddd] focus:outline-none focus:border-[#111]"
-              }`}
+                }`}
               placeholder={isBanned ? `🚫 이용이 제한되었습니다 (남은 시간: ${getRemainingTime()})` : "메시지를 입력하세요..."}
             />
-            <button 
-              onClick={sendMessage} 
+            <button
+              onClick={sendMessage}
               disabled={isBanned}
-              className={`px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-colors ${
-                isBanned
+              className={`px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-colors ${isBanned
                   ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                   : "bg-[#111] text-white hover:bg-[#333]"
-              }`}
+                }`}
             >
               전송
             </button>

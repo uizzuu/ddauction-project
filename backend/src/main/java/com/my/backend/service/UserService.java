@@ -340,5 +340,10 @@ public class UserService {
 
         // 기존 WebSocketHandler 이용해서 메시지 보내기
         publicChatWebSocketHandler.sendMessageToUser(userId, "관리자에 의해 밴 처리되었습니다."); // sendMessageToUser는 핸들러에 직접 만들어야 함
+        // 1. 강제 로그아웃 명령 메시지 생성
+        String logoutCommand = "{\"command\":\"FORCE_LOGOUT\", \"message\":\"관리자에 의해 밴 처리되어 로그아웃됩니다.\"}";
+
+        // 2. WebSocket으로 명령 전송
+        publicChatWebSocketHandler.sendMessageToUser(userId, logoutCommand);
     }
 }

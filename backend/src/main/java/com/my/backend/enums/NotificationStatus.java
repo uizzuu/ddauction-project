@@ -7,5 +7,6 @@ public enum NotificationStatus {
     NOTICE,   // 공지사항
     MESSAGE,
     FOLLOW,
-    WARN
+    WARN,
+    BAN
 }
