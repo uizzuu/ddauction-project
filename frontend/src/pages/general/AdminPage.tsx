@@ -269,17 +269,17 @@ export default function AdminPage({ user }: { user: User }) {
   };
 
   // 문의 관리
-  const handleSaveInquiryAnswer = async (inquiryId: number, answer?: string) => {
-    if (!answer) return alert("답변을 입력해주세요.");
-    try {
-      await API.saveInquiryAnswer(inquiryId, answer);
-      alert("답변이 등록되었습니다.");
-      fetchInquiries();
-    } catch (err) {
-      console.error(err);
-      alert("답변 등록 실패");
-    }
-  };
+  // const handleSaveInquiryAnswer = async (inquiryId: number, answer?: string) => {
+  //   if (!answer) return alert("답변을 입력해주세요.");
+  //   try {
+  //     await API.saveInquiryAnswer(inquiryId, answer);
+  //     alert("답변이 등록되었습니다.");
+  //     fetchInquiries();
+  //   } catch (err) {
+  //     console.error(err);
+  //     alert("답변 등록 실패");
+  //   }
+  // };
 
   // ===================================
   // useEffect - 데이터 로딩 (기존과 동일)
@@ -309,7 +309,7 @@ export default function AdminPage({ user }: { user: User }) {
     { id: "product" as TabId, label: "상품 관리", icon: Package },
     { id: "report" as TabId, label: "신고 관리", icon: AlertCircle },
     { id: "stats" as TabId, label: "통계", icon: BarChart3 },
-    { id: "inquiry" as TabId, label: "1:1 문의", icon: MessageSquare },
+    // { id: "inquiry" as TabId, label: "1:1 문의", icon: MessageSquare },
     { id: "publicChat" as TabId, label: "공개 채팅", icon: MessagesSquare },
     { id: "privateChat" as TabId, label: "1:1 채팅", icon: MessageSquare },
   ];
@@ -410,13 +410,13 @@ export default function AdminPage({ user }: { user: User }) {
           )}
 
           {/* 1:1 문의 관리 컴포넌트 */}
-          {activeTab === "inquiry" && (
+          {/* {activeTab === "inquiry" && (
             <InquiryManagement
               inquiries={inquiries}
               setInquiries={setInquiries}
               handleSaveInquiryAnswer={handleSaveInquiryAnswer}
             />
-          )}
+          )} */}
 
           {/* 공개 채팅 컴포넌트 */}
           {activeTab === "publicChat" && user && <div className="-mt-[20px]"><PublicChat user={user} /></div>}

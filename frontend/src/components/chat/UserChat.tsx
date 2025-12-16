@@ -518,13 +518,13 @@ export default function UserChat({ user }: UserChatProps) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-xs font-bold text-[#333] bg-blue-50 px-1.5 py-0.5 rounded">
+                    <span className="text-xs font-semibold text-[#333] bg-blue-50 px-1.5 py-0.5 rounded">
                       {getCategoryName(product.productCategoryType)}
                     </span>
                     <h3 className="text-sm font-medium text-gray-900 truncate">{product.title}</h3>
                   </div>
                   <p className="text-sm font-bold text-gray-900">
-                    {product.startingPrice?.toLocaleString()}원
+                    {product.originalPrice?.toLocaleString()}원
                   </p>
                 </div>
               </div>
