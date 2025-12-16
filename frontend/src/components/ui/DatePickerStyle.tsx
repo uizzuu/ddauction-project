@@ -16,6 +16,7 @@ interface CustomInputProps {
     disabled?: boolean;
     noDefaultStyle?: boolean;
     className?: string;
+    maxLength?: number;
     // 부모로부터 받는 추가 Props
     inputValue: string;
     onManualChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -40,7 +41,7 @@ const CustomInput = React.forwardRef<HTMLInputElement, CustomInputProps>(
                 onBlur={() => setIsFocused(false)}
                 disabled={disabled}
                 placeholder={placeholder}
-                maxLength={10}
+                maxLength={props.maxLength || 10}
                 className={`
                     ${!noDefaultStyle ? `
                         w-full px-4 py-3 pr-10 bg-white text-left
@@ -100,7 +101,14 @@ export default function DatePickerStyle({
                 const year = selected.getFullYear();
                 const month = String(selected.getMonth() + 1).padStart(2, '0');
                 const day = String(selected.getDate()).padStart(2, '0');
-                setInputValue(`${year}-${month}-${day}`);
+
+                if (showTimeSelect) {
+                    const hours = String(selected.getHours()).padStart(2, '0');
+                    const minutes = String(selected.getMinutes()).padStart(2, '0');
+                    setInputValue(`${year}-${month}-${day} ${hours}:${minutes}`);
+                } else {
+                    setInputValue(`${year}-${month}-${day}`);
+                }
             } else {
                 setInputValue("");
             }
@@ -110,35 +118,57 @@ export default function DatePickerStyle({
     const handleManualInput = (e: React.ChangeEvent<HTMLInputElement>) => {
         let value = e.target.value;
         const numbersOnly = value.replace(/[^\d]/g, '');
-        const limitedNumbers = numbersOnly.slice(0, 8);
+
+        const limit = showTimeSelect ? 12 : 8;
+        const limitedNumbers = numbersOnly.slice(0, limit);
 
         let formatted = limitedNumbers;
+
+        // Date Formatting (YYYY-MM-DD)
         if (limitedNumbers.length >= 5) {
             formatted = limitedNumbers.slice(0, 4) + '-' + limitedNumbers.slice(4, 6) + (limitedNumbers.length > 6 ? '-' + limitedNumbers.slice(6, 8) : '');
         } else if (limitedNumbers.length >= 4) {
             formatted = limitedNumbers.slice(0, 4) + '-' + limitedNumbers.slice(4);
         }
 
+        // Time Formatting (HH:mm)
+        if (showTimeSelect && limitedNumbers.length > 8) {
+            formatted += ' ' + limitedNumbers.slice(8, 10);
+            if (limitedNumbers.length > 10) {
+                formatted += ':' + limitedNumbers.slice(10, 12);
+            }
+        }
+
         setInputValue(formatted);
 
-        // 완전한 날짜 형식(10글자)이고 유효한 날짜일 때만 부모에게 전달
-        if (formatted.length === 10) {
-            const [year, month, day] = formatted.split('-').map(Number);
-            if (year && month && day) {
-                const parsedDate = new Date(year, month - 1, day);
-                // 유효성 검사 및 실제 값 비교
-                if (!isNaN(parsedDate.getTime()) &&
-                    parsedDate.getFullYear() === year &&
-                    parsedDate.getMonth() === month - 1 &&
-                    parsedDate.getDate() === day) {
-                    onChange(parsedDate);
+        // Validation
+        const targetLength = showTimeSelect ? 16 : 10;
+
+        if (formatted.length === targetLength) {
+            let parsedDate: Date | null = null;
+
+            if (showTimeSelect) {
+                const [datePart, timePart] = formatted.split(' ');
+                const [year, month, day] = datePart.split('-').map(Number);
+                const [hour, minute] = timePart.split(':').map(Number);
+
+                if (year && month && day && hour !== undefined && minute !== undefined) {
+                    parsedDate = new Date(year, month - 1, day, hour, minute);
                 }
+            } else {
+                const [year, month, day] = formatted.split('-').map(Number);
+                if (year && month && day) {
+                    parsedDate = new Date(year, month - 1, day);
+                }
+            }
+
+            if (parsedDate && !isNaN(parsedDate.getTime())) {
+                // Additional validation (year match etc) can be done here if needed
+                onChange(parsedDate);
             }
         } else if (formatted === "") {
             onChange(null);
         }
-        // 그 외(1~9글자)일 때는 onChange를 호출하지 않아 부모 state가 null이 되는 것을 방지
-        // (즉, 부모는 기존 값을 유지하거나, 이 컴포넌트 내부에서만 임시 변경)
     };
 
     const toggleCalendar = (e: React.MouseEvent) => {
@@ -174,8 +204,9 @@ export default function DatePickerStyle({
                         setIsFocused={setIsFocused}
                         noDefaultStyle={noDefaultStyle}
                         className={className}
-                        placeholder={placeholder} // placeholder도 CustomInput으로 전달
-                        disabled={disabled} // disabled도 CustomInput으로 전달
+                        placeholder={placeholder}
+                        disabled={disabled}
+                        maxLength={showTimeSelect ? 16 : 10}
                     />
                 }
                 renderCustomHeader={({
