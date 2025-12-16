@@ -2,8 +2,13 @@ package com.my.backend.service;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.my.backend.dto.PaymentHistoryResponse;
+import com.my.backend.enums.ImageType;
+import com.my.backend.repository.*;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -23,10 +28,6 @@ import com.my.backend.entity.Users;
 import com.my.backend.enums.PaymentMethodType;
 import com.my.backend.enums.PaymentStatus;
 import com.my.backend.enums.ProductStatus;
-import com.my.backend.repository.BidRepository;
-import com.my.backend.repository.PaymentRepository;
-import com.my.backend.repository.ProductRepository;
-import com.my.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,7 @@ public class PortOnePaymentService {
     private final BidRepository bidRepository;
     private final PaymentProperties props;
     private final RestTemplate restTemplate;
+    private final ImageRepository imageRepository;
 
     private static final String PORTONE_API_BASE = "https://api.iamport.kr";
     private static final String GET_TOKEN_URL = PORTONE_API_BASE + "/users/getToken";
@@ -521,17 +523,53 @@ public class PortOnePaymentService {
     //  구매/판매 내역 조회
     // ============================
     @Transactional(readOnly = true)
-    public java.util.List<com.my.backend.dto.PaymentHistoryResponse> getBuyingHistory(Long userId) {
-        return paymentRepository.findByUser_UserId(userId).stream()
-                .map(com.my.backend.dto.PaymentHistoryResponse::fromEntity)
-                .collect(java.util.stream.Collectors.toList());
+    public List<PaymentHistoryResponse> getBuyingHistory(Long userId) {
+        // N+1 문제 방지를 위해 paymentRepository.findByUser_UserId(userId) 호출 시
+        // Product, User, Seller 엔티티를 Fetch Join하는 쿼리를 사용하는 것이 좋습니다.
+
+        List<Payment> payments = paymentRepository.findByUser_UserId(userId);
+
+        return payments.stream()
+                .map(payment -> {
+                    Long productId = payment.getProduct().getProductId();
+
+                    // 1. Image 엔티티 조회 (상품 ID와 타입 이용)
+                    String mainImageUrl = imageRepository
+                            // ImageType.PRODUCT는 이미지 엔티티에서 정의된 Enum이어야 합니다.
+                            .findTopByRefIdAndImageTypeOrderByCreatedAtAsc(productId, ImageType.PRODUCT)
+                            .map(com.my.backend.entity.Image::getImagePath)
+                            .orElse(null); // 이미지가 없을 경우 null
+
+                    // 2. DTO 변환 시 조회한 이미지 URL을 함께 전달
+                    //    (PaymentHistoryResponse.fromEntityWithImage 메서드가 필요합니다. 이전 답변 참고)
+                    return PaymentHistoryResponse.fromEntityWithImage(payment, mainImageUrl);
+                })
+                .collect(Collectors.toList());
     }
 
+    /**
+     * 판매 내역을 조회합니다.
+     */
     @Transactional(readOnly = true)
-    public java.util.List<com.my.backend.dto.PaymentHistoryResponse> getSellingHistory(Long userId) {
-        return paymentRepository.findByProduct_Seller_UserId(userId).stream()
-                .map(com.my.backend.dto.PaymentHistoryResponse::fromEntity)
-                .collect(java.util.stream.Collectors.toList());
+    public List<PaymentHistoryResponse> getSellingHistory(Long userId) {
+        // N+1 문제 방지를 위해 Fetch Join 권장
+
+        List<Payment> payments = paymentRepository.findByProduct_Seller_UserId(userId);
+
+        return payments.stream()
+                .map(payment -> {
+                    Long productId = payment.getProduct().getProductId();
+
+                    // 1. Image 엔티티 조회
+                    String mainImageUrl = imageRepository
+                            .findTopByRefIdAndImageTypeOrderByCreatedAtAsc(productId, ImageType.PRODUCT)
+                            .map(com.my.backend.entity.Image::getImagePath)
+                            .orElse(null);
+
+                    // 2. DTO 변환 시 조회한 이미지 URL을 함께 전달
+                    return PaymentHistoryResponse.fromEntityWithImage(payment, mainImageUrl);
+                })
+                .collect(Collectors.toList());
     }
 
     // ============================
