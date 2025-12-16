@@ -20,6 +20,7 @@ public class CommentDto {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String articleTitle; // 게시글 제목 추가
 
     // Entity → DTO
     public static CommentDto fromEntity(Comment comment) {
@@ -33,6 +34,7 @@ public class CommentDto {
                 .content(comment.getContent())
                 .createdAt(comment.getCreatedAt())
                 .updatedAt(comment.getUpdatedAt())
+                .articleTitle(comment.getArticle() != null ? comment.getArticle().getTitle() : null)
                 .build();
     }
 

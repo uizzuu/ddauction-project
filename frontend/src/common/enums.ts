@@ -27,6 +27,12 @@ export const ARTICLE_TYPES = {
   FAQ: "FAQ"
 } as const;
 
+export const ARTICLE_TYPE_LABELS: Record<keyof typeof ARTICLE_TYPES, string> = {
+  NOTICE: "공지사항",
+  COMMUNITY: "자유",
+  FAQ: "FAQ",
+};
+
 export type ArticleType = keyof typeof ARTICLE_TYPES;
 export const ARTICLE_TYPE_KEYS = Object.keys(ARTICLE_TYPES) as ArticleType[];
 

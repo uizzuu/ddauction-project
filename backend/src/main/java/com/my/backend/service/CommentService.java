@@ -41,6 +41,15 @@ public class CommentService {
                 .toList();
     }
 
+    // 특정 유저의 댓글 전체 조회
+    public List<CommentDto> findCommentsByUserId(Long userId) {
+        Users user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        return commentRepository.findByUser(user).stream()
+                .map(CommentDto::fromEntity)
+                .toList();
+    }
+
     // 댓글 생성
     @Transactional
     public void insertComment(Long articleId, CommentDto dto) {

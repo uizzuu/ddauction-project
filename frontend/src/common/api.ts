@@ -402,6 +402,13 @@ export async function deleteComment(commentId: number): Promise<void> {
   if (!response.ok) throw new Error("댓글 삭제 실패");
 }
 
+export async function fetchUserComments(userId: number): Promise<TYPE.CommentDto[]> {
+  const response = await authFetch(`${API_BASE_URL}${SPRING_API}/comments/user/${userId}`);
+  if (!response.ok) throw new Error("작성한 댓글 목록 조회 실패");
+  const text = await response.text();
+  return text ? JSON.parse(text) : [];
+}
+
 // 로그인
 export async function loginAPI(
   form: TYPE.LoginForm | { phone: string; password: string },

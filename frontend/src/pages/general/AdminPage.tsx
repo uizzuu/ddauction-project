@@ -13,7 +13,6 @@ import {
   ProductManage,
   ReportManage,
   AdminDashboard,
-  InquiryManagement,
 } from "../../common/import";
 import PublicChat from "../../components/chat/PublicChat";
 import UserChat from "../../components/chat/UserChat";
@@ -52,7 +51,7 @@ export default function AdminPage({ user }: { user: User }) {
     reportCount?: number;
   }>({});
 
-  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
+  const [_inquiries, setInquiries] = useState<Inquiry[]>([]);
 
   // --- 상품 필터 상태 (ProductManagement로 props 전달) ---
   const [filterKeyword, setFilterKeyword] = useState("");

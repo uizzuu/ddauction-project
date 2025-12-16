@@ -225,8 +225,8 @@ export default function PublicChat({ user }: Props) {
 
   return (
     <div className="max-w-[1280px] mx-auto flex flex-col mt-[20px] h-[calc(100vh-180px)]">
-      <div className="border border-[#ccc] p-3 md:px-0 w-full h-full flex flex-col rounded-lg shadow-sm bg-white relative">
-        <div className="flex-1 overflow-y-auto mb-3 p-4 bg-gray-50 rounded-lg border border-[#eee]">
+      <div className="border border-[#ccc] pb-3 md:px-0 w-full h-full flex flex-col rounded-lg shadow-sm bg-white relative">
+        <div className="flex-1 overflow-y-auto mb-3 p-4 rounded-lg">
           {messages.map((msg, i) => {
             const isMe = msg.user?.userId === user?.userId;
             const isAdmin = user.role === "ADMIN";
@@ -341,7 +341,7 @@ export default function PublicChat({ user }: Props) {
         </div>
 
         {user.role !== "ADMIN" ? (
-          <div className="flex gap-2">
+          <div className="flex gap-2 px-3">
             <input
               type="text"
               value={input}

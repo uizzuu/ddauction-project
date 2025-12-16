@@ -218,6 +218,7 @@ export interface CommentDto {
   content: string;
   createdAt: string;
   updatedAt: string;
+  articleTitle?: string;
 }
 
 export interface CommentForm {

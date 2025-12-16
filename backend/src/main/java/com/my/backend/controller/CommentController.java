@@ -46,6 +46,12 @@ public class CommentController {
         return ResponseEntity.ok(comments);
     }
 
+    @GetMapping("/comments/user/{userId}")
+    public ResponseEntity<List<CommentDto>> getCommentsByUserId(@PathVariable Long userId) {
+        List<CommentDto> comments = commentService.findCommentsByUserId(userId);
+        return ResponseEntity.ok(comments);
+    }
+
     // 2️⃣ 댓글 생성
     @PostMapping("/articles/{articleId}/comments")
     public ResponseEntity<?> commentCreate(
