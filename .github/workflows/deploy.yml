@@ -87,7 +87,7 @@ jobs:
             # 결제
             PAYMENT_PORTONE_IMP_CODE=imp38147237
             PAYMENT_PORTONE_API_KEY=4607256811104714
-            PAYMENT_PORTONE_API_SECRET=eemuGM3AVPFIfny5NDcHhvaheSOq0sniBIi2eU4dx0Lc8juTEkYOdo3gIuZSRjzk0SUmixLCrZb4XCd1
+            PAYMENT_PORTONE_API_SECRET=z58ewwrg9BBTHYZZtKIIR6IH8nqjqarA5J9kgcrdgAJxeWYGjC7S1nQ4AyHExUeuoG8o4UoJQtFevkgL
             PAYMENT_PORTONE_CALLBACK_URL=https://ddauction.shop/api/payments/portone/callback
             # 파일 업로드
             FILE_UPLOAD_DIRECTORY=/home/ubuntu/ddauction-project/backend/uploads
