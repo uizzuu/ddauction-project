@@ -40,8 +40,6 @@ public class UserService {
     private final ReportRepository reportRepository;
     private final PublicChatWebSocketHandler publicChatWebSocketHandler;
 
-
-
     // 모든 유저 조회
     public List<UsersDto> getAllUsers() {
         return userRepository.findAll()

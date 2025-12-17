@@ -1,4 +1,4 @@
-package com.my.backend.dto.auth;
+package com.my.backend.dto;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

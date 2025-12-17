@@ -2,16 +2,15 @@ package com.my.backend.service;
 
 import com.my.backend.dto.SmsVerificationResponse;
 import com.my.backend.entity.PhoneVerification;
-import com.my.backend.entity.Users;
 import com.my.backend.repository.PhoneVerificationRepository;
 import com.my.backend.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -19,28 +18,23 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
-@Transactional
+@RequiredArgsConstructor
 public class SmsAuthService {
 
     private final PhoneVerificationRepository phoneVerificationRepository;
     private final UserRepository usersRepository;
-    private final String apiKey;
-    private final String apiSecret;
-    private final String fromNumber;
 
-    public SmsAuthService(
-            PhoneVerificationRepository phoneVerificationRepository,
-            UserRepository usersRepository,
-            @Value("${solapi.api-key}") String apiKey,
-            @Value("${solapi.api-secret}") String apiSecret,
-            @Value("${solapi.from-number}") String fromNumber) {
-        this.phoneVerificationRepository = phoneVerificationRepository;
-        this.usersRepository = usersRepository;
-        this.apiKey = apiKey;
-        this.apiSecret = apiSecret;
-        this.fromNumber = fromNumber;
-    }
+    @Value("${solapi.api-key}") 
+    private final String apiKey;
+
+    @Value("${solapi.api-secret}") 
+    private final String apiSecret;
+
+    @Value("${solapi.from-number}")
+    private final String fromNumber;
 
     // 인메모리 캐시 (실제 서비스에서는 Redis 권장)
     private Map<String, VerificationAttempt> attemptCache = new HashMap<>();
