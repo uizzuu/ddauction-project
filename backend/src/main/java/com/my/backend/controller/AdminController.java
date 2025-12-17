@@ -82,7 +82,7 @@ public class AdminController {
     // Authentication에서 관리자 ID 추출
     private Long getAdminIdFromAuth(Authentication auth) {
         // TODO: 실제 구현에서는 CustomUserDetails 등에서 추출
-        return 1L; // 임시
+        return 25L; // 임시
     }
 }
 
