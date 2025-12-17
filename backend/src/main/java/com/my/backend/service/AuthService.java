@@ -19,9 +19,9 @@ import com.my.backend.entity.PhoneVerification;
 import com.my.backend.entity.Users;
 import com.my.backend.enums.Role;
 import com.my.backend.myjwt.JWTUtil;
-import com.my.backend.phoneVerification.PhoneVerificationRepository;
 import com.my.backend.repository.AddressRepository;
 import com.my.backend.repository.EmailVerificationRepository;
+import com.my.backend.repository.PhoneVerificationRepository;
 import com.my.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package com.my.backend.phoneVerification;
+package com.my.backend.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

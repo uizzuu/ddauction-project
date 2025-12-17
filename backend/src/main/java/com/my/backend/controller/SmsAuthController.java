@@ -1,12 +1,15 @@
-package com.my.backend.phoneVerification;
+package com.my.backend.controller;
 
 
-import com.my.backend.phoneVerification.SmsAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.my.backend.dto.SmsVerificationRequest;
+import com.my.backend.dto.SmsVerificationResponse;
+import com.my.backend.service.SmsAuthService;
 
 @RestController
 @RequestMapping("/api/sms")

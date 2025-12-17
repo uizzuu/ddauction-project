@@ -1,4 +1,4 @@
-package com.my.backend.phoneVerification;
+package com.my.backend.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;

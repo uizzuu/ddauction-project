@@ -1,4 +1,4 @@
-package com.my.backend.phoneVerification;
+package com.my.backend.repository;
 
 import com.my.backend.entity.PhoneVerification;
 import org.springframework.data.jpa.repository.JpaRepository;

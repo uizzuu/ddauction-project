@@ -1,9 +1,9 @@
-package com.my.backend.phoneVerification;
+package com.my.backend.service;
 
-import com.my.backend.phoneVerification.SmsVerificationResponse;
+import com.my.backend.dto.SmsVerificationResponse;
 import com.my.backend.entity.PhoneVerification;
 import com.my.backend.entity.Users;
-import com.my.backend.phoneVerification.PhoneVerificationRepository;
+import com.my.backend.repository.PhoneVerificationRepository;
 import com.my.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

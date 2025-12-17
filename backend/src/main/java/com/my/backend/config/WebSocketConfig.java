@@ -1,10 +1,11 @@
 package com.my.backend.config;
 
 import com.my.backend.websocket.AuctionWebSocketHandler;
-// import com.my.backend.config.WebSocketHandler; // 개인채팅용
 import com.my.backend.websocket.PublicChatWebSocketHandler;
 import com.my.backend.websocket.NotificationWebSocketHandler;
 import com.my.backend.websocket.RealTimeSearchWebSocketHandler;
+import com.my.backend.websocket.WebSocketHandler;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.server.ServerHttpRequest;
@@ -28,13 +29,14 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final PublicChatWebSocketHandler publicChatWebSocketHandler; // 공개채팅용
     private final RealTimeSearchWebSocketHandler realTimeSearchWebSocketHandler;
     private final NotificationWebSocketHandler notificationWebSocketHandler;
+    private final WebSocketHandler webSocketHandler;
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 
         // 경매용 WebSocket
         registry.addHandler(auctionWebSocketHandler, "/ws/auction")
-                .setAllowedOrigins("*");
+                .setAllowedOrigins("*"); 
 
         // 공개채팅용 WebSocket
         registry.addHandler(publicChatWebSocketHandler, "/ws/public-chat")

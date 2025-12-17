@@ -8,9 +8,10 @@ import com.my.backend.entity.Product;
 import com.my.backend.repository.BidRepository;
 import com.my.backend.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.*;
+import org.springframework.web.socket.WebSocketHandler;
 
 import java.io.IOException;
 import java.net.URI;
@@ -19,10 +20,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class AuctionWebSocketHandler implements WebSocketHandler {
+public class AuctionWebSocketHandler implements WebSocketHandler{
 
     private final Map<Long, Set<WebSocketSession>> productSessions = new ConcurrentHashMap<>();
     private final Map<Long, List<Bid>> bidHistoryMap = new ConcurrentHashMap<>();
@@ -38,7 +41,6 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
         }
     }
 
-    @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Long productId = parseProductId(session);
         if (productId == null) {
@@ -63,7 +65,6 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
         log.info("새 세션 연결: {}, productId={}", session.getId(), productId);
     }
 
-    @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) {
         try {
             Long productId = parseProductId(session);
@@ -175,17 +176,14 @@ public class AuctionWebSocketHandler implements WebSocketHandler {
         }
     }
 
-    @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) {
         log.error("WebSocket transport error", exception);
     }
 
-    @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus closeStatus) {
         productSessions.values().forEach(sessions -> sessions.remove(session));
     }
 
-    @Override
     public boolean supportsPartialMessages() {
         return false;
     }

@@ -1,4 +1,4 @@
-package com.my.backend.config;
+package com.my.backend.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
