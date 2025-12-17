@@ -3,7 +3,6 @@ package com.my.backend.service;
 import com.my.backend.dto.ReviewDto;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.Review;
-import com.my.backend.entity.Users;
 import com.my.backend.enums.ProductType;
 import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.ReviewRepository;

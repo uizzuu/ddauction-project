@@ -1,20 +1,11 @@
 package com.my.backend.controller;
 
 import com.my.backend.dto.ProductQnaDto;
-import com.my.backend.enums.ProductType;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.service.ProductQnaService;
-import com.my.backend.service.UserService;
-import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
-import org.apache.catalina.User;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,9 +14,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor

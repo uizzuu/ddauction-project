@@ -2,14 +2,11 @@ package com.my.backend.controller;
 
 import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.service.BidService;
-import com.my.backend.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.my.backend.repository.BidRepository;
-import com.my.backend.repository.ProductRepository;
 
 import java.util.Map;
 
@@ -20,7 +17,6 @@ import java.util.Map;
 public class BidController {
 
     private final BidService bidService;
-    private final AuthUtil authUtil;
 
     // 입찰하기
     @PostMapping("/{productId}/bid")

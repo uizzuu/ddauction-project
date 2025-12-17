@@ -1,7 +1,6 @@
 package com.my.backend.dto;
 
 import lombok.*;
-import java.time.LocalDateTime;
 
 // 경고 요청 DTO
 @Getter

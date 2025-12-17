@@ -1,6 +1,5 @@
 package com.my.backend.controller;
 
-import com.my.backend.config.JwtProperties;
 import com.my.backend.dto.ProductDto;
 import com.my.backend.myjwt.JWTUtil;
 import com.my.backend.service.BookMarkService;

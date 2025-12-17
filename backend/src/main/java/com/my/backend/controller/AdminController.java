@@ -3,16 +3,22 @@ package com.my.backend.controller;
 import com.my.backend.dto.BanRequestDto;
 import com.my.backend.dto.BanResponseDto;
 import com.my.backend.dto.BanStatusDto;
+import com.my.backend.dto.auth.CustomUserDetails;
 import com.my.backend.service.AdminService;
 import com.my.backend.service.UserService;
 import com.my.backend.service.UserBanService;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
 import java.util.Map;
+
+import com.my.backend.enums.Role;
 
 @RestController
 @RequiredArgsConstructor
@@ -80,8 +86,13 @@ public class AdminController {
 
     // Authentication에서 관리자 ID 추출
     private Long getAdminIdFromAuth(Authentication auth) {
-        // TODO: 실제 구현에서는 CustomUserDetails 등에서 추출
-        return 25L; // 임시
+        CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();
+        
+        if (userDetails.getRole() != Role.ADMIN) {
+            throw new AccessDeniedException("관리자 권한이 필요합니다.");
+        }
+        
+        return userDetails.getUserId();
     }
 }
 

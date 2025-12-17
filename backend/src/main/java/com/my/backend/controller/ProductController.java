@@ -3,8 +3,6 @@ package com.my.backend.controller;
 import java.util.List;
 
 import com.my.backend.entity.Product;
-import com.my.backend.enums.ProductType;
-import com.my.backend.enums.Role;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -12,7 +10,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -83,7 +80,7 @@ public class ProductController {
     // 입찰 처리 (로그인 필수)
     @PostMapping("/{id}/bid")
     public ResponseEntity<?> placeBid(@PathVariable Long id,
-                                      @RequestBody @Valid BidDto dto,
+                                      @RequestBody BidDto dto,
                                       HttpSession session) {
         Users loginUser = (Users) session.getAttribute("loginUser");
         if (loginUser == null) {
@@ -92,7 +89,7 @@ public class ProductController {
         try {
             BidDto newBid = productService.placeBid(id, loginUser.getUserId(), dto.getBidPrice());
             return ResponseEntity.ok(newBid);
-        } catch (Exception e) {
+        } catch (Exception e) { 
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }

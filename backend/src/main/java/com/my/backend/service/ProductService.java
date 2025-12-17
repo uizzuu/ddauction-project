@@ -112,11 +112,6 @@ public class ProductService {
                 .collect(Collectors.toList());
     }
 
-    // 이미지 조회 (기존 헬퍼 - 삭제 가능)
-    private List<Image> getProductImages(Long productId) {
-        return imageRepository.findByRefIdAndImageType(productId, ImageType.PRODUCT);
-    }
-
     // 특정 사용자의 판매 상품 조회
     public List<ProductDto> getProductsBySeller(Long sellerId) {
         Users seller = findUserOrThrow(sellerId);
@@ -197,10 +192,8 @@ public class ProductService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "사업자만 일반판매(STORE) 상품을 수정할 수 있습니다.");
         }
 
-        // ... (Bid, Payment 조회 로직은 그대로)
         Bid bid = findBidOrNull(dto.getBidId());
         Payment payment = findPaymentOrNull(dto.getPaymentId());
-
 
         // DTO → Entity 매핑
         // mapDtoToProduct 호출 시, 위에서 정의한 Users seller 변수를 전달합니다.

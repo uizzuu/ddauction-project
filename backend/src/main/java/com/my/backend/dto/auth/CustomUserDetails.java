@@ -19,7 +19,6 @@ public class CustomUserDetails implements UserDetails {
         this.user = user;
     }
 
-    // ⭐ 추가: userId 반환
     public Long getUserId() {
         return user.getUserId();
     }
@@ -36,7 +35,6 @@ public class CustomUserDetails implements UserDetails {
         return user.getNickName();
     }
 
-    // ⭐ 추가: Role enum 반환
     public Role getRole() {
         return user.getRole();
     }
@@ -44,12 +42,7 @@ public class CustomUserDetails implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> collection = new ArrayList<>();
-        collection.add(new GrantedAuthority() {
-            @Override
-            public String getAuthority() {
-                return "ROLE_" + user.getRole().toString();  // ROLE_ 접두사 추가 권장
-            }
-        });
+        collection.add((GrantedAuthority) () -> "ROLE_" + user.getRole().toString());
         return collection;
     }
 

@@ -52,7 +52,7 @@ public class JWTUtil {
         claims.put("role", role);
         claims.put("nickName", nickName);
 
-        // ✅ businessNumber가 null이어도 OK
+        // businessNumber가 null이어도 OK
         if (businessNumber != null) {
             claims.put("businessNumber", businessNumber);
         }
@@ -61,7 +61,6 @@ public class JWTUtil {
     }
     public String createJwt(Map<String, Object> claims, Long expiredMs) {
         return Jwts.builder()
-                .setClaims(claims)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(secretKey)
