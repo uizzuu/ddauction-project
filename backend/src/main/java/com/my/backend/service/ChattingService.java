@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.my.backend.ban.UserBanRepository;
 import com.my.backend.dto.*;
 import com.my.backend.enums.Role;
 import org.springframework.stereotype.Service;
@@ -19,6 +18,7 @@ import com.my.backend.repository.ChatRoomRepository;
 import com.my.backend.repository.PrivateChatRepository;
 import com.my.backend.repository.ProductRepository;
 import com.my.backend.repository.PublicChatRepository;
+import com.my.backend.repository.UserBanRepository;
 import com.my.backend.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;

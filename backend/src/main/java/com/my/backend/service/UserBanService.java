@@ -1,12 +1,17 @@
-package com.my.backend.ban;
+package com.my.backend.service;
 
 
+import com.my.backend.dto.BanRequestDto;
+import com.my.backend.dto.BanResponseDto;
+import com.my.backend.dto.BanStatusDto;
 import com.my.backend.dto.NotificationDto;
 import com.my.backend.entity.Notification;
+import com.my.backend.entity.UserBan;
 import com.my.backend.entity.Users;
 import com.my.backend.enums.NotificationStatus;
 import com.my.backend.repository.NotificationRepository;
 import com.my.backend.repository.UserRepository;
+import com.my.backend.repository.UserBanRepository;
 import com.my.backend.websocket.NotificationWebSocketHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

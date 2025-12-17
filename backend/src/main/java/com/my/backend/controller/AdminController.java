@@ -1,14 +1,13 @@
 package com.my.backend.controller;
 
-import com.my.backend.ban.BanRequestDto;
-import com.my.backend.ban.BanResponseDto;
-import com.my.backend.ban.BanStatusDto;
-import com.my.backend.ban.UserBanService;
+import com.my.backend.dto.BanRequestDto;
+import com.my.backend.dto.BanResponseDto;
+import com.my.backend.dto.BanStatusDto;
 import com.my.backend.service.AdminService;
 import com.my.backend.service.UserService;
+import com.my.backend.service.UserBanService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 

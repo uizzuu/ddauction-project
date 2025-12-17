@@ -90,7 +90,6 @@ public class Users {
     private PhoneVerification phoneVerification;
 
     @Column(nullable = false)
-    @Builder.Default
     private boolean verified = false;
 
     // 인증 완료 처리 메서드 추가

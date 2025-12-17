@@ -1,4 +1,4 @@
-package com.my.backend.ban;
+package com.my.backend.dto;
 
 import lombok.*;
 

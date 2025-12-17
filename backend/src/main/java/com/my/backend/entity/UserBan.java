@@ -1,5 +1,4 @@
-package com.my.backend.ban;
-import com.my.backend.entity.Users;
+package com.my.backend.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
