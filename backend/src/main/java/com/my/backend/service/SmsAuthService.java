@@ -28,13 +28,13 @@ public class SmsAuthService {
     private final UserRepository usersRepository;
 
     @Value("${solapi.api-key}") 
-    private final String apiKey;
+    private String apiKey;
 
     @Value("${solapi.api-secret}") 
-    private final String apiSecret;
+    private String apiSecret;
 
     @Value("${solapi.from-number}")
-    private final String fromNumber;
+    private String fromNumber;
 
     // 인메모리 캐시 (실제 서비스에서는 Redis 권장)
     private Map<String, VerificationAttempt> attemptCache = new HashMap<>();
