@@ -84,6 +84,7 @@ public class AdminController {
         return ResponseEntity.ok(status);
     }
 
+    // 헬퍼함수
     // Authentication에서 관리자 ID 추출
     private Long getAdminIdFromAuth(Authentication auth) {
         CustomUserDetails userDetails = (CustomUserDetails) auth.getPrincipal();

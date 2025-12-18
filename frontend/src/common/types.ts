@@ -1,4 +1,4 @@
-import type { Role, ProductStatus, PaymentStatus, ImageType, ProductType, ProductCategoryType, NotificationStatus, ArticleType } from './enums';
+import type { Role, ProductStatus, PaymentStatus, ImageType, ProductType, ProductCategoryType, NotificationStatus, ArticleType, DeliveryType } from './enums';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -84,6 +84,7 @@ export interface Product {
   deliveryPrice?: number;
   deliveryAddPrice?: number;
   deliveryIncluded?: boolean;
+  deliveryType?: DeliveryType;
 
   // 정렬 로직 (인기순)을 위해 ProductSearchPage에서 사용되는 필드를 옵셔널로 추가
   bookmarkCount?: number;

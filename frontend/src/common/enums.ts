@@ -94,7 +94,6 @@ export const DELIVERY_TYPES = {
   MEETUP: "직거래",
   PICKUP: "방문수령"
 } as const;
-
 export type DeliveryType = keyof typeof DELIVERY_TYPES;
 export const DELIVERY_TYPE_KEYS = Object.keys(DELIVERY_TYPES) as DeliveryType[];
 

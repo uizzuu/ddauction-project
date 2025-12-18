@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatDateTime } from "../../../../common/util";
-import { PRODUCT_CATEGORIES } from "../../../../common/enums";
+import { DELIVERY_TYPES, PRODUCT_CATEGORIES } from "../../../../common/enums";
 import type { Product, User, EditProductForm, Bid } from "../../../../common/types";
 import Avatar from "../../../../components/ui/Avatar";
 
@@ -293,7 +293,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                         <div className="text-xs text-gray-900 flex flex-wrap gap-1">
                             {product.deliveryAvailable.split(",").map((method, idx) => (
                                 <span key={idx} className="inline-block border border-gray-300 border-solid px-1.5 py-0.5 rounded text-[12px] text-gray-600 bg-white">
-                                    {method.trim()}
+                                    {DELIVERY_TYPES[method.trim() as keyof typeof DELIVERY_TYPES] || method.trim()}
                                 </span>
                             ))}
                         </div>
