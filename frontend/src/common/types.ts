@@ -1,4 +1,4 @@
-import type { Role, ProductStatus, PaymentStatus, ImageType, ProductType, ProductCategoryType, NotificationStatus, ArticleType, DeliveryType } from './enums';
+import type { Role, ProductStatus, PaymentStatus, ImageType, ProductType, ProductCategoryType, NotificationStatus, ArticleType } from './enums';
 
 export interface CartItem extends Product {
   quantity: number;
@@ -76,7 +76,7 @@ export interface Product {
   // New Fields
   tag?: string;
   address?: string;
-  deliveryAvailable?: string; // Comma separated
+  deliveryAvailable?: string; // delivery_type 이 아니라 여기에 배송타입 저장되고있음
   productBanners?: string[]; // List of URLs
   originalPrice?: number;    // USED: 판매가
   salePrice?: number;        // STORE: 판매가
@@ -84,7 +84,6 @@ export interface Product {
   deliveryPrice?: number;
   deliveryAddPrice?: number;
   deliveryIncluded?: boolean;
-  deliveryType?: DeliveryType;
 
   // 정렬 로직 (인기순)을 위해 ProductSearchPage에서 사용되는 필드를 옵셔널로 추가
   bookmarkCount?: number;

@@ -4,7 +4,7 @@ import type { Product, Bid } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
 import { Heart, Truck, ChevronRight, Minus } from "lucide-react";
 import { toggleBookmark, fetchBookmarkCheck, API_BASE_URL } from "../../common/api";
-import { PRODUCT_CATEGORIES } from "../../common/enums";
+import { DELIVERY_TYPES, PRODUCT_CATEGORIES } from "../../common/enums";
 
 type Props = {
     product: Product;
@@ -61,7 +61,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
     }, [product.images]);
 
     // ✅ 입찰 정보 계산 (우선순위: props > 백엔드 집계 > product.bids 계산)
-    const getBidInfo = () => { 
+    const getBidInfo = () => {
         // 1. 외부에서 전달된 props가 있으면 사용
         if (externalBids !== undefined && externalHighestBid !== undefined) {
             return { bidCount: externalBids.length, highestBidPrice: externalHighestBid };
@@ -346,7 +346,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                     ) : (
                         /* USED: 실제 주소 사용 */
                         <div className="flex items-center gap-1 min-w-0">
-                            <span className="truncate">{product.address || product.deliveryAvailable}</span>
+                            <span className="truncate">{product.address || (product.deliveryAvailable ? (DELIVERY_TYPES[product.deliveryAvailable.split(",")[0].trim() as keyof typeof DELIVERY_TYPES] || product.deliveryAvailable) : "")}</span>
                             <span className="w-[1px] h-[8px] flex-shrink-0 bg-[#ddd] inline-block mx-0.5"></span>
                             <span className="text-nowrap flex-shrink-0">{formatTimeAgo(product.createdAt)}</span>
                         </div>
