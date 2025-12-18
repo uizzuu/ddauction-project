@@ -17,7 +17,7 @@ import type {
   CommentDto,
   CommentForm,
 } from "../../common/types";
-import { ArticleType } from "../../common/types";
+import { ARTICLE_TYPES, type ArticleType } from "../../common/enums";
 import { formatDateTime } from "../../common/util";
 
 interface Props {
@@ -238,7 +238,7 @@ export default function ArticleDetail({ user }: Props) {
   // 작성자 최초 등장 Map 계산 (렌더링 시 사용)
   const getUserFirstAppearanceMap = () => {
     const map = new Map<number, { index: number; commentId: number }>();
-    if (!article || article.articleType !== ArticleType.COMMUNITY) return map;
+    if (!article || article.articleType !== ARTICLE_TYPES.COMMUNITY) return map;
 
     comments.forEach((c, i) => {
       if (!map.has(c.userId)) {
@@ -255,7 +255,7 @@ export default function ArticleDetail({ user }: Props) {
     if (!article) return { label: "", originalCommentId: null };
 
     // Community: 익명 처리 (Sequence Based)
-    if (article.articleType === ArticleType.COMMUNITY) {
+    if (article.articleType === ARTICLE_TYPES.COMMUNITY) {
       // 1. 관리자 체크 (여기서는 별도 role 필드가 commentDto에 없으므로 nickName이나 userId 등으로 판단해야 할 수도 있으나, 보통 Role을 가져와야 함. 
       //    User 정보를 join해서 가져오지 않는 이상 nickName이 "관리자"인지 확인하거나, 로직상 admin 여부를 알 수 있어야 함. 
       //    현재 CommentDto에는 role 필드가 없으므로, 우선 '글쓴이' 요구사항을 확실히 반영.
@@ -307,7 +307,7 @@ export default function ArticleDetail({ user }: Props) {
     let target: CommentDto | undefined;
 
     // COMMUNITY: @숫자 형식 지원
-    if (article.articleType === ArticleType.COMMUNITY) {
+    if (article.articleType === ARTICLE_TYPES.COMMUNITY) {
       // @123 형태인지 확인
       const num = Number(cleanMention);
       if (!isNaN(num) && num > 0 && num <= comments.length) {
@@ -351,7 +351,7 @@ export default function ArticleDetail({ user }: Props) {
   const handleReplyClick = (index: number, nickname: string, userId: number) => {
     // Community라면 @숫자 또는 @글쓴이, 그외에는 @닉네임
     let mentionObj = nickname;
-    if (article?.articleType === ArticleType.COMMUNITY) {
+    if (article?.articleType === ARTICLE_TYPES.COMMUNITY) {
       if (userId === article.userId) {
         mentionObj = "글쓴이";
       } else {
@@ -381,7 +381,7 @@ export default function ArticleDetail({ user }: Props) {
         let displayMention = part;
         let isClickable = false;
 
-        if (article?.articleType === ArticleType.COMMUNITY) {
+        if (article?.articleType === ARTICLE_TYPES.COMMUNITY) {
           const clean = part.replace("@", "");
 
           // 1. "글쓴이" 인 경우
@@ -427,11 +427,11 @@ export default function ArticleDetail({ user }: Props) {
 
   const getArticleTypeBadge = (type: ArticleType) => {
     const badges = {
-      [ArticleType.NOTICE]: { label: "공지", bg: "bg-red-100", text: "text-red-600" },
-      [ArticleType.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-[#333]" },
-      [ArticleType.COMMUNITY]: { label: "자유", bg: "bg-gray-100", text: "text-gray-600" }
+      [ARTICLE_TYPES.NOTICE]: { label: "공지", bg: "bg-red-100", text: "text-red-600" },
+      [ARTICLE_TYPES.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-[#333]" },
+      [ARTICLE_TYPES.COMMUNITY]: { label: "자유", bg: "bg-gray-100", text: "text-gray-600" }
     };
-    const badge = badges[type] || badges[ArticleType.COMMUNITY];
+    const badge = badges[type] || badges[ARTICLE_TYPES.COMMUNITY];
     return (
       <span className={`px-2 py-0.5 rounded text-xs font-bold ${badge.bg} ${badge.text}`}>
         {badge.label}
@@ -559,7 +559,7 @@ export default function ArticleDetail({ user }: Props) {
 
       {/* 댓글 영역 */}
       {/* 댓글 영역 - NOTICE는 숨김 */}
-      {article.articleType !== ArticleType.NOTICE && (
+      {article.articleType !== ARTICLE_TYPES.NOTICE && (
         <div className="bg-white border border-[#ddd] rounded-lg p-6 shadow-sm">
           <h2 className="text-lg font-bold text-[#111] mb-4">
             댓글 <span className="text-[#999] font-normal text-base">({comments.length})</span>
@@ -669,7 +669,7 @@ export default function ArticleDetail({ user }: Props) {
           )}
 
           {/* 댓글 작성: Notice는 아예 숨김, FAQ는 관리자만, Community는 누구나 */}
-          {(article.articleType !== ArticleType.FAQ || user?.role === 'ADMIN') ? (
+          {(article.articleType !== ARTICLE_TYPES.FAQ || user?.role === 'ADMIN') ? (
             user ? (
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <label className="block text-sm font-bold text-[#333] mb-2">

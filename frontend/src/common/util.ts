@@ -1,5 +1,6 @@
-import type { Product, ProductCategoryType, ProductType, CartItem } from "./types";
+import type { Product, CartItem } from "./types";
 import { PRODUCT_STATUS, PAYMENT_STATUS, PRODUCT_CATEGORIES } from "./enums";
+import type { ProductCategoryType, ProductType } from "./enums";
 import { fetchBookmarkCount } from "./api";
 
 // SortOption
@@ -122,8 +123,8 @@ export const normalizeProduct = (
     images: p.images ? [...p.images] : [], // Copy the images array
     imageUrl: p.images?.[0]?.imagePath ?? "", // Set imageUrl from the first image
     auctionEndTime: p.auctionEndTime ?? defaultDateTime,
-    productStatus: p.productStatus ?? PRODUCT_STATUS[0],
-    paymentStatus: p.paymentStatus ?? PAYMENT_STATUS[0],
+    productStatus: p.productStatus ?? PRODUCT_STATUS.ACTIVE,
+    paymentStatus: p.paymentStatus ?? PAYMENT_STATUS.PENDING,
     productCategoryType: p.productCategoryType ?? null,
     productType: p.productType ?? ('AUCTION' as ProductType),
     sellerId: p.sellerId ?? 0,

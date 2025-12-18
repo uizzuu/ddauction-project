@@ -1,8 +1,8 @@
 import React, { useState, useRef } from "react";
 import { searchByImageFile } from "../../common/api";
 import ProductCard from "../ui/ProductCard";
-import type { Product, ProductCategoryType } from "../../common/types";
-import { CATEGORY_OPTIONS } from "../../common/enums";
+import type { Product } from "../../common/types";
+import { CATEGORY_OPTIONS, type ProductCategoryType } from "../../common/enums";
 import SelectStyle from "../ui/SelectStyle";
 import { ImagePlus, X, Search, Loader2 } from "lucide-react";
 

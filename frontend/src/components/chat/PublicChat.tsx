@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetchRecentPublicChats, deletePublicChat, banUser } from "../../common/api";
 import type { PublicChat, User, ChatMessagePayload } from "../../common/types";
 import { useNavigate } from "react-router-dom";
+import { ROLE } from "../../common/enums";
 
 // -----------------------------
 // PublicChat 컴포넌트
@@ -229,7 +230,7 @@ export default function PublicChat({ user }: Props) {
         <div className="flex-1 overflow-y-auto mb-3 p-4 rounded-lg">
           {messages.map((msg, i) => {
             const isMe = msg.user?.userId === user?.userId;
-            const isAdmin = user.role === "ADMIN";
+            const isAdmin = user.role === ROLE.ADMIN;
             const isDeleted = msg.isDeleted;
 
             const displayName = isAdmin && msg.user?.userName
@@ -340,7 +341,7 @@ export default function PublicChat({ user }: Props) {
           <div ref={messagesEndRef} />
         </div>
 
-        {user.role !== "ADMIN" ? (
+        {user.role !== ROLE.ADMIN ? (
           <div className="flex gap-2 px-3">
             <input
               type="text"

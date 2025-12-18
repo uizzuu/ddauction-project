@@ -1,13 +1,9 @@
 import type * as TYPE from "./types";
 import { normalizeProduct } from "./util";
 import type { SortOption } from "./util";
-import type { ArticleType, Notification } from './types';
-import type { ChatRoomListDto } from "./types";
-import type { AdminChatRoomListDto, PrivateChat } from "./types";
-import type { BusinessVerifyResponse } from './types';
-
-
-
+import type { Notification, ChatRoomListDto, AdminChatRoomListDto, PrivateChat, BusinessVerifyResponse } from './types';
+import { IMAGE_TYPE, REPORT_TYPE, ROLE } from "./enums";
+import type { ArticleType, ImageType, PaymentStatus, ProductCategoryType, ProductStatus, ProductType } from "./enums";
 
 const SPRING_API = "/api";
 const PYTHON_API = "/ai";
@@ -180,7 +176,7 @@ export const reportProduct = (productId: number, reason: string, token?: string)
   return fetchJson<string>(`${API_BASE_URL}${SPRING_API}/reports`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${t}` },
-    body: JSON.stringify({ refId: productId, reason, reportType: "PRODUCT" }),
+    body: JSON.stringify({ refId: productId, reason, reportType: REPORT_TYPE.PRODUCT }),
   });
 };
 
@@ -1081,7 +1077,7 @@ export async function uploadImageToS3(file: File, dir?: string, customName?: str
 async function saveImageToDatabase(
   refId: number,
   imagePath: string,
-  imageType: "PRODUCT" | "USER" | "REVIEW",
+  imageType: ImageType,
   productType?: string | null
 ): Promise<void> {
   const imageDto = {
@@ -1117,7 +1113,7 @@ export async function registerProductImage(
   imagePath: string,
   productType: string
 ): Promise<void> {
-  return saveImageToDatabase(productId, imagePath, "PRODUCT", productType);
+  return saveImageToDatabase(productId, imagePath, IMAGE_TYPE.PRODUCT, productType);
 }
 
 // 🔹 유저 이미지 저장 (public)
@@ -1125,7 +1121,7 @@ export async function registerUserImage(
   userId: number,
   imagePath: string
 ): Promise<void> {
-  return saveImageToDatabase(userId, imagePath, "USER");
+  return saveImageToDatabase(userId, imagePath, ROLE.USER);
 }
 
 // 🔹 리뷰 이미지 저장 (public)
@@ -1144,10 +1140,10 @@ export async function registerProductWithImages(
     startingPrice: number;
     // ... other fields
     auctionEndTime?: string;
-    productCategoryType: TYPE.ProductCategoryType | null;
-    productStatus: TYPE.ProductStatus;
-    productType: TYPE.ProductType;
-    paymentStatus: TYPE.PaymentStatus;
+    productCategoryType: ProductCategoryType | null;
+    productStatus: ProductStatus;
+    productType: ProductType;
+    paymentStatus: PaymentStatus;
     sellerId: number;
 
     // New Fields
@@ -1265,7 +1261,7 @@ export async function updateProductWithImages(
       finalImages.push({
         refId: productId,
         imagePath: s3Url,
-        imageType: "PRODUCT",
+        imageType: IMAGE_TYPE.PRODUCT,
         productType: productData.productType, // Ensure productType is passed if needed
       });
     } else {
@@ -1407,7 +1403,7 @@ export async function updateUserRole(userId: number, role: TYPE.User["role"]): P
 }
 
 // 관리자 상품 조회 (필터 적용 가능)
-export async function fetchAdminProducts(keyword?: string, category?: TYPE.ProductCategoryType | null): Promise<TYPE.Product[]> {
+export async function fetchAdminProducts(keyword?: string, category?: ProductCategoryType | null): Promise<TYPE.Product[]> {
   let url = `${API_BASE_URL}${SPRING_API}/products/search?`;
   if (keyword) url += `keyword=${encodeURIComponent(keyword)}&`;
   if (category) url += `productCategoryType=${category}&`; // 👈 여기 변경
@@ -2094,7 +2090,7 @@ export async function fetchUserProfile(userId: number): Promise<TYPE.User | null
         userName: "Mock User",
         nickName: `Seller_${userId}`,
         email: "hidden@email.com",
-        role: "USER"
+        role: ROLE.USER
       };
     }
     throw new Error("유저 프로필 조회 실패");

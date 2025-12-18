@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import CheckboxStyle from "../ui/CheckboxStyle";
 import type { User, ProductQna, Product } from "../../common/types";
-import { ROLE } from "../../common/enums";
 import {
   getQnaList,
   createQna,
@@ -12,6 +11,7 @@ import {
   deleteQnaAnswer,
 } from "../../common/api";
 import { formatDateTime } from "../../common/util";
+import { ROLE } from "../../common/enums";
 
 type Props = {
   user: User | null;
@@ -138,7 +138,7 @@ export default function ProductQnA({
   // 답변 권한 확인 함수
   const canAnswer = () => {
     if (!user || !product) return false;
-    return user.role === ROLE[0] || user.userId === product.sellerId;
+    return user.role === ROLE.ADMIN || user.userId === product.sellerId;
   };
 
   // 답변 수정 시작
@@ -435,7 +435,7 @@ export default function ProductQnA({
 
                                     {/* 수정/삭제 버튼 */}
                                     {user &&
-                                      (user.role === "ADMIN" ||
+                                      (user.role === ROLE.ADMIN ||
                                         user.userId === a.qnaUserId) && (
                                         <div className="flex gap-2 mt-3 justify-end">
                                           <button

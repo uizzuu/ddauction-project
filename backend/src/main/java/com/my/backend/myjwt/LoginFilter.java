@@ -43,7 +43,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
             UsernamePasswordAuthenticationToken authToken;
 
             if (request.getRequestURI().contains("/phone")) {
-                // 📱 핸드폰 로그인 처리
+                // 핸드폰 로그인 처리
                 PhoneLoginRequest loginRequest = objectMapper.readValue(
                         request.getInputStream(), PhoneLoginRequest.class);
                 String phone = loginRequest.getPhone();
@@ -53,7 +53,7 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
                 authToken = new UsernamePasswordAuthenticationToken(phone, password, null);
             } else {
-                // 📧 이메일 로그인 처리
+                // 이메일 로그인 처리
                 LoginRequest loginRequest = objectMapper.readValue(
                         request.getInputStream(), LoginRequest.class);
                 String email = loginRequest.getEmail();

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import DatePickerStyle from "../../components/ui/DatePickerStyle";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Package, Heart, MessageSquare, Settings, ShoppingBag, Gavel, Star, FileText, Search, Check, AlertCircle, ChevronDown, HelpCircle } from "lucide-react";
-import { COURIER_OPTIONS, ARTICLE_TYPE_LABELS } from "../../common/enums";
+import { COURIER_OPTIONS, ARTICLE_TYPE_LABELS, IMAGE_TYPE } from "../../common/enums";
 import type { User, Product, Report, ProductQna, Inquiry, Review, Bid, ArticleDto, CommentDto } from "../../common/types";
 import * as API from "../../common/api";
 import { API_BASE_URL } from "../../common/api";
@@ -619,7 +619,7 @@ export default function MyPage({ user, setUser }: Props) {
               {activeTab === "profile_edit" && (
                 <div className="space-y-8 w-full mx-auto">
                   <CollapsibleSection title="프로필 이미지" icon={<Settings size={20} />} className="border-0">
-                    <ProfileImageUploader user={user} isEditing={true} onUpload={(url: string) => setUser({ ...user, images: [{ imageId: 0, refId: user.userId, imagePath: url, imageType: "USER" }] })} onDelete={() => setUser({ ...user, images: [] })} />
+                    <ProfileImageUploader user={user} isEditing={true} onUpload={(url: string) => setUser({ ...user, images: [{ imageId: 0, refId: user.userId, imagePath: url, imageType: IMAGE_TYPE.USER }] })} onDelete={() => setUser({ ...user, images: [] })} />
                   </CollapsibleSection>
 
                   <CollapsibleSection title="회원 정보 수정" icon={<Settings size={20} />}>

@@ -2,14 +2,14 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom"; // useSearchParams 추가
 import { getArticles } from "../../common/api";
 import type { ArticleDto, User } from "../../common/types";
-import { ArticleType } from "../../common/types";
+import { ARTICLE_TYPES, type ArticleType } from "../../common/enums";
 import { formatShortDate } from "../../common/util";
 
 // 사용 가능한 탭 키 목록을 정의합니다.
 const TABS = [
-  ArticleType.COMMUNITY,
-  ArticleType.NOTICE,
-  ArticleType.FAQ,
+  ARTICLE_TYPES.COMMUNITY,
+  ARTICLE_TYPES.NOTICE,
+  ARTICLE_TYPES.FAQ,
 ];
 type TabKey = ArticleType | "COMMUNITY"; // 실제 탭 키 타입
 
@@ -29,7 +29,7 @@ export default function ArticleList({ user }: Props) {
   // URL 파라미터가 유효한 탭 키가 아닐 경우 기본값 COMMUNITY를 사용합니다.
   const initialTab: TabKey = (urlTab && TABS.includes(urlTab as ArticleType))
     ? urlTab
-    : ArticleType.COMMUNITY;
+    : ARTICLE_TYPES.COMMUNITY;
 
   const [activeTab, setActiveTab] = useState<TabKey>(initialTab);
   const [articles, setArticles] = useState<ArticleDto[]>([]);
@@ -42,9 +42,9 @@ export default function ArticleList({ user }: Props) {
   // 언더바 위치 업데이트 함수
   const updateUnderlinePosition = (currentTab: TabKey) => {
     const tabs = [
-      { key: ArticleType.COMMUNITY },
-      { key: ArticleType.NOTICE },
-      { key: ArticleType.FAQ },
+      { key: ARTICLE_TYPES.COMMUNITY },
+      { key: ARTICLE_TYPES.NOTICE },
+      { key: ARTICLE_TYPES.FAQ },
     ];
     // 현재 활성화된 탭의 인덱스를 찾습니다.
     const index = tabs.findIndex((t) => t.key === currentTab);
@@ -63,8 +63,8 @@ export default function ArticleList({ user }: Props) {
     const currentUrlTab = searchParams.get("tab") as TabKey | null;
     const newTab: TabKey = (currentUrlTab && TABS.includes(currentUrlTab as ArticleType))
       ? currentUrlTab
-      : ArticleType.COMMUNITY;
-      
+      : ARTICLE_TYPES.COMMUNITY;
+
     setActiveTab(newTab);
     // 탭이 변경되었으므로 언더바 위치를 업데이트합니다.
     updateUnderlinePosition(newTab);
@@ -77,7 +77,7 @@ export default function ArticleList({ user }: Props) {
     setLoading(true);
 
     const params = { articleType: activeTab };
-    
+
     // API 호출 (필터링)
     getArticles(params)
       .then(setArticles)
@@ -93,8 +93,8 @@ export default function ArticleList({ user }: Props) {
     requestAnimationFrame(() => {
       setTimeout(() => {
         // 초기 activeTab을 기준으로 위치를 설정합니다.
-        updateUnderlinePosition(initialTab); 
-      }, 50); 
+        updateUnderlinePosition(initialTab);
+      }, 50);
     });
   }, []); // [] : 최초 마운트 시 한 번만 실행
 
@@ -104,16 +104,16 @@ export default function ArticleList({ user }: Props) {
     // 이 변경은 위의 useEffect([searchParams])를 트리거하고 activeTab이 업데이트됩니다.
     setSearchParams({ tab: tabKey });
   };
-  
+
   // (생략된 기타 함수 및 렌더링 로직은 동일)
   const getArticleTypeBadge = (type: ArticleType) => {
     // ... (기존 코드와 동일)
     const badges = {
-      [ArticleType.NOTICE]: { label: "공지", bg: "bg-red-100", text: "text-red-600" },
-      [ArticleType.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-[#333]" },
-      [ArticleType.COMMUNITY]: { label: "자유", bg: "bg-gray-100", text: "text-gray-600" }
+      [ARTICLE_TYPES.NOTICE]: { label: "공지", bg: "bg-red-100", text: "text-red-600" },
+      [ARTICLE_TYPES.FAQ]: { label: "FAQ", bg: "bg-blue-100", text: "text-[#333]" },
+      [ARTICLE_TYPES.COMMUNITY]: { label: "자유", bg: "bg-gray-100", text: "text-gray-600" }
     };
-    const badge = badges[type] || badges[ArticleType.COMMUNITY];
+    const badge = badges[type] || badges[ARTICLE_TYPES.COMMUNITY];
     return (
       <span className={`px-2 py-0.5 rounded text-xs font-bold ${badge.bg} ${badge.text}`}>
         {badge.label}
@@ -149,9 +149,9 @@ export default function ArticleList({ user }: Props) {
       {/* 탭 네비게이션 */}
       <div className="relative flex gap-2 mb-6 border-b border-gray-200">
         {[
-          { key: ArticleType.COMMUNITY, label: "자유게시판" },
-          { key: ArticleType.NOTICE, label: "공지사항" },
-          { key: ArticleType.FAQ, label: "FAQ" },
+          { key: ARTICLE_TYPES.COMMUNITY, label: "자유게시판" },
+          { key: ARTICLE_TYPES.NOTICE, label: "공지사항" },
+          { key: ARTICLE_TYPES.FAQ, label: "FAQ" },
         ].map((tab, index) => (
           <button
             key={tab.key}

@@ -4,6 +4,7 @@ import {
   CATEGORY_OPTIONS,
   PRODUCT_CATEGORIES,
   type ProductCategoryType,
+  PRODUCT_STATUS_VALUES,
 } from "../../common/enums";
 import { Search } from "lucide-react";
 import CustomSelect from "../ui/CustomSelect";
@@ -45,7 +46,7 @@ export default function ProductManage({
   fetchProducts,
 }: Props) {
   const handleProductStatusChange = (value: string) => {
-    if (PRODUCT_STATUS.includes(value as Product["productStatus"])) {
+    if (PRODUCT_STATUS_VALUES.includes(value as Product["productStatus"])) {
       setEditProductForm({
         ...editProductForm,
         productStatus: value as Product["productStatus"],
@@ -219,7 +220,7 @@ export default function ProductManage({
                   {editingProductId === p.productId ? (
                     <CustomSelect
                       value={
-                        editProductForm.productStatus ?? PRODUCT_STATUS[0]
+                        editProductForm.productStatus ?? PRODUCT_STATUS.ACTIVE
                       }
                       onChange={(value) =>
                         handleProductStatusChange(value)

@@ -2,6 +2,7 @@ import type { User } from "../../common/types";
 import { Search } from "lucide-react";
 import { useMemo } from "react";
 import CustomSelect from "../ui/CustomSelect";
+import { ROLE } from "../../common/enums";
 
 type Props = {
   users: User[];
@@ -173,14 +174,14 @@ export default function UserManage({
 
                 <td className="px-4 py-3 text-sm">
                   <CustomSelect
-                    value={u.role || "USER"}
+                    value={u.role || ROLE.USER}
                     onChange={(value) =>
                       handleChangeRole(u.userId, value as User["role"])
                     }
                     options={[
-                      { value: "USER", label: "USER" },
-                      { value: "BANNED", label: "BANNED" },
-                      { value: "ADMIN", label: "ADMIN" },
+                      { value: ROLE.USER, label: ROLE.USER },
+                      { value: ROLE.BANNED, label: ROLE.BANNED },
+                      { value: ROLE.ADMIN, label: ROLE.ADMIN },
                     ]}
                     className="w-32"
                   />

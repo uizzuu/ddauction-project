@@ -1,14 +1,19 @@
-export const ROLE = ["ADMIN", "USER", "BANNED"] as const;
-export type Role = (typeof ROLE)[number];
+export const ROLE = { ADMIN: "ADMIN", USER: "USER", SELLER: "SELLER", BANNED: "BANNED" } as const;
+export type Role = typeof ROLE[keyof typeof ROLE];
 
-export const PRODUCT_STATUS = ["ACTIVE", "CLOSED", "SOLD"] as const;
-export type ProductStatus = (typeof PRODUCT_STATUS)[number];
+export const PRODUCT_STATUS = {
+  ACTIVE: "ACTIVE",
+  CLOSED: "CLOSED",
+  SOLD: "SOLD"
+} as const;
+export type ProductStatus = typeof PRODUCT_STATUS[keyof typeof PRODUCT_STATUS];
+export const PRODUCT_STATUS_VALUES = Object.values(PRODUCT_STATUS) as ProductStatus[];
 
-export const PAYMENT_STATUS = ["PENDING", "PAID", "COMPLETED", "FAILED"] as const;
-export type PaymentStatus = (typeof PAYMENT_STATUS)[number];
+export const PAYMENT_STATUS = { PENDING: "PENDING", PAID: "PAID", COMPLETED: "COMPLETED", FAILED: "FAILED" } as const;
+export type PaymentStatus = typeof PAYMENT_STATUS[keyof typeof PAYMENT_STATUS];
 
-export const CHAT_TYPE = ["PRIVATE", "PUBLIC"] as const;
-export type ChatType = (typeof CHAT_TYPE)[number];
+export const CHAT_TYPE = { PRIVATE: "PRIVATE", PUBLIC: "PUBLIC" } as const;
+export type ChatType = typeof CHAT_TYPE[keyof typeof CHAT_TYPE];
 
 // Product Type Definition (Consolidated)
 export const PRODUCT_TYPES = {
@@ -16,7 +21,6 @@ export const PRODUCT_TYPES = {
   USED: "중고",
   STORE: "스토어",
 } as const;
-
 export type ProductType = keyof typeof PRODUCT_TYPES;
 export const PRODUCT_TYPE_KEYS = Object.keys(PRODUCT_TYPES) as ProductType[];
 
@@ -26,18 +30,25 @@ export const ARTICLE_TYPES = {
   COMMUNITY: "COMMUNITY",
   FAQ: "FAQ"
 } as const;
+export type ArticleType = typeof ARTICLE_TYPES[keyof typeof ARTICLE_TYPES];
 
 export const ARTICLE_TYPE_LABELS: Record<keyof typeof ARTICLE_TYPES, string> = {
   NOTICE: "공지사항",
   COMMUNITY: "자유",
   FAQ: "FAQ",
 };
-
-export type ArticleType = keyof typeof ARTICLE_TYPES;
 export const ARTICLE_TYPE_KEYS = Object.keys(ARTICLE_TYPES) as ArticleType[];
 
-export const IMAGE_TYPE = ["PRODUCT", "REVIEW", "USER"] as const;
-export type ImageType = (typeof IMAGE_TYPE)[number];
+export const REPORT_TYPE = {
+  PRODUCT: "PRODUCT",
+  ARTICLE: "ARTICLE",
+  PUBLIC_CHAT: "PUBLIC_CHAT",
+  COMMENT: "COMMENT",
+}
+export type Report = typeof REPORT_TYPE[keyof typeof REPORT_TYPE];
+
+export const IMAGE_TYPE = { PRODUCT: "PRODUCT", REVIEW: "REVIEW", USER: "USER" } as const;
+export type ImageType = typeof IMAGE_TYPE[keyof typeof IMAGE_TYPE];
 
 // Product Categories (Consolidated)
 export const PRODUCT_CATEGORIES = {

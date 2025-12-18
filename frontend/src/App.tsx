@@ -36,6 +36,7 @@ import {
   TermsAgreement
 } from "./common/import";
 import type { User } from "./common/types";
+import { ROLE, type Role } from "./common/enums";
 
 // 유효한 경로 패턴 정의
 const VALID_PATHS = [
@@ -115,7 +116,7 @@ export default function App() {
         userId: number;
         userName: string;
         nickName: string;
-        role?: "ADMIN" | "USER" | "BANNED";
+        role?: Role;
         businessNumber?: string;
       }>(token);
       console.log("🔍 JWT decoded:", decoded); // ✅ 추가
@@ -190,7 +191,7 @@ export default function App() {
         <Route
           path="/admin"
           element={
-            user?.role === "ADMIN" ? (
+            user?.role === ROLE.ADMIN ? (
               <AdminPage user={user!} />
             ) : (
               <div style={{ padding: "20px" }}>

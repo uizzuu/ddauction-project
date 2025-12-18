@@ -12,6 +12,7 @@ import {
 import { NotificationModal } from "../../common/import";
 import { RealTimeSearch } from "../../common/websocket";
 import { getCartItems } from "../../common/util";
+import { ROLE } from "../../common/enums";
 
 type Props = {
   user: User | null;
@@ -400,7 +401,7 @@ export default function Header({ user, setUser }: Props) {
           {user ? (
             <>
               <span>{user.nickName} 님</span>
-              {user.role === "ADMIN" && (
+              {user.role === ROLE.ADMIN && (
                 <NavLink to="/admin" className="hover:text-[#666] transition-colors">
                   관리자 페이지
                 </NavLink>

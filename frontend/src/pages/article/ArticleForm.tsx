@@ -3,8 +3,7 @@ import CheckboxStyle from "../../components/ui/CheckboxStyle";
 import { useNavigate, useParams } from "react-router-dom";
 import { createArticle, getArticleById, updateArticle } from "../../common/api";
 import type { ArticleForm as ArticleFormType, User } from "../../common/types";
-import { ArticleType } from "../../common/types";
-
+import { ARTICLE_TYPES, ROLE } from "../../common/enums";
 interface Props {
   user: User | null;
 }
@@ -12,12 +11,12 @@ interface Props {
 export default function ArticleForm({ user }: Props) {
   const { id } = useParams(); // 게시글 ID (수정 모드일 경우)
   const navigate = useNavigate();
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === ROLE.ADMIN;
 
   const [form, setForm] = useState<ArticleFormType>({
     title: "",
     content: "",
-    articleType: ArticleType.COMMUNITY, // 기본값: COMMUNITY
+    articleType: ARTICLE_TYPES.COMMUNITY,
     isSecret: false,
   });
 
@@ -144,9 +143,9 @@ export default function ArticleForm({ user }: Props) {
           </label>
           <div className="flex gap-2">
             {[
-              { value: ArticleType.COMMUNITY, label: "자유" },
-              ...(isAdmin ? [{ value: ArticleType.NOTICE, label: "공지사항" }] : []),
-              { value: ArticleType.FAQ, label: "FAQ" }
+              { value: ARTICLE_TYPES.COMMUNITY, label: "자유" },
+              ...(isAdmin ? [{ value: ARTICLE_TYPES.NOTICE, label: "공지사항" }] : []),
+              { value: ARTICLE_TYPES.FAQ, label: "FAQ" }
             ].map((type) => (
               <button
                 key={type.value}
@@ -169,7 +168,7 @@ export default function ArticleForm({ user }: Props) {
         </div>
 
         {/* 비밀글 설정 (FAQ일 때만 표시) */}
-        {form.articleType === ArticleType.FAQ && (
+        {form.articleType === ARTICLE_TYPES.FAQ && (
           <div className="mb-6">
             <div className="mb-6">
               <CheckboxStyle

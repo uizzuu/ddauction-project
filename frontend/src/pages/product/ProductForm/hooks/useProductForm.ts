@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import type { User, ProductForm, PaymentStatus } from "../../../../common/types";
-import type { ProductCategoryType } from "../../../../common/enums";
+import type { User, ProductForm } from "../../../../common/types";
+import { PAYMENT_STATUS, PRODUCT_TYPES, type ProductCategoryType } from "../../../../common/enums";
 import { formatDateTime } from "../../../../common/util";
 import { generateAiDescription, registerProductWithImages, fetchProductById, updateProductWithImages } from "../../../../common/api";
 
@@ -12,9 +12,9 @@ export default function useProductForm(user: User | null, productId?: number) {
     const [form, setForm] = useState<ProductForm>({
         title: "",
         content: "",
-        startingPrice: "",      // ✅ AUCTION: 시작 입찰가
-        salePrice: "",          // ✅ STORE: 판매가 (NEW)
-        originalPrice: "",      // ✅ USED: 판매가
+        startingPrice: "",      // AUCTION: 시작 입찰가
+        salePrice: "",          // STORE: 판매가 (NEW)
+        originalPrice: "",      // USED: 판매가
         images: [],
         productType: "AUCTION",
         auctionEndTime: "",
@@ -23,7 +23,7 @@ export default function useProductForm(user: User | null, productId?: number) {
         address: "",
         deliveryAvailable: [],
         productBanners: [],
-        discountRate: "",       // ✅ STORE: 할인율
+        discountRate: "",       // STORE: 할인율
         deliveryPrice: "",
         deliveryAddPrice: "",
         deliveryIncluded: false,
@@ -64,9 +64,9 @@ export default function useProductForm(user: User | null, productId?: number) {
             setForm({
                 title: product.title,
                 content: product.content || "",
-                startingPrice: String(product.startingPrice || ""),      // ✅ AUCTION
-                salePrice: String(extProduct.salePrice || ""),           // ✅ STORE
-                originalPrice: String(product.originalPrice || ""),      // ✅ USED
+                startingPrice: String(product.startingPrice || ""),      // AUCTION
+                salePrice: String(extProduct.salePrice || ""),           // STORE
+                originalPrice: String(product.originalPrice || ""),      // USED
                 images: (product.images || []) as any[],
                 productType: product.productType as "AUCTION" | "USED" | "STORE",
                 auctionEndTime: product.auctionEndTime ? product.auctionEndTime.replace("T", " ") : "",
@@ -135,14 +135,14 @@ export default function useProductForm(user: User | null, productId?: number) {
         }
     };
 
-    // ✅ 타입별 가격 가져오기 (수정됨)
+    // 타입별 가격 가져오기 (수정됨)
 const getPriceByType = (): number => {
     const cleanNumber = (val?: string) =>
         Number(String(val ?? "").replace(/[^0-9]/g, "")) || 0;
 
-    if (form.productType === "AUCTION") {
+    if (PRODUCT_TYPES.AUCTION) {
         return cleanNumber(form.startingPrice);
-    } else if (form.productType === "STORE") {
+    } else if (PRODUCT_TYPES.STORE) {
         return cleanNumber(form.salePrice);
     } else {
         // USED
@@ -154,7 +154,7 @@ const getPriceByType = (): number => {
     const validateForm = () => {
         if (!form.title) return "제목은 필수 입력 항목입니다";
         
-        if (form.productType === "STORE") {
+        if (PRODUCT_TYPES.STORE) {
             if (!form.content && (!form.productBanners || form.productBanners.length === 0)) {
                 return "스토어 상품은 상세 설명 또는 상세 이미지를 입력해야 합니다";
             }
@@ -162,19 +162,19 @@ const getPriceByType = (): number => {
             if (!form.content) return "상세 설명은 필수 입력 항목입니다";
         }
 
-        // ✅ 타입별 가격 검증
+        // 타입별 가격 검증
         const price = getPriceByType();
         if (price <= 0) {
-            if (form.productType === "AUCTION") {
+            if (PRODUCT_TYPES.AUCTION) {
                 return "시작 입찰가는 1원 이상이어야 합니다";
-            } else if (form.productType === "STORE") {
+            } else if (PRODUCT_TYPES.STORE) {
                 return "판매가는 1원 이상이어야 합니다";
             } else {
                 return "가격은 1원 이상이어야 합니다";
             }
         }
 
-        if (form.productType === "AUCTION" && !form.auctionEndTime) {
+        if (PRODUCT_TYPES.AUCTION && !form.auctionEndTime) {
             return "경매 종료 시간을 입력해주세요";
         }
         if (!form.productCategoryType) return "카테고리를 선택해주세요";
@@ -205,9 +205,9 @@ const getPriceByType = (): number => {
             return;
         }
 
-        // ✅ 타입별 가격으로 확인 메시지 표시
+        // 타입별 가격으로 확인 메시지 표시
         const price = getPriceByType();
-        const priceLabel = form.productType === "AUCTION" ? "시작가" : "판매가";
+        const priceLabel = PRODUCT_TYPES.AUCTION ? "시작가" : "판매가";
 
         const summary = isEditMode
             ? "상품 정보를 수정하시겠습니까?"
@@ -218,15 +218,15 @@ const getPriceByType = (): number => {
         try {
             setUploading(true);
 
-            // ✅ 타입별 가격 필드 설정
+            // 타입별 가격 필드 설정
             const productData: any = {
                 title: form.title,
                 content: form.content,
-                auctionEndTime: form.productType === "AUCTION" ? (form.auctionEndTime ? form.auctionEndTime.replace(" ", "T") : undefined) : undefined,
+                auctionEndTime: PRODUCT_TYPES.AUCTION ? (form.auctionEndTime ? form.auctionEndTime.replace(" ", "T") : undefined) : undefined,
                 sellerId: user.userId,
                 productCategoryType: form.productCategoryType as ProductCategoryType,
                 productType: form.productType,
-                productStatus: (form as any).productStatus || "ACTIVE",
+                productStatus: (form as any).PRODUCT_STATUS.ACTIVE,
                 tag: form.tag,
                 address: form.address,
                 deliveryAvailable: Array.isArray(form.deliveryAvailable) ? form.deliveryAvailable.join(",") : form.deliveryAvailable,
@@ -236,13 +236,13 @@ const getPriceByType = (): number => {
                 deliveryIncluded: form.deliveryIncluded,
                 latitude: form.latitude,
                 longitude: form.longitude,
-                paymentStatus: "PENDING" as PaymentStatus
+                paymentStatus: PAYMENT_STATUS.PENDING,
             };
 
-            // ✅ 타입별 가격 필드 매핑
-            if (form.productType === "AUCTION") {
+            // 타입별 가격 필드 매핑
+            if (PRODUCT_TYPES.AUCTION) {
                 productData.startingPrice = Math.max(Number(form.startingPrice.replace(/[^0-9]/g, "")), 1);
-            } else if (form.productType === "STORE") {
+            } else if (PRODUCT_TYPES.STORE) {
                 productData.salePrice = Math.max(Number(String(form.salePrice).replace(/[^0-9]/g, "")), 1);
             } else {
                 // USED

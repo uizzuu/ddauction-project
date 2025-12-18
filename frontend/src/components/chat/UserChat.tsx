@@ -6,6 +6,7 @@ import type { UserChatProps, PrivateChat, ChatMessagePayload, User, ChatListItem
 import { deletePrivateChat, fetchProductById, fetchChatUsers, fetchPrivateMessages, API_BASE_URL, fetchMyChatRooms, fetchPrivateMessagesByRoomId, fetchAdminAllChatRooms, banUser } from "../../common/api";
 import { getCategoryName } from "../../common/util";
 import type { ChatRoomListDto, AdminChatRoomListDto } from "../../common/types";
+import { ROLE } from "../../common/enums";
 
 export default function UserChat({ user }: UserChatProps) {
   const location = useLocation();
@@ -26,7 +27,7 @@ export default function UserChat({ user }: UserChatProps) {
   const ws = useRef<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === ROLE.ADMIN;
   const isLocal = window.location.hostname === "localhost";
 
   const [chatRooms, setChatRooms] = useState<ChatRoomListDto[]>([]);
