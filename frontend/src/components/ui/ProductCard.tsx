@@ -61,7 +61,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
     }, [product.images]);
 
     // ✅ 입찰 정보 계산 (우선순위: props > 백엔드 집계 > product.bids 계산)
-    const getBidInfo = () => {
+    const getBidInfo = () => { 
         // 1. 외부에서 전달된 props가 있으면 사용
         if (externalBids !== undefined && externalHighestBid !== undefined) {
             return { bidCount: externalBids.length, highestBidPrice: externalHighestBid };
@@ -293,7 +293,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                 {/* Price Area */}
                 <div className="mt-auto">
                     {product.productType === "AUCTION" ? (
-                        /* ✅ AUCTION: 시작가 + 현재가 표시 */
+                        /* AUCTION: 시작가(startingPrice) + 현재가 표시 */
                         <div className="flex flex-col">
                             <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
                                 시작가 {formatPrice(product.startingPrice)}
@@ -306,7 +306,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                             </div>
                         </div>
                     ) : product.productType === "STORE" ? (
-                        /* ✅ STORE: salePrice 사용 */
+                        /* STORE: salePrice 사용 */
                         <div className="flex flex-col">
                             {priceInfo.hasDiscount && (
                                 <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
@@ -323,7 +323,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                             </div>
                         </div>
                     ) : (
-                        /* ✅ USED: originalPrice 사용 */
+                        /* USED: originalPrice 사용 */
                         <div className="flex flex-col">
                             <span className="text-[0.95rem] font-bold text-[#333]">
                                 {formatPrice(priceInfo.finalPrice)}
@@ -335,18 +335,18 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                 {/* Footer Info Area */}
                 <div className="mt-2 text-[0.85rem] text-[#999] font-medium flex items-center gap-1">
                     {product.productType === "AUCTION" ? (
-                        /* ✅ AUCTION: 입찰 건수 표시 */
+                        /* AUCTION: 입찰 건수 표시 */
                         <span className="text-[#aaa]">입찰 {bidInfo.bidCount}건</span>
                     ) : product.productType === "STORE" ? (
-                        /* ✅ STORE: deliveryIncluded 체크 */
+                        /* STORE: deliveryIncluded 체크 */
                         <div className="flex items-center gap-1">
                             <Truck size={10} />
-                            <span>{product.deliveryIncluded === true ? "무료배송" : "유료배송"}</span>
+                            <span>{product.deliveryIncluded === true ? "무료배송" : `배송비 ${formatPrice(product.deliveryPrice)}`}</span>
                         </div>
                     ) : (
-                        /* ✅ USED: 실제 주소 사용 */
+                        /* USED: 실제 주소 사용 */
                         <div className="flex items-center gap-1 min-w-0">
-                            <span className="truncate">{product.address || "지역 미설정"}</span>
+                            <span className="truncate">{product.address || product.deliveryAvailable}</span>
                             <span className="w-[1px] h-[8px] flex-shrink-0 bg-[#ddd] inline-block mx-0.5"></span>
                             <span className="text-nowrap flex-shrink-0">{formatTimeAgo(product.createdAt)}</span>
                         </div>

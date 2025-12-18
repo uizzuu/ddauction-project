@@ -68,7 +68,7 @@ export interface Product {
   sellerProfileImage?: string;
   title: string;
   content?: string;
-  startingPrice?: number;  // ✅ AUCTION: 시작 입찰가
+  startingPrice?: number;  // AUCTION: 시작 입찰가
   images?: Image[];
   auctionEndTime?: string; // Optional for non-auction items
   productStatus: ProductStatus;
@@ -89,9 +89,9 @@ export interface Product {
   address?: string;
   deliveryAvailable?: string; // Comma separated
   productBanners?: string[]; // List of URLs
-  originalPrice?: number;    // ✅ USED: 판매가
-  salePrice?: number;        // ✅ STORE: 판매가
-  discountRate?: number;     // ✅ STORE: 할인율
+  originalPrice?: number;    // USED: 판매가
+  salePrice?: number;        // STORE: 판매가
+  discountRate?: number;     // STORE: 할인율
   deliveryPrice?: number;
   deliveryAddPrice?: number;
   deliveryIncluded?: boolean;
@@ -125,9 +125,9 @@ export interface SignupForm {
 export interface ProductForm {
   title: string;
   content: string;
-  startingPrice: string;   // ✅ AUCTION: 시작 입찰가
-  salePrice?: string;      // ✅ STORE: 판매가 (NEW)
-  originalPrice?: string;  // ✅ USED: 판매가
+  startingPrice: string;   // AUCTION: 시작 입찰가
+  salePrice?: string;      // STORE: 판매가 (NEW)
+  originalPrice?: string;  // USED: 판매가
   auctionEndTime: string;
   productCategoryType: ProductCategoryType | null;
   productType: ProductType; // 상품 타입 필드 추가
@@ -140,7 +140,7 @@ export interface ProductForm {
   longitude?: number;
   deliveryAvailable?: string[]; // Frontend uses array, convert to string for backend
   productBanners?: File[]; // Store only (Multi-upload)
-  discountRate?: string;   // ✅ STORE: 할인율
+  discountRate?: string;   // STORE: 할인율
   deliveryPrice?: string;
   deliveryAddPrice?: string;
   deliveryIncluded?: boolean;

@@ -61,6 +61,7 @@ public class JWTUtil {
     }
     public String createJwt(Map<String, Object> claims, Long expiredMs) {
         return Jwts.builder()
+                .claims(claims)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + expiredMs))
                 .signWith(secretKey)
