@@ -25,6 +25,18 @@ export interface User {
   address?: string;
   detailAddress?: string;
   zipCode?: string;
+  activeBan?: BanResponseDto; // 프론트엔드에서 매핑할 정지 정보
+}
+
+export interface BanResponseDto {
+  banId: number;
+  userId: number;
+  userName: string;
+  reason: string;
+  banUntil: string;
+  active: boolean;
+  createdAt: string;
+  bannedByName: string;
 }
 
 export interface Bid {

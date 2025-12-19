@@ -37,12 +37,12 @@ export default function AdminPage({ user }: { user: User }) {
     // 저장된 값이 유효한 TabId이면 사용, 아니면 기본값 "user" 사용
     return isValidTabId(savedTab) ? savedTab : "user";
   });
-  
+
   const tabRefs = useRef<{ [key in TabId]?: HTMLButtonElement }>({});
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
 
   const [users, setUsers] = useState<User[]>([]);
-// ... (나머지 상태 선언은 동일)
+  // ... (나머지 상태 선언은 동일)
   const [products, setProducts] = useState<Product[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [stats, setStats] = useState<{
@@ -119,8 +119,19 @@ export default function AdminPage({ user }: { user: User }) {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const data = await API.getUsers(userFilterField, userFilterKeyword);
-      setUsers(data);
+      const [usersData, activeBans] = await Promise.all([
+        API.getUsers(userFilterField, userFilterKeyword),
+        API.fetchActiveBans(),
+      ]);
+
+      // 매핑
+      const banMap = new Map(activeBans.map((ban) => [ban.userId, ban]));
+      const mappedUsers = usersData.map((u) => ({
+        ...u,
+        activeBan: banMap.get(u.userId),
+      }));
+
+      setUsers(mappedUsers);
     } catch (err) {
       console.error("회원 조회 실패:", err);
       setUsers([]);
@@ -216,7 +227,7 @@ export default function AdminPage({ user }: { user: User }) {
       productType: product.productType || "AUCTION",
       auctionEndTime: product.auctionEndTime || "",
       // @ts-ignore: images 속성이 EditProductForm에 추가된 경우를 위해 임시 무시
-      images: product.images || [], 
+      images: product.images || [],
     });
   };
 

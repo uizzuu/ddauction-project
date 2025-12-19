@@ -1441,6 +1441,61 @@ export async function updateReportStatus(reportId: number, status: boolean): Pro
   if (!res.ok) throw new Error("신고 상태 변경 실패");
 }
 
+// ===================== 유저 정지 관리 (UserBan) =====================
+
+// 활성화된 모든 정지 목록 조회
+export async function fetchActiveBans(): Promise<TYPE.BanResponseDto[]> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/active`, {
+    headers: { Authorization: token ? `Bearer ${token}` : "" },
+  });
+
+  if (!res.ok) return []; // 실패 시 빈 배열 반환 (에러 전파 방지) or throw
+  const text = await res.text();
+  return text ? JSON.parse(text) : [];
+}
+
+// 유저 정지 (Warn)
+export async function warnUser(userId: number, banHours: number): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/warn`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
+    body: JSON.stringify({ userId, banHours }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    let msg = "유저 정지 실패";
+    try {
+      const json = JSON.parse(text);
+      msg = json.message || msg;
+    } catch { }
+    throw new Error(msg);
+  }
+}
+
+// 유저 정지 해제
+export async function liftWarn(banId: number): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/warn/${banId}`, {
+    method: "DELETE",
+    headers: { Authorization: token ? `Bearer ${token}` : "" },
+  });
+
+  if (!res.ok) throw new Error("정지 해제 실패");
+}
+
+// 정지 이력 조회
+export async function getUserBanHistory(userId: number): Promise<TYPE.BanResponseDto[]> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE_URL}${SPRING_API}/user/${userId}`, {
+    headers: { Authorization: token ? `Bearer ${token}` : "" },
+  });
+  if (!res.ok) throw new Error("정지 이력 조회 실패");
+  return res.json();
+}
+
 // 관리자 문의 목록 조회
 export async function getInquiries(): Promise<TYPE.Inquiry[]> {
   const token = localStorage.getItem("token");

@@ -1,6 +1,7 @@
 import type { User } from "../../common/types";
-import { Search } from "lucide-react";
-import { useMemo } from "react";
+import * as API from "../../common/api";
+import { Search, AlertTriangle } from "lucide-react";
+import { useMemo, useState } from "react";
 import CustomSelect from "../ui/CustomSelect";
 import { ROLE } from "../../common/enums";
 
@@ -40,6 +41,12 @@ export default function UserManage({
   setUserFilterKeyword,
   fetchUsers,
 }: Props) {
+  // --- Ban Modal State ---
+  const [isBanModalOpen, setIsBanModalOpen] = useState(false);
+  const [selectedBanUser, setSelectedBanUser] = useState<User | null>(null);
+  const [banDuration, setBanDuration] = useState("1"); // days
+  const [_banReason, setBanReason] = useState("");
+
   /** 🔍 검색 필터링 */
   const filteredUsers = useMemo(() => {
     if (!userFilterKeyword.trim()) return users;
@@ -54,6 +61,47 @@ export default function UserManage({
         .includes(userFilterKeyword.toLowerCase());
     });
   }, [users, userFilterField, userFilterKeyword]);
+
+  // --- Handlers for Ban ---
+  const openBanModal = (user: User) => {
+    setSelectedBanUser(user);
+    setBanDuration("1");
+    setBanReason("");
+    setIsBanModalOpen(true);
+  };
+
+  const closeBanModal = () => {
+    setIsBanModalOpen(false);
+    setSelectedBanUser(null);
+  };
+
+  const handleBanSubmit = async () => {
+    if (!selectedBanUser) return;
+    try {
+      const hours = parseInt(banDuration) * 24;
+      await API.warnUser(selectedBanUser.userId, hours);
+      alert(`${selectedBanUser.nickName}님을 ${banDuration}일간 정지했습니다.`);
+      closeBanModal();
+      fetchUsers(); // Refresh list
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "정지 처리에 실패했습니다.");
+    }
+  };
+
+  const handleLiftBan = async (user: User) => {
+    if (!user.activeBan) return;
+    if (!confirm(`${user.nickName}님의 정지를 해제하시겠습니까?`)) return;
+
+    try {
+      await API.liftWarn(user.activeBan.banId);
+      alert("정지가 해제되었습니다.");
+      fetchUsers();
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || "정지 해제 실패");
+    }
+  };
 
   return (
     <div>
@@ -109,17 +157,17 @@ export default function UserManage({
       </div>
 
       {/* Table */}
-      <div className="border border-[#eee] rounded-lg">
+      <div className="border border-[#eee] rounded-lg overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="bg-[#f9f9f9] border-b-2 border-[#eee]">
+            <tr className="bg-[#f9f9f9] border-b border-[#eee]">
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">ID</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">이름</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">닉네임</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">이메일</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">전화번호</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">가입일</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">권한</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">정지 정보</th>
               <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">관리</th>
             </tr>
           </thead>
@@ -127,7 +175,7 @@ export default function UserManage({
           <tbody className="bg-white divide-y divide-[#eee]">
             {filteredUsers.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-6 text-center text-sm text-[#999]">
+                <td colSpan={9} className="px-4 py-6 text-center text-sm text-[#999]">
                   검색 결과가 없습니다.
                 </td>
               </tr>
@@ -135,8 +183,8 @@ export default function UserManage({
 
             {filteredUsers.map((u) => (
               <tr key={u.userId} className="hover:bg-[#f9f9f9]">
-                <td className="px-4 py-3 text-sm">{u.userId}</td>
-                <td className="px-4 py-3 text-sm">{u.userName}</td>
+                <td className="px-4 py-3 text-sm text-[#666]">{u.userId}</td>
+                <td className="px-4 py-3 text-sm font-medium text-[#333]">{u.userName}</td>
 
                 <td className="px-4 py-3 text-sm">
                   {editingUserId === u.userId ? (
@@ -145,7 +193,7 @@ export default function UserManage({
                       onChange={(e) =>
                         setEditUserForm({ ...editUserForm, nickName: e.target.value })
                       }
-                      className="px-2 py-1 border rounded text-sm w-full"
+                      className="px-2 py-1 border rounded text-sm w-full focus:border-black outline-none"
                     />
                   ) : (
                     u.nickName
@@ -161,15 +209,11 @@ export default function UserManage({
                       onChange={(e) =>
                         setEditUserForm({ ...editUserForm, phone: e.target.value })
                       }
-                      className="px-2 py-1 border rounded text-sm w-full"
+                      className="px-2 py-1 border rounded text-sm w-full focus:border-black outline-none"
                     />
                   ) : (
                     <span className="text-[#666]">{u.phone}</span>
                   )}
-                </td>
-
-                <td className="px-4 py-3 text-sm text-[#666]">
-                  {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "-"}
                 </td>
 
                 <td className="px-4 py-3 text-sm">
@@ -187,48 +231,132 @@ export default function UserManage({
                   />
                 </td>
 
+                {/* 정지 정보 컬럼 */}
                 <td className="px-4 py-3 text-sm">
-                  {editingUserId === u.userId ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="password"
-                        placeholder="새 비밀번호"
-                        value={editUserForm.password}
-                        onChange={(e) =>
-                          setEditUserForm({
-                            ...editUserForm,
-                            password: e.target.value,
-                          })
-                        }
-                        className="px-2 py-1 border rounded text-sm w-24"
-                      />
-                      <button
-                        onClick={() => handleSaveUserClick(u.userId)}
-                        className="px-3 py-1 bg-[#111] text-white rounded text-xs"
-                      >
-                        저장
-                      </button>
-                      <button
-                        onClick={handleCancelUserClick}
-                        className="px-3 py-1 border rounded text-xs"
-                      >
-                        취소
-                      </button>
+                  {u.activeBan ? (
+                    <div className="flex items-center text-red-600 gap-1">
+                      <AlertTriangle size={14} />
+                      <span className="text-xs font-semibold">
+                        {/* 남은 기간 계산/필요시 추가 로직 */}
+                        ~{new Date(u.activeBan.banUntil).toLocaleDateString()}
+                      </span>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => handleEditUserClick(u)}
-                      className="px-3 py-1 border rounded text-xs"
-                    >
-                      수정
-                    </button>
+                    <span className="text-gray-400 text-xs">-</span>
                   )}
+                </td>
+
+                <td className="px-4 py-3 text-sm">
+                  <div className="flex gap-2 items-center">
+                    {editingUserId === u.userId ? (
+                      <>
+                        <button
+                          onClick={() => handleSaveUserClick(u.userId)}
+                          className="px-3 py-1 bg-[#111] text-white rounded text-xs hover:bg-[#333]"
+                        >
+                          저장
+                        </button>
+                        <button
+                          onClick={handleCancelUserClick}
+                          className="px-3 py-1 border rounded text-xs hover:bg-gray-50"
+                        >
+                          취소
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleEditUserClick(u)}
+                          className="px-3 py-1 border border-[#ddd] rounded text-xs hover:bg-white bg-[#f5f5f5]"
+                        >
+                          수정
+                        </button>
+
+                        {/* Ban / Unban Buttons */}
+                        {u.activeBan ? (
+                          <button
+                            onClick={() => handleLiftBan(u)}
+                            className="px-3 py-1 bg-green-600 text-white rounded text-xs hover:bg-green-700 flex items-center gap-1"
+                          >
+                            해제
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => openBanModal(u)}
+                            className="px-3 py-1 bg-red-100 text-red-600 rounded text-xs hover:bg-red-200 font-medium"
+                          >
+                            정지
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Ban Modal */}
+      {isBanModalOpen && selectedBanUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl w-[400px] p-6">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <AlertTriangle className="text-red-500" />
+              유저 일시 정지
+            </h3>
+
+            <p className="text-sm text-gray-600 mb-4">
+              <span className="font-bold text-black">{selectedBanUser.nickName}</span>님을 정지하시겠습니까?
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">정지 기간</label>
+                <select
+                  value={banDuration}
+                  onChange={(e) => setBanDuration(e.target.value)}
+                  className="w-full border rounded p-2 text-sm focus:border-black outline-none"
+                >
+                  <option value="1">1일</option>
+                  <option value="3">3일</option>
+                  <option value="7">7일</option>
+                  <option value="30">30일</option>
+                </select>
+              </div>
+
+              {/* Optional: Reason input if needed */}
+              {/* 
+              <div>
+                <label className="block text-sm font-medium mb-1">사유</label>
+                <input 
+                  value={banReason} 
+                  onChange={(e) => setBanReason(e.target.value)}
+                  className="w-full border rounded p-2 text-sm"
+                  placeholder="정지 사유 (선택)" 
+                />
+              </div> 
+              */}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={closeBanModal}
+                className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded"
+              >
+                취소
+              </button>
+              <button
+                onClick={handleBanSubmit}
+                className="px-4 py-2 text-sm bg-red-600 text-white hover:bg-red-700 rounded font-medium"
+              >
+                정지 적용
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
