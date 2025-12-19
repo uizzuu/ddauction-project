@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.my.backend.dto.PaymentHistoryResponse;
-import com.my.backend.enums.ImageType;
+import com.my.backend.enums.*;
 import com.my.backend.repository.*;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -25,9 +25,6 @@ import com.my.backend.entity.Bid;
 import com.my.backend.entity.Payment;
 import com.my.backend.entity.Product;
 import com.my.backend.entity.Users;
-import com.my.backend.enums.PaymentMethodType;
-import com.my.backend.enums.PaymentStatus;
-import com.my.backend.enums.ProductStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +37,6 @@ public class PortOnePaymentService {
 
     private final PaymentRepository paymentRepository;
     private final ProductRepository productRepository;
-    private final UserRepository userRepository;
     private final BidRepository bidRepository;
     private final PaymentProperties props;
     private final RestTemplate restTemplate;
@@ -281,7 +277,7 @@ public class PortOnePaymentService {
         // 결제 금액 계산 (상품 타입별 분기)
         Long amount;
 
-        if (p.getProductType() == com.my.backend.enums.ProductType.STORE) {
+        if (p.getProductType() == ProductType.STORE) {
             // ⭐ STORE: salePrice (정상가) - 할인 + 배송비
             Long basePrice = p.getSalePrice(); // 프론트 인터페이스에 따라 salePrice를 기준 가격으로 사용
             if (basePrice == null || basePrice <= 0) {
@@ -301,7 +297,7 @@ public class PortOnePaymentService {
             log.info("[STORE] 기준가={}, 할인={}%, 할인적용가={}, 배송비={}, 최종={}",
                     basePrice, discountRate, discountedSalePrice, shippingFee, amount);
 
-        } else if (p.getProductType() == com.my.backend.enums.ProductType.USED) {
+        } else if (p.getProductType() == ProductType.USED) {
             // ⭐ USED: originalPrice (판매가) + 배송비
             Long usedPrice = p.getOriginalPrice(); // 프론트 인터페이스에 따라 originalPrice를 중고 판매가로 사용
             if (usedPrice == null || usedPrice <= 0) {
@@ -410,7 +406,7 @@ public class PortOnePaymentService {
 
         //  3) 우리 시스템 기준 기대 금액 계산 (수정된 로직)
         Long expectedAmountLong;
-        if (p.getProductType() == com.my.backend.enums.ProductType.STORE) {
+        if (p.getProductType() == ProductType.STORE) {
             // ⭐ STORE: salePrice (정상가) - 할인 + 배송비
             Long basePrice = p.getSalePrice();
             if (basePrice == null || basePrice <= 0) {
@@ -425,7 +421,7 @@ public class PortOnePaymentService {
                     (p.getDeliveryPrice() != null ? p.getDeliveryPrice() : 0L);
             expectedAmountLong = discountedSalePrice + shippingFee;
 
-        } else if (p.getProductType() == com.my.backend.enums.ProductType.USED) {
+        } else if (p.getProductType() == ProductType.USED) {
             // ⭐ USED: originalPrice (판매가) + 배송비
             Long usedPrice = p.getOriginalPrice();
             if (usedPrice == null || usedPrice <= 0) {
@@ -473,15 +469,15 @@ public class PortOnePaymentService {
         p.setPayment(payment);
 
 // ⭐ 상품 타입별로 상태 처리
-        if (p.getProductType() == com.my.backend.enums.ProductType.USED) {
+        if (p.getProductType() == ProductType.USED) {
             // 중고 거래: 1개만 있으므로 판매 완료 처리
             p.setProductStatus(ProductStatus.SOLD);
             log.info("[USED] 상품 판매완료 처리: productId={}", p.getProductId());
-        } else if (p.getProductType() == com.my.backend.enums.ProductType.STORE) {
+        } else if (p.getProductType() == ProductType.STORE) {
             // 스토어: 재고가 여러 개일 수 있으므로 상태 유지
             // p.setProductStatus는 변경하지 않음 (ACTIVE 유지)
             log.info("[STORE] 상품 상태 유지 (ACTIVE): productId={}", p.getProductId());
-        } else if (p.getProductType() == com.my.backend.enums.ProductType.AUCTION) {
+        } else if (p.getProductType() == ProductType.AUCTION) {
             // 경매: 낙찰자 1명만 구매 가능하므로 판매 완료 처리
             p.setProductStatus(ProductStatus.SOLD);
             log.info("[AUCTION] 경매 낙찰완료 처리: productId={}", p.getProductId());
