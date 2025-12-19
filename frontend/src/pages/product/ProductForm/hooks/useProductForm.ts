@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User, ProductForm } from "../../../../common/types";
-import { PAYMENT_STATUS, PRODUCT_TYPES, type ProductCategoryType } from "../../../../common/enums";
+import { DELIVERY_TYPES, PAYMENT_STATUS, PRODUCT_TYPES, type ProductCategoryType } from "../../../../common/enums";
 import { formatDateTime } from "../../../../common/util";
 import { generateAiDescription, registerProductWithImages, fetchProductById, updateProductWithImages } from "../../../../common/api";
 
@@ -87,7 +87,7 @@ export default function useProductForm(user: User | null, productId?: number) {
                 setAuctionEndDate(new Date(product.auctionEndTime));
             }
 
-            if (product.productType === "AUCTION" && product.bids && product.bids.length > 0) {
+            if (product.productType === PRODUCT_TYPES.AUCTION && product.bids && product.bids.length > 0) {
                 setHasBids(true);
             }
             setIsAgreed(true);
@@ -136,25 +136,25 @@ export default function useProductForm(user: User | null, productId?: number) {
     };
 
     // 타입별 가격 가져오기 (수정됨)
-const getPriceByType = (): number => {
-    const cleanNumber = (val?: string) =>
-        Number(String(val ?? "").replace(/[^0-9]/g, "")) || 0;
+    const getPriceByType = (): number => {
+        const cleanNumber = (val?: string) =>
+            Number(String(val ?? "").replace(/[^0-9]/g, "")) || 0;
 
-    if (PRODUCT_TYPES.AUCTION) {
-        return cleanNumber(form.startingPrice);
-    } else if (PRODUCT_TYPES.STORE) {
-        return cleanNumber(form.salePrice);
-    } else {
-        // USED
-        return cleanNumber(form.originalPrice);
-    }
-};
+        if (form.productType === PRODUCT_TYPES.AUCTION) {
+            return cleanNumber(form.startingPrice);
+        } else if (form.productType === PRODUCT_TYPES.STORE) {
+            return cleanNumber(form.salePrice);
+        } else {
+            // USED
+            return cleanNumber(form.originalPrice);
+        }
+    };
 
 
     const validateForm = () => {
         if (!form.title) return "제목은 필수 입력 항목입니다";
-        
-        if (PRODUCT_TYPES.STORE) {
+
+        if (form.productType === PRODUCT_TYPES.STORE) {
             if (!form.content && (!form.productBanners || form.productBanners.length === 0)) {
                 return "스토어 상품은 상세 설명 또는 상세 이미지를 입력해야 합니다";
             }
@@ -165,26 +165,26 @@ const getPriceByType = (): number => {
         // 타입별 가격 검증
         const price = getPriceByType();
         if (price <= 0) {
-            if (PRODUCT_TYPES.AUCTION) {
+            if (form.productType === PRODUCT_TYPES.AUCTION) {
                 return "시작 입찰가는 1원 이상이어야 합니다";
-            } else if (PRODUCT_TYPES.STORE) {
+            } else if (form.productType === PRODUCT_TYPES.STORE) {
                 return "판매가는 1원 이상이어야 합니다";
             } else {
                 return "가격은 1원 이상이어야 합니다";
             }
         }
 
-        if (PRODUCT_TYPES.AUCTION && !form.auctionEndTime) {
+        if (form.productType === PRODUCT_TYPES.AUCTION && !form.auctionEndTime) {
             return "경매 종료 시간을 입력해주세요";
         }
         if (!form.productCategoryType) return "카테고리를 선택해주세요";
         if (!form.images || form.images.length === 0)
             return "최소 1개 이상의 이미지를 선택해주세요";
 
-        if (form.productType !== "STORE" && (!form.deliveryAvailable || form.deliveryAvailable.length === 0)) {
+        if (form.productType !== PRODUCT_TYPES.STORE && (!form.deliveryAvailable || form.deliveryAvailable.length === 0)) {
             return "거래 가능 방식을 최소 1개 이상 선택해주세요";
         }
-        const isDirectTransaction = form.deliveryAvailable?.some(method => method.includes("직거래") || method === "MEETUP");
+        const isDirectTransaction = form.deliveryAvailable?.some(method => method.includes("직거래") || method === DELIVERY_TYPES.MEETUP);
         if (isDirectTransaction && !form.address) {
             return "직거래를 선택하셨으므로 거래 희망 장소를 입력해주세요";
         }
@@ -207,7 +207,7 @@ const getPriceByType = (): number => {
 
         // 타입별 가격으로 확인 메시지 표시
         const price = getPriceByType();
-        const priceLabel = PRODUCT_TYPES.AUCTION ? "시작가" : "판매가";
+        const priceLabel = form.productType === PRODUCT_TYPES.AUCTION ? "시작가" : "판매가";
 
         const summary = isEditMode
             ? "상품 정보를 수정하시겠습니까?"
@@ -222,7 +222,7 @@ const getPriceByType = (): number => {
             const productData: any = {
                 title: form.title,
                 content: form.content,
-                auctionEndTime: PRODUCT_TYPES.AUCTION ? (form.auctionEndTime ? form.auctionEndTime.replace(" ", "T") : undefined) : undefined,
+                auctionEndTime: form.productType === PRODUCT_TYPES.AUCTION ? (form.auctionEndTime ? form.auctionEndTime.replace(" ", "T") : undefined) : undefined,
                 sellerId: user.userId,
                 productCategoryType: form.productCategoryType as ProductCategoryType,
                 productType: form.productType,
@@ -240,9 +240,9 @@ const getPriceByType = (): number => {
             };
 
             // 타입별 가격 필드 매핑
-            if (PRODUCT_TYPES.AUCTION) {
+            if (form.productType === PRODUCT_TYPES.AUCTION) {
                 productData.startingPrice = Math.max(Number(form.startingPrice.replace(/[^0-9]/g, "")), 1);
-            } else if (PRODUCT_TYPES.STORE) {
+            } else if (form.productType === PRODUCT_TYPES.STORE) {
                 productData.salePrice = Math.max(Number(String(form.salePrice).replace(/[^0-9]/g, "")), 1);
             } else {
                 // USED

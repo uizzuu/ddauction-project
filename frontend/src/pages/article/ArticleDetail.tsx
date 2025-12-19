@@ -17,7 +17,7 @@ import type {
   CommentDto,
   CommentForm,
 } from "../../common/types";
-import { ARTICLE_TYPES, type ArticleType } from "../../common/enums";
+import { ARTICLE_TYPES, ROLE, type ArticleType } from "../../common/enums";
 import { formatDateTime } from "../../common/util";
 
 interface Props {
@@ -669,7 +669,7 @@ export default function ArticleDetail({ user }: Props) {
           )}
 
           {/* 댓글 작성: Notice는 아예 숨김, FAQ는 관리자만, Community는 누구나 */}
-          {(article.articleType !== ARTICLE_TYPES.FAQ || user?.role === 'ADMIN') ? (
+          {(article.articleType !== ARTICLE_TYPES.FAQ || ROLE.ADMIN) ? (
             user ? (
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <label className="block text-sm font-bold text-[#333] mb-2">

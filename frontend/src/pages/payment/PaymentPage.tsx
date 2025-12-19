@@ -4,6 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchProductById, getWinningInfo, preparePayment, completePayment, fetchUserAddress, fetchMe, updateUserAddress } from "../../common/api";
 import { getCartItems, removeFromCart } from "../../common/util";
 import type { CartItem } from "../../common/types";
+import { PRODUCT_TYPES } from "../../common/enums";
 
 // PortOne Global Type
 declare global {
@@ -81,13 +82,12 @@ export default function PaymentPage() {
 
       const product = await fetchProductById(id);
       console.log("📦 상품 정보:", product);
-      if (product.productType === 'USED') {
+      if (product.productType === PRODUCT_TYPES.USED) {
         alert("중고 거래 상품은 1:1 채팅을 통해 거래해주세요.");
         navigate(`/products/${id}`);
         return;
       }
-
-      if (product.productType === 'STORE') {
+      if (product.productType === PRODUCT_TYPES.STORE) {
         const salePrice = Number(product.salePrice || 0);
         const shippingFee = product.deliveryIncluded ? 0 : Number(product.deliveryPrice || 0);
 
@@ -99,7 +99,7 @@ export default function PaymentPage() {
           price: salePrice,
           shippingFee: shippingFee
         });
-      } else if (product.productType === 'AUCTION') {
+      } else if (product.productType === PRODUCT_TYPES.AUCTION) {
         try {
           const winData = await getWinningInfo(id);
           setPaymentInfo({
@@ -141,7 +141,7 @@ export default function PaymentPage() {
         return;
       }
 
-      const hasUsedProduct = selectedItems.some(item => item.productType === 'USED');
+      const hasUsedProduct = selectedItems.some(item => item.productType === PRODUCT_TYPES.USED);
       if (hasUsedProduct) {
         alert("중고 거래 상품은 결제할 수 없습니다.");
         navigate("/cart");

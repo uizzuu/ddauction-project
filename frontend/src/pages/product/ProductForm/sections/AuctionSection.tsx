@@ -38,14 +38,14 @@ export default function AuctionSection({
     };
 
     // 편의점 택배 체크 여부 (GS 또는 CU 포함)
-    const hasConvenience = deliveryAvailable.some(m => m === "GS" || m === "CU");
+    const hasConvenience = deliveryAvailable.some(m => m === DELIVERY_TYPES.GS || m === DELIVERY_TYPES.CU);
 
     // 편의점 택배 토글
     const handleConvenienceToggle = () => {
         if (hasConvenience) {
-            updateForm("deliveryAvailable", deliveryAvailable.filter(m => m !== "GS" && m !== "CU"));
+            updateForm("deliveryAvailable", deliveryAvailable.filter(m => m !== DELIVERY_TYPES.GS && m !== DELIVERY_TYPES.CU));
         } else {
-            updateForm("deliveryAvailable", [...deliveryAvailable, "GS"]);
+            updateForm("deliveryAvailable", [...deliveryAvailable, DELIVERY_TYPES.GS]);
         }
     };
 

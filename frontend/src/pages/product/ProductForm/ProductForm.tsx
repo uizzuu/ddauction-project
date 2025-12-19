@@ -5,7 +5,7 @@ import AuctionSection from "./sections/AuctionSection";
 import UsedSection from "./sections/UsedSection";
 import StoreSection from "./sections/StoreSection";
 import type { User } from "../../../common/types";
-import { CATEGORY_OPTIONS, PRODUCT_TYPES, PRODUCT_TYPE_KEYS } from "../../../common/enums";
+import { CATEGORY_OPTIONS, PRODUCT_TYPES, PRODUCT_TYPE_KEYS, PRODUCT_TYPE_LABELS } from "../../../common/enums";
 import type { ProductCategoryType } from "../../../common/enums";
 import SelectStyle from "../../../components/ui/SelectStyle";
 import CheckboxStyle from "../../../components/ui/CheckboxStyle";
@@ -70,9 +70,9 @@ export default function ProductRegister({ user }: Props) {
 
     // ✅ 타입별 가격 가져오기
     const getPriceForSettlement = (): number => {
-        if (form.productType === "AUCTION") {
+        if (form.productType === PRODUCT_TYPES.AUCTION) {
             return Number(form.startingPrice) || 0;
-        } else if (form.productType === "STORE") {
+        } else if (form.productType === PRODUCT_TYPES.STORE) {
             return Number(form.salePrice) || 0;
         } else {
             // USED
@@ -115,9 +115,9 @@ export default function ProductRegister({ user }: Props) {
                         </label>
                         <div className="flex p-1 bg-gray-100 rounded-xl">
                             {PRODUCT_TYPE_KEYS.filter(type => {
-                                if (type === "STORE") {
+                                if (type === PRODUCT_TYPES.STORE) {
                                     // 스토어는 사업자만 가능
-                                   return !!user?.businessNumber;
+                                    return !!user?.businessNumber;
                                 }
                                 return true;
                             }).map((type) => (
@@ -131,7 +131,7 @@ export default function ProductRegister({ user }: Props) {
                                     onClick={() => updateForm("productType", type)}
                                     disabled={uploading}
                                 >
-                                    {PRODUCT_TYPES[type]}
+                                    {PRODUCT_TYPE_LABELS[type]}
                                 </button>
                             ))}
                         </div>
@@ -305,7 +305,7 @@ export default function ProductRegister({ user }: Props) {
                     </div>
 
                     {/* 4. Content */}
-                    {form.productType === "STORE" ? (
+                    {form.productType === PRODUCT_TYPES.STORE ? (
                         <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 space-y-6">
                             <div>
                                 <label className="block text-sm font-bold text-[#333] mb-1">
@@ -420,7 +420,7 @@ export default function ProductRegister({ user }: Props) {
 
                     {/* 5. Dynamic Section - ✅ 타입별 가격 필드 매핑 */}
                     <div className="p-6 bg-gray-50 rounded-xl border border-gray-100">
-                        {form.productType === "AUCTION" && (
+                        {form.productType === PRODUCT_TYPES.AUCTION && (
                             <AuctionSection
                                 startingPrice={form.startingPrice}
                                 auctionEndDate={auctionEndDate}
@@ -434,7 +434,7 @@ export default function ProductRegister({ user }: Props) {
                                 hasBids={false}
                             />
                         )}
-                        {form.productType === "USED" && (
+                        {form.productType === PRODUCT_TYPES.USED && (
                             <UsedSection
                                 price={form.originalPrice || ""}
                                 onChangePrice={(val) => updateForm("originalPrice", val)}
@@ -443,7 +443,7 @@ export default function ProductRegister({ user }: Props) {
                                 updateForm={updateForm}
                             />
                         )}
-                        {form.productType === "STORE" && (
+                        {form.productType === PRODUCT_TYPES.STORE && (
                             <StoreSection
                                 price={form.salePrice || ""}
                                 onChangePrice={(val) => updateForm("salePrice", val)}

@@ -5,7 +5,7 @@ import AuctionSection from "../ProductForm/sections/AuctionSection";
 import UsedSection from "../ProductForm/sections/UsedSection";
 import StoreSection from "../ProductForm/sections/StoreSection";
 import type { User } from "../../../common/types";
-import { CATEGORY_OPTIONS } from "../../../common/enums";
+import { CATEGORY_OPTIONS, PRODUCT_TYPES } from "../../../common/enums";
 import type { ProductCategoryType } from "../../../common/enums";
 import SelectStyle from "../../../components/ui/SelectStyle";
 import CheckboxStyle from "../../../components/ui/CheckboxStyle";
@@ -68,14 +68,14 @@ export default function ProductEdit({ user }: Props) {
         updateForm("images", newImages);
     };
 
-    // ✅ 타입별 가격 가져오기
+    // 타입별 가격 가져오기
     // AUCTION: startingPrice (시작 입찰가)
     // STORE: salePrice (판매가)
     // USED: originalPrice (판매가)
     const getPriceForSettlement = (): number => {
-        if (form.productType === "AUCTION") {
+        if (form.productType === PRODUCT_TYPES.AUCTION) {
             return Number(form.startingPrice) || 0;
-        } else if (form.productType === "STORE") {
+        } else if (form.productType === PRODUCT_TYPES.STORE) {
             return Number(form.salePrice) || 0;
         } else {
             // USED
@@ -279,7 +279,7 @@ export default function ProductEdit({ user }: Props) {
                     </div>
 
                     {/* 4. Content */}
-                    {form.productType === "STORE" ? (
+                    {form.productType === PRODUCT_TYPES.STORE ? (
                         <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 space-y-6">
                             <div>
                                 <label className="block text-sm font-bold text-[#333] mb-1">
@@ -394,7 +394,7 @@ export default function ProductEdit({ user }: Props) {
 
                     {/* 5. Dynamic Section */}
                     <div className="p-6 bg-gray-50 rounded-xl border border-gray-100">
-                        {form.productType === "AUCTION" && (
+                        {form.productType === PRODUCT_TYPES.AUCTION && (
                             <AuctionSection
                                 startingPrice={form.startingPrice}
                                 auctionEndDate={auctionEndDate}
@@ -408,10 +408,10 @@ export default function ProductEdit({ user }: Props) {
                                 hasBids={hasBids}
                             />
                         )}
-                        {hasBids && form.productType === "AUCTION" && (
+                        {hasBids && form.productType === PRODUCT_TYPES.AUCTION && (
                             <p className="text-xs text-red-500 text-center mt-2">입찰이 시작된 경매 상품은 가격을 수정할 수 없습니다.</p>
                         )}
-                        {form.productType === "USED" && (
+                        {form.productType === PRODUCT_TYPES.USED && (
                             <UsedSection
                                 price={form.originalPrice || ""}
                                 onChangePrice={(val) => updateForm("originalPrice", val)}
@@ -420,7 +420,7 @@ export default function ProductEdit({ user }: Props) {
                                 updateForm={updateForm}
                             />
                         )}
-                        {form.productType === "STORE" && (
+                        {form.productType === PRODUCT_TYPES.STORE && (
                             <StoreSection
                                 price={form.salePrice || ""}
                                 onChangePrice={(val) => updateForm("salePrice", val)}

@@ -226,24 +226,24 @@ export default function ProductManage({
                         handleProductStatusChange(value)
                       }
                       options={[
-                        { value: "ACTIVE", label: "판매중" },
-                        { value: "SOLD", label: "판매완료" },
-                        { value: "CLOSED", label: "비활성" },
+                        { value: PRODUCT_STATUS.ACTIVE, label: "판매중" },
+                        { value: PRODUCT_STATUS.SOLD, label: "판매완료" },
+                        { value: PRODUCT_STATUS.CLOSED, label: "비활성" },
                       ]}
                       className="w-full"
                     />
                   ) : (
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${p.productStatus === "ACTIVE"
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${PRODUCT_STATUS.ACTIVE
                           ? "bg-green-50 text-green-700"
-                          : p.productStatus === "SOLD"
+                          : PRODUCT_STATUS.SOLD
                             ? "bg-gray-100 text-gray-700"
                             : "bg-red-50 text-red-700"
                         }`}
                     >
-                      {p.productStatus === "ACTIVE"
+                      {PRODUCT_STATUS.ACTIVE
                         ? "판매중"
-                        : p.productStatus === "SOLD"
+                        : PRODUCT_STATUS.SOLD
                           ? "판매완료"
                           : "비활성"}
                     </span>

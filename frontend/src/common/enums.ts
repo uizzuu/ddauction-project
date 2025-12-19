@@ -17,12 +17,18 @@ export type ChatType = typeof CHAT_TYPE[keyof typeof CHAT_TYPE];
 
 // Product Type Definition (Consolidated)
 export const PRODUCT_TYPES = {
-  AUCTION: "경매",
-  USED: "중고",
-  STORE: "스토어",
+  AUCTION: "AUCTION",
+  USED: "USED",
+  STORE: "STORE",
 } as const;
-export type ProductType = keyof typeof PRODUCT_TYPES;
-export const PRODUCT_TYPE_KEYS = Object.keys(PRODUCT_TYPES) as ProductType[];
+export type ProductType = typeof PRODUCT_TYPES[keyof typeof PRODUCT_TYPES];
+export const PRODUCT_TYPE_KEYS = Object.values(PRODUCT_TYPES) as ProductType[];
+
+export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
+  [PRODUCT_TYPES.AUCTION]: "경매",
+  [PRODUCT_TYPES.USED]: "중고",
+  [PRODUCT_TYPES.STORE]: "스토어",
+};
 
 // Article Types (Consolidated)
 export const ARTICLE_TYPES = {
@@ -81,7 +87,6 @@ export const CATEGORY_OPTIONS = PRODUCT_CATEGORY_KEYS.map(code => ({
   label: PRODUCT_CATEGORIES[code]
 }));
 
-// 배송 방법
 // 배송 방법 (Consolidated)
 export const DELIVERY_TYPES = {
   PARCEL: "택배",
