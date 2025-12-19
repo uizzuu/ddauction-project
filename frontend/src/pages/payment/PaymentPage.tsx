@@ -53,6 +53,7 @@ export default function PaymentPage() {
 
   // Form State
   const [address, setAddress] = useState("");
+  const [detailAddress, setDetailAddress] = useState("");
   const [postcode, setPostcode] = useState("");
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
@@ -241,11 +242,9 @@ export default function PaymentPage() {
       setPhone(userData.phone || "");
       setPostcode(userData.zipCode || "");
 
-      const fullAddress = [
-        userData.address,
-        userData.detailAddress
-      ].filter(Boolean).join(" ");
-      setAddress(fullAddress);
+      // 주소와 상세주소를 분리해서 설정
+      setAddress(userData.address || "");
+      setDetailAddress(userData.detailAddress || "");
 
       if (!userData.address && !userData.zipCode) {
         alert("이름과 연락처를 불러왔습니다.\n주소 정보는 등록되어 있지 않습니다.");
@@ -271,13 +270,9 @@ export default function PaymentPage() {
 
       if (!userId) return;
 
-      const addressParts = address.split(" ");
-      const detailAddress = addressParts.length > 3 ? addressParts.slice(3).join(" ") : "";
-      const baseAddress = addressParts.slice(0, 3).join(" ");
-
       await updateUserAddress(userId, {
-        address: baseAddress,
-        detailAddress: detailAddress,
+        address: address, // 기본 주소
+        detailAddress: detailAddress, // 상세 주소
         zipCode: postcode,
         phone: phone,
       });
@@ -295,9 +290,11 @@ export default function PaymentPage() {
 
     await handleSaveAddress();
 
+    const fullAddress = `${address} ${detailAddress}`.trim();
+
     try {
       if (cartMode && cartPaymentInfo) {
-        handleCartPayment();
+        handleCartPayment(fullAddress);
         return;
       }
 
@@ -322,7 +319,7 @@ export default function PaymentPage() {
         buyer_email: prepareData.buyerEmail,
         buyer_name: name,
         buyer_tel: phone,
-        buyer_addr: address,
+        buyer_addr: fullAddress, // 합쳐진 주소 사용
         buyer_postcode: postcode,
       };
 
@@ -350,8 +347,11 @@ export default function PaymentPage() {
     }
   };
 
-  const handleCartPayment = async () => {
+  const handleCartPayment = async (fullBuyerAddress?: string) => {
     if (!cartPaymentInfo) return;
+
+    // 만약 인자로 전달되지 않았다면 조합 (호환성)
+    const finalAddress = fullBuyerAddress || `${address} ${detailAddress}`.trim();
 
     try {
       const firstProductId = cartPaymentInfo.items[0].productId;
@@ -375,7 +375,7 @@ export default function PaymentPage() {
         buyer_email: prepareData.buyerEmail,
         buyer_name: name,
         buyer_tel: phone,
-        buyer_addr: address,
+        buyer_addr: finalAddress,
         buyer_postcode: postcode,
       };
 
@@ -536,7 +536,13 @@ export default function PaymentPage() {
                     <input
                       type="text"
                       value={address} onChange={(e) => setAddress(e.target.value)}
-                      placeholder="기본 주소 + 상세 주소"
+                      placeholder="기본 주소 "
+                      className="w-full border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
+                    />
+                    <input
+                      type="text"
+                      value={detailAddress} onChange={(e) => setDetailAddress(e.target.value)}
+                      placeholder="상세 주소"
                       className="w-full border border-gray-300 rounded-lg p-3 focus:border-black outline-none transition-colors"
                     />
                     <div className="mt-2">
