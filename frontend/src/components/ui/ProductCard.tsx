@@ -4,7 +4,7 @@ import type { Product, Bid } from "../../common/types";
 import { formatPrice, calculateRemainingTime, formatTimeAgo } from "../../common/util";
 import { Heart, Truck, ChevronRight, Minus } from "lucide-react";
 import { toggleBookmark, fetchBookmarkCheck, API_BASE_URL } from "../../common/api";
-import { DELIVERY_TYPES, PRODUCT_CATEGORIES } from "../../common/enums";
+import { DELIVERY_TYPES, PRODUCT_CATEGORIES, PRODUCT_STATUS, PRODUCT_TYPES } from "../../common/enums";
 
 type Props = {
     product: Product;
@@ -88,7 +88,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
 
     // ✅ 가격 정보 계산 (타입별 분기)
     const getPriceInfo = () => {
-        if (product.productType === 'STORE') {
+        if (PRODUCT_TYPES.STORE) {
             const salePrice = Number(product.salePrice) || 0;
             const discountRate = Number(product.discountRate) || 0;
 
@@ -103,7 +103,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                 discountRate,
                 hasDiscount: discountRate > 0
             };
-        } else if (product.productType === 'USED') {
+        } else if (PRODUCT_TYPES.USED) {
             const price = Number(product.originalPrice) || 0;
             return {
                 originalPrice: 0,
@@ -178,7 +178,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                 {product.productStatus !== "ACTIVE" && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                         <span className="text-white font-bold text-lg border border-white px-3 py-1 rounded">
-                            {product.productStatus === "SOLD" ? "판매완료" : "거래종료"}
+                            {PRODUCT_STATUS.SOLD ? "판매완료" : "거래종료"}
                         </span>
                     </div>
                 )}
@@ -186,7 +186,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                 {/* Top-Left Badge (Black Square) */}
                 <div className="absolute top-3 left-3 w-6 h-6 bg-black flex items-center justify-center rounded-[4px] z-10">
                     <span className="text-white text-xs font-bold leading-none">
-                        {product.productType === "AUCTION" ? "A" : product.productType === "STORE" ? "S" : "U"}
+                        {PRODUCT_TYPES.AUCTION ? "A" : PRODUCT_TYPES.STORE ? "S" : "U"}
                     </span>
                 </div>
 
@@ -257,19 +257,19 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
 
                 {/* Type-Specific Header Info */}
                 <div>
-                    {product.productType === "AUCTION" && product.auctionEndTime && (
+                    {PRODUCT_TYPES.AUCTION && product.auctionEndTime && (
                         <span className="flex items-center gap-0.5 text-[0.8rem] font-bold text-[#333]">
                             {calculateRemainingTime(product.auctionEndTime)}
                         </span>
                     )}
-                    {product.productType === "USED" && (
+                    {PRODUCT_TYPES.USED && (
                         <span className="flex items-center gap-0.5 text-[0.8rem] font-bold text-[#333]">
                             {product.productCategoryType
                                 ? PRODUCT_CATEGORIES[product.productCategoryType]
                                 : "카테고리 없음"}
                         </span>
                     )}
-                    {product.productType === "STORE" && (
+                    {PRODUCT_TYPES.STORE && (
                         <div
                             className="flex items-center gap-0.5 text-[0.8rem] font-bold text-[#333] hover:underline cursor-pointer"
                             onClick={(e) => {
@@ -292,7 +292,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
 
                 {/* Price Area */}
                 <div className="mt-auto">
-                    {product.productType === "AUCTION" ? (
+                    {PRODUCT_TYPES.AUCTION ? (
                         /* AUCTION: 시작가(startingPrice) + 현재가 표시 */
                         <div className="flex flex-col">
                             <div className="text-[0.85rem] text-[#999] line-through decoration-slate-300">
@@ -305,7 +305,7 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
                                 </span>
                             </div>
                         </div>
-                    ) : product.productType === "STORE" ? (
+                    ) : PRODUCT_TYPES.STORE ? (
                         /* STORE: salePrice 사용 */
                         <div className="flex flex-col">
                             {priceInfo.hasDiscount && (
@@ -334,10 +334,10 @@ export default function ProductCard({ product, rank, rankChange, mergedBids: ext
 
                 {/* Footer Info Area */}
                 <div className="mt-2 text-[0.85rem] text-[#999] font-medium flex items-center gap-1">
-                    {product.productType === "AUCTION" ? (
+                    {PRODUCT_TYPES.AUCTION ? (
                         /* AUCTION: 입찰 건수 표시 */
                         <span className="text-[#aaa]">입찰 {bidInfo.bidCount}건</span>
-                    ) : product.productType === "STORE" ? (
+                    ) : PRODUCT_TYPES.STORE ? (
                         /* STORE: deliveryIncluded 체크 */
                         <div className="flex items-center gap-1">
                             <Truck size={10} />

@@ -138,7 +138,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     ) {
         return (root, query, criteriaBuilder) -> {
             Predicate predicate = criteriaBuilder.conjunction();
-
             // 1. Keyword (Title or Tag)
             if (keyword != null && !keyword.isEmpty()) {
                 String likePattern = "%" + keyword + "%";
@@ -146,17 +145,14 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
                 Predicate tagLike = criteriaBuilder.like(root.get("tag"), likePattern);
                 predicate = criteriaBuilder.and(predicate, criteriaBuilder.or(titleLike, tagLike));
             }
-
             // 2. Category
             if (categoryType != null) {
                 predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(root.get("productCategoryType"), categoryType));
             }
-
             // 3. Status
             if (status != null) {
                 predicate = criteriaBuilder.and(predicate, criteriaBuilder.equal(root.get("productStatus"), status));
             }
-
             // 4. Start Price Range
             if (minStartPrice != null) {
                 predicate = criteriaBuilder.and(predicate, criteriaBuilder.greaterThanOrEqualTo(root.get("startingPrice"), minStartPrice));
@@ -164,7 +160,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
             if (maxStartPrice != null) {
                 predicate = criteriaBuilder.and(predicate, criteriaBuilder.lessThanOrEqualTo(root.get("startingPrice"), maxStartPrice));
             }
-
             // 5. Current Price Range (Complex)
             // Current Price = MAX(Bid Price) OR Starting Price if no bids
             if (minPrice != null || maxPrice != null) {
@@ -184,7 +179,6 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
                     predicate = criteriaBuilder.and(predicate, criteriaBuilder.lessThanOrEqualTo(currentPrice, maxPrice));
                 }
             }
-
             return predicate;
         };
     }
