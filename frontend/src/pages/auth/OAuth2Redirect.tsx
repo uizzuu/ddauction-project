@@ -17,18 +17,14 @@ export default function OAuth2Redirect({ setUser }: Props) {
         const params = new URLSearchParams(window.location.search);
         const token = params.get("token");
         const error = params.get("error");
-        const message = params.get("message");
+        // const message = params.get("message");
 
         console.log("✅ URL 확인: ", window.location.href);
 
         // 에러 처리 (정지된 계정 등)
         if (error) {
-          console.error("❌ OAuth2 login error:", error, message);
-          if (message && (message.includes("정지") || message.includes("제한"))) {
-            alert(message);
-          } else if (message) {
-            alert(message);
-          }
+          console.error("❌ OAuth2 login error:", error);
+          alert(error);  // ✅ 간단하게!
           navigate("/login");
           return;
         }

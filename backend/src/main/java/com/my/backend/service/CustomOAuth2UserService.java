@@ -8,6 +8,8 @@ import java.util.UUID;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
@@ -98,13 +100,21 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         } else {
             // 탈퇴한 회원 체크
             if (user.getDeletedAt() != null) {
-                throw new RuntimeException("탈퇴한 회원입니다.");
+                throw new OAuth2AuthenticationException(
+                        new OAuth2Error("deleted_user", "탈퇴한 회원입니다.", null)
+                );
             }
 
-            // 기존 유저 로그인 시 provider 정보 업데이트 (없을 경우)
-            if (user.getProvider() == null || !user.getProvider().equals(registrationId)) {
-                user.setProvider(registrationId);
-                userRepository.save(user);
+            if (user.getProvider() == null) {
+                throw new OAuth2AuthenticationException(
+                        new OAuth2Error("email_signup", "EMAIL_SIGNUP:" + email, null)
+                );
+            }
+
+            if (!user.getProvider().equals(registrationId)) {
+                throw new OAuth2AuthenticationException(
+                        new OAuth2Error("social_conflict", "SOCIAL_CONFLICT:" + user.getProvider(), null)
+                );
             }
         }
 
