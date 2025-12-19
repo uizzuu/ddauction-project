@@ -1,6 +1,6 @@
 import type { User } from "../../common/types";
 import * as API from "../../common/api";
-import { Search, AlertTriangle } from "lucide-react";
+import { Search, AlertTriangle, ChevronsUpDown, ChevronUp, ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import CustomSelect from "../ui/CustomSelect";
 import { ROLE } from "../../common/enums";
@@ -17,14 +17,17 @@ type Props = {
   handleCancelUserClick: () => void;
   handleChangeRole: (userId: number, newRole: User["role"]) => void;
 
-  userFilterField: "userName" | "nickName" | "email" | "phone";
+  userFilterField: "all" | "userName" | "nickName" | "email" | "phone" | "role" | "social";
   setUserFilterField: React.Dispatch<
-    React.SetStateAction<"userName" | "nickName" | "email" | "phone">
+    React.SetStateAction<"all" | "userName" | "nickName" | "email" | "phone" | "role" | "social">
   >;
   userFilterKeyword: string;
   setUserFilterKeyword: React.Dispatch<React.SetStateAction<string>>;
   fetchUsers: () => void;
 };
+
+type SortKey = keyof User | "activeBan";
+type SortDirection = "asc" | "desc";
 
 export default function UserManage({
   users,
@@ -47,20 +50,91 @@ export default function UserManage({
   const [banDuration, setBanDuration] = useState("1"); // days
   const [_banReason, setBanReason] = useState("");
 
-  /** 🔍 검색 필터링 */
+  // --- Sorting State ---
+  const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
+
+  // --- 검색 필터링 & 정렬 ---
   const filteredUsers = useMemo(() => {
-    if (!userFilterKeyword.trim()) return users;
+    let result = [...users];
 
-    return users.filter((user) => {
-      const value = user[userFilterField];
-      if (!value) return false;
+    // 필터링
+    if (userFilterKeyword.trim()) {
+      const lowerKeyword = userFilterKeyword.toLowerCase();
+      result = result.filter((user) => {
+        if (userFilterField === "all") {
+          return (
+            user.userName.toLowerCase().includes(lowerKeyword) ||
+            user.nickName.toLowerCase().includes(lowerKeyword) ||
+            (user.email && user.email.toLowerCase().includes(lowerKeyword)) ||
+            (user.phone && user.phone.includes(lowerKeyword)) ||
+            (user.provider && user.provider.toLowerCase().includes(lowerKeyword)) ||
+            (user.role && user.role.toLowerCase().includes(lowerKeyword))
+          );
+        }
+        if (userFilterField === "social") {
+          return user.provider && user.provider.toLowerCase().includes(lowerKeyword);
+        }
+        if (userFilterField === "role") {
+          return user.role && user.role.toLowerCase().includes(lowerKeyword);
+        }
 
-      return value
-        .toString()
-        .toLowerCase()
-        .includes(userFilterKeyword.toLowerCase());
-    });
-  }, [users, userFilterField, userFilterKeyword]);
+        const fieldKey = userFilterField as keyof User;
+        const value = user[fieldKey];
+        if (!value) return false;
+        return value.toString().toLowerCase().includes(lowerKeyword);
+      });
+    }
+
+    // 정렬
+    if (sortConfig !== null) {
+      result.sort((a, b) => {
+        let aValue: any = a[sortConfig.key];
+        let bValue: any = b[sortConfig.key];
+
+        // Special handling for activeBan (sort by banUntil date)
+        if (sortConfig.key === "activeBan") {
+          aValue = a.activeBan ? a.activeBan.banUntil : "";
+          bValue = b.activeBan ? b.activeBan.banUntil : "";
+        }
+
+        // Special handling for provider (Social)
+        if (sortConfig.key === "provider") {
+          aValue = a.provider || "";
+          bValue = b.provider || "";
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === "asc" ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === "asc" ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return result;
+  }, [users, userFilterField, userFilterKeyword, sortConfig]);
+
+  // --- Sorting Handler ---
+  const handleSort = (key: SortKey) => {
+    let direction: SortDirection = "asc";
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: SortKey) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <ChevronsUpDown size={14} className="text-gray-300 ml-1" />;
+    }
+    return sortConfig.direction === "asc" ? (
+      <ChevronUp size={14} className="text-black ml-1" />
+    ) : (
+      <ChevronDown size={14} className="text-black ml-1" />
+    );
+  };
 
   // --- Handlers for Ban ---
   const openBanModal = (user: User) => {
@@ -117,14 +191,17 @@ export default function UserManage({
             value={userFilterField}
             onChange={(value) =>
               setUserFilterField(
-                value as "userName" | "nickName" | "email" | "phone"
+                value as "all" | "userName" | "nickName" | "email" | "phone" | "role" | "social"
               )
             }
             options={[
+              { value: "all", label: "전체" },
               { value: "userName", label: "이름" },
               { value: "nickName", label: "닉네임" },
               { value: "email", label: "이메일" },
               { value: "phone", label: "전화번호" },
+              { value: "role", label: "권한" },
+              { value: "social", label: "소셜로그인" },
             ]}
           />
         </div>
@@ -157,18 +234,32 @@ export default function UserManage({
       </div>
 
       {/* Table */}
-      <div className="border border-[#eee] rounded-lg overflow-hidden">
-        <table className="w-full">
+      <div className="border border-[#eee] rounded-lg">
+        <table className="w-full table-fixed">
           <thead>
             <tr className="bg-[#f9f9f9] border-b border-[#eee]">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">ID</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">이름</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">닉네임</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">이메일</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">전화번호</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">권한</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">정지 정보</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666]">관리</th>
+              {[
+                { label: "ID", key: "userId", width: "w-[5%]" },
+                { label: "이름", key: "userName", width: "w-[10%]" },
+                { label: "닉네임", key: "nickName", width: "w-[12%]" },
+                { label: "이메일", key: "email", width: "w-[20%]" },
+                { label: "소셜", key: "provider", width: "w-[8%]" },
+                { label: "전화번호", key: "phone", width: "w-[15%]" },
+                { label: "권한", key: "role", width: "w-[8%]" },
+                { label: "정지 정보", key: "activeBan", width: "w-[10%]" },
+              ].map((col) => (
+                <th
+                  key={col.key}
+                  className={`${col.width} px-4 py-3 text-left text-xs font-semibold text-[#666] cursor-pointer hover:bg-gray-100 select-none`}
+                  onClick={() => handleSort(col.key as SortKey)}
+                >
+                  <div className="flex items-center">
+                    {col.label}
+                    {getSortIcon(col.key as SortKey)}
+                  </div>
+                </th>
+              ))}
+              <th className="w-[12%] px-4 py-3 text-left text-xs font-semibold text-[#666]">관리</th>
             </tr>
           </thead>
 
@@ -201,6 +292,17 @@ export default function UserManage({
                 </td>
 
                 <td className="px-4 py-3 text-sm text-[#666]">{u.email}</td>
+
+                {/* Social Login Column */}
+                <td className="px-4 py-3 text-sm">
+                  {u.provider ? (
+                    <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-medium uppercase">
+                      {u.provider}
+                    </span>
+                  ) : (
+                    <span className="text-gray-300 text-xs">-</span>
+                  )}
+                </td>
 
                 <td className="px-4 py-3 text-sm">
                   {editingUserId === u.userId ? (

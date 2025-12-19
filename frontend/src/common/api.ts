@@ -1364,12 +1364,14 @@ export const fetchStatsApi = async () => {
 
 // 관리자 회원 목록 조회 (필터 적용 가능)
 export async function getUsers(
-  field?: "userName" | "nickName" | "email" | "phone",
+  field?: "userName" | "nickName" | "email" | "phone" | "role" | "social" | "all",
   keyword?: string
 ): Promise<TYPE.User[]> {
   let url = `${API_BASE_URL}${SPRING_API}/users`;
   if (field && keyword) {
-    url += `?${field}=${encodeURIComponent(keyword)}`;
+    if (field !== "all") {
+      url += `?${field}=${encodeURIComponent(keyword)}`;
+    }
   }
   const token = localStorage.getItem("token");
   return fetchJson<TYPE.User[]>(url, {

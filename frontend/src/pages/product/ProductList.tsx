@@ -6,7 +6,7 @@ import { parseWithTZ } from "../../common/util";
 import type { SortOption } from "../../common/util";
 import ProductCard from "../../components/ui/ProductCard";
 import { type DeliveryType } from "../../common/enums";
-import { ArrowUpDown } from "lucide-react";
+import { ChevronsUpDown } from "lucide-react";
 import FilterBar from "../../components/modal/FilterBar";
 import SideFilterModal from "../../components/modal/SideFilterModal";
 
@@ -204,7 +204,7 @@ export default function ProductSearchPage() {
               onBlur={() => setTimeout(() => setIsSortOpen(false), 200)}
               className="flex items-center gap-1 text-[14px] font-medium text-[#666] hover:text-black"
             >
-              <ArrowUpDown size={14} />
+              <ChevronsUpDown size={14} />
               <span>
                 {sortOption === "latest" ? "최신순" :
                   sortOption === "priceAsc" ? "가격 낮은순" :

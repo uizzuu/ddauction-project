@@ -5,7 +5,6 @@ export default function PublicChatManage() {
     return (
         <div>
             <h2 className="text-xl font-bold text-[#111] mb-6">공개 채팅 관리</h2>
-
             <div className="border border-[#eee] rounded-lg p-12 text-center">
                 <div className="max-w-md mx-auto">
                     <div className="w-16 h-16 bg-[#f9f9f9] rounded-full flex items-center justify-center mx-auto mb-4">

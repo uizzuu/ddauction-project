@@ -163,19 +163,19 @@ export default function ReportManage({
       <h2 className="text-xl font-bold text-[#111] mb-6">신고 관리</h2>
 
       {/* Table */}
-      <div className="border border-[#eee] rounded-lg overflow-x-auto">
-        <table className="w-full">
+      <div className="border border-[#eee] rounded-lg">
+        <table className="w-full table-fixed">
           <thead>
             <tr className="bg-[#f9f9f9] border-b-2 border-[#eee]">
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">ID</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">신고자</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">대상 타입</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">대상 정보</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">신고 사유</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">신고일</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">상태</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">처리</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider">답변</th>
+              <th className="w-[5%] px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider text-nowrap">ID</th>
+              <th className="w-[10%] px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider text-nowrap">신고자</th>
+              <th className="w-[8%] px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider text-nowrap">대상 타입</th>
+              <th className="w-[15%] px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider text-nowrap">대상 정보</th>
+              <th className="w-[20%] px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider text-nowrap">신고 사유</th>
+              <th className="w-[10%] px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider text-nowrap">신고일</th>
+              <th className="w-[8%] px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider text-nowrap">상태</th>
+              <th className="w-[12%] px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider text-nowrap">처리</th>
+              <th className="w-[12%] px-4 py-3 text-left text-xs font-semibold text-[#666] uppercase tracking-wider text-nowrap">답변</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-[#eee]">
@@ -202,7 +202,7 @@ export default function ReportManage({
                     </div>
                   </td>
                   <td className="px-4 py-3 text-sm">
-                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                    <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium text-nowrap">
                       {targetInfo[r.reportId]?.type || r.reportType || "-"}
                     </span>
                   </td>
@@ -230,8 +230,8 @@ export default function ReportManage({
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${r.status
-                        ? "bg-green-50 text-green-700"
-                        : "bg-yellow-50 text-yellow-700"
+                      ? "bg-green-50 text-green-700"
+                      : "bg-yellow-50 text-yellow-700"
                       }`}>
                       {r.status ? "처리 완료" : "보류 중"}
                     </span>

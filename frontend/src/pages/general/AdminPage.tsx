@@ -59,8 +59,8 @@ export default function AdminPage({ user }: { user: User }) {
 
   // --- 회원 필터 상태 (UserManagement로 props 전달) ---
   const [userFilterField, setUserFilterField] = useState<
-    "userName" | "nickName" | "email" | "phone"
-  >("userName");
+    "userName" | "nickName" | "email" | "phone" | "role" | "social" | "all"
+  >("all");
   const [userFilterKeyword, setUserFilterKeyword] = useState("");
 
   // 상품 수정 상태
@@ -326,7 +326,7 @@ export default function AdminPage({ user }: { user: User }) {
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-[1280px] mx-auto">
+      <div className="max-w-[1280px] mx-auto xl:px-0 px-4">
         {/* Header */}
         <div className="py-8">
           <h1 className="text-2xl font-bold text-[#111]">관리자 페이지</h1>
@@ -345,9 +345,10 @@ export default function AdminPage({ user }: { user: User }) {
                     if (el) tabRefs.current[tab.id] = el;
                   }}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex-1 px-6 py-4 text-sm font-medium transition-colors relative flex items-center justify-center gap-2 ${activeTab === tab.id
-                    ? "text-[#111]"
-                    : "text-[#666] hover:text-[#111]"
+                  className={`flex-1 px-6 py-4 text-sm font-medium transition-colors relative flex items-center justify-center gap-2 text-nowrap
+                    ${activeTab === tab.id
+                      ? "text-[#111]"
+                      : "text-[#666] hover:text-[#111]"
                     }`}
                 >
                   <Icon size={18} />
@@ -429,7 +430,7 @@ export default function AdminPage({ user }: { user: User }) {
           )} */}
 
           {/* 공개 채팅 컴포넌트 */}
-          {activeTab === "publicChat" && user && <div className="-mt-[20px]"><PublicChat user={user} /></div>}
+          {activeTab === "publicChat" && user && <div className="-mt-[20px]"><PublicChat user={user} className="px-0" /></div>}
 
           {/* 1:1 채팅 컴포넌트 */}
           {activeTab === "privateChat" && user && <div className="-mt-[20px]"><UserChat user={user} /></div>}

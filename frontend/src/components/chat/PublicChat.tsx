@@ -9,9 +9,10 @@ import { ROLE } from "../../common/enums";
 // -----------------------------
 type Props = {
   user: User;
+  className?: string;
 };
 
-export default function PublicChat({ user }: Props) {
+export default function PublicChat({ user, className }: Props) {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<PublicChat[]>([]);
   const [input, setInput] = useState("");
@@ -23,18 +24,18 @@ export default function PublicChat({ user }: Props) {
   // 관리자 메뉴 상태
   const [activeMenuMessageId, setActiveMenuMessageId] = useState<number | null>(null);
   const [selectedMessageId, setSelectedMessageId] = useState<number | null>(null);
-  
+
   // 채팅 금지 상태
   const [isBanned, setIsBanned] = useState(false);
   const [banEndTime, setBanEndTime] = useState<Date | null>(null);
- 
+
 
   // 남은 시간 계산
   const getRemainingTime = () => {
     if (!banEndTime) return "";
     const now = new Date();
     const diff = banEndTime.getTime() - now.getTime();
-    
+
     if (diff <= 0) {
       setIsBanned(false);
       return "";
@@ -42,7 +43,7 @@ export default function PublicChat({ user }: Props) {
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (hours > 0) {
       return `${hours}시간 ${minutes}분`;
     }
@@ -65,7 +66,7 @@ export default function PublicChat({ user }: Props) {
         if (response.ok) {
           const data = await response.json();
           console.log("경고 상태 응답:", data);
-          
+
           // banned가 true이면 경고 상태
           if (data.banned) {
             console.log("경고 상태 감지!");
@@ -76,12 +77,12 @@ export default function PublicChat({ user }: Props) {
               setBanEndTime(endTime);
               console.log("종료시간:", endTime);
             }
-       
+
           } else {
             console.log("경고 없음");
             setIsBanned(false);
             setBanEndTime(null);
-     
+
           }
         } else {
           console.error("API 응답 실패:", response.status);
@@ -202,7 +203,7 @@ export default function PublicChat({ user }: Props) {
       alert(`채팅이 제한되었습니다. ${getRemainingTime()} 후 이용 가능합니다.`);
       return;
     }
-    
+
     if (!input.trim() || !ws.current) return;
     if (ws.current.readyState !== WebSocket.OPEN) return;
 
@@ -225,8 +226,8 @@ export default function PublicChat({ user }: Props) {
   }, []);
 
   return (
-    <div className="max-w-[1280px] mx-auto flex flex-col mt-[20px] h-[calc(100vh-180px)]">
-      <div className="border border-[#ccc] pb-3 px-4 xl:px-0 w-full h-full flex flex-col rounded-lg shadow-sm bg-white relative">
+    <div className={`max-w-[1280px] mx-auto flex flex-col mt-[20px] h-[calc(100vh-180px)] ${className || "px-4 xl:px-0"}`}>
+      <div className="border border-[#ccc] pb-3 w-full h-full flex flex-col rounded-lg shadow-sm bg-white relative">
         <div className="flex-1 overflow-y-auto mb-3 p-4 rounded-lg">
           {messages.map((msg, i) => {
             const isMe = msg.user?.userId === user?.userId;
@@ -349,21 +350,19 @@ export default function PublicChat({ user }: Props) {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.nativeEvent.isComposing && sendMessage()}
               disabled={isBanned}
-              className={`flex-1 p-3 border rounded-lg text-sm shadow-sm ${
-                isBanned 
-                  ? "bg-red-50 border-red-300 text-red-600 cursor-not-allowed" 
-                  : "border-[#ddd] focus:outline-none focus:border-[#111]"
-              }`}
+              className={`flex-1 p-3 border rounded-lg text-sm shadow-sm ${isBanned
+                ? "bg-red-50 border-red-300 text-red-600 cursor-not-allowed"
+                : "border-[#ddd] focus:outline-none focus:border-[#111]"
+                }`}
               placeholder={isBanned ? `🚫 이용이 제한되었습니다 (남은 시간: ${getRemainingTime()})` : "메시지를 입력하세요..."}
             />
-            <button 
-              onClick={sendMessage} 
+            <button
+              onClick={sendMessage}
               disabled={isBanned}
-              className={`px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-colors ${
-                isBanned
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  : "bg-[#111] text-white hover:bg-[#333]"
-              }`}
+              className={`px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-colors ${isBanned
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : "bg-[#111] text-white hover:bg-[#333]"
+                }`}
             >
               전송
             </button>
