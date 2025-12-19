@@ -20,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
     private final JWTUtil jwtUtil;
+    private final com.my.backend.repository.UserBanRepository userBanRepository;
+
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
@@ -46,6 +48,48 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
             } catch (IllegalArgumentException e) {
                 roleEnum = Role.USER; // 안전하게 기본값
             }
+
+            // 영구 정지(Role) 확인
+            if (roleEnum == Role.BANNED) {
+                redirectWithError(response, "영구 정지된 계정입니다. 고객센터에 문의해주세요.");
+                return;
+            }
+
+            // 기간 정지(UserBan) 확인
+            if (userBanRepository.existsByUser_UserIdAndActiveTrue(userId)) {
+                userBanRepository.findActiveByUserId(userId).ifPresent(ban -> {
+                   if (ban.isExpired()) {
+                       if (!ban.isExpired()) {
+                           String msg = "서비스 이용이 정지된 계정입니다.";
+                           if (ban.getBanUntil() != null) {
+                               msg += " (해제일: " + ban.getBanUntil().toLocalDate() + ")";
+                           }
+                           try {
+                               redirectWithError(response, msg);
+                           } catch (IOException e) {
+                               throw new RuntimeException(e);
+                           }
+                       }
+                   }
+                });
+            }
+            var activeBan = userBanRepository.findActiveByUserId(userId).orElse(null);
+            if (activeBan != null) {
+                if (activeBan.isExpired()) {
+                    // 만료되었으면 해제 (DB 업데이트)
+                    activeBan.setActive(false);
+                    userBanRepository.save(activeBan); 
+                } else {
+                    String msg = "서비스 이용이 정지된 계정입니다.";
+                    if (activeBan.getBanUntil() != null) {
+                        msg += " (해제일: " + activeBan.getBanUntil().toLocalDate() + ")";
+                    }
+                    redirectWithError(response, msg);
+                    return;
+                }
+            }
+
+
             System.out.println("✅ OAuth2 사용자 정보: email=" + email + ", roleEnum=" + roleEnum + ", businessNumber=" + businessNumber);
             // JWT 생성
             String jwtToken = jwtUtil.createJwt(userId, email, roleEnum, nickName, businessNumber, 24 * 60 * 60 * 1000L);
@@ -66,7 +110,16 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         } catch (Exception e) {
             System.err.println("❌ OAuth2SuccessHandler 에러: " + e.getMessage());
             throw new RuntimeException(e);
+        }
+
     }
 
+    private void redirectWithError(HttpServletResponse response, String message) throws IOException {
+        String encodedMessage = java.net.URLEncoder.encode(message, java.nio.charset.StandardCharsets.UTF_8);
+        String redirectUrl = frontendUrl + "/oauth2/redirect?error=banned&message=" + encodedMessage;
+        
+        System.out.println("⛔ 정지된 계정 리다이렉트: " + redirectUrl);
+        response.setContentType("text/html;charset=UTF-8");
+        response.sendRedirect(redirectUrl);
     }
 }

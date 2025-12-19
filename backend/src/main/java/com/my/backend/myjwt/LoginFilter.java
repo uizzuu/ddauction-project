@@ -1,12 +1,8 @@
 package com.my.backend.myjwt;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.my.backend.dto.auth.CustomUserDetails;
-import com.my.backend.dto.auth.LoginRequest;
-import com.my.backend.dto.auth.PhoneLoginRequest;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Collection;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -14,10 +10,15 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import java.io.IOException;
-import java.util.Collection;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.my.backend.dto.auth.CustomUserDetails;
+import com.my.backend.dto.auth.LoginRequest;
+import com.my.backend.dto.auth.PhoneLoginRequest;
 import com.my.backend.enums.Role;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class LoginFilter extends UsernamePasswordAuthenticationFilter {
 
@@ -132,13 +133,22 @@ public class LoginFilter extends UsernamePasswordAuthenticationFilter {
     @Override
     protected void unsuccessfulAuthentication(HttpServletRequest request,
                                               HttpServletResponse response,
-                                              AuthenticationException failed) {
+                                              AuthenticationException failed) throws IOException {
         System.out.println("==== unsuccessfulAuthentication START ====");
         System.out.println("[WARN] 로그인 실패");
         System.out.println("[WARN] 실패 메시지: " + failed.getMessage());
-        failed.printStackTrace();
 
-        response.setStatus(401);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("application/json;charset=UTF-8");
+
+        String message = "로그인 실패";
+        if (failed.getMessage() != null) {
+            message = failed.getMessage();
+        }
+
+        // JSON 응답 생성
+        response.getWriter().write("{\"message\": \"" + message + "\"}");
+        
         System.out.println("==== unsuccessfulAuthentication END ====");
     }
 }

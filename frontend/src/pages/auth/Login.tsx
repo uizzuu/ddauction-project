@@ -84,6 +84,12 @@ export default function Login({ setUser }: Props) {
       navigate("/");
     } catch (err: any) {
       console.error("▶ login error:", err);
+
+      // 정지/밴 관련 메시지가 있으면 alert 띄우기
+      if (err.message && (err.message.includes("정지") || err.message.includes("제한"))) {
+        alert(err.message);
+      }
+
       setErrors((prev) => ({
         ...prev,
         submit: err.message || "로그인 실패",
