@@ -3,7 +3,7 @@ import { AuctionBidding } from "../../../../components/product/AuctionBidding";
 import type { Product, Bid } from "../../../../common/types";
 import * as API from "../../../../common/api";
 import { addToCart } from "../../../../common/util";
-import { DELIVERY_TYPES } from "../../../../common/enums";
+import { DELIVERY_TYPES, PRODUCT_TYPES } from "../../../../common/enums";
 import type { DeliveryType } from "../../../../common/enums";
 
 interface ActionBoxProps {
@@ -67,9 +67,9 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
             <div className="mb-2 shrink-0">
                 <div className="flex justify-between items-center">
                     <span className="font-bold text-gray-800 text-lg text-nowrap">
-                        {product.productType === "AUCTION"
+                        {PRODUCT_TYPES.AUCTION
                             ? "입찰하기"
-                            : product.productType === 'STORE' ? "스토어 구매" : "중고 거래"}
+                            : PRODUCT_TYPES.STORE ? "스토어 구매" : "중고 거래"}
                     </span>
                     <div className="flex gap-2">
                         <button
@@ -98,7 +98,7 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
 
             {/* Scrollable Content Area */}
             <div className="flex-1 overflow-y-auto scrollbar-hide mb-4 space-y-4 min-h-0">
-                {product.productType === "AUCTION" ? (
+                {PRODUCT_TYPES.AUCTION ? (
                     <div className="flex flex-col">
                         {/* Auction Bidding List */}
                         <AuctionBidding
@@ -127,7 +127,7 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
 
             {/* Bottom: Action Buttons (Fixed at Bottom) */}
             <div className="mt-auto pt-4 border-t border-gray-100 bg-white">
-                {product.productType === 'STORE' ? (
+                {PRODUCT_TYPES.STORE ? (
                     <div className="flex gap-3 h-[56px]">
                         <button
                             onClick={() => {
@@ -148,7 +148,7 @@ export const ActionBox: React.FC<ActionBoxProps> = ({
                             바로구매
                         </button>
                     </div>
-                ) : product.productType === 'USED' ? (
+                ) : PRODUCT_TYPES.USED ? (
                     <button
                         onClick={() => navigate("/user-chat", { state: { sellerId: product.sellerId, productId: product.productId } })}
                         className="w-full h-[56px] bg-[#f5f5f5] text-[#333] rounded-xl font-semibold hover:bg-[#eee] transition-colors flex items-center justify-center gap-2"
