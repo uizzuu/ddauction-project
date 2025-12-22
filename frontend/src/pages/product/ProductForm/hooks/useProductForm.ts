@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { User, ProductForm } from "../../../../common/types";
-import { DELIVERY_TYPES, PAYMENT_STATUS, PRODUCT_TYPES, type ProductCategoryType } from "../../../../common/enums";
+import { DELIVERY_TYPES, PAYMENT_STATUS, PRODUCT_TYPES, type ProductCategoryType, PRODUCT_STATUS } from "../../../../common/enums";
 import { formatDateTime } from "../../../../common/util";
 import { generateAiDescription, registerProductWithImages, fetchProductById, updateProductWithImages } from "../../../../common/api";
 
@@ -226,7 +226,7 @@ export default function useProductForm(user: User | null, productId?: number) {
                 sellerId: user.userId,
                 productCategoryType: form.productCategoryType as ProductCategoryType,
                 productType: form.productType,
-                productStatus: (form as any).PRODUCT_STATUS.ACTIVE,
+                productStatus: PRODUCT_STATUS.ACTIVE,
                 tag: form.tag,
                 address: form.address,
                 deliveryAvailable: Array.isArray(form.deliveryAvailable) ? form.deliveryAvailable.join(",") : form.deliveryAvailable,
