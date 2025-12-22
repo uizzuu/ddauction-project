@@ -3,6 +3,7 @@ package com.my.backend.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.my.backend.enums.ProductType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -185,4 +186,17 @@ public interface ProductRepository extends JpaRepository<Product, Long>, JpaSpec
     
     // ★ 상품 ID 리스트로 product 조회
     List<Product> findByProductIdIn(List<Long> productIds);
+
+    //  ACTIVE
+    // └─(auctionEndTime 도달)
+    //      ├─ 입찰 없음 → CLOSED
+    //      └─ 입찰 있음
+    //           ├─ 결제 완료 → SOLD
+    //           └─ 결제 미완료 → CLOSED
+    List<Product> findByProductTypeAndProductStatusAndAuctionEndTimeBefore(
+            ProductType productType,
+            ProductStatus productStatus,
+            LocalDateTime time
+    );
+
 }

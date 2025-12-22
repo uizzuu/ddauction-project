@@ -554,4 +554,46 @@ public class ProductService {
         // 수정포인트: 상품 리스트 조회
         return productRepository.findByProductIdIn(productIds);
     }
+    @Transactional
+    public void closeExpiredAuctions() {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        List<Product> expiredAuctions =
+                productRepository.findByProductTypeAndProductStatusAndAuctionEndTimeBefore(
+                        ProductType.AUCTION,
+                        ProductStatus.ACTIVE,
+                        now
+                );
+
+        for (Product product : expiredAuctions) {
+
+            // 최고 입찰 조회
+            Bid topBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
+                    .orElse(null);
+
+            // 입찰 없음 → 경매 종료
+            if (topBid == null) {
+                product.setProductStatus(ProductStatus.CLOSED);
+                continue;
+            }
+
+            // 결제 조회 (상품 기준)
+            Payment payment = paymentRepository
+                    .findByProduct_ProductId(product.getProductId())
+                    .orElse(null);
+
+            // 결제 완료 or 구매 확정 → 판매 완료
+            if (payment != null &&
+                    (payment.getPaymentStatus() == PaymentStatus.PAID
+                            || payment.getPaymentStatus() == PaymentStatus.CONFIRMED)) {
+
+                product.setProductStatus(ProductStatus.SOLD);
+            } else {
+                // 결제 안 함 / 실패 / 대기 → 종료
+                product.setProductStatus(ProductStatus.CLOSED);
+            }
+        }
+    }
+
 }
