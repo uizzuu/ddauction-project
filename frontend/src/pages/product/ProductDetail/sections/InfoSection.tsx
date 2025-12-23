@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { formatDateTime } from "../../../../common/util";
-import { DELIVERY_TYPES, PRODUCT_CATEGORIES } from "../../../../common/enums";
+import { DELIVERY_TYPES, PRODUCT_CATEGORIES, PRODUCT_TYPES } from "../../../../common/enums";
 import type { Product, User, EditProductForm, Bid } from "../../../../common/types";
 import Avatar from "../../../../components/ui/Avatar";
 
@@ -66,7 +66,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                 discountRate,
                 hasDiscount: discountRate > 0
             };
-        } else if (productType === 'USED') {
+        } else if (productType === PRODUCT_TYPES.USED) {
             // USED: originalPrice가 판매가
             const price = Number(product.originalPrice) || 0;
             return {
@@ -195,7 +195,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                     </div>
                 ) : (
                     <div>
-                        {product.productType === 'AUCTION' ? (
+                        {product.productType === PRODUCT_TYPES.AUCTION ? (
                             /* ✅ AUCTION 가격 표시 - 입찰 건수 추가 */
                             <div className="space-y-2 mb-3">
                                 <div className="flex justify-between items-center text-sm">
@@ -220,7 +220,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
                                     </div>
                                 )}
                             </div>
-                        ) : product.productType === 'STORE' ? (
+                        ) : product.productType === PRODUCT_TYPES.STORE ? (
                             /* ✅ STORE 가격 표시 - salePrice 사용 */
                             <div className="space-y-1">
                                 {priceInfo.hasDiscount && (
@@ -302,7 +302,7 @@ export const InfoSection: React.FC<InfoSectionProps> = ({
             </div>
 
             {/* Auction Info: Time Only (Compact) */}
-            {!editingProductId && product.productType === 'AUCTION' && (
+            {!editingProductId && product.productType === PRODUCT_TYPES.AUCTION && (
                 <div className="mt-auto pt-2">
                     <div className="bg-gray-50 rounded-lg p-3 border border-gray-100 flex items-start justify-between">
                         <span className="text-gray-500 font-bold text-sm">남은 시간</span>
