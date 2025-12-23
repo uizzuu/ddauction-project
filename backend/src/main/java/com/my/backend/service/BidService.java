@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -118,14 +119,14 @@ public class BidService {
                     bidRepository.save(prev);
                 }
             });
-            // ✅ 알림 추가 - 판매자에게 알림
+            // 알림 추가 - 판매자에게 알림
             notificationService.sendNewBidToSeller(
                     product.getSeller().getUserId(),
                     product.getTitle(),
                     bidPrice
             );
 
-            // ✅ 알림 추가 - 다른 입찰자들에게 알림
+            // 알림 추가 - 다른 입찰자들에게 알림
             List<Bid> allBids = bidRepository.findByProduct(product);
             for (Bid b : allBids) {
                 // 현재 입찰자 제외, 판매자 제외
@@ -222,22 +223,54 @@ public class BidService {
             Product product = productRepository.findById(productId)
                     .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
 
+            // 경매 진행 중
             if (product.getAuctionEndTime() != null && LocalDateTime.now().isBefore(product.getAuctionEndTime())) {
                 return ResponseEntity.ok(Map.of("isWinner", false, "message", "경매가 아직 진행중입니다."));
             }
 
             // 최고 금액 기준으로 낙찰자 조회
-            Bid winningBid = bidRepository.findTopByProductOrderByBidPriceDesc(product)
-                    .orElseThrow(() -> new IllegalArgumentException("입찰 내역이 없습니다."));
+            Optional<Bid> winningBidOpt = bidRepository.findTopByProductOrderByBidPriceDesc(product);
 
-            if (!winningBid.isWinning()) {
+            // 입찰이 없는 경우 - 예외 대신 정상 응답
+            if (winningBidOpt.isEmpty()) {
+                return ResponseEntity.ok(Map.of(
+                        "isWinner", false,
+                        "message", "입찰 내역이 없습니다.",
+                        "noBids", true
+                ));
+            }
+
+            Bid winningBid = winningBidOpt.get();
+
+            // null 체크 추가
+            if (winningBid.getUser() == null) {
+                return ResponseEntity.ok(Map.of(
+                        "isWinner", false,
+                        "message", "낙찰자 정보를 확인할 수 없습니다."
+                ));
+            }
+
+            if (!winningBid.isWinning() && product.getAuctionEndTime() != null
+                    && LocalDateTime.now().isAfter(product.getAuctionEndTime())) {
                 lazyCloseBid(product, winningBid);
+            }
+
+            // userId가 null인 경우 (비로그인)
+            if (userId == null) {
+                return ResponseEntity.ok(Map.of(
+                        "isWinner", false,
+                        "bidPrice", winningBid.getBidPrice()
+                ));
             }
 
             boolean isWinner = winningBid.getUser().getUserId().equals(userId);
             return ResponseEntity.ok(Map.of("isWinner", isWinner, "bidPrice", winningBid.getBidPrice()));
+
+        } catch (IllegalArgumentException e) {
+            log.warn("낙찰자 확인 실패: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            log.error("낙찰자 확인 실패", e);
+            log.error("낙찰자 확인 중 서버 오류", e);
             return ResponseEntity.status(500).body(Map.of("error", "낙찰자 확인 중 오류가 발생했습니다."));
         }
     }
